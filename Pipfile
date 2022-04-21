@@ -1,0 +1,25 @@
+[[source]]
+url = "https://pypi.org/simple"
+verify_ssl = true
+name = "pypi"
+
+[packages]
+django = "~=4.0.3"
+django-debug-toolbar = "~=3.2.4"
+psycopg2 = "*"
+djangorestframework = "*"
+django-filter = "*"
+requests = "*"
+djoser = "*"
+djangorestframework-simplejwt = "*"
+pillow = "*"
+django-imagekit = "*"
+drf-nested-routers = "*"
+whitenoise = "*"
+django-cors-headers = "*"
+gunicorn = "*"
+
+[dev-packages]
+
+[requires]
+python_version = "3.8"
