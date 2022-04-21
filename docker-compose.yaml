@@ -1,8 +1,7 @@
 version: '3.7'
 
 services:
-  poshbot:
-    image: ghcr.io/mredwin1/poshbot:latest
+  api:
     build:
       context: .
       dockerfile: api.Dockerfile
