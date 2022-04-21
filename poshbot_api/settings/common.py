@@ -73,17 +73,6 @@ TEMPLATES = [
 
 WSGI_APPLICATION = 'poshbot_api.wsgi.application'
 
-DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.postgresql_psycopg2',
-        "NAME": os.environ.get('SQL_DATABASE', 'poshbot-db'),
-        "USER": os.environ['SQL_USER'],
-        "PASSWORD": os.environ['SQL_PASSWORD'],
-        'HOST': 'localhost',
-        'PORT': '5432',
-    }
-}
-
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
