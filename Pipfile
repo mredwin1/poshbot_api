@@ -16,8 +16,8 @@ django-imagekit = "*"
 drf-nested-routers = "*"
 whitenoise = "*"
 django-cors-headers = "*"
-gunicorn = "*"
 psycopg2-binary = "*"
+tzdata = "*"
 
 [dev-packages]
 
