@@ -69,7 +69,6 @@ class Command(BaseCommand):
             campaign.status = Campaign.IDLE
             campaign.save()
 
-
         logging.info('Starting server...')
         os.system("gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 8 -w 4")
         exit()
