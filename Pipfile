@@ -6,7 +6,6 @@ name = "pypi"
 [packages]
 django = "~=4.0.3"
 django-debug-toolbar = "~=3.2.4"
-psycopg2 = "*"
 djangorestframework = "*"
 django-filter = "*"
 requests = "*"
@@ -18,6 +17,7 @@ drf-nested-routers = "*"
 whitenoise = "*"
 django-cors-headers = "*"
 gunicorn = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
