@@ -17,9 +17,9 @@ drf-nested-routers = "*"
 whitenoise = "*"
 django-cors-headers = "*"
 tzdata = "*"
-psycopg2 = "*"
 django-storages = "*"
 boto3 = "*"
+psycopg2-binary = "*"
 
 [dev-packages]
 
