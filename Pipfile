@@ -18,6 +18,8 @@ whitenoise = "*"
 django-cors-headers = "*"
 tzdata = "*"
 psycopg2 = "*"
+django-storages = "*"
+boto3 = "*"
 
 [dev-packages]
 
