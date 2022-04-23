@@ -51,14 +51,16 @@ class Command(BaseCommand):
             logging.error('Migrations could not be run, exiting.')
             sys.exit('Migrations unsuccessful')
 
-        if not User.objects.filter(username=os.environ['SUPER_USERNAME']).exists():
-            User.objects.create_superuser(
-                username=os.environ['SUPER_USERNAME'],
-                password=os.environ['SUPER_PASSWORD'],
-            )
-            logging.info('Superuser created.')
-        else:
-            logging.info('Superuser already created, skipping that step.')
+        superusername = os.environ.get('SUPER_USERNAME')
+        if superusername:
+            if not User.objects.filter(username=superusername).exists():
+                User.objects.create_superuser(
+                    username=superusername,
+                    password=os.environ['SUPER_PASSWORD'],
+                )
+                logging.info('Superuser created.')
+            else:
+                logging.info('Superuser already created, skipping that step.')
 
         logging.info('Running collectstatic...')
         call_command("collectstatic", interactive=False, clear=True)
