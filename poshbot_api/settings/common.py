@@ -161,5 +161,5 @@ LOGGING = {
     }
 }
 
-CELERY_BROKER_URL = f'redis://redis:6379'
-CELERY_RESULT_BACKEND = f'redis://redis:6379'
+CELERY_BROKER_URL = f'redis://redis:6379/1'
+CELERY_RESULT_BACKEND = f'redis://redis:6379/1'
