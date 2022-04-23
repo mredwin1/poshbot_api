@@ -1,24 +1,16 @@
-import requests
 from .common import *
+import socket
 
 DEBUG = False
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
+local_ip = str(socket.gethostbyname(socket.gethostname()))
+
 ALLOWED_HOSTS = [
-    'api.poshbot.net'
+    'api.poshbot.net',
+    local_ip
 ]
-
-try:
-    AWS_LOCAL_IP = requests.get(
-      'http://169.254.169.254/latest/meta-data/local-ipv4',
-      timeout=0.01
-    ).text
-
-    ALLOWED_HOSTS.append(AWS_LOCAL_IP)
-
-except requests.exceptions.ConnectionError:
-    pass
 
 CORS_ALLOWED_ORIGINS = [
     'http://api.poshbot.net/',
