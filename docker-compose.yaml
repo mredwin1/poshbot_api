@@ -13,7 +13,7 @@ services:
     depends_on:
       - redis
       - celery
-      - celery_beat
+#      - celery_beat
     networks:
       - traefik
       - internal
