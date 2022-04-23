@@ -1,16 +1,11 @@
-import socket
 from .common import *
 
 DEBUG = False
 
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
-hostname = socket.gethostname()
-local_ip = socket.gethostbyname(hostname)
-
 ALLOWED_HOSTS = [
     'api.poshbot.net',
-    local_ip
 ]
 
 CORS_ALLOWED_ORIGINS = [
