@@ -204,9 +204,7 @@ class ListingSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context.get('user')
-        logger.info('First', user)
         listing = Listing(**validated_data)
-        logger.info('Second', user)
         listing.user = user
         listing.save()
 
