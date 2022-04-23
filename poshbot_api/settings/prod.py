@@ -12,6 +12,11 @@ CSRF_TRUSTED_ORIGINS = [
     'https://api.poshbot.net'
 ]
 
+CORS_ALLOWED_ORIGINS = [
+    'https://api.poshbot.net',
+    'https://poshbot.net'
+]
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
