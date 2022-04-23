@@ -142,13 +142,14 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': '/opt/python/log/general.log'
+            'filename': '/opt/python/log/general.log',
+            'formatter': 'verbose'
         },
     },
     'loggers': {
         '': {
-            'handlers': ['console'],
-            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO')
+            'handlers': ['console', 'file'],
+            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
         }
     },
     'formatters': {
