@@ -14,43 +14,6 @@ class Command(BaseCommand):
     help = 'An alternative to runserver which will run migrate and collectstatic beforehand'
 
     def handle(self, *args, **options):
-        # Attempt to connect to the database socket
-        s = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-
-        attempts_left = 10
-        while attempts_left:
-            try:
-                # Ignore 'incomplete startup packet'
-                s.connect((os.environ['SQL_HOST'], int(os.environ['SQL_PORT'])))
-                s.shutdown(socket.SHUT_RDWR)
-                logging.info('Database is ready.')
-                break
-            except socket.error:
-                attempts_left -= 1
-                logging.warning('Database not ready yet, retrying.')
-                time.sleep(2)
-        else:
-            logging.error('Database could not be found, exiting.')
-            sys.exit('Database not found')
-
-        attempts_left = 5
-        while attempts_left:
-            try:
-                logging.info('Trying to run migrations...')
-                call_command("migrate")
-                logging.info('Migrations complete')
-                break
-            except OperationalError as error:
-                if error.args[0] == 'FATAL:  the database system is starting up\n':
-                    attempts_left -= 1
-                    logging.warning('Cannot run migrations because the database system is starting up, retrying.')
-                    time.sleep(0.5)
-                else:
-                    sys.exit(f'Migrations unsuccessful. Error: {error.args}')
-        else:
-            logging.error('Migrations could not be run, exiting.')
-            sys.exit('Migrations unsuccessful')
-
         superusername = os.environ.get('SUPER_USERNAME')
         if superusername:
             if not User.objects.filter(username=superusername).exists():
