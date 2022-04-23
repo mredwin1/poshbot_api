@@ -133,7 +133,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
         return new_user_info
 
     def create(self, validated_data):
-        user = self.context.get('request').user
+        user = self.context.get('user')
         all_data = {**validated_data, **self.get_new_posh_user()}
         picture_urls = {
             'profile_picture': all_data.pop('profile_picture_url'),
@@ -199,7 +199,7 @@ class ListingSerializer(serializers.ModelSerializer):
     images = ListingImageSerializer(many=True, read_only=True)
 
     def create(self, validated_data):
-        user = self.context.get('request').user
+        user = self.context.get('user')
         listing = Listing(**validated_data)
         listing.user = user
         listing.save()

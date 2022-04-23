@@ -22,7 +22,7 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyModelMixin, ListModelMixin, Cre
 
     def get_serializer_context(self):
         context = super(PoshUserViewSet, self).get_serializer_context()
-        context.update({'request': self.request})
+        context.update({'user': self.request.user})
         return context
 
 
@@ -40,7 +40,7 @@ class ListingViewSet(ModelViewSet):
 
     def get_serializer_context(self):
         context = super(ListingViewSet, self).get_serializer_context()
-        context.update({'request': self.request})
+        context.update({'user': self.request.user})
         return context
 
 

@@ -8,11 +8,6 @@ ALLOWED_HOSTS = [
     'api.poshbot.net'
 ]
 
-CORS_ALLOWED_ORIGINS = [
-    'http://api.poshbot.net',
-    'http://poshbot.net',
-]
-
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
