@@ -43,7 +43,7 @@ class Command(BaseCommand):
                 logging.info('Superuser already created, skipping that step.')
 
         logging.info('Running collectstatic...')
-        call_command("collectstatic", interactive=False, clear=True)
+        call_command("collectstatic", interactive=False)
 
         logging.info('Setting all campaigns to IDLE status')
         campaigns = Campaign.objects.exclude(status=Campaign.IDLE)
