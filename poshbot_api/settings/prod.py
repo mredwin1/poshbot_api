@@ -9,7 +9,7 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'api.poshbot.net'
+    'https://api.poshbot.net'
 ]
 
 DATABASES = {
@@ -30,3 +30,7 @@ AWS_S3_REGION_NAME = os.environ['AWS_S3_REGION_NAME']
 
 AWS_S3_ACCESS_KEY_ID = os.environ['AWS_ACCESS_KEY_ID']
 AWS_S3_SECRET_ACCESS_KEY = os.environ['AWS_SECRET_ACCESS_KEY']
+
+SECURE_SSL_REDIRECT = True
+SESSION_COOKIE_SECURE = True
+CSRF_COOKIE_SECURE = True
