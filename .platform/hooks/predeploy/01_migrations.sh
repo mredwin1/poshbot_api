@@ -5,5 +5,4 @@ cd /var/app/staging
 
 python manage.py makemigrations
 python manage.py migrate
-python manage.py createfirstsuperuser
 python manage.py collectstatic --noinput
