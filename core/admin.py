@@ -75,6 +75,7 @@ class PoshUserAdmin(admin.ModelAdmin):
         ('Important Information', {
             'fields': (
                 ('is_registered', 'profile_updated'),
+                ('user',),
                 ('date_added', 'sales'),
                 ('username', 'password', 'email'),
                 ('phone_number'),
@@ -114,7 +115,7 @@ class ListingAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Listing Information', {
             'fields': (
-                ('campaign',),
+                ('user', 'campaign'),
                 ('title',),
                 ('size', 'brand'),
                 ('category', 'subcategory'),
@@ -154,6 +155,7 @@ class CampaignAdmin(admin.ModelAdmin):
         ('Campaign Information', {
             'fields': (
                 ('auto_run', 'generate_users'),
+                ('user',),
                 ('status',),
                 ('posh_user',),
                 ('mode',),
