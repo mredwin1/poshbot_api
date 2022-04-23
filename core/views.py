@@ -85,3 +85,11 @@ class CampaignViewSet(ModelViewSet):
         advanced_sharing_campaign.delay(pk)
 
         return Response({'status': 'started'})
+
+    @action(detail=True, methods=['POST'])
+    def start(self, request, pk):
+        campaign = self.get_object()
+        campaign.status = Campaign.STOPPED
+        Campaign.save()
+
+        return Response({'status': 'stopped'})

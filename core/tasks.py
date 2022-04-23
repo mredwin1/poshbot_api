@@ -7,5 +7,7 @@ from .models import Campaign
 def advanced_sharing_campaign(campaign_id):
     print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
+    campaign.status = Campaign.RUNNING
+    campaign.save()
     sleep(campaign.delay)
     print('Campaign ended')
