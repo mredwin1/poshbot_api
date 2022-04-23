@@ -211,11 +211,17 @@ class CampaignSerializer(serializers.ModelSerializer):
     class Meta:
         model = Campaign
         fields = [
-            'id', 'auto_run', 'generate_users', 'title', 'mode', 'delay','status',  'posh_user', 'listings']
+            'id', 'auto_run', 'generate_users', 'title', 'mode', 'delay', 'status',  'posh_user', 'listings']
         extra_kwargs = {
             'id': {'read_only': True},
             'status': {'read_only': True}
         }
+
+    status = serializers.SerializerMethodField(method_name='get_status')
+
+    @staticmethod
+    def get_status(campaign: Campaign):
+        return [status[1] for status in Campaign.STATUS_CHOICES if status[0] == campaign.status][0]
 
     def create(self, validated_data):
         listings = validated_data.pop('listings')
