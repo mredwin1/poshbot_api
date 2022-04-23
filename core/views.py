@@ -90,7 +90,7 @@ class CampaignViewSet(ModelViewSet):
         return Response({'status': 'started'})
 
     @action(detail=True, methods=['POST'])
-    def start(self, request, pk):
+    def stop(self, request, pk):
         campaign = self.get_object()
         campaign.status = Campaign.STOPPED
         campaign.save()
