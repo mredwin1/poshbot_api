@@ -19,6 +19,7 @@ tzdata = "*"
 django-storages = "*"
 boto3 = "*"
 psycopg2-binary = "*"
+redis = "*"
 
 [dev-packages]
 
