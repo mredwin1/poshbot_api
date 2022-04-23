@@ -9,5 +9,5 @@ def advanced_sharing_campaign(campaign_id):
     campaign = Campaign.objects.get(id=campaign_id)
     sleep(campaign.delay)
     if campaign.status != Campaign.STOPPED:
-        advanced_sharing_campaign.apply_async(countdown=5)
+        advanced_sharing_campaign.apply_async(countdown=5, kwargs={'campaign_id': campaign_id})
     print('Campaign ended')
