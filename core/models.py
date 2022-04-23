@@ -88,9 +88,9 @@ class Campaign(models.Model):
     STOPPED = '3'
 
     STATUS_CHOICES = [
-        (RUNNING, 'Running'),
-        (IDLE, 'Idle'),
-        (STOPPED, 'Stopping'),
+        (RUNNING, 'RUNNING'),
+        (IDLE, 'IDLE'),
+        (STOPPED, 'STOPPED'),
     ]
 
     ADVANCED_SHARING = '0'
