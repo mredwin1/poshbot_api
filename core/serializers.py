@@ -200,7 +200,9 @@ class ListingSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context.get('user')
+        print('First', user)
         listing = Listing(**validated_data)
+        print('Second', user)
         listing.user = user
         listing.save()
 
