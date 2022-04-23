@@ -1,3 +1,3 @@
 #!/bin/bash
 
-mkdir -p "/var/log/app-logs"
+mkdir /var/log/app-logs
