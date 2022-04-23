@@ -9,8 +9,8 @@ ALLOWED_HOSTS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'http://api.poshbot.net/',
-    'http://poshbot.net/',
+    'http://api.poshbot.net',
+    'http://poshbot.net',
 ]
 
 DATABASES = {
