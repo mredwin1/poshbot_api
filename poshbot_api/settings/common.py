@@ -142,7 +142,7 @@ LOGGING = {
         },
         'file': {
             'class': 'logging.FileHandler',
-            'filename': '/opt/python/log/general.log',
+            'filename': '/var/log/app-logs/general.log',
             'formatter': 'verbose'
         },
     },
