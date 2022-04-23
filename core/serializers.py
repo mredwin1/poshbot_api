@@ -217,12 +217,6 @@ class CampaignSerializer(serializers.ModelSerializer):
             'status': {'read_only': True}
         }
 
-    status = serializers.SerializerMethodField(method_name='get_status')
-
-    @staticmethod
-    def get_status(campaign: Campaign):
-        return [status[1] for status in Campaign.STATUS_CHOICES if status[0] == campaign.status][0]
-
     def create(self, validated_data):
         listings = validated_data.pop('listings')
         user = self.context.get('user')
