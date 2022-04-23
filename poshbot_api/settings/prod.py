@@ -6,7 +6,7 @@ SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = [
     'poshbot-api-prod.us-east-1.elasticbeanstalk.com',
-    '172.31.43.106'
+    'api.poshbot.net'
 ]
 
 DATABASES = {
