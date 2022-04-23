@@ -41,6 +41,7 @@ class ListingViewSet(ModelViewSet):
     def get_serializer_context(self):
         context = super(ListingViewSet, self).get_serializer_context()
         context.update({'user': self.request.user})
+
         return context
 
 
