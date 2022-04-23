@@ -159,7 +159,7 @@ class CampaignAdmin(admin.ModelAdmin):
                 ('status',),
                 ('posh_user',),
                 ('mode',),
-                ('title', 'delay', 'times'),
+                ('title', 'delay'),
             )
         }),
     )

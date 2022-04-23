@@ -107,6 +107,8 @@ class Campaign(models.Model):
     title = models.CharField(max_length=30)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=IDLE)
 
+    delay = models.SmallIntegerField()
+
     auto_run = models.BooleanField(default=True)
     generate_users = models.BooleanField(default=True)
 
