@@ -76,7 +76,7 @@ services:
     image: ghcr.io/mredwin1/poshbot_api:latest
     container_name: celery_poshbot_api
     restart: always
-#    entrypoint: celery -A poshbot_api worker --concurrency=1  -l INFO
+    entrypoint: celery -A poshbot_api worker --concurrency=1  -l INFO
     depends_on:
       - redis
     env_file:
@@ -85,19 +85,19 @@ services:
       - internal
     volumes:
       - /dev/shm:/dev/shm
-  celery_beat:
-    image: ghcr.io/mredwin1/poshbot_api:latest
-    container_name: celery_beat_poshbot
-    restart: always
+#  celery_beat:
+#    image: ghcr.io/mredwin1/poshbot_api:latest
+#    container_name: celery_beat_poshbot
+#    restart: always
 #    entrypoint: celery -A poshbot_api beat -l INFO
-    depends_on:
-      - redis
-    env_file:
-      - .env
-    networks:
-      - internal
-    volumes:
-      - /dev/shm:/dev/shm
+#    depends_on:
+#      - redis
+#    env_file:
+#      - .env
+#    networks:
+#      - internal
+#    volumes:
+#      - /dev/shm:/dev/shm
 
 networks:
   internal:
