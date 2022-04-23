@@ -2,12 +2,16 @@ import os
 import random
 import requests
 import urllib3
+import logging
 
 from datetime import datetime
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer as BaseUserSerializer, UserCreateSerializer as BaseUserCreateSerializer
 from rest_framework import serializers
 from .models import PoshUser, Campaign, Listing, ListingImage
+
+
+logger = logging.getLogger(__name__)
 
 
 class UserCreateSerializer(BaseUserCreateSerializer):
@@ -200,9 +204,9 @@ class ListingSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context.get('user')
-        print('First', user)
+        logger.info('First', user)
         listing = Listing(**validated_data)
-        print('Second', user)
+        logger.info('Second', user)
         listing.user = user
         listing.save()
 
