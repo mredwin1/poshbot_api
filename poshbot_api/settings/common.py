@@ -140,15 +140,15 @@ LOGGING = {
         'console': {
             'class': 'logging.StreamHandler',
         },
-        # 'file': {
-        #     'class': 'logging.FileHandler',
-        #     'filename': '/var/log/app-logs/general.log',
-        #     'formatter': 'verbose'
-        # },
+        'file': {
+            'class': 'logging.FileHandler',
+            'filename': '/opt/python/log/general.log',
+            'formatter': 'verbose'
+        },
     },
     'loggers': {
         '': {
-            'handlers': ['console'],
+            'handlers': ['console', 'file'],
             'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
         }
     },
