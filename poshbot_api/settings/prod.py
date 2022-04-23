@@ -8,6 +8,10 @@ ALLOWED_HOSTS = [
     'api.poshbot.net'
 ]
 
+CSRF_TRUSTED_ORIGINS = [
+    'api.poshbot.net'
+]
+
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.postgresql_psycopg2',
