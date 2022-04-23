@@ -1,0 +1,108 @@
+version: '3.7'
+
+services:
+  poshbot:
+    image: ghcr.io/mredwin1/poshbot_api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
+    container_name: poshbot
+    restart: always
+    env_file:
+      - .env
+    depends_on:
+      - redis
+      - celery
+      - celery_beat
+    networks:
+      - traefik
+      - internal
+    labels:
+      # Explicitly tell Traefik to expose this container
+      - "traefik.enable=true"
+      # The domain the service will respond to
+      - "traefik.http.routers.dms.rule=Host(`${DOMAIN}`)"
+      # Allow request only from the predefined entry point named "websecure"
+      - "traefik.http.routers.dms.entrypoints=websecure"
+      # Tell it to listen to port 80 inside the Docker container
+      - "traefik.http.services.frontend.loadbalancer.server.port=80"
+      # Traefik will use the traefik_default docker network
+      - "traefik.docker.network=traefik_default"
+      # Automatic Certificate Generation
+      - "traefik.http.routers.dms.tls=true"
+      - "traefik.http.routers.dms.tls.certresolver=le"
+
+    # Bind volumes to enable hot-reloads.
+    # e.g. when a file is changed in this folder, the change is
+    # also applied to the same file inside the docker container.
+    volumes:
+      - /dev/shm:/dev/shm
+  redis:
+    image: redis
+    restart: always
+    container_name: redis_poshbot_api
+    networks:
+      - internal
+  traefik:
+    image: "traefik:v2.3"
+    container_name: "traefik"
+    networks:
+      - traefik
+    command:
+      - "--log.level=${TRAEFIK_LOG}"
+      - "--api.insecure=false"
+      - "--providers.docker=true"
+      # All docker containers must be _explicitely_ exposed with traefik.enable=true
+      - "--providers.docker.exposedbydefault=false"
+      # Traefik will listen to _incoming requests_ on port 80 and 443
+      - "--entrypoints.web.address=:80"
+      - "--entrypoints.websecure.address=:443"
+      # SSL Set Up
+      - "--certificatesResolvers.le.acme.email=${ACME_EMAIL}"
+      - "--certificatesResolvers.le.acme.storage=acme.json"
+      - "--certificatesResolvers.le.acme.tlsChallenge=true"
+      - "--certificatesResolvers.le.acme.httpChallenge=true"
+      - "--certificatesResolvers.le.acme.httpChallenge.entryPoint=web"
+      - "--entrypoints.web.http.redirections.entryPoint.to=websecure"
+      - "--entrypoints.web.http.redirections.entryPoint.scheme=https"
+      - "--entrypoints.web.http.redirections.entrypoint.permanent=true"
+    ports:
+      - "80:80"
+      - "443:443"
+    volumes:
+      - "/var/run/docker.sock:/var/run/docker.sock:ro"
+      - "/letsencrypt/acme.json:/acme.json"
+  celery:
+    image: ghcr.io/mredwin1/poshbot_api:latest
+    container_name: celery_poshbot_api
+    restart: always
+#    entrypoint: celery -A poshbot_api worker --concurrency=1  -l INFO
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    networks:
+      - internal
+    volumes:
+      - /dev/shm:/dev/shm
+  celery_beat:
+    image: ghcr.io/mredwin1/poshbot_api:latest
+    container_name: celery_beat_poshbot
+    restart: always
+#    entrypoint: celery -A poshbot_api beat -l INFO
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    networks:
+      - internal
+    volumes:
+      - /dev/shm:/dev/shm
+
+networks:
+  internal:
+  traefik:
+    name: traefik_default
+
+volumes:
+  postgres_db:
