@@ -3,6 +3,7 @@ from rest_framework import filters
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
 from rest_framework.permissions import IsAuthenticated
+from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
 from .models import PoshUser, Campaign, Listing, ListingImage
 from .serializers import PoshUserSerializer, CampaignSerializer, ListingSerializer, ListingImageSerializer
@@ -82,3 +83,5 @@ class CampaignViewSet(ModelViewSet):
     @action(detail=True, methods=['POST'])
     def start(self, request, pk):
         advanced_sharing_campaign.delay(pk)
+
+        return Response({'status': 'started'})
