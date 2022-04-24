@@ -7,8 +7,18 @@ from datetime import datetime
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer as BaseUserSerializer, UserCreateSerializer as BaseUserCreateSerializer
 from rest_framework import serializers
+from rest_framework_simplejwt.tokens import RefreshToken
+from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as BaseTokenObtainPairSerializer
 from .models import PoshUser, Campaign, Listing, ListingImage
 
+
+class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
+    def validate(self, attrs):
+        data = super(TokenObtainPairSerializer, self).validate(attrs)
+        data['id'] = str(self.user.id)
+        data['username'] = self.user.username
+
+        return data
 
 class UserCreateSerializer(BaseUserCreateSerializer):
     class Meta(BaseUserCreateSerializer.Meta):
@@ -17,6 +27,16 @@ class UserCreateSerializer(BaseUserCreateSerializer):
         extra_kwargs = {
             'id': {'read_only': True},
         }
+
+    def to_representation(self, instance):
+        data = super(UserCreateSerializer, self).to_representation(instance)
+        user_tokens = RefreshToken.for_user(instance)
+        tokens = {'access': str(user_tokens.access_token), 'refresh': str(user_tokens)}
+        data = {
+            "success": "true",
+            "data": {**data, **tokens}
+        }
+        return data
 
 
 class UserSerializer(BaseUserSerializer):

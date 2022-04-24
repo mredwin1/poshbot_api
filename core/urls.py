@@ -1,3 +1,4 @@
+from django.urls import path
 from rest_framework_nested import routers
 from . import views
 
@@ -10,5 +11,8 @@ router.register('campaigns', views.CampaignViewSet, basename='campaigns')
 listings_router = routers.NestedSimpleRouter(router, 'listings', lookup='listing')
 listings_router.register('images', views.ListingImageViewSet, basename='listing-images')
 
-urlpatterns = router.urls
+urlpatterns = [
+    path('auth/token/create/', views.TokenObtainPairView.as_view(), name='token')
+]
+urlpatterns += router.urls
 urlpatterns += listings_router.urls

@@ -5,9 +5,14 @@ from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyMod
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
 from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .models import PoshUser, Campaign, Listing, ListingImage
-from .serializers import PoshUserSerializer, CampaignSerializer, ListingSerializer, ListingImageSerializer
+from .serializers import PoshUserSerializer, CampaignSerializer, ListingSerializer, ListingImageSerializer, TokenObtainPairSerializer
 from .tasks import advanced_sharing_campaign
+
+
+class TokenObtainPairView(BaseTokenObtainPairView):
+    serializer_class = TokenObtainPairSerializer
 
 
 class PoshUserViewSet(RetrieveModelMixin, DestroyModelMixin, ListModelMixin, CreateModelMixin, GenericViewSet):
