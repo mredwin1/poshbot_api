@@ -14,7 +14,7 @@ CSRF_TRUSTED_ORIGINS = [
 
 CORS_ALLOWED_ORIGINS = [
     'https://api.poshbot.net',
-    'https://poshbot.net'
+    'https://poshbot.net',
     'https://www.poshbot.net'
 ]
 
