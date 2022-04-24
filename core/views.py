@@ -1,22 +1,23 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework.decorators import action
-from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, DestroyModelMixin, CreateModelMixin
+from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
 from rest_framework.response import Response
-from rest_framework.viewsets import ModelViewSet, GenericViewSet
+from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
+from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage
-from .serializers import PoshUserSerializer, CampaignSerializer, ListingSerializer, ListingImageSerializer, TokenObtainPairSerializer
 from .tasks import advanced_sharing_campaign
+from . import serializers as serializers
 
 
 class TokenObtainPairView(BaseTokenObtainPairView):
-    serializer_class = TokenObtainPairSerializer
+    serializer_class = serializers.TokenObtainPairSerializer
 
 
-class PoshUserViewSet(RetrieveModelMixin, DestroyModelMixin, ListModelMixin, CreateModelMixin, GenericViewSet):
-    serializer_class = PoshUserSerializer
+class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, CreateModelMixin, GenericViewSet):
+    serializer_class = serializers.PoshUserSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     permission_classes = [IsAuthenticated]
     search_fields = ['email', 'username']
@@ -34,8 +35,8 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyModelMixin, ListModelMixin, Cre
         return context
 
 
-class ListingViewSet(ModelViewSet):
-    serializer_class = ListingSerializer
+class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, GenericViewSet):
+    serializer_class = serializers.ListingSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     permission_classes = [IsAuthenticated]
     search_fields = ['title']
@@ -53,8 +54,8 @@ class ListingViewSet(ModelViewSet):
         return context
 
 
-class ListingImageViewSet(ModelViewSet):
-    serializer_class = ListingImageSerializer
+class ListingImageViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, GenericViewSet):
+    serializer_class = serializers.ListingImageSerializer
 
     def get_queryset(self):
         queryset = ListingImage.objects.filter(listing_id=self.kwargs['listing_pk'])
@@ -68,8 +69,8 @@ class ListingImageViewSet(ModelViewSet):
         return context
 
 
-class CampaignViewSet(ModelViewSet):
-    serializer_class = CampaignSerializer
+class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, GenericViewSet):
+    serializer_class = serializers.CampaignSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     permission_classes = [IsAuthenticated]
     search_fields = ['title']
