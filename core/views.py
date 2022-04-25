@@ -50,6 +50,7 @@ class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, Des
     def get_serializer_context(self):
         context = super(ListingViewSet, self).get_serializer_context()
         context.update({'user': self.request.user})
+        context.update({'files': self.request.FILES})
 
         return context
 

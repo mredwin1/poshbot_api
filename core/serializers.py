@@ -220,10 +220,19 @@ class ListingSerializer(serializers.ModelSerializer):
     images = ListingImageSerializer(many=True, read_only=True)
 
     def create(self, validated_data):
+        files = self.context.get('files')
         user = self.context.get('user')
         listing = Listing(**validated_data)
         listing.user = user
         listing.save()
+
+        for name, file in files.items():
+            print(name, file)
+            if name != 'cover_photo':
+                listing_image = ListingImage(
+                    listing=listing,
+                )
+                listing_image.image.save(name, ContentFile(file.read()), save=True)
 
         return listing
 
