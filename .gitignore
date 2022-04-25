@@ -82,7 +82,7 @@ target/
 *.pyc
 local_settings.py
 media
-static
+/static
 
 # User-specific stuff:
 .idea/workspace.xml
