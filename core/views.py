@@ -9,7 +9,7 @@ from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtai
 from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage
 from .tasks import advanced_sharing_campaign
-from . import serializers as serializers
+from . import serializers
 
 
 class TokenObtainPairView(BaseTokenObtainPairView):
@@ -25,7 +25,12 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
 
     def get_queryset(self):
         user = self.request.user
+        unassinged = self.request.query_params.get('unassigned')
+
         queryset = PoshUser.objects.filter(user=user).prefetch_related('campaign')
+
+        if unassinged == 'true':
+            queryset = queryset.filter(campaign__isnull=True)
 
         return queryset
 
