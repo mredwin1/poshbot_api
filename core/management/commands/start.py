@@ -46,9 +46,9 @@ class Command(BaseCommand):
         call_command("collectstatic", interactive=False, clear=True)
 
         logging.info('Setting all campaigns to IDLE status')
-        campaigns = Campaign.objects.exclude(status=Campaign.IDLE)
+        campaigns = Campaign.objects.exclude(status=Campaign.STOPPED)
         for campaign in campaigns:
-            campaign.status = Campaign.IDLE
+            campaign.status = Campaign.STOPPED
             campaign.save()
 
         logging.info('Starting server...')
