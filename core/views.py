@@ -94,14 +94,19 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
     @action(detail=True, methods=['POST'])
     def start(self, request, pk):
+        campaign = self.get_object()
+        campaign.status = Campaign.IDLE
+        campaign.save()
+        serializer = self.get_serializer(campaign)
         advanced_sharing_campaign.delay(pk)
 
-        return Response({'status': 'started'})
+        return Response(serializer.data)
 
     @action(detail=True, methods=['POST'])
     def stop(self, request, pk):
         campaign = self.get_object()
         campaign.status = Campaign.STOPPED
         campaign.save()
+        serializer = self.get_serializer(campaign)
 
-        return Response({'status': 'stopped'})
+        return Response(serializer.data)
