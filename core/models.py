@@ -61,11 +61,15 @@ class PoshUser(models.Model):
     date_added = models.DateField(auto_now_add=True)
     date_of_birth = models.DateField()
 
+    is_active = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
     profile_updated = models.BooleanField(default=False)
 
     @property
     def status(self):
+        if not self.is_active:
+            return 'Inactive'
+        
         assigned_campaign = Campaign.objects.filter(posh_user=self)
 
         if not assigned_campaign:
@@ -105,7 +109,7 @@ class Campaign(models.Model):
 
     mode = models.CharField(max_length=10, choices=MODE_CHOICES, default='0')
     title = models.CharField(max_length=30)
-    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=IDLE)
+    status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STOPPED)
 
     delay = models.SmallIntegerField()
 
