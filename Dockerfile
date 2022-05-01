@@ -1,7 +1,5 @@
 FROM ghcr.io/mredwin1/chrome:latest
 
-ENV PATH="/poshbot_api/chrome_clients/chromedriver:${PATH}"
-
 # Copy the project files into working directory
 COPY . .
 
