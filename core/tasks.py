@@ -18,6 +18,7 @@ def advanced_sharing_campaign(campaign_id):
         with PoshMarkClient(campaign, logger) as client:
             client.register()
 
+        campaign.refresh_from_db()
         if campaign.status != Campaign.STOPPED:
             campaign.status = Campaign.IDLE
             campaign.save()
