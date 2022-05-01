@@ -464,6 +464,7 @@ class PoshMarkClient(BaseClient):
                 errors = self.locate_all(By.CLASS_NAME, present_error_class)
                 error_texts = [error.text for error in errors]
                 self.logger.error(f"The following form errors were found: {','.join(error_texts)}")
+                self.posh_user_inactive()
 
                 return 'ERROR_FORM_ERROR'
             else:
