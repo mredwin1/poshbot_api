@@ -428,9 +428,9 @@ class PoshMarkClient(BaseClient):
         self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
         self.posh_user = campaign.posh_user
         self.campaign = campaign
-        self.requests_proxy = {
-            'https': f'http://{proxy_hostname}:{proxy_port}',
-        }
+        self.requests_proxy = {}
+        if proxy_hostname and proxy_port:
+            self.requests_proxy['https'] = f'http://{proxy_hostname}:{proxy_port}'
         self.last_login = None
         self.login_error = None
 
