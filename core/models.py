@@ -69,7 +69,7 @@ class PoshUser(models.Model):
     def status(self):
         if not self.is_active:
             return 'Inactive'
-        
+
         assigned_campaign = Campaign.objects.filter(posh_user=self)
 
         if not assigned_campaign:

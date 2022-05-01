@@ -1,6 +1,10 @@
-from time import sleep
+import logging
 from celery import shared_task
+from chrome_clients.clients import PoshMarkClient
+
 from .models import Campaign
+
+logger = logging.getLogger(__name__)
 
 
 @shared_task
@@ -10,7 +14,8 @@ def advanced_sharing_campaign(campaign_id):
     campaign.status = Campaign.RUNNING
     campaign.save()
 
-    sleep(120)
+    with PoshMarkClient(campaign, logger) as client:
+        client.register()
 
     if campaign.status != Campaign.STOPPED:
         campaign.status = Campaign.IDLE
