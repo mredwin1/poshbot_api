@@ -23,6 +23,7 @@ redis = "*"
 whitenoise = "*"
 gunicorn = "*"
 celery = "*"
+selenium = "*"
 
 [dev-packages]
 
