@@ -753,9 +753,9 @@ class PoshMarkClient(BaseClient):
 
     def register(self):
         """Will register a given user to poshmark"""
+        self.logger.info(f'Registering {self.posh_user.username}')
         if not self.posh_user.is_registered:
             try:
-                self.logger.info(f'Registering {self.posh_user.username}')
                 self.web_driver.get('https://poshmark.com/signup')
                 self.logger.info(f'At signup page - {self.web_driver.current_url}')
 
@@ -806,6 +806,8 @@ class PoshMarkClient(BaseClient):
                 self.logger.error(f'{traceback.format_exc()}')
                 if not self.posh_user.is_registered:
                     self.logger.error(f'User did not get registered')
+        else:
+            self.logger.info(f'{self.posh_user.username} already registered')
 
     def log_in(self):
         """Will go to the Posh Mark home page and log in using waits for realism"""
