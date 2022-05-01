@@ -85,6 +85,7 @@ services:
       - internal
     volumes:
       - /dev/shm:/dev/shm
+      - bot_data:/bot_data
 #  celery_beat:
 #    image: ghcr.io/mredwin1/poshbot_api:latest
 #    container_name: celery_beat_poshbot
@@ -107,3 +108,4 @@ networks:
 
 volumes:
   postgres_db:
+  bot_data:
