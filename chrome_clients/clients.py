@@ -695,6 +695,8 @@ class PoshMarkClient(BaseClient):
             self.logger.info('Uploading profile picture')
             # This while is to ensure that the profile picture path exists and tries 5 times
             # attempts = 1
+            self.logger.info(self.posh_user.profile_picture.path)
+            self.logger.info(self.posh_user.profile_picture.name)
             self.bucket.download_file(self.posh_user.profile_picture.path, self.posh_user.profile_picture.name)
             # profile_picture_exists = Path(profile_picture_path).is_file()
             # while not profile_picture_exists and attempts < 6:
