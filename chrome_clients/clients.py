@@ -335,7 +335,7 @@ class BaseClient:
 
     def open(self):
         """Used to open the selenium web driver session"""
-        self.web_driver = webdriver.Chrome(executable_path='/poshbot_api/chrome_clients/chromedriver', options=self.web_driver_options)
+        self.web_driver = webdriver.Chrome(executable_path='/chrome_clients/chromedriver', options=self.web_driver_options)
         self.web_driver.implicitly_wait(15)
         self.web_driver.set_page_load_timeout(300)
         if '--headless' in self.web_driver_options.arguments:
