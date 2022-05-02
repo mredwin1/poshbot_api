@@ -23,7 +23,7 @@ def advanced_sharing_campaign(campaign_id):
         campaign.save()
 
         start_time = time.time()
-        with PoshMarkClient(campaign, logger, '192.154.251.91', '8000') as client:
+        with PoshMarkClient(campaign, logger, '192.154.246.219', '8000') as client:
             client.register()
 
         end_time = time.time()
