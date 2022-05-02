@@ -308,6 +308,7 @@ class BaseClient:
         capabilities = webdriver.DesiredCapabilities.CHROME
         proxy.add_to_capabilities(capabilities)
 
+        self.cookies_path = '/bot_data/cookies'
         self.logger = logger
         self.web_driver = None
         self.web_driver_options = Options()
@@ -394,7 +395,11 @@ class BaseClient:
 
     def save_cookies(self):
         self.logger.info('Saving cookies')
-        with open(f'/bot_data/cookies/{self.cookies_filename}.pkl', 'wb') as file:
+
+        if not os.path.exists(self.cookies_path):
+            os.mkdir(self.cookies_path)
+
+        with open(f'{self.cookies_path}/{self.cookies_filename}.pkl', 'wb') as file:
             pickle.dump(self.web_driver.get_cookies(), file)
         self.cookies_saved = True
         self.logger.info('Cookies successfully saved')
@@ -402,7 +407,7 @@ class BaseClient:
     def load_cookies(self):
         self.logger.info('Loading Cookies')
         try:
-            filename = f'/bot_data/cookies/{self.cookies_filename}.pkl'
+            filename = f'{self.cookies_path}/{self.cookies_filename}.pkl'
             if os.path.getsize(filename) > 0:
                 with open(filename, 'rb') as cookies:
                     for cookie in pickle.load(cookies):
