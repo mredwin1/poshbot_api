@@ -705,7 +705,9 @@ class PoshMarkClient(BaseClient):
                                           '//*[@id="content"]/div/div[2]/div[1]/label/input')
             profile_picture.send_keys(f'/{profile_picture_name}')
 
-            self.sleep(1)
+            self.web_driver.save_screenshot('image.png')
+
+            self.sleep(2)
 
             apply_button = self.locate(
                 By.XPATH, '//*[@id="content"]/div/div[2]/div[1]/div/div[2]/div[2]/div/button[2]')
