@@ -11,7 +11,7 @@ logger = logging.getLogger(__name__)
 def advanced_sharing_campaign(campaign_id):
     print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
-    if campaign.status != Campaign.STOPPED:
+    if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
         campaign.save()
 
