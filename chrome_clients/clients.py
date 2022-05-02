@@ -444,7 +444,7 @@ class PoshMarkClient(BaseClient):
         self.posh_user.save()
 
     def posh_user_registered(self):
-        self.posh_user.is_registered = False
+        self.posh_user.is_registered = True
         self.posh_user.save()
 
     def check_for_errors(self):
