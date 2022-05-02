@@ -26,13 +26,16 @@ def advanced_sharing_campaign(campaign_id):
         with PoshMarkClient(campaign, logger, '192.154.251.91', '8000') as client:
             client.register()
 
-        post_action_time = time.time()
-        elapsed_time = round(post_action_time - start_time, 2)
-        end_time = (delay - elapsed_time) + deviation
+        end_time = time.time()
+        elapsed_time = round(end_time - start_time, 2)
+        campaign_delay = (delay - elapsed_time) + deviation
 
         campaign.refresh_from_db()
         if campaign.status != Campaign.STOPPED:
             campaign.status = Campaign.IDLE
             campaign.save()
-            advanced_sharing_campaign.apply_async(countdown=end_time, kwargs={'campaign_id': campaign_id})
+            hours, remainder = divmod(campaign_delay, 3600)
+            minutes, seconds = divmod(remainder, 60)
+            logger.info(f'Campaign will start back up in {hours} hours {minutes} minutes and {seconds} seconds')
+            advanced_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
     print('Campaign ended')
