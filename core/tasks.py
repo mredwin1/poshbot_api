@@ -15,7 +15,7 @@ def advanced_sharing_campaign(campaign_id):
         campaign.status = Campaign.RUNNING
         campaign.save()
 
-        with PoshMarkClient(campaign, logger) as client:
+        with PoshMarkClient(campaign, logger, '192.154.251.91', '8000') as client:
             client.register()
 
         campaign.refresh_from_db()
