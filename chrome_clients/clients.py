@@ -695,8 +695,9 @@ class PoshMarkClient(BaseClient):
             self.logger.info('Uploading profile picture')
             # This while is to ensure that the profile picture path exists and tries 5 times
             # attempts = 1
-            self.logger.info(self.posh_user.profile_picture.name)
-            self.bucket.download_file(self.posh_user.profile_picture.name, self.posh_user.profile_picture.name.split('/')[1])
+
+            profile_picture_name = self.posh_user.profile_picture.name.split('/')[1]
+            self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
             # profile_picture_exists = Path(profile_picture_path).is_file()
             # while not profile_picture_exists and attempts < 6:
             #     self.logger.info(str(profile_picture_path))
@@ -710,7 +711,7 @@ class PoshMarkClient(BaseClient):
             #     else:
             profile_picture = self.locate(By.XPATH,
                                           '//*[@id="content"]/div/div[2]/div[1]/label/input')
-            profile_picture.send_keys(self.posh_user.profile_picture.name)
+            profile_picture.send_keys(profile_picture_name)
 
             self.sleep(1)
 
