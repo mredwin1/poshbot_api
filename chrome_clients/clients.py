@@ -394,7 +394,7 @@ class BaseClient:
 
     def save_cookies(self):
         self.logger.info('Saving cookies')
-        with open(f'/shared_volume/cookies/{self.cookies_filename}.pkl', 'wb') as file:
+        with open(f'/bot_data/cookies/{self.cookies_filename}.pkl', 'wb') as file:
             pickle.dump(self.web_driver.get_cookies(), file)
         self.cookies_saved = True
         self.logger.info('Cookies successfully saved')
@@ -402,7 +402,7 @@ class BaseClient:
     def load_cookies(self):
         self.logger.info('Loading Cookies')
         try:
-            filename = f'/shared_volume/cookies/{self.cookies_filename}.pkl'
+            filename = f'/bot_data/cookies/{self.cookies_filename}.pkl'
             if os.path.getsize(filename) > 0:
                 with open(filename, 'rb') as cookies:
                     for cookie in pickle.load(cookies):
