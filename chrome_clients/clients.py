@@ -711,11 +711,11 @@ class PoshMarkClient(BaseClient):
                 By.XPATH, '//*[@id="content"]/div/div[2]/div[1]/div/div[2]/div[2]/div/button[2]')
             apply_button.click()
 
+            self.sleep(4)
+
             self.web_driver.save_screenshot('image.png')
 
             self.logger.info('Profile picture uploaded')
-
-            self.sleep(1)
 
             next_button = self.locate(By.XPATH, '//button[@type="submit"]')
             next_button.click()
