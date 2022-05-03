@@ -721,7 +721,7 @@ class PoshMarkClient(BaseClient):
             next_button.click()
 
             # Next Section - Select Brands (will not select brands)
-            self.sleep(1, 3)  # Sleep for realism
+            self.sleep(2, 4)  # Sleep for realism
             self.logger.info('Selecting random brands')
             brands = self.web_driver.find_elements_by_class_name('content-grid-item')
             next_button = self.locate(By.XPATH, '//button[@type="submit"]')
@@ -736,7 +736,7 @@ class PoshMarkClient(BaseClient):
             next_button.click()
 
             # Next Section - All Done Page
-            self.sleep(1, 3)  # Sleep for realism
+            self.sleep(2, 4)  # Sleep for realism
             start_shopping_button = self.locate(By.XPATH, '//button[@type="submit"]')
             start_shopping_button.click()
 
