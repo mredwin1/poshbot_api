@@ -15,8 +15,8 @@ def advanced_sharing_campaign(campaign_id):
     print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
     delay = campaign.delay * 60
-    positive_negative = 1 if random.random() < 0.5 else -1
-    deviation = random.randint(0, (delay / 2)) * positive_negative
+    deviation = random.randint(0, (delay / 2))
+    register_retries = 0
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
@@ -28,7 +28,7 @@ def advanced_sharing_campaign(campaign_id):
 
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
-        campaign_delay = (delay - elapsed_time) + deviation
+        campaign_delay = (delay - elapsed_time) - deviation
 
         campaign.refresh_from_db()
         if campaign.status != Campaign.STOPPED:
