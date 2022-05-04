@@ -29,8 +29,10 @@ def advanced_sharing_campaign(campaign_id):
                 client.register()
             register_retries += 1
 
-            logger.info('Retrying registration and profile update in 5 seconds')
-            time.sleep(5)
+            campaign.refresh_from_db()
+            if not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
+                logger.info('Retrying registration and profile update in 5 seconds')
+                time.sleep(5)
 
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
@@ -44,4 +46,5 @@ def advanced_sharing_campaign(campaign_id):
             minutes, seconds = divmod(remainder, 60)
             logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
             advanced_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
+
     print('Campaign ended')
