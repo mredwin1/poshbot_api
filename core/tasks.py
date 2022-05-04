@@ -23,8 +23,14 @@ def advanced_sharing_campaign(campaign_id):
         campaign.save()
 
         start_time = time.time()
-        with PoshMarkClient(campaign, logger, '192.154.246.219', '8000') as client:
-            client.register()
+
+        while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
+            with PoshMarkClient(campaign, logger, '192.154.246.219', '8000') as client:
+                client.register()
+            register_retries += 1
+
+            logger.info('Retrying registration and profile update in 5 seconds')
+            time.sleep(5)
 
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
