@@ -698,25 +698,25 @@ class PoshMarkClient(BaseClient):
                 f'Successfully registered {self.posh_user.username}')
 
             # Next Section - Profile
-            self.logger.info('Uploading profile picture')
-            profile_picture_name = self.posh_user.profile_picture.name.split('/')[1]
-            self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
-
-            profile_picture = self.locate(By.XPATH,
-                                          '//*[@id="content"]/div/div[2]/div[1]/label/input')
-            profile_picture.send_keys(f'/{profile_picture_name}')
-
-            self.sleep(2)
-
-            apply_button = self.locate(
-                By.XPATH, '//*[@id="content"]/div/div[2]/div[1]/div/div[2]/div[2]/div/button[2]')
-            apply_button.click()
-
-            self.sleep(4)
-
-            self.web_driver.save_screenshot('image.png')
-
-            self.logger.info('Profile picture uploaded')
+            # self.logger.info('Uploading profile picture')
+            # profile_picture_name = self.posh_user.profile_picture.name.split('/')[1]
+            # self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
+            #
+            # profile_picture = self.locate(By.XPATH,
+            #                               '//*[@id="content"]/div/div[2]/div[1]/label/input')
+            # profile_picture.send_keys(f'/{profile_picture_name}')
+            #
+            # self.sleep(2)
+            #
+            # apply_button = self.locate(
+            #     By.XPATH, '//*[@id="content"]/div/div[2]/div[1]/div/div[2]/div[2]/div/button[2]')
+            # apply_button.click()
+            #
+            # self.sleep(4)
+            #
+            # self.web_driver.save_screenshot('image.png')
+            #
+            # self.logger.info('Profile picture uploaded')
 
             next_button = self.locate(By.XPATH, '//button[@type="submit"]')
             next_button.click()
