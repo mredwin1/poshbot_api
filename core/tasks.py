@@ -34,19 +34,19 @@ def advanced_sharing_campaign(campaign_id):
                 logger.info('Retrying registration and profile update in 5 seconds')
                 time.sleep(5)
 
-            if campaign.posh_user.is_registered:
-                all_listings = client.get_all_listings()
-                all_listing_titles = []
+        if campaign.posh_user.is_registered:
+            all_listings = client.get_all_listings()
+            all_listing_titles = []
 
-                for listings in all_listings.values():
-                    all_listing_titles += listings
+            for listings in all_listings.values():
+                all_listing_titles += listings
 
-                for listing in campaign.listings:
-                    if listing not in all_listings:
-                        client.list_item(listing)
+            for listing in campaign.listings:
+                if listing not in all_listings:
+                    client.list_item(listing)
 
-                for shareable_listing in all_listings['shareable_listings']:
-                    client.share_item(shareable_listing)
+            for shareable_listing in all_listings['shareable_listings']:
+                client.share_item(shareable_listing)
 
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
