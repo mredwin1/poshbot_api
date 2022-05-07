@@ -14,7 +14,8 @@ logger = logging.getLogger(__name__)
 def advanced_sharing_campaign(campaign_id):
     print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
-    listings = Listing.objects.filter(campaign=campaign)
+    listings = Listing.objects.filter(campaign__id=campaign_id)
+    logger.info(f'Listings: {listings}')
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
     register_retries = 0
