@@ -2163,4 +2163,4 @@ class PoshMarkClient(BaseClient):
         self.web_driver.get('https://www.whatsmyip.org/')
         host_name = self.locate(By.ID, 'hostname')
 
-        self.logger.debug(f'Hostname: {host_name.text}')
+        self.logger.info(f'Hostname: {host_name.text}')
