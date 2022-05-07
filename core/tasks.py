@@ -25,18 +25,17 @@ def advanced_sharing_campaign(campaign_id):
 
         start_time = time.time()
 
-        while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
-            with PoshMarkClient(campaign, logger, '192.154.246.207', '8000') as client:
+        with PoshMarkClient(campaign, logger, '192.154.246.207', '8000') as client:
+            while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
                 client.register()
-            register_retries += 1
+                register_retries += 1
 
             campaign.refresh_from_db()
             if not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
                 logger.info('Retrying registration and profile update in 5 seconds')
                 time.sleep(5)
 
-        if campaign.posh_user.is_registered:
-            with PoshMarkClient(campaign, logger) as client:
+            if campaign.posh_user.is_registered:
                 all_listings = client.get_all_listings()
                 all_listing_titles = []
 
@@ -48,6 +47,8 @@ def advanced_sharing_campaign(campaign_id):
                         images = ListingImage.objects.filter(listing=listing)
                         client.list_item(listing, images)
 
+        if campaign.posh_user.is_registered:
+            with PoshMarkClient(campaign, logger) as client:
                 for shareable_listing in all_listings['shareable_listings']:
                     client.share_item(shareable_listing)
 
