@@ -14,8 +14,7 @@ logger = logging.getLogger(__name__)
 def advanced_sharing_campaign(campaign_id):
     print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
-    listings = Listing.objects.filter(campaign__id=campaign_id)
-    logger.info(f'Listings: {listings}')
+    campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
     register_retries = 0
@@ -44,10 +43,7 @@ def advanced_sharing_campaign(campaign_id):
                 for listings in all_listings.values():
                     all_listing_titles += listings
 
-                logger.info(f'All listing titles: {all_listing_titles}')
-                logger.info(f'All listings: {listings}')
-
-                for listing in listings:
+                for listing in campaign_listings:
                     if listing not in all_listings:
                         client.list_item(listing)
 
