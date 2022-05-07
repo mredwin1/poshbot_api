@@ -5,7 +5,7 @@ import time
 from celery import shared_task
 from chrome_clients.clients import PoshMarkClient
 
-from .models import Campaign
+from .models import Campaign, Listing
 
 logger = logging.getLogger(__name__)
 
@@ -14,6 +14,7 @@ logger = logging.getLogger(__name__)
 def advanced_sharing_campaign(campaign_id):
     print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
+    listings = Listing.objects.filter(campaign=campaign)
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
     register_retries = 0
@@ -42,7 +43,7 @@ def advanced_sharing_campaign(campaign_id):
                 for listings in all_listings.values():
                     all_listing_titles += listings
 
-                for listing in campaign.listings:
+                for listing in listings:
                     if listing not in all_listings:
                         client.list_item(listing)
 
