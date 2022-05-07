@@ -43,6 +43,9 @@ def advanced_sharing_campaign(campaign_id):
                 for listings in all_listings.values():
                     all_listing_titles += listings
 
+                logger.info(f'All listing titles: {all_listing_titles}')
+                logger.info(f'All listings: {listings}')
+
                 for listing in listings:
                     if listing not in all_listings:
                         client.list_item(listing)
