@@ -597,8 +597,9 @@ class PoshMarkClient(BaseClient):
             self.go_to_closet()
 
             listing_count_element = self.locate(
-                By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div[2]/nav/ul/li[1]/a'
+                By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div/nav/ul/li[1]/a'
             )
+            # '//*[@id="content"]/div/div[1]/div/div[2]/div/div[2]/nav/ul/li[1]/a'
             listing_count = listing_count_element.text
             index = listing_count.find('\n')
             total_listings = int(listing_count[:index])
