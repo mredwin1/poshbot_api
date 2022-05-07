@@ -5,7 +5,7 @@ import time
 from celery import shared_task
 from chrome_clients.clients import PoshMarkClient
 
-from .models import Campaign, Listing
+from .models import Campaign, Listing, ListingImage
 
 logger = logging.getLogger(__name__)
 
@@ -45,7 +45,8 @@ def advanced_sharing_campaign(campaign_id):
 
                 for listing in campaign_listings:
                     if listing not in all_listings:
-                        client.list_item(listing)
+                        images = ListingImage.objects.filter(listing=listing)
+                        client.list_item(listing, images)
 
                 for shareable_listing in all_listings['shareable_listings']:
                     client.share_item(shareable_listing)

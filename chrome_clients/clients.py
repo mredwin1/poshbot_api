@@ -1000,7 +1000,7 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.log_in()
 
-    def list_item(self, listing):
+    def list_item(self, listing, images):
         """Will list an item on poshmark for the user"""
         try:
             listing_title = listing.title
@@ -1019,7 +1019,7 @@ class PoshMarkClient(BaseClient):
             listing_cover_photo_name = listing.cover_photo.name.split('/')[1]
             self.bucket.download_file(listing.cover_photo.name, listing_cover_photo_name)
 
-            for image in listing.images:
+            for image in images:
                 image_name = image.name.split('/')[1]
                 self.bucket.download_file(image.name, image_name)
                 listing_images.append(image_name)
