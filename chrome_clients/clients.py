@@ -743,7 +743,7 @@ class PoshMarkClient(BaseClient):
 
             self.save_cookies()
             self.cookies_saved = True
-            self.cookied_loaded = True
+            self.cookies_loaded = True
 
             self.logger.info('Registration Complete')
         else:
