@@ -1037,6 +1037,7 @@ class PoshMarkClient(BaseClient):
 
             if self.is_present(By.XPATH, '//*[@id="app"]/main/div[1]/div/div[2]'):
                 self.logger.error('Error encountered when on the new listing page')
+                self.web_driver.save_screenshot('listing_error.png')
                 if self.check_inactive():
                     self.posh_user_inactive()
                 else:
