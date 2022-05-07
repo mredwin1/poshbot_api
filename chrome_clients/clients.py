@@ -809,7 +809,7 @@ class PoshMarkClient(BaseClient):
     def log_in(self):
         """Will go to the Posh Mark home page and log in using waits for realism"""
         try:
-            self.logger.info(f'Logging {self.get_redis_object_attr(self.redis_posh_user_id, "username")} in')
+            self.logger.info(f'Logging {self.posh_user.username} in')
 
             self.web_driver.get('https://poshmark.com/login')
 
@@ -832,11 +832,11 @@ class PoshMarkClient(BaseClient):
 
             self.logger.info('Filling in form')
 
-            username_field.send_keys(self.get_redis_object_attr(self.redis_posh_user_id, "username"))
+            username_field.send_keys(self.posh_user.username)
 
             self.sleep(1)
 
-            password_field.send_keys(self.get_redis_object_attr(self.redis_posh_user_id, "password"))
+            password_field.send_keys(self.posh_user.password)
             password_field.send_keys(Keys.RETURN)
 
             self.logger.info('Form submitted')
@@ -875,13 +875,12 @@ class PoshMarkClient(BaseClient):
                         self.logger.warning('Could not log in, trying again.')
                         log_in_attempts += 1
                     if log_in_attempts >= 2:
-                        self.update_redis_object(self.redis_campaign_id, {'status': '5'})
                         self.close()
 
-            if self.web_driver.current_url != f'https://poshmark.com/closet/{self.get_redis_object_attr(self.redis_posh_user_id, "username")}':
-                self.web_driver.get(f'https://poshmark.com/closet/{self.get_redis_object_attr(self.redis_posh_user_id, "username")}')
+            if self.web_driver.current_url != f'https://poshmark.com/closet/{self.posh_user.username}':
+                self.web_driver.get(f'https://poshmark.com/closet/{self.posh_user.username}')
             else:
-                self.logger.info(f"Already at {self.get_redis_object_attr(self.redis_posh_user_id, 'username')}'s closet, refreshing.")
+                self.logger.info(f"Already at {self.posh_user.username}'s closet, refreshing.")
                 self.web_driver.refresh()
 
             show_all_listings_xpath = '//*[@id="content"]/div/div[2]/div/div/section/div[2]/div/div/button'
@@ -931,7 +930,7 @@ class PoshMarkClient(BaseClient):
 
             else:
                 if self.check_inactive():
-                    self.update_redis_object(self.redis_posh_user_id, {'status': PoshUser.INACTIVE})
+                    self.posh_user_inactive()
 
             listings = {
                 'shareable_listings': shareable_listings,
@@ -1000,47 +999,29 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.log_in()
 
-    def list_item(self, redis_listing_id=None):
+    def list_item(self, listing):
         """Will list an item on poshmark for the user"""
         try:
-            if redis_listing_id:
-                listing_title = self.get_redis_object_attr(redis_listing_id, 'title')
-                listing_brand = self.get_redis_object_attr(redis_listing_id, 'brand')
-                listing_category = self.get_redis_object_attr(redis_listing_id, 'category')
-                listing_subcategory = self.get_redis_object_attr(redis_listing_id, 'subcategory')
-                listing_size = self.get_redis_object_attr(redis_listing_id, 'size')
-                listing_cover_photo = self.get_redis_object_attr(redis_listing_id, 'cover_photo')
-                listing_description = self.get_redis_object_attr(redis_listing_id, 'description')
-                listing_tags = int(self.get_redis_object_attr(redis_listing_id, 'tags'))
-                listing_original_price = self.get_redis_object_attr(redis_listing_id, 'original_price')
-                listing_listing_price = self.get_redis_object_attr(redis_listing_id, 'listing_price')
-                redis_listing_photos_id = self.get_redis_object_attr(redis_listing_id, 'photos')
-                listing_photos = self.get_redis_object_attr(redis_listing_photos_id)
-            else:
-                self.logger.info('Creating a fake listing, checking if there is one made first.')
-                self.go_to_closet()
+            listing_title = listing.title
+            listing_category = listing.category
+            listing_subcategory = listing.subcategory
+            listing_size = listing.size
+            listing_brand = listing.brand
+            listing_description = listing.description
+            listing_original_price = listing.original_price
+            listing_listing_price = listing.listing_price
+            listing_tags = None
+            listing_images = []
 
-                if self.is_present(By.CLASS_NAME, 'card--small'):
-                    listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-                    for listed_item in listed_items:
-                        title = listed_item.find_element_by_class_name('tile__title')
-                        if '[FKE]' in title.text:
-                            self.logger.info('There is a fake listing already there, using that one')
-                            return title.text
+            self.logger.info('Downloading all of the listing images')
 
-                lowercase = string.ascii_lowercase
-                uppercase = string.ascii_uppercase
-                listing_title = f"{uppercase[0]}{''.join([random.choice(lowercase) for i in range(7)])} [FKE] {''.join([random.choice(lowercase) for i in range(5)])}"
-                listing_brand = 'Saks Fifth Avenue'
-                listing_category = 'Men Pants'
-                listing_subcategory = 'Dress'
-                listing_size = 'Large'
-                listing_cover_photo = '/static/poshmark/images/listing.jpg'
-                listing_description = f'{"".join([random.choice(lowercase) for i in range(5)])}'
-                listing_tags = 0
-                listing_original_price = '30'
-                listing_listing_price = '15'
-                listing_photos = ''
+            listing_cover_photo_name = listing.cover_photo.name.split('/')[1]
+            self.bucket.download_file(listing.cover_photo.name, listing_cover_photo_name)
+
+            for image in listing.images:
+                image_name = image.name.split('/')[1]
+                self.bucket.download_file(image.name, image_name)
+                listing_images.append(image_name)
 
             self.logger.info(f'Listing the following item: {listing_title}')
 
@@ -1056,7 +1037,7 @@ class PoshMarkClient(BaseClient):
             if self.is_present(By.XPATH, '//*[@id="app"]/main/div[1]/div/div[2]'):
                 self.logger.error('Error encountered when on the new listing page')
                 if self.check_inactive():
-                    self.update_redis_object(self.redis_posh_user_id, {'status': PoshUser.INACTIVE})
+                    self.posh_user_inactive()
                 else:
                     self.logger.info('User is not inactive')
             else:
@@ -1141,17 +1122,17 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Uploading photos')
 
                 cover_photo_field = self.locate(By.ID, 'img-file-input')
-                cover_photo_field.send_keys(listing_cover_photo)
+                cover_photo_field.send_keys(f'/{listing_cover_photo_name}')
 
                 apply_button = self.locate(By.XPATH, '//*[@id="imagePlaceholder"]/div[2]/div[2]/div[2]/div/button[2]')
                 apply_button.click()
 
                 self.sleep(1)
 
-                for photo in listing_photos:
+                for image in listing_images:
                     upload_photos_field = self.locate(By.ID, 'img-file-input')
                     upload_photos_field.clear()
-                    upload_photos_field.send_keys(photo)
+                    upload_photos_field.send_keys(f'/{image}')
                     self.sleep(1)
 
                 self.logger.info('Photos uploaded')
@@ -1203,89 +1184,6 @@ class PoshMarkClient(BaseClient):
                 )
                 list_item_button.click()
 
-                pop_up = self.is_present(By.XPATH, '//*[@id="content"]/div/div[3]/div/div[2]/div[3]/button')
-                pop_up_retries = 0
-
-                while not pop_up and pop_up_retries < 5:
-                    self.sleep(5)
-                    pop_up_retries += 1
-                    pop_up = self.is_present(By.XPATH, '//*[@id="content"]/div/div[3]/div/div[2]/div[3]/button')
-
-                if pop_up:
-                    verify_email_button = self.locate(By.XPATH, '//*[@id="content"]/div/div[3]/div/div[2]/div[3]/button')
-                    verify_email_button.click()
-
-                    self.sleep(30)
-
-                    email_verification_code = None
-                    email_verification_code_attempts = 0
-                    while not email_verification_code and email_verification_code_attempts < 4:
-                        email_verification_code = PoshUser.get_email_verification_code(self.get_redis_object_attr(self.redis_posh_user_id, 'username'))
-                        if not email_verification_code:
-                            self.sleep(60)
-                            email_verification_code_attempts += 1
-
-                    if not email_verification_code:
-                        return False
-
-                    email_verification_code_input = self.locate(By.NAME, 'otp')
-                    email_verification_code_input.send_keys(email_verification_code)
-
-                    self.sleep(1)
-
-                    email_verify_next_button = self.locate(By.XPATH, '/html/body/div[1]/main/div[2]/div[2]/div[2]/div[3]/div/button', 'clickable')
-                    email_verify_next_button.click()
-
-                    self.sleep(2)
-
-                    phone_verification_code = None
-                    excluded_numbers = []
-                    while not phone_verification_code:
-                        phone_number = PhoneNumber('poshmark', self.logger)
-                        while not phone_number.number:
-                            phone_number.get_number(excluded_numbers=excluded_numbers)
-                            if phone_number.number:
-                                phone_number_field = self.locate(By.XPATH, '//input[@type="tel"]')
-                                phone_number_field.clear()
-                                phone_number_field.send_keys(phone_number.number)
-
-                                self.logger.debug('Putting the phone number in the field')
-
-                                next_button_two = self.locate(
-                                    By.XPATH,
-                                    '/html/body/div[1]/main/div[2]/div/div[3]/div[2]/div[2]/div[3]/div/div/button'
-                                )
-                                next_button_two.click()
-
-                        self.logger.info(f'Going to get the verification code from {phone_number.number}')
-
-                        if not phone_verification_code:
-                            self.sleep(10)
-
-                        self.sleep(2)
-
-                        code_input = self.locate(By.NAME, 'otp')
-                        phone_verify_button = self.locate(By.XPATH, '/html/body/div[1]/main/div[2]/div/div[3]/div[2]/div[2]/div[3]/div/button')
-                        send_again_button = self.locate(By.XPATH, '/html/body/div[1]/main/div[2]/div/div[3]/div[2]/div[2]/div[2]/div/p[1]/a')
-
-                        phone_verification_code = phone_number.get_verification_code(send_again_button)
-
-                        if not phone_verification_code:
-                            self.logger.warning('Trying again since there is no verification code.')
-                            excluded_numbers.append(phone_number.number)
-                            phone_number.number = None
-                            phone_number.reuse = False
-                            phone_number.retries = 0
-                            back_button = self.locate(By.XPATH, '/html/body/div[1]/main/div[2]/div/div[3]/div[2]/div[2]/div[2]/div/p[2]/a')
-                            back_button.click()
-
-                            self.sleep(2)
-                        else:
-                            code_input.send_keys(phone_verification_code)
-                            self.update_redis_object(self.redis_posh_user_id, {'phone_number': phone_number.number})
-                            phone_verify_button.click()
-                else:
-                    self.logger.warning(f'No SMS Verification pop up after {pop_up_retries} retries')
                 sell_button = self.is_present(By.XPATH, '//*[@id="app"]/header/nav[2]/div[1]/ul[2]/li[2]/a')
 
                 attempts = 0
@@ -1297,7 +1195,6 @@ class PoshMarkClient(BaseClient):
                 else:
                     if attempts >= 10:
                         self.logger.error(f'Attempted to locate the sell button {attempts} times but could not find it.')
-                        self.web_driver.save_screenshot(f'{phone_verification_code}.png')
                         return False
                     else:
                         self.logger.info('Item listed successfully')
@@ -1817,7 +1714,7 @@ class PoshMarkClient(BaseClient):
             else:
                 if self.check_inactive():
                     self.logger.warning('Setting user status to inactive')
-                    self.update_redis_object(self.redis_posh_user_id, {'status': PoshUser.INACTIVE})
+                    self.posh_user_inactive()
 
                     return False
 
