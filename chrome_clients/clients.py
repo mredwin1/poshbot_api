@@ -320,7 +320,7 @@ class BaseClient:
                                              '(KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36')
         self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
-        self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
+        # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
         self.cookies_filename = cookies_filename
         self.cookies_loaded = False
