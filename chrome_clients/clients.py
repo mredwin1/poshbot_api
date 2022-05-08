@@ -318,7 +318,7 @@ class BaseClient:
         self.web_driver_options.add_argument('--headless')
         self.web_driver_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 '
                                              '(KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36')
-        # self.web_driver_options.add_argument('--incognito')
+        self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
         self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
