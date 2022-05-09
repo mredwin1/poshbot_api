@@ -660,20 +660,20 @@ class PoshMarkClient(BaseClient):
             self.logger.error(f'{traceback.format_exc()}')
 
     def check_logged_in(self):
-        """Will go to the user's closet to see if the PoshUser is logged in or not, the bot knows if they are logged in
-        if it can find the login button which is only displayed when a user is not logged in"""
+        """Will load cookies if they have not already been loaded. Then go to the login page, if the username field
+        exists then it assumes it needs to log in and does so."""
 
-        self.logger.info('Checking if user is signed in')
-        self.web_driver.get(f'https://poshmark.com/closet/{self.posh_user.username}')
-
-        time.sleep(2)
-        
         if not self.cookies_loaded:
             self.load_cookies()
 
-        result = self.is_present(By.XPATH, '//*[@id="app"]/header/nav[1]/div/ul/li[5]/div/div[1]/div')
+        self.web_driver.get(f'https://poshmark.com/closet/login')
+        self.logger.info('Checking if user is signed in')
 
-        if result:
+        time.sleep(2)
+
+        result = self.is_present(By.ID, 'login_form_username_email')
+
+        if not result:
             self.logger.info('User is logged in')
             self.last_login = datetime.datetime.now()
             self.login_error = None
