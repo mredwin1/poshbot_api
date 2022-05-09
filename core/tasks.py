@@ -88,6 +88,7 @@ def basic_sharing_campaign(campaign_id):
                 all_listings = client.get_all_listings()
                 for shareable_listing in all_listings['shareable_listings']:
                     client.share_item(shareable_listing)
+                    client.sleep(2, 4)
 
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)

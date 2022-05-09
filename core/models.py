@@ -98,9 +98,11 @@ class Campaign(models.Model):
     ]
 
     ADVANCED_SHARING = '0'
+    BASIC_SHARING = '0'
 
     MODE_CHOICES = [
         (ADVANCED_SHARING, 'Advanced Sharing'),
+        (BASIC_SHARING, 'Basic Sharing'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
