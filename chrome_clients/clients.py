@@ -672,9 +672,9 @@ class PoshMarkClient(BaseClient):
         time.sleep(2)
 
         self.web_driver.save_screenshot('cookies.png')
-        result = self.is_present(By.ID, 'login_form_username_email')
+        result = not self.is_present(By.ID, 'login_form_username_email')
 
-        if not result:
+        if result:
             self.logger.info('User is logged in')
             self.last_login = datetime.datetime.now()
             self.login_error = None
