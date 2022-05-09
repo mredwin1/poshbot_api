@@ -663,11 +663,11 @@ class PoshMarkClient(BaseClient):
         """Will load cookies if they have not already been loaded. Then go to the login page, if the username field
         exists then it assumes it needs to log in and does so."""
 
-        if not self.cookies_loaded:
-            self.load_cookies()
-
         self.web_driver.get(f'https://poshmark.com/closet/login')
         self.logger.info('Checking if user is signed in')
+
+        if not self.cookies_loaded:
+            self.load_cookies()
 
         time.sleep(2)
 
