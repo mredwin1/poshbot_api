@@ -25,7 +25,7 @@ def advanced_sharing_campaign(campaign_id):
 
         start_time = time.time()
 
-        with PoshMarkClient(campaign, logger, '192.154.246.203', '8000') as client:
+        with PoshMarkClient(campaign, logger, '192.154.246.164', '8000') as client:
             client.check_ip()
             while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
                 client.register()
