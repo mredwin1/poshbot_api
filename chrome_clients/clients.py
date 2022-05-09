@@ -408,14 +408,15 @@ class BaseClient:
         self.logger.info('Loading Cookies')
         try:
             filename = f'{self.cookies_path}/{self.cookies_filename}.pkl'
-            if os.path.getsize(filename) > 0:
-                with open(filename, 'rb') as cookies:
-                    for cookie in pickle.load(cookies):
-                        self.web_driver.add_cookie(cookie)
-                    self.web_driver.refresh()
-                    self.sleep(2)
-                    self.cookies_loaded = True
-                    self.logger.info('Cookies loaded successfully')
+            if os.path.exists(filename):
+                if os.path.getsize(filename) > 0:
+                    with open(filename, 'rb') as cookies:
+                        for cookie in pickle.load(cookies):
+                            self.web_driver.add_cookie(cookie)
+                        self.web_driver.refresh()
+                        self.sleep(2)
+                        self.cookies_loaded = True
+                        self.logger.info('Cookies loaded successfully')
         except Exception as e:
             self.logger.error(traceback.format_exc())
             self.logger.warning('Cookies not loaded: Cookie file not found')
