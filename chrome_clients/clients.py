@@ -671,6 +671,7 @@ class PoshMarkClient(BaseClient):
 
         time.sleep(2)
 
+        self.web_driver.save_screenshot('cookies.png')
         result = self.is_present(By.ID, 'login_form_username_email')
 
         if not result:
@@ -908,8 +909,6 @@ class PoshMarkClient(BaseClient):
             self.logger.info('Getting all listings')
 
             self.go_to_closet()
-
-            self.web_driver.save_screenshot('listings.png')
 
             if self.is_present(By.CLASS_NAME, 'card--small'):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
