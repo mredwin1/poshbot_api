@@ -909,6 +909,8 @@ class PoshMarkClient(BaseClient):
 
             self.go_to_closet()
 
+            self.web_driver.save_screenshot('listings.png')
+
             if self.is_present(By.CLASS_NAME, 'card--small'):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
