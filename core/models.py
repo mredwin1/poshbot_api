@@ -98,7 +98,7 @@ class Campaign(models.Model):
     ]
 
     ADVANCED_SHARING = '0'
-    BASIC_SHARING = '0'
+    BASIC_SHARING = '1'
 
     MODE_CHOICES = [
         (ADVANCED_SHARING, 'Advanced Sharing'),
