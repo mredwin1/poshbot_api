@@ -1707,7 +1707,7 @@ class PoshMarkClient(BaseClient):
 
                         self.sleep(1)
 
-                        self.web_driver.save_screenshot()
+                        self.web_driver.save_screenshot('share.png')
 
                         to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
                         to_followers_button.click()
