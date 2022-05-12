@@ -1001,7 +1001,7 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.log_in()
 
-    def list_item(self, listing, images):
+    def list_item(self, listing, listing_images):
         """Will list an item on poshmark for the user"""
         try:
             listing_title = listing.title
@@ -1013,17 +1013,17 @@ class PoshMarkClient(BaseClient):
             listing_original_price = listing.original_price
             listing_listing_price = listing.listing_price
             listing_tags = None
-            listing_images = []
+            listing_image_names = []
 
             self.logger.info('Downloading all of the listing images')
 
             listing_cover_photo_name = listing.cover_photo.name.split('/')[1]
             self.bucket.download_file(listing.cover_photo.name, listing_cover_photo_name)
 
-            for image in images:
-                image_name = image.name.split('/')[1]
-                self.bucket.download_file(image.name, image_name)
-                listing_images.append(image_name)
+            for listing_image in listing_images:
+                image_name = listing_image.image.name.split('/')[1]
+                self.bucket.download_file(listing_image.image.name, image_name)
+                listing_image_names.append(image_name)
 
             self.logger.info(f'Listing the following item: {listing_title}')
 
@@ -1132,7 +1132,7 @@ class PoshMarkClient(BaseClient):
 
                 self.sleep(1)
 
-                for image in listing_images:
+                for image in listing_image_names:
                     upload_photos_field = self.locate(By.ID, 'img-file-input')
                     upload_photos_field.clear()
                     upload_photos_field.send_keys(f'/{image}')
@@ -1706,6 +1706,8 @@ class PoshMarkClient(BaseClient):
                         share_button.click()
 
                         self.sleep(1)
+
+                        self.web_driver.save_screenshot()
 
                         to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
                         to_followers_button.click()
