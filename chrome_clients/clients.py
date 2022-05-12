@@ -671,6 +671,8 @@ class PoshMarkClient(BaseClient):
 
         time.sleep(2)
 
+        self.web_driver.save_screenshot('cookies.png')
+        
         result = not self.is_present(By.ID, 'login_form_username_email')
 
         if result:
