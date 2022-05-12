@@ -45,8 +45,8 @@ def advanced_sharing_campaign(campaign_id):
 
                 for listing in campaign_listings:
                     if listing not in all_listings:
-                        images = ListingImage.objects.filter(listing=listing)
-                        client.list_item(listing, images)
+                        listing_images = ListingImage.objects.filter(listing=listing)
+                        client.list_item(listing, listing_images)
 
         if campaign.posh_user.is_registered:
             with PoshMarkClient(campaign, logger) as client:
