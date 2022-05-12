@@ -540,9 +540,9 @@ class PoshMarkClient(BaseClient):
             if self.check_listing(listing_title):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
-                    title = listed_item.find_element_by_class_name('tile__title')
+                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     if title.text == listing_title:
-                        listing_button = listed_item.find_element_by_class_name('tile__covershot')
+                        listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
                         listing_button.click()
 
                         self.sleep(1)
@@ -626,9 +626,9 @@ class PoshMarkClient(BaseClient):
             if self.check_listing(listing_title):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
-                    title = listed_item.find_element_by_class_name('tile__title')
+                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     if title.text == listing_title:
-                        listing_button = listed_item.find_element_by_class_name('tile__covershot')
+                        listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
                         listing_button.click()
 
                         self.sleep(1)
@@ -725,7 +725,7 @@ class PoshMarkClient(BaseClient):
             # Next Section - Select Brands (will not select brands)
             self.sleep(2, 4)  # Sleep for realism
             self.logger.info('Selecting random brands')
-            brands = self.web_driver.find_elements_by_class_name('content-grid-item')
+            brands = self.web_driver.find_elements(By.CLASS_NAME, 'content-grid-item')
             next_button = self.locate(By.XPATH, '//button[@type="submit"]')
 
             # Select random brands then click next
@@ -775,7 +775,7 @@ class PoshMarkClient(BaseClient):
                 password_field.send_keys(self.posh_user.password)
                 gender_field.click()
                 self.sleep(1)
-                gender_options = self.web_driver.find_elements_by_class_name('dropdown__link')
+                gender_options = self.web_driver.find_elements(By.CLASS_NAME, 'dropdown__link')
                 done_button = self.locate(By.XPATH, '//button[@type="submit"]')
 
                 gender = 'Male' if self.posh_user.gender == 'M' else 'Female'
@@ -912,9 +912,9 @@ class PoshMarkClient(BaseClient):
             if self.is_present(By.CLASS_NAME, 'card--small'):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
-                    title = listed_item.find_element_by_class_name('tile__title')
+                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     try:
-                        icon = listed_item.find_element_by_class_name('inventory-tag__text')
+                        icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
                     except NoSuchElementException:
                         icon = None
 
@@ -1230,9 +1230,9 @@ class PoshMarkClient(BaseClient):
 
             listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
             for listed_item in listed_items:
-                title = listed_item.find_element_by_class_name('tile__title')
+                title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                 if '[FKE]' in title.text or current_title == title.text:
-                    listing_button = listed_item.find_element_by_class_name('tile__covershot')
+                    listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
                     listing_button.click()
 
                     self.sleep(3)
@@ -1474,9 +1474,9 @@ class PoshMarkClient(BaseClient):
 
             listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
             for listed_item in listed_items:
-                title = listed_item.find_element_by_class_name('tile__title')
+                title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                 if '[FKE]' in title.text or listing_title == title.text:
-                    listing_button = listed_item.find_element_by_class_name('tile__covershot')
+                    listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
                     listing_button.click()
 
                     self.sleep(3)
@@ -1700,9 +1700,9 @@ class PoshMarkClient(BaseClient):
             if self.check_listing(listing_title):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
-                    title = listed_item.find_element_by_class_name('tile__title')
+                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     if title.text == listing_title:
-                        share_button = listed_item.find_element_by_class_name('social-action-bar__share')
+                        share_button = listed_item.find_element(By.CLASS_NAME, 'social-action-bar__share')
                         share_button.click()
 
                         self.sleep(1)
@@ -1899,12 +1899,12 @@ class PoshMarkClient(BaseClient):
             if self.check_listing(listing_title):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
-                    title = listed_item.find_element_by_class_name('tile__title')
+                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     if title.text == listing_title:
-                        listing_price_text = listed_item.find_element_by_class_name('fw--bold').text
+                        listing_price_text = listed_item.find_element(By.CLASS_NAME, 'fw--bold').text
                         listing_price = int(re.findall(r'\d+', listing_price_text)[-1])
 
-                        listing_button = listed_item.find_element_by_class_name('tile__covershot')
+                        listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
                         listing_button.click()
 
                         self.sleep(2)
@@ -1972,9 +1972,9 @@ class PoshMarkClient(BaseClient):
             if self.check_listing(listing_title):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
-                    title = listed_item.find_element_by_class_name('tile__title')
+                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     if title.text == listing_title:
-                        listing_button = listed_item.find_element_by_class_name('tile__covershot')
+                        listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
                         listing_button.click()
 
                         self.sleep(3)
@@ -1982,11 +1982,11 @@ class PoshMarkClient(BaseClient):
                             regex = re.compile('[^a-zA-Z]+')
                             comments = self.locate_all(By.CLASS_NAME, 'comment-item__container')
                             for comment in comments:
-                                text = comment.find_element_by_class_name('comment-item__text').text
+                                text = comment.find_element(By.CLASS_NAME, 'comment-item__text').text
                                 cleaned_comment = regex.sub('', text.lower())
 
                                 if any([bad_word in cleaned_comment for bad_word in bad_words]):
-                                    report_button = comment.find_element_by_class_name('flag')
+                                    report_button = comment.find_element(By.CLASS_NAME, 'flag')
                                     report_button.click()
 
                                     self.sleep(1)
@@ -2050,7 +2050,7 @@ class PoshMarkClient(BaseClient):
                 follow_button = selection.find_element_by_tag_name('button')
 
                 if follow_button.text.replace(' ', '') == 'Follow':
-                    selected_user = selection.find_element_by_class_name('follow__action__follower ').text
+                    selected_user = selection.find_element(By.CLASS_NAME, 'follow__action__follower ').text
                     actions = ActionChains(self.web_driver)
                     actions.move_to_element(follow_button).perform()
 
@@ -2083,8 +2083,8 @@ class PoshMarkClient(BaseClient):
             selected_users = random.sample(available_users, sample_size) if available_users else []
 
             for selected_user in selected_users:
-                username = selected_user.find_element_by_class_name('follow__action__follower').text
-                follow_button = selected_user.find_element_by_class_name('follow__action__button')
+                username = selected_user.find_element(By.CLASS_NAME, 'follow__action__follower').text
+                follow_button = selected_user.find_element(By.CLASS_NAME, 'follow__action__button')
 
                 self.logger.info(f'The following user was selected to be followed: {username}')
 
@@ -2120,10 +2120,10 @@ class PoshMarkClient(BaseClient):
                 for post in posts:
                     if post.is_displayed():
                         try:
-                            like_icon = post.find_element_by_class_name('heart-gray-empty')
-                            share_icon = post.find_element_by_class_name('share-gray-large')
-                            post_title = post.find_element_by_class_name('feed__unit__header__title--medium').text
-                            listing_title = post.find_element_by_class_name('feed__summary__title-block').text
+                            like_icon = post.find_element(By.CLASS_NAME, 'heart-gray-empty')
+                            share_icon = post.find_element(By.CLASS_NAME, 'share-gray-large')
+                            post_title = post.find_element(By.CLASS_NAME, 'feed__unit__header__title--medium').text
+                            listing_title = post.find_element(By.CLASS_NAME, 'feed__summary__title-block').text
 
                             index = post_title.find(' ')
                             username = post_title[:index]
