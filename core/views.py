@@ -36,7 +36,7 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
 
     def get_serializer_context(self):
         context = super(PoshUserViewSet, self).get_serializer_context()
-        context.update({'user': self.request.user})
+        context.update({'user': self.request.user, 'path': self.request.path})
         return context
 
 
