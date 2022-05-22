@@ -58,14 +58,6 @@ class PoshUserSerializer(serializers.ModelSerializer):
         ]
         extra_kwargs = {
             'id': {'read_only': True},
-            'username': {'read_only': True},
-            'first_name': {'read_only': True},
-            'last_name': {'read_only': True},
-            'phone_number': {'read_only': True},
-            'profile_picture': {'read_only': True},
-            'status': {'read_only': True},
-            'sales': {'read_only': True},
-            'profile_url': {'read_only': True}
         }
 
     profile_url = serializers.SerializerMethodField(method_name='get_profile_url')
@@ -155,36 +147,41 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         user = self.context.get('user')
-        all_data = {**validated_data, **self.get_new_posh_user()}
-        picture_urls = {
-            'profile_picture': all_data.pop('profile_picture_url'),
-            'header_picture': all_data.pop('header_picture_url')
-        }
-        posh_user = PoshUser(**all_data)
+        path = self.context.get('path')
+
+        if 'generate' in path:
+            all_data = {**validated_data, **self.get_new_posh_user()}
+            picture_urls = {
+                'profile_picture': all_data.pop('profile_picture_url'),
+                'header_picture': all_data.pop('header_picture_url')
+            }
+            posh_user = PoshUser(**all_data)
+
+            for key, value in picture_urls.items():
+                file_name = f'{posh_user.username}.png'
+
+                http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5))
+                response = http.request('GET', value, preload_content=False)
+                with open(file_name, 'wb') as img_temp:
+                    while True:
+                        data = response.read(65536)
+                        if not data:
+                            break
+                        img_temp.write(data)
+
+                response.release_conn()
+
+                with open(file_name, 'rb') as img_temp:
+                    if key == 'profile_picture':
+                        posh_user.profile_picture.save(file_name, ContentFile(img_temp.read()), save=True)
+                    else:
+                        posh_user.header_picture.save(file_name, ContentFile(img_temp.read()), save=True)
+
+                os.remove(file_name)
+        else:
+            posh_user = PoshUser(**validated_data)
+
         posh_user.user = user
-
-        for key, value in picture_urls.items():
-            file_name = f'{posh_user.username}.png'
-
-            http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5))
-            response = http.request('GET', value, preload_content=False)
-            with open(file_name, 'wb') as img_temp:
-                while True:
-                    data = response.read(65536)
-                    if not data:
-                        break
-                    img_temp.write(data)
-
-            response.release_conn()
-
-            with open(file_name, 'rb') as img_temp:
-                if key == 'profile_picture':
-                    posh_user.profile_picture.save(file_name, ContentFile(img_temp.read()), save=True)
-                else:
-                    posh_user.header_picture.save(file_name, ContentFile(img_temp.read()), save=True)
-
-            os.remove(file_name)
-
         posh_user.save()
 
         return posh_user
