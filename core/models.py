@@ -45,21 +45,21 @@ class PoshUser(models.Model):
     username = models.CharField(max_length=15, unique=True)
     password = models.CharField(max_length=20,
                                 help_text='Must be at least 6 characters and must contain a number or symbol.')
-    first_name = models.CharField(max_length=30)
-    last_name = models.CharField(max_length=30)
-    gender = models.CharField(max_length=2, choices=GENDER_CHOICES)
+    first_name = models.CharField(max_length=30, blank=True)
+    last_name = models.CharField(max_length=30, blank=True)
+    gender = models.CharField(max_length=2, choices=GENDER_CHOICES, blank=True)
     phone_number = models.CharField(max_length=20, default='', blank=True)
-    profile_picture_id = models.CharField(max_length=200)
+    profile_picture_id = models.CharField(max_length=200, blank=True)
 
-    profile_picture = models.ImageField(upload_to='profile_pictures')
-    header_picture = models.ImageField(upload_to='header_pictures')
+    profile_picture = models.ImageField(upload_to='profile_pictures', null=True)
+    header_picture = models.ImageField(upload_to='header_pictures', null=True)
 
-    email = models.EmailField(unique=True)
+    email = models.EmailField(unique=True, blank=True)
 
     sales = models.PositiveSmallIntegerField(default=0, blank=True)
 
     date_added = models.DateField(auto_now_add=True)
-    date_of_birth = models.DateField()
+    date_of_birth = models.DateField(null=True)
 
     is_active = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
