@@ -5,7 +5,7 @@ DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = [
-    'www.turtleswags.com'
+    'turtleswags.com'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
