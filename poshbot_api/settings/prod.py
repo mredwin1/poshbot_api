@@ -5,17 +5,16 @@ DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = [
-    'api.poshbot.net'
+    'www.turtleswags.com'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://api.poshbot.net'
+    'https://www.turtleswags.com'
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'https://api.poshbot.net',
-    'https://poshbot.net',
-    'https://www.poshbot.net'
+    'https://turtleswags.com',
+    'https://www.turleswags.com'
 ]
 
 DATABASES = {
