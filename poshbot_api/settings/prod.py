@@ -14,7 +14,8 @@ CSRF_TRUSTED_ORIGINS = [
 
 CORS_ALLOWED_ORIGINS = [
     'https://turtleswags.com',
-    'https://www.turleswags.com'
+    'https://www.turleswags.com',
+    'https://d1mcixgmwig4k8.cloudfront.net'
 ]
 
 DATABASES = {
