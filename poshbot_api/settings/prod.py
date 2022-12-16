@@ -9,7 +9,7 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://www.turtleswags.com'
+    'https://turtleswags.com'
 ]
 
 CORS_ALLOWED_ORIGINS = [
