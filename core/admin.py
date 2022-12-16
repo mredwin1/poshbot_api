@@ -74,7 +74,7 @@ class PoshUserAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Important Information', {
             'fields': (
-                ('is_registered', 'profile_updated'),
+                ('is_active', 'is_registered', 'profile_updated'),
                 ('user',),
                 ('date_added', 'sales'),
                 ('username', 'password', 'email'),
