@@ -421,6 +421,12 @@ class BaseClient:
             self.logger.error(traceback.format_exc())
             self.logger.warning('Cookies not loaded: Cookie file not found')
 
+    def bot_check(self):
+        self.web_driver.get('bot.sannysoft.com')
+        self.sleep(3)
+
+        self.web_driver.save_screenshot('bot_result.png')
+
 
 class PoshMarkClient(BaseClient):
     def __init__(self, campaign: Campaign, logger, proxy_hostname=None, proxy_port=None):
