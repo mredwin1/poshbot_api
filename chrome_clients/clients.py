@@ -422,7 +422,7 @@ class BaseClient:
             self.logger.warning('Cookies not loaded: Cookie file not found')
 
     def bot_check(self):
-        self.web_driver.get('bot.sannysoft.com')
+        self.web_driver.get('https://bot.sannysoft.com')
         self.sleep(3)
 
         self.web_driver.save_screenshot('bot_result.png')
