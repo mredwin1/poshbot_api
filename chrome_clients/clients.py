@@ -21,6 +21,7 @@ from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
+from selenium_stealth import stealth
 
 from core.models import Campaign
 
@@ -337,6 +338,14 @@ class BaseClient:
     def open(self):
         """Used to open the selenium web driver session"""
         self.web_driver = webdriver.Chrome('/chrome_clients/chromedriver', options=self.web_driver_options)
+        stealth(self.web_driver,
+                languages=["en-US", "en"],
+                vendor="Google Inc.",
+                platform="Win32",
+                webgl_vendor="Intel Inc.",
+                renderer="Intel Iris OpenGL Engine",
+                fix_hairline=True,
+                )
         self.web_driver.implicitly_wait(15)
         self.web_driver.set_page_load_timeout(300)
         if '--headless' in self.web_driver_options.arguments:
