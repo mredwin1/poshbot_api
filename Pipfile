@@ -24,6 +24,7 @@ whitenoise = "*"
 gunicorn = "*"
 celery = "*"
 selenium = "*"
+selenium-stealth = "*"
 
 [dev-packages]
 
