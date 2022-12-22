@@ -1143,7 +1143,8 @@ class PoshMarkClient(BaseClient):
 
                 cover_photo_field = self.locate(By.ID, 'img-file-input')
                 cover_photo_field.send_keys(f'/{listing_cover_photo_name}')
-                self.web_driver.execute_script("window.scrollBy(0,0)","")
+                element = self.locate(By.CLASS_NAME, 'listing-editor__box-content')
+                self.web_driver.execute_script("return arguments[0].scrollIntoView(true);", element)
                 self.web_driver.save_screenshot('cover_photo_upload.png')
                 apply_button = self.locate(By.XPATH, '//*[@id="imagePlaceholder"]/div[2]/div[2]/div[2]/div/button[2]')
                 apply_button.click()
