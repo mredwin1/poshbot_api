@@ -43,15 +43,11 @@ def advanced_sharing_campaign(campaign_id):
                     all_listing_titles += listings
 
                 for listing in campaign_listings:
-                    if listing not in all_listings:
+                    if listing.title not in all_listing_titles:
                         listing_images = ListingImage.objects.filter(listing=listing)
                         client.list_item(listing, listing_images)
-
-        if campaign.posh_user.is_registered:
-            with PoshMarkClient(campaign, logger) as client:
-                client.check_ip()
-                for shareable_listing in all_listings['shareable_listings']:
-                    client.share_item(shareable_listing)
+                    elif listing.title in all_listings['shareable_listings']:
+                        client.share_item(listing.title)
 
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
