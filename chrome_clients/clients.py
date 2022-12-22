@@ -1034,12 +1034,11 @@ class PoshMarkClient(BaseClient):
 
             self.logger.info('Downloading all of the listing images')
 
-            self.logger.info(listing.cover_photo.name)
-            listing_cover_photo_name = listing.cover_photo.name.split('/')[1]
+            listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
             self.bucket.download_file(listing.cover_photo.name, listing_cover_photo_name)
 
             for listing_image in listing_images:
-                image_name = listing_image.image.name.split('/')[1]
+                image_name = listing_image.image.name.split('/')[-1]
                 self.bucket.download_file(listing_image.image.name, image_name)
                 listing_image_names.append(image_name)
 
