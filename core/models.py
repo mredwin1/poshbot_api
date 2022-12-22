@@ -9,11 +9,13 @@ from uuid import uuid4
 def path_and_rename(instance, filename):
     upload_to = 'listing_images'
     ext = filename.split('.')[-1]
-    path = instance.title.replace(' ', '_')
 
     if isinstance(instance, Listing):
+        path = instance.title.replace(' ', '_')
         filename = f'cover_photo.{ext}'
+
     else:
+        path = instance.listing.title.replace(' ', '_')
         filename = f'image.{ext}'
 
     return os.path.join(upload_to, path, 'images', filename)
