@@ -1,4 +1,9 @@
+import boto3
 import os
+import random
+import string
+
+from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 from imagekit.models import ProcessedImageField
@@ -15,8 +20,22 @@ def path_and_rename(instance, filename):
         filename = f'cover_photo.{ext}'
 
     else:
+        aws_session = boto3.Session()
+        s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+                                         aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+                                         region_name=settings.AWS_S3_REGION_NAME)
+
         path = instance.listing.title.replace(' ', '_')
-        filename = f'image.{ext}'
+        filename = None
+
+        while not filename:
+            rand_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+            filename = f'image_{rand_str}.{ext}'
+            try:
+                s3_client.Object(settings.AWS_STORAGE_BUCKET_NAME, os.path.join(upload_to, path, 'images', filename)).load()
+                filename = None
+            except Exception:
+                pass
 
     return os.path.join(upload_to, path, 'images', filename)
 
