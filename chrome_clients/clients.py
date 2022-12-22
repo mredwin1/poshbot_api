@@ -1088,7 +1088,7 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Setting subcategory')
 
                 subcategory_menu = self.locate(By.CLASS_NAME, 'dropdown__menu--expanded')
-                subcategories = subcategory_menu.find_element(By.TAG_NAME,'a')
+                subcategories = subcategory_menu.find_elements(By.TAG_NAME,'a')
                 subcategory = listing_subcategory
                 for available_subcategory in subcategories:
                     if available_subcategory.text == subcategory:
