@@ -55,12 +55,12 @@ def advanced_sharing_campaign(campaign_id):
 
         campaign.refresh_from_db()
         if campaign.status != Campaign.STOPPED:
-            campaign.status = Campaign.IDLE
+            campaign.status = Campaign.STOPPED
             campaign.save()
             hours, remainder = divmod(campaign_delay, 3600)
             minutes, seconds = divmod(remainder, 60)
             logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
-            advanced_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
+            # advanced_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
 
     print('Campaign ended')
 
