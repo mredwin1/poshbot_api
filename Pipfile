@@ -26,6 +26,7 @@ celery = "*"
 selenium = "*"
 selenium-stealth = "*"
 pyautogui = "*"
+python3-xlib = "*"
 
 [dev-packages]
 

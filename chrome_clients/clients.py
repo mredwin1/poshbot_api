@@ -437,11 +437,13 @@ class BaseClient:
         self.web_driver.save_screenshot('bot_result.png')
 
     def auth_proxy(self, username, password):
+        self.web_driver.get('https://www.google.com')
         self.sleep(1)
         pyautogui.write(username)
         pyautogui.press('tab')
         pyautogui.write(password)
         pyautogui.press('enter')
+        self.sleep(2)
 
 
 class PoshMarkClient(BaseClient):
