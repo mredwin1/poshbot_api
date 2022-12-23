@@ -154,42 +154,52 @@ class PoshUserSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         path = self.context.get('path')
         logger.info(validated_data)
+        posh_users = []
         if 'generate' in path:
             all_data = {**validated_data, **self.get_new_posh_user()}
             picture_urls = {
                 'profile_picture': all_data.pop('profile_picture_url'),
                 'header_picture': all_data.pop('header_picture_url')
             }
-            posh_user = PoshUser(**all_data)
+            quantity = all_data.pop('quantity')
+            for x in range(quantity):
+                posh_user = PoshUser(**all_data)
 
-            for key, value in picture_urls.items():
-                file_name = f'{posh_user.username}.png'
+                for key, value in picture_urls.items():
+                    file_name = f'{posh_user.username}.png'
 
-                http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5))
-                response = http.request('GET', value, preload_content=False)
-                with open(file_name, 'wb') as img_temp:
-                    while True:
-                        data = response.read(65536)
-                        if not data:
-                            break
-                        img_temp.write(data)
+                    http = urllib3.PoolManager(timeout=urllib3.Timeout(connect=5))
+                    response = http.request('GET', value, preload_content=False)
+                    with open(file_name, 'wb') as img_temp:
+                        while True:
+                            data = response.read(65536)
+                            if not data:
+                                break
+                            img_temp.write(data)
 
-                response.release_conn()
+                    response.release_conn()
 
-                with open(file_name, 'rb') as img_temp:
-                    if key == 'profile_picture':
-                        posh_user.profile_picture.save(file_name, ContentFile(img_temp.read()), save=True)
-                    else:
-                        posh_user.header_picture.save(file_name, ContentFile(img_temp.read()), save=True)
+                    with open(file_name, 'rb') as img_temp:
+                        if key == 'profile_picture':
+                            posh_user.profile_picture.save(file_name, ContentFile(img_temp.read()), save=True)
+                        else:
+                            posh_user.header_picture.save(file_name, ContentFile(img_temp.read()), save=True)
 
-                os.remove(file_name)
+                    os.remove(file_name)
+
+                    posh_user.user = user
+                    posh_user.save()
+
+                    posh_users.append(posh_user)
         else:
             posh_user = PoshUser(**validated_data)
 
-        posh_user.user = user
-        posh_user.save()
+            posh_user.user = user
+            posh_user.save()
 
-        return posh_user
+            posh_users.append(posh_user)
+
+        return posh_users
 
 
 class ListingImageSerializer(serializers.ModelSerializer):
