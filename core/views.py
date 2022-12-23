@@ -44,7 +44,7 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
 
         return context
 
-    @action(detail=True, methods=['POST'])
+    @action(detail=False, methods=['POST'])
     def generate(self, request):
         logger.info(self.request.path)
 
