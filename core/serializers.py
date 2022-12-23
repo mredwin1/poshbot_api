@@ -167,7 +167,6 @@ class PoshUserSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         path = self.context.get('path')
         posh_users = []
-        logger.info(path)
         if 'generate' in path:
             try:
                 quantity = validated_data.pop('quantity')
@@ -219,7 +218,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
                     posh_user.save()
 
                     posh_users.append(posh_user)
-                    self.increment_email(email)
+                    email = self.increment_email(email)
         else:
             posh_user = PoshUser(**validated_data)
 
