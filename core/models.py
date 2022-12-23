@@ -72,7 +72,7 @@ class PoshUser(models.Model):
     profile_picture = models.ImageField(upload_to='profile_pictures', null=True)
     header_picture = models.ImageField(upload_to='header_pictures', null=True)
 
-    email = models.EmailField(unique=True, blank=True)
+    email = models.EmailField(blank=True)
 
     sales = models.PositiveSmallIntegerField(default=0, blank=True)
 
