@@ -92,7 +92,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
         return f'{username}{random_int}'
 
-    def get_new_posh_user(self):
+    def get_new_posh_user(self, quantity=1):
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36'
         }
@@ -101,7 +101,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
             'nat': 'US',
             'password': 'upper,lower,number,10-12',
             'inc': 'gender,nat,name,email,login,dob,picture,password',
-            'results': 1
+            'results': quantity
         }
         user_url = 'https://randomuser.me/api/'
         header_image_url = 'https://picsum.photos/1920/300'
@@ -110,45 +110,49 @@ class PoshUserSerializer(serializers.ModelSerializer):
             'picture_ids': [],
             'usernames': []
         }
+        new_users = []
 
         for posh_user in all_posh_users:
             posh_user_info['picture_ids'].append(posh_user.profile_picture_id)
             posh_user_info['usernames'].append(posh_user.username)
 
         user_response = requests.get(user_url, params=user_payload, timeout=10, headers=headers)
-        user_info = user_response.json()['results'][0]
-        first_name = user_info['name']['first']
-        last_name = user_info['name']['last']
-        gender = user_info['gender'][0].upper()
-        username = self.generate_username(first_name, last_name)
-        profile_image_url = f'https://source.unsplash.com/600x600/?{user_info["gender"]}'
-        date_of_birth = datetime.strptime(user_info['dob']['date'][:-5], '%Y-%m-%dT%H:%M:%S')
-
-        header_image_response = requests.get(header_image_url, timeout=10, headers=headers)
-
-        profile_image_response = requests.get(profile_image_url, timeout=10, headers=headers)
-
-        retries = 0
-        
-        while self.get_image_id(profile_image_response.url) in posh_user_info['picture_ids'] and retries < 10:
-            profile_image_response = requests.get(profile_image_url, timeout=10, headers=headers)
-            retries += 1
-
-        while username in posh_user_info['usernames']:
+        for user_info in user_response.json()['results']:
+            first_name = user_info['name']['first']
+            last_name = user_info['name']['last']
+            gender = user_info['gender'][0].upper()
             username = self.generate_username(first_name, last_name)
+            profile_image_url = f'https://source.unsplash.com/600x600/?{user_info["gender"]}'
+            date_of_birth = datetime.strptime(user_info['dob']['date'][:-5], '%Y-%m-%dT%H:%M:%S')
 
-        new_user_info = {
-            'first_name': first_name,
-            'last_name': last_name,
-            'gender': gender,
-            'username': username if len(username) <= 12 else username[:12],
-            'date_of_birth': date_of_birth,
-            'profile_picture_url': profile_image_response.url,
-            'header_picture_url': header_image_response.url,
-            'profile_picture_id': self.get_image_id(profile_image_response.url),
-        }
+            header_image_response = requests.get(header_image_url, timeout=10, headers=headers)
 
-        return new_user_info
+            profile_image_response = requests.get(profile_image_url, timeout=10, headers=headers)
+
+            retries = 0
+
+            while self.get_image_id(profile_image_response.url) in posh_user_info['picture_ids'] and retries < 10:
+                profile_image_response = requests.get(profile_image_url, timeout=10, headers=headers)
+                retries += 1
+
+            while username in posh_user_info['usernames']:
+                username = self.generate_username(first_name, last_name)
+
+            new_user_info = {
+                'first_name': first_name,
+                'last_name': last_name,
+                'gender': gender,
+                'username': username if len(username) <= 12 else username[:12],
+                'date_of_birth': date_of_birth,
+                'profile_picture_url': profile_image_response.url,
+                'header_picture_url': header_image_response.url,
+                'profile_picture_id': self.get_image_id(profile_image_response.url),
+            }
+
+            posh_user_info['picture_ids'].append(new_user_info['profile_picture_id'])
+            posh_user_info['usernames'].append(new_user_info['username'])
+            new_users.append(new_user_info)
+        return new_users
 
     def create(self, validated_data):
         user = self.context.get('user')
@@ -156,14 +160,20 @@ class PoshUserSerializer(serializers.ModelSerializer):
         posh_users = []
         logger.info(path)
         if 'generate' in path:
-            all_data = {**validated_data, **self.get_new_posh_user()}
-            picture_urls = {
-                'profile_picture': all_data.pop('profile_picture_url'),
-                'header_picture': all_data.pop('header_picture_url')
-            }
-            quantity = all_data.pop('quantity')
-            logger.info(all_data)
-            for x in range(quantity):
+            try:
+                quantity = validated_data.pop('quantity')
+            except KeyError:
+                quantity = 1
+
+            new_posh_users = self.get_new_posh_user(quantity)
+
+            for new_posh_user in new_posh_users:
+                all_data = {**validated_data, **new_posh_user}
+                picture_urls = {
+                    'profile_picture': all_data.pop('profile_picture_url'),
+                    'header_picture': all_data.pop('header_picture_url')
+                }
+                logger.info(all_data)
                 posh_user = PoshUser(**all_data)
 
                 for key, value in picture_urls.items():
