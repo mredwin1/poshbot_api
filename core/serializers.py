@@ -92,6 +92,15 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
         return f'{username}{random_int}'
 
+    @staticmethod
+    def increment_email(old_email):
+        plus_index = old_email.find('+')
+        at_index = old_email.find('@')
+        email_number = int(old_email[plus_index + 1:at_index])
+        email_number += 1
+
+        return f'{old_email[:plus_index + 1]}{email_number}{old_email[at_index:]}'
+
     def get_new_posh_user(self, quantity=1):
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36'
@@ -165,10 +174,18 @@ class PoshUserSerializer(serializers.ModelSerializer):
             except KeyError:
                 quantity = 1
 
+            email = validated_data.pop('email')
+
+            if '+' not in email:
+                at_index = email.find('@')
+                username = email[:at_index]
+                domain = email[at_index:]
+                email = f'{username}+1{domain}'
+
             new_posh_users = self.get_new_posh_user(quantity)
 
             for new_posh_user in new_posh_users:
-                all_data = {**validated_data, **new_posh_user}
+                all_data = {**validated_data, **new_posh_user, 'email': email}
                 picture_urls = {
                     'profile_picture': all_data.pop('profile_picture_url'),
                     'header_picture': all_data.pop('header_picture_url')
@@ -202,6 +219,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
                     posh_user.save()
 
                     posh_users.append(posh_user)
+                    self.increment_email(email)
         else:
             posh_user = PoshUser(**validated_data)
 
