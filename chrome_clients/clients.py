@@ -3,6 +3,7 @@ import botocore
 import datetime
 import os
 import pickle
+import pyautogui
 import random
 import re
 import requests
@@ -434,6 +435,13 @@ class BaseClient:
         self.sleep(3)
 
         self.web_driver.save_screenshot('bot_result.png')
+
+    def auth_proxy(self, username, password):
+        self.sleep(1)
+        pyautogui.write(username)
+        pyautogui.press('tab')
+        pyautogui.write(password)
+        pyautogui.press('enter')
 
 
 class PoshMarkClient(BaseClient):
