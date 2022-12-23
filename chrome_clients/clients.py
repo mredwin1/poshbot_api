@@ -15,6 +15,7 @@ from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.alert import Alert
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
 from selenium.webdriver.common.proxy import Proxy, ProxyType
@@ -438,10 +439,11 @@ class BaseClient:
     def auth_proxy(self, username, password):
         self.web_driver.get('https://www.google.com')
         self.sleep(1)
-        alert = self.web_driver.switch_to_alert()
-        ActionChains(self.web_driver).send_keys(username)
-        ActionChains(self.web_driver).send_keys(Keys.TAB).perform()
-        ActionChains(self.web_driver).send_keys(password)
+        alert = Alert(self.web_driver)
+        self.logger.info(str(alert.text))
+        alert.send_keys(username)
+        alert.send_keys(Keys.TAB)
+        alert.send_keys(password)
         alert.accept()
         self.web_driver.save_screenshot('end_proxy.png')
 
