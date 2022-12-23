@@ -438,7 +438,7 @@ class BaseClient:
 
     def auth_proxy(self, username, password):
         self.web_driver.get('https://www.google.com')
-        self.sleep(5)
+        WebDriverWait(self.web_driver, 20).until(EC.alert_is_present())
         alert = Alert(self.web_driver)
         self.logger.info(str(alert.text))
         alert.send_keys(username)
