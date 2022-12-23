@@ -11,6 +11,9 @@ from .models import PoshUser, Campaign, Listing, ListingImage
 from .tasks import advanced_sharing_campaign, basic_sharing_campaign
 from . import serializers
 
+import logging
+logger = logging.getLogger(__name__)
+
 
 class TokenObtainPairView(BaseTokenObtainPairView):
     serializer_class = serializers.TokenObtainPairSerializer
@@ -37,6 +40,9 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
     def get_serializer_context(self):
         context = super(PoshUserViewSet, self).get_serializer_context()
         context.update({'user': self.request.user, 'path': self.request.path})
+
+        logger.info(self.request.path)
+
         return context
 
 
