@@ -438,13 +438,11 @@ class BaseClient:
 
     def auth_proxy(self, username, password):
         self.web_driver.get('https://www.google.com')
-        WebDriverWait(self.web_driver, 20).until(EC.alert_is_present())
-        alert = Alert(self.web_driver)
-        self.logger.info(str(alert.text))
-        alert.send_keys(username)
-        alert.send_keys(Keys.TAB)
-        alert.send_keys(password)
-        alert.accept()
+        self.sleep(2)
+        self.web_driver.switch_to.alert.send_keys(username)
+        self.web_driver.switch_to.alert.send_keys(Keys.TAB)
+        self.web_driver.switch_to.alert.send_keys(password)
+        self.web_driver.switch_to.alert.accept()
         self.web_driver.save_screenshot('end_proxy.png')
 
 
