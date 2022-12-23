@@ -12,6 +12,10 @@ from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as Ba
 from .models import PoshUser, Campaign, Listing, ListingImage
 
 
+import logging
+logger = logging.getLogger(__name__)
+
+
 class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
     def validate(self, attrs):
         data = super(TokenObtainPairSerializer, self).validate(attrs)
@@ -149,7 +153,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context.get('user')
         path = self.context.get('path')
-
+        logger.info(validated_data)
         if 'generate' in path:
             all_data = {**validated_data, **self.get_new_posh_user()}
             picture_urls = {
