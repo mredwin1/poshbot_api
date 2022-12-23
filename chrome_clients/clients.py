@@ -3,7 +3,6 @@ import botocore
 import datetime
 import os
 import pickle
-import pyautogui
 import random
 import re
 import requests
@@ -439,11 +438,13 @@ class BaseClient:
     def auth_proxy(self, username, password):
         self.web_driver.get('https://www.google.com')
         self.sleep(1)
-        pyautogui.write(username)
-        pyautogui.press('tab')
-        pyautogui.write(password)
-        pyautogui.press('enter')
-        self.sleep(2)
+        self.web_driver.save_screenshot('begin_proxy.png')
+        alert = self.web_driver.switch_to.alert
+        alert.send_keys(username)
+        alert.send_keys(Keys.TAB)
+        alert.send_keys(password)
+        self.web_driver.save_screenshot('end_proxy.png')
+        alert.accept()
 
 
 class PoshMarkClient(BaseClient):
