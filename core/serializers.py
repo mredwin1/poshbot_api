@@ -60,6 +60,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
             'id': {'read_only': True},
         }
 
+    quantity = serializers.IntegerField(required=False, default=1)
     profile_url = serializers.SerializerMethodField(method_name='get_profile_url')
 
     @staticmethod
