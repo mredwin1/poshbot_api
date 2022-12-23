@@ -182,9 +182,9 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
                     with open(file_name, 'rb') as img_temp:
                         if key == 'profile_picture':
-                            posh_user.profile_picture.save(file_name, ContentFile(img_temp.read()), save=True)
+                            posh_user.profile_picture.save(file_name, ContentFile(img_temp.read()), save=False)
                         else:
-                            posh_user.header_picture.save(file_name, ContentFile(img_temp.read()), save=True)
+                            posh_user.header_picture.save(file_name, ContentFile(img_temp.read()), save=False)
 
                     os.remove(file_name)
 
