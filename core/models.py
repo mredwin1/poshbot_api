@@ -60,7 +60,7 @@ class PoshUser(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    username = models.CharField(max_length=15, unique=True)
+    username = models.CharField(max_length=15, unique=True, blank=True)
     password = models.CharField(max_length=20,
                                 help_text='Must be at least 6 characters and must contain a number or symbol.')
     first_name = models.CharField(max_length=30, blank=True)
