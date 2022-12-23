@@ -438,6 +438,7 @@ class BaseClient:
     def auth_proxy(self, username, password):
         self.web_driver.get('https://www.google.com')
         self.sleep(1)
+        self.web_driver.save_screenshot('begin_proxy.png')
         alert = self.web_driver.switch_to.alert
         alert.send_keys(username)
         alert.send_keys(Keys.TAB)
