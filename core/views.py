@@ -1,5 +1,6 @@
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
+from rest_framework import status
 from rest_framework.decorators import action
 from rest_framework.mixins import RetrieveModelMixin, ListModelMixin, CreateModelMixin, UpdateModelMixin
 from rest_framework.permissions import IsAuthenticated
@@ -41,9 +42,18 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
         context = super(PoshUserViewSet, self).get_serializer_context()
         context.update({'user': self.request.user, 'path': self.request.path})
 
+        return context
+
+    @action(detail=True, methods=['POST'])
+    def generate(self, request):
         logger.info(self.request.path)
 
-        return context
+        serializer = self.get_serializer(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        self.perform_create(serializer)
+        headers = self.get_success_headers(serializer.data)
+
+        return Response(serializer.data, status=status.HTTP_201_CREATED, headers=headers)
 
 
 class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, GenericViewSet):
