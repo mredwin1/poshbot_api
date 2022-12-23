@@ -436,15 +436,6 @@ class BaseClient:
 
         self.web_driver.save_screenshot('bot_result.png')
 
-    def auth_proxy(self, username, password):
-        self.web_driver.get('https://www.google.com')
-        self.sleep(2)
-        self.web_driver.switch_to.alert.send_keys(username)
-        self.web_driver.switch_to.alert.send_keys(Keys.TAB)
-        self.web_driver.switch_to.alert.send_keys(password)
-        self.web_driver.switch_to.alert.accept()
-        self.web_driver.save_screenshot('end_proxy.png')
-
 
 class PoshMarkClient(BaseClient):
     def __init__(self, campaign: Campaign, logger, proxy_hostname=None, proxy_port=None):
