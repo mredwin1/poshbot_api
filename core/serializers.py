@@ -153,8 +153,8 @@ class PoshUserSerializer(serializers.ModelSerializer):
     def create(self, validated_data):
         user = self.context.get('user')
         path = self.context.get('path')
-        logger.info(validated_data)
         posh_users = []
+        logger.info(path)
         if 'generate' in path:
             all_data = {**validated_data, **self.get_new_posh_user()}
             picture_urls = {
@@ -162,6 +162,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
                 'header_picture': all_data.pop('header_picture_url')
             }
             quantity = all_data.pop('quantity')
+            logger.info(all_data)
             for x in range(quantity):
                 posh_user = PoshUser(**all_data)
 
