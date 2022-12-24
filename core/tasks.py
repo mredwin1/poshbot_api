@@ -86,13 +86,13 @@ def basic_sharing_campaign(campaign_id):
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
 
+    logger.info(campaign.status != Campaign.STOPPED)
+    logger.info(campaign.posh_user.is_active)
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
         campaign.save()
 
         start_time = time.time()
-
-        logger.info(campaign.posh_user.is_registered)
 
         if campaign.posh_user.is_registered:
             with PoshMarkClient(campaign, logger, proxy_hostname='192.154.249.98', proxy_port='8000') as client:
