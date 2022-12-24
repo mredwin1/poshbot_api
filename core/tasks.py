@@ -92,12 +92,28 @@ def basic_sharing_campaign(campaign_id):
 
         start_time = time.time()
 
+        logger.info(campaign.posh_user.is_registered)
+
         if campaign.posh_user.is_registered:
-            with PoshMarkClient(campaign, logger) as client:
+            with PoshMarkClient(campaign, logger, proxy_hostname='192.154.249.98', proxy_port='8000') as client:
                 all_listings = client.get_all_listings()
-                for shareable_listing in all_listings['shareable_listings']:
-                    client.share_item(shareable_listing)
-                    client.sleep(2, 4)
+
+                if all_listings:
+                    for listing_title in all_listings['shareable_listings']:
+                        client.share_item(listing_title)
+
+                        today = datetime.datetime.today()
+                        nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
+                                                    minute=0,
+                                                    second=0)
+                        if today > nine_pm:
+                            client.send_offer_to_likers(listing_title)
+
+                        client.check_offers(listing_title)
+
+        response = requests.get('https://portal.mobilehop.com/proxies/a8bf30bf48de4125afd38f809d68bef2/reset')
+        logger.info(response.text)
+        time.sleep(15)
 
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
