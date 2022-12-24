@@ -977,32 +977,11 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(2)
 
-            attempts = 1
-            header_picture_path = self.get_redis_object_attr(self.redis_posh_user_id, 'header_picture')
-            header_picture_exists = Path(header_picture_path).is_file()
-            while not header_picture_exists and attempts < 6:
-                self.logger.info(str(header_picture_path))
-                self.logger.warning(f'Could not find header picture file. Attempt # {attempts}')
-                self.sleep(2)
-                header_picture_exists = Path(header_picture_path).is_file()
-                attempts += 1
-            else:
-                if not header_picture_exists:
-                    self.logger.error('Could not upload header picture - Picture not found')
-                else:
-                    header_picture = self.locate(By.XPATH,
-                                                 '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/label/input')
-                    header_picture.send_keys(header_picture_path)
-
-                    self.sleep(2)
-
-                    apply_button = self.locate(
-                        By.XPATH, '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/div/button[2]')
-                    apply_button.click()
-
-                    self.logger.info('Header picture uploaded')
-
-                    self.sleep(2)
+            header_picture_name = self.posh_user.header_picture.name.split('/')[1]
+            self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
+            header_picture = self.locate(By.XPATH,
+                                         '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/label/input')
+            header_picture.send_keys(f'/{header_picture_name}')
 
             save_button = self.locate(By.CLASS_NAME, 'btn--primary')
             save_button.click()
@@ -1011,7 +990,8 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(5)
 
-            self.update_redis_object(self.redis_posh_user_id, {'profile_updated': 1})
+            self.posh_user.profile_updated = True
+            self.posh_user.save()
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():

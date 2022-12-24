@@ -29,12 +29,10 @@ def advanced_sharing_campaign(campaign_id):
         with PoshMarkClient(campaign, logger, proxy_hostname='192.154.249.98', proxy_port='192.154.249.98') as client:
             while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
                 client.register()
+                client.update_profile()
                 register_retries += 1
 
             campaign.refresh_from_db()
-            if not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
-                logger.info('Retrying registration and profile update in 5 seconds')
-                time.sleep(5)
 
             if campaign.posh_user.is_registered:
                 all_listings = client.get_all_listings()
