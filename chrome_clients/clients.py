@@ -23,7 +23,7 @@ from selenium.webdriver.support import expected_conditions as EC
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign
+from core.models import Campaign, Offer
 
 
 class Captcha:
@@ -1687,65 +1687,92 @@ class PoshMarkClient(BaseClient):
     def send_offer_to_likers(self, listing_title):
         """Will send offers to all likers for a given listing"""
         try:
-            lowest_price = self.campaign.listings.get(title=listing_title)
             self.logger.info(f'Sending offers to all likers for the following item: {listing_title}')
+            today = datetime.datetime.today()
+            start_date = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=0, minute=0,
+                                           second=0)
+            end_date = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=23, minute=59,
+                                         second=59)
 
-            self.go_to_closet()
+            offers = Offer.objects.filter(
+                listing_title=listing_title,
+                posh_user=self.campaign.posh_user,
+                datetime_sent__range=(start_date, end_date)
+            ).order_by('datetime_sent')
+            first_offer = offers.first()
+            last_offer = offers.last()
+            if len(offers) <= 3:
+                self.go_to_closet()
+                if first_offer is None or (first_offer != last_offer and (first_offer.datetime_sent - today).minutes > 720):
+                    if self.check_listing(listing_title):
+                        listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
+                        for listed_item in listed_items:
+                            title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
+                            if title.text == listing_title:
+                                listing_price_text = listed_item.find_element(By.CLASS_NAME, 'fw--bold').text
+                                listing_price = int(re.findall(r'\d+', listing_price_text)[-1])
 
-            if self.check_listing(listing_title):
-                listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-                for listed_item in listed_items:
-                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
-                    if title.text == listing_title:
-                        listing_price_text = listed_item.find_element(By.CLASS_NAME, 'fw--bold').text
-                        listing_price = int(re.findall(r'\d+', listing_price_text)[-1])
+                                listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
+                                listing_button.click()
 
-                        listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
-                        listing_button.click()
+                                self.sleep(2)
 
-                        self.sleep(2)
+                                offer_button = self.locate(
+                                    By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div/button'
+                                )
+                                offer_button.click()
 
-                        offer_button = self.locate(
-                            By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div/button'
-                        )
-                        offer_button.click()
+                                offer_to_likers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/div[2]/div/button')
+                                offer_to_likers_button.click()
 
-                        offer_to_likers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/div[2]/div/button')
-                        offer_to_likers_button.click()
+                                self.sleep(1)
 
-                        self.sleep(1)
+                                offer_amount = int(listing_price - (listing_price * .1))
 
-                        offer = int(listing_price - (listing_price * .1))
+                                self.logger.info(f'Sending offers to likers for ${offer_amount}')
 
-                        self.logger.info(f'Sending offers to likers for ${offer}')
+                                offer_input = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[1]/input')
+                                offer_input.send_keys(str(offer_amount))
 
-                        offer_input = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[1]/input')
-                        offer_input.send_keys(str(offer))
+                                self.sleep(2)
 
-                        self.sleep(2)
+                                shipping_dropdown = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[2]/div[1]/div/div/div/div[1]/div')
+                                shipping_dropdown.click()
 
-                        shipping_dropdown = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[2]/div[1]/div/div/div/div[1]/div')
-                        shipping_dropdown.click()
+                                shipping_options = self.locate_all(By.CLASS_NAME, 'dropdown__menu__item')
 
-                        shipping_options = self.locate_all(By.CLASS_NAME, 'dropdown__menu__item')
+                                for shipping_option in shipping_options:
+                                    if shipping_option.text == 'FREE':
+                                        shipping_option.click()
+                                        break
 
-                        for shipping_option in shipping_options:
-                            if shipping_option.text == 'FREE':
-                                shipping_option.click()
-                                break
+                                apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div/button[2]')
+                                apply_button.click()
 
-                        apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div/button[2]')
-                        apply_button.click()
+                                done_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[2]/div[3]/button')
+                                done_button.click()
 
-                        done_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[2]/div[3]/button')
-                        done_button.click()
+                                offer = Offer(
+                                    amount=offer_amount,
+                                    listing_title=listing_title,
+                                    posh_user=self.campaign.posh_user
+                                )
+                                offer.save()
 
-                        self.logger.info('Offers successfully sent!')
+                                self.logger.info('Offers successfully sent!')
 
-                        return True
+                                return True
+                    else:
+                        self.logger.warning(f'The following listing was not found: {listing_title}')
+                        self.logger.warning(f'Offers not sent to likers')
+                else:
+                    self.logger.info('Not sending another offer the following offer was already sent today:')
+                    self.logger.info(f'Datetime Sent - {first_offer.datetime_sent} Offer Amount - {first_offer.amount}')
+
             else:
-                self.logger.warning(f'The following listing was not found: {listing_title}')
-                self.logger.warning(f'Offers not sent to likers')
+                self.logger.info('Not sending another offer the following offers were already sent today: ')
+                self.logger.info(f'Datetime Sent - {first_offer.datetime_sent} Offer Amount - {first_offer.amount}')
+                self.logger.info(f'Datetime Sent - {last_offer.datetime_sent} Offer Amount - {last_offer.amount}')
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')

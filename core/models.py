@@ -191,3 +191,14 @@ class ListingImage(models.Model):
 
     def __str__(self):
         return f'Image {self.id}'
+
+
+class Offer(models.Model):
+    posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE, related_name='offers')
+    listing_title = models.CharField(max_length=50)
+
+    datetime_sent = models.DateTimeField(auto_created=True)
+    amount = models.PositiveIntegerField()
+
+    def __str__(self):
+        return f'Offer {self.id}'
