@@ -41,25 +41,26 @@ def advanced_sharing_campaign(campaign_id):
                 all_listings = client.get_all_listings()
                 all_listing_titles = []
 
-                for listings in all_listings.values():
-                    all_listing_titles += listings
+                if all_listings:
+                    for listings in all_listings.values():
+                        all_listing_titles += listings
 
-                for listing in campaign_listings:
-                    if listing.title not in all_listing_titles:
-                        listing_images = ListingImage.objects.filter(listing=listing)
-                        client.list_item(listing, listing_images)
-                    elif listing.title in all_listings['shareable_listings']:
-                        client.share_item(listing.title)
+                    for listing in campaign_listings:
+                        if listing.title not in all_listing_titles:
+                            listing_images = ListingImage.objects.filter(listing=listing)
+                            client.list_item(listing, listing_images)
+                        elif listing.title in all_listings['shareable_listings']:
+                            client.share_item(listing.title)
 
-                        today = datetime.datetime.today()
-                        nine_pm = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=2, minute=0,
-                                                    second=0)
-                        print(today)
-                        print(nine_pm)
-                        if today > nine_pm:
-                            client.send_offer_to_likers(listing.title)
+                            today = datetime.datetime.today()
+                            nine_pm = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=2, minute=0,
+                                                        second=0)
+                            print(today)
+                            print(nine_pm)
+                            if today > nine_pm:
+                                client.send_offer_to_likers(listing.title)
 
-                        client.check_offers(listing.title)
+                            client.check_offers(listing.title)
 
         response = requests.get('https://portal.mobilehop.com/proxies/a8bf30bf48de4125afd38f809d68bef2/reset')
         logger.info(response.text)
