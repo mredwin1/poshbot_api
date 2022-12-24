@@ -979,16 +979,21 @@ class PoshMarkClient(BaseClient):
 
             header_picture_name = self.posh_user.header_picture.name.split('/')[1]
             self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
+
+            self.sleep(2)
+
             header_picture = self.locate(By.XPATH,
                                          '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/label/input')
             header_picture.send_keys(f'/{header_picture_name}')
+
+            self.sleep(2)
 
             save_button = self.locate(By.CLASS_NAME, 'btn--primary')
             save_button.click()
 
             self.logger.info('Profile saved')
 
-            self.sleep(5)
+            self.sleep(1, 3)
 
             self.posh_user.profile_updated = True
             self.posh_user.save()
