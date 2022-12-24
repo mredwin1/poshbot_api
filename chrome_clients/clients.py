@@ -1587,7 +1587,7 @@ class PoshMarkClient(BaseClient):
                                 chat_bubbles = self.locate_all(By.CLASS_NAME, 'ai--fs')
                                 for chat_bubble in reversed(chat_bubbles):
                                     try:
-                                        bubble = chat_bubble.find_element_by_xpath('.//*')
+                                        bubble = chat_bubble.find_element(By.XPATH, './/*')
                                         if sender_offer and receiver_offer:
                                             break
                                         elif 'sender' in bubble.get_attribute('class') and not sender_offer:
