@@ -69,7 +69,7 @@ def advanced_sharing_campaign(campaign_id):
 
         campaign.refresh_from_db()
         if campaign.status != Campaign.STOPPED:
-            campaign.status = Campaign.STOPPED
+            campaign.status = Campaign.IDLE
             campaign.save()
             hours, remainder = divmod(campaign_delay, 3600)
             minutes, seconds = divmod(remainder, 60)
@@ -86,8 +86,6 @@ def basic_sharing_campaign(campaign_id):
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
 
-    logger.info(campaign.status != Campaign.STOPPED)
-    logger.info(campaign.posh_user.is_active)
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
         campaign.save()
