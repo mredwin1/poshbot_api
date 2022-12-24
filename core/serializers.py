@@ -218,6 +218,11 @@ class ListingSerializer(serializers.ModelSerializer):
         }
 
     images = ListingImageSerializer(many=True, read_only=True)
+    assigned = serializers.SerializerMethodField(method_name='check_assigned')
+
+    @staticmethod
+    def check_assigned(listing: PoshUser):
+        return True if listing.campaign else False
 
     def create(self, validated_data):
         files = self.context.get('files')
