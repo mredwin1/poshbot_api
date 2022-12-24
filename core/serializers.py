@@ -210,7 +210,7 @@ class ListingSerializer(serializers.ModelSerializer):
         model = Listing
         fields = [
             'id', 'title', 'size', 'brand', 'category', 'subcategory', 'cover_photo', 'description', 'original_price',
-            'listing_price', 'lowest_price', 'images'
+            'listing_price', 'lowest_price', 'images', 'assigned'
         ]
 
         extra_kwargs = {
