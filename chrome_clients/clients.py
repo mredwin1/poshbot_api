@@ -719,6 +719,8 @@ class PoshMarkClient(BaseClient):
             profile_picture_name = self.posh_user.profile_picture.name.split('/')[1]
             self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
 
+            self.sleep(2)
+
             profile_picture = self.locate(By.XPATH,
                                           '//*[@id="content"]/div/div[2]/div[1]/label/input')
             profile_picture.send_keys(f'/{profile_picture_name}')
