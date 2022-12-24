@@ -1,3 +1,4 @@
+import datetime
 import logging
 import random
 import requests
@@ -49,7 +50,14 @@ def advanced_sharing_campaign(campaign_id):
                         client.list_item(listing, listing_images)
                     elif listing.title in all_listings['shareable_listings']:
                         client.share_item(listing.title)
-                        client.send_offer_to_likers(listing.title)
+
+                        today = datetime.datetime.today()
+                        nine_pm = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=2, minute=0,
+                                                    second=0)
+                        print(today)
+                        print(nine_pm)
+                        if today > nine_pm:
+                            client.send_offer_to_likers(listing.title)
 
         response = requests.get('https://portal.mobilehop.com/proxies/a8bf30bf48de4125afd38f809d68bef2/reset')
         logger.info(response.text)

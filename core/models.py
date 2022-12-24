@@ -197,7 +197,7 @@ class Offer(models.Model):
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE, related_name='offers')
     listing_title = models.CharField(max_length=50)
 
-    datetime_sent = models.DateTimeField(auto_created=True)
+    datetime_sent = models.DateTimeField()
     amount = models.PositiveIntegerField()
 
     def __str__(self):
