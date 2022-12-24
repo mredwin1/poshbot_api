@@ -544,6 +544,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('check_listing_error.png')
 
     def check_listing_timestamp(self, listing_title):
         """Given a listing title will check the last time the listing was shared"""
@@ -604,6 +605,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('check_listing_timestamp_error.png')
 
     def check_inactive(self):
         """Will check if the current user is inactive"""
@@ -629,6 +631,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('check_inactive_error.png')
 
     def delete_listing(self, listing_title):
         """Given a listing title will delete the listing"""
@@ -672,6 +675,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('delete_listing.png')
 
     def check_logged_in(self):
         """Will load cookies if they have not already been loaded. Then go to the login page, if the username field
@@ -821,6 +825,7 @@ class PoshMarkClient(BaseClient):
 
             except Exception as e:
                 self.logger.error(f'{traceback.format_exc()}')
+                self.web_driver.save_screenshot('register_error.png')
                 if not self.posh_user.is_registered:
                     self.logger.error(f'User did not get registered')
         else:
@@ -881,6 +886,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('log_in_error.png')
             self.login_error = True
             return False
 
@@ -913,6 +919,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('go_to_closet_error.png')
             if not self.check_logged_in():
                 self.log_in()
 
@@ -962,6 +969,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('get_all_listings_error.png')
             if not self.check_logged_in():
                 self.log_in()
 
@@ -1001,6 +1009,7 @@ class PoshMarkClient(BaseClient):
             self.posh_user.save()
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('update_profile_error.png')
             if not self.check_logged_in():
                 self.log_in()
 
@@ -1211,6 +1220,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('list_item_error.png')
             self.web_driver.save_screenshot('list_item_error.png')
             if not self.check_logged_in():
                 self.log_in()
@@ -1467,6 +1477,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('update_listing_error.png')
             if not self.check_logged_in():
                 self.log_in()
             self.check_inactive()
@@ -1691,6 +1702,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('replace_fke_listing_error.png')
             if not self.check_logged_in():
                 self.log_in()
             self.check_inactive()
@@ -1730,6 +1742,7 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
+            self.web_driver.save_screenshot('share_listing_error.png')
             if not self.check_logged_in():
                 self.log_in()
 
