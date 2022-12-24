@@ -17,7 +17,8 @@ def advanced_sharing_campaign(campaign_id):
     campaign = Campaign.objects.get(id=campaign_id)
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     delay = campaign.delay * 60
-    deviation = random.randint(0, (delay / 2))
+    sign = 1 if random.random() < 0.5 else -1
+    deviation = random.randint(0, (delay / 2)) * sign
     register_retries = 0
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
@@ -52,7 +53,12 @@ def advanced_sharing_campaign(campaign_id):
         time.sleep(8)
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
-        campaign_delay = (delay - elapsed_time) - deviation
+        campaign_delay = (delay - elapsed_time) + deviation
+
+        logger.info(start_time)
+        logger.info(end_time)
+        logger.info(delay)
+        logger.info(deviation)
 
         campaign.refresh_from_db()
         if campaign.status != Campaign.STOPPED:
