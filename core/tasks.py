@@ -1,5 +1,6 @@
 import logging
 import random
+import requests
 import time
 
 from celery import shared_task
@@ -49,6 +50,8 @@ def advanced_sharing_campaign(campaign_id):
                     elif listing.title in all_listings['shareable_listings']:
                         client.share_item(listing.title)
 
+        requests.get('https://portal.mobilehop.com/proxies/a8bf30bf48de4125afd38f809d68bef2/reset')
+        time.sleep(8)
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
         campaign_delay = (delay - elapsed_time) - deviation
