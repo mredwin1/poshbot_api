@@ -2180,8 +2180,8 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.log_in()
 
-    def check_ip(self, filename=None):
-        self.web_driver.get('https://www.whatsmyip.org/')
-        host_name = self.locate(By.ID, 'hostname')
+    def check_ip(self):
+        self.web_driver.get('https://www.ipchicken.com/')
+        ip = self.locate(By.XPATH, '/html/body/table[2]/tbody/tr/td[3]/p[2]/font/b')
 
-        self.logger.info(f'Hostname: {host_name.text}')
+        self.logger.info(f'IP: {ip}')
