@@ -392,15 +392,16 @@ class BaseClient:
         upper value"""
         seconds = random.randint(lower, upper) if upper else lower
 
-        if seconds > 60:
-            duration = seconds / 60
-            word = 'minutes'
-        else:
-            duration = seconds
-            word = 'second' if seconds == 1 else 'seconds'
+        if seconds:
+            if seconds > 60:
+                duration = seconds / 60
+                word = 'minutes'
+            else:
+                duration = seconds
+                word = 'second' if seconds == 1 else 'seconds'
 
-        self.logger.info(f'Sleeping for about {round(duration, 2)} {word}')
-        time.sleep(seconds)
+            self.logger.info(f'Sleeping for about {round(duration, 2)} {word}')
+            time.sleep(seconds)
 
     def save_cookies(self):
         self.logger.info('Saving cookies')
@@ -996,6 +997,11 @@ class PoshMarkClient(BaseClient):
             header_picture.send_keys(f'/{header_picture_name}')
             self.web_driver.save_screenshot('header_after.png')
             self.sleep(2)
+
+            apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/div/button[2]')
+            apply_button.click()
+
+            self.sleep(1, 2)
 
             save_button = self.locate(By.CLASS_NAME, 'btn--primary')
             save_button.click()

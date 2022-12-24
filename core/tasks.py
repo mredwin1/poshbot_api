@@ -35,7 +35,8 @@ def advanced_sharing_campaign(campaign_id):
             campaign.refresh_from_db()
 
             if campaign.posh_user.is_registered:
-                client.update_profile()
+                if not campaign.posh_user.profile_updated:
+                    client.update_profile()
                 all_listings = client.get_all_listings()
                 all_listing_titles = []
 
