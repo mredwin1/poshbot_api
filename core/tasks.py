@@ -53,10 +53,8 @@ def advanced_sharing_campaign(campaign_id):
                             client.share_item(listing.title)
 
                             today = datetime.datetime.today()
-                            nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=22, minute=0,
+                            nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2, minute=0,
                                                         second=0)
-                            print(today)
-                            print(nine_pm)
                             if today > nine_pm:
                                 client.send_offer_to_likers(listing.title)
 
