@@ -69,8 +69,8 @@ class PoshUser(models.Model):
     phone_number = models.CharField(max_length=20, default='', blank=True)
     profile_picture_id = models.CharField(max_length=200, blank=True)
 
-    profile_picture = models.ImageField(upload_to='profile_pictures', null=True)
-    header_picture = models.ImageField(upload_to='header_pictures', null=True)
+    profile_picture = models.ImageField(upload_to='profile_pictures', null=True, blank=True)
+    header_picture = models.ImageField(upload_to='header_pictures', null=True, blank=True)
 
     email = models.EmailField(blank=True)
 
