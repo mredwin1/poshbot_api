@@ -2182,6 +2182,6 @@ class PoshMarkClient(BaseClient):
 
     def check_ip(self):
         self.web_driver.get('https://www.ipchicken.com/')
-        ip = self.locate(By.XPATH, '/html/body/table[2]/tbody/tr/td[3]/p[2]/font/b')
+        ip = self.locate(By.XPATH, '/html/body/table[2]/tbody/tr/td[3]/p[2]/font/b').text
 
         self.logger.info(f'IP: {ip}')
