@@ -993,11 +993,11 @@ class PoshMarkClient(BaseClient):
             self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
 
             self.sleep(2)
-
+            self.web_driver.save_screenshot('header_before.png')
             header_picture = self.locate(By.XPATH,
                                          '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/label/input')
             header_picture.send_keys(f'/{header_picture_name}')
-
+            self.web_driver.save_screenshot('header_after.png')
             self.sleep(2)
 
             save_button = self.locate(By.CLASS_NAME, 'btn--primary')
