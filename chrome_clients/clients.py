@@ -931,7 +931,7 @@ class PoshMarkClient(BaseClient):
             sold_listings = []
             reserved_listings = []
 
-            self.logger.info('Getting all listings')
+            self.logger.info(f'Getting all listings for {self.campaign.posh_user.username}')
 
             self.go_to_closet()
 
@@ -965,7 +965,6 @@ class PoshMarkClient(BaseClient):
                 'sold_listings': sold_listings,
                 'reserved_listings': reserved_listings
             }
-            self.logger.debug(str(listings))
             return listings
 
         except Exception as e:
