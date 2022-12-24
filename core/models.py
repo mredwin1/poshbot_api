@@ -132,6 +132,7 @@ class Campaign(models.Model):
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STOPPED)
 
     delay = models.SmallIntegerField()
+    lowest_price = models.SmallIntegerField(default=250)
 
     auto_run = models.BooleanField(default=True)
     generate_users = models.BooleanField(default=True)

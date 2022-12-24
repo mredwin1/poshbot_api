@@ -1554,7 +1554,11 @@ class PoshMarkClient(BaseClient):
 
     def check_offers(self, listing_title):
         try:
-            lowest_price = self.campaign.listings.get(title=listing_title).lowest_price
+            if self.campaign.mode == Campaign.ADVANCED_SHARING:
+                lowest_price = self.campaign.listings.get(title=listing_title).lowest_price
+            else:
+                lowest_price = self.campaign.lowest_price
+
             self.logger.info(f'Checking offers for {listing_title}')
             self.web_driver.get('https://poshmark.com/offers/my_offers')
 
