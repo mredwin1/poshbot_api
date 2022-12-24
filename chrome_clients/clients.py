@@ -1715,10 +1715,7 @@ class PoshMarkClient(BaseClient):
 
                         self.sleep(1)
 
-                        offer = round(lowest_price + (lowest_price * .05))
-                        ten_off = int(listing_price - (listing_price * .1))
-                        if offer > ten_off:
-                            offer = ten_off
+                        offer = int(listing_price - (listing_price * .1))
 
                         self.logger.info(f'Sending offers to likers for ${offer}')
 
