@@ -562,9 +562,8 @@ class PoshMarkClient(BaseClient):
                         listing_button.click()
 
                         self.sleep(1)
-
                         timestamp_element = self.locate(
-                            By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[1]/div/header/div/div/div/div[2]'
+                            By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[1]/div[1]/header/div/div/div/div'
                         )
                         timestamp = timestamp_element.text
 
@@ -687,9 +686,7 @@ class PoshMarkClient(BaseClient):
         if not self.cookies_loaded:
             self.load_cookies()
 
-        time.sleep(2)
-
-        self.web_driver.save_screenshot('cookies.png')
+        self.sleep(2)
 
         result = not self.is_present(By.ID, 'login_form_username_email')
 
