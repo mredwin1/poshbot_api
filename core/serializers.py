@@ -78,14 +78,14 @@ class PoshUserSerializer(serializers.ModelSerializer):
         if username_length > 12:
             username = username[:(12 - username_length)]
 
-        random_int = random.randint(100, 999)
-        response = requests.get(f'https://poshmark.com/closet/{username}{random_int}')
+        response = requests.get(f'https://poshmark.com/closet/{username}')
 
         while response.status_code == requests.codes.ok:
             random_int = random.randint(100, 999)
-            response = requests.get(f'https://poshmark.com/closet/{username}{random_int}')
+            username = f'{username[:-3]}{random_int}'
+            response = requests.get(f'https://poshmark.com/closet/{username}')
 
-        return f'{username}{random_int}'
+        return username
 
     def get_new_posh_user(self):
         headers = {
