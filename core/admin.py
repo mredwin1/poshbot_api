@@ -6,6 +6,9 @@ from django.urls import reverse
 from . import models
 
 
+admin.site.register(models.Offer)
+
+
 class ListingInline(admin.StackedInline):
     model = models.Listing
     extra = 0
