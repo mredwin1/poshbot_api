@@ -59,6 +59,8 @@ def advanced_sharing_campaign(campaign_id):
                         if today > nine_pm:
                             client.send_offer_to_likers(listing.title)
 
+                        client.check_offers(listing.title)
+
         response = requests.get('https://portal.mobilehop.com/proxies/a8bf30bf48de4125afd38f809d68bef2/reset')
         logger.info(response.text)
         time.sleep(15)

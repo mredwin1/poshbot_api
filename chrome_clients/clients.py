@@ -1552,10 +1552,9 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.log_in()
 
-    def check_offers(self, redis_listing_id=None, listing_title=None):
+    def check_offers(self, listing_title):
         try:
-            listing_title = self.get_redis_object_attr(redis_listing_id, 'title') if redis_listing_id else listing_title
-            lowest_price = int(self.get_redis_object_attr(redis_listing_id, 'lowest_price')) if redis_listing_id else int(self.get_redis_object_attr(self.redis_campaign_id, 'lowest_price'))
+            lowest_price = self.campaign.listings.get(title=listing_title).lowest_price
             self.logger.info(f'Checking offers for {listing_title}')
             self.web_driver.get('https://poshmark.com/offers/my_offers')
 
