@@ -686,7 +686,7 @@ class PoshMarkClient(BaseClient):
         if not self.cookies_loaded:
             self.load_cookies()
 
-        self.sleep(2)
+        self.sleep(1, 2)
 
         result = not self.is_present(By.ID, 'login_form_username_email')
 
@@ -914,7 +914,7 @@ class PoshMarkClient(BaseClient):
                 if show_all_listings.is_displayed():
                     show_all_listings.click()
 
-            self.sleep(2)
+            self.sleep(0, 2)
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
