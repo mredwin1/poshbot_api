@@ -54,12 +54,7 @@ def advanced_sharing_campaign(campaign_id):
         time.sleep(15)
         end_time = time.time()
         elapsed_time = round(end_time - start_time, 2)
-        campaign_delay = (delay - elapsed_time) + deviation
-
-        logger.info(start_time)
-        logger.info(end_time)
-        logger.info(delay)
-        logger.info(deviation)
+        campaign_delay = (delay - elapsed_time) + deviation if elapsed_time > 1 else deviation
 
         campaign.refresh_from_db()
         if campaign.status != Campaign.STOPPED:
