@@ -1701,7 +1701,7 @@ class PoshMarkClient(BaseClient):
             ).order_by('datetime_sent')
             first_offer = offers.first()
 
-            if first_offer:
+            if not first_offer:
                 self.go_to_closet()
 
                 if self.check_listing(listing_title):
