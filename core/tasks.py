@@ -27,7 +27,7 @@ def advanced_sharing_campaign(campaign_id):
 
         start_time = time.time()
 
-        with PoshMarkClient(campaign, logger, proxy_hostname='gate.smartproxy.com', proxy_port='10000') as client:
+        with PoshMarkClient(campaign, logger, proxy_hostname='us.smartproxy.com', proxy_port='10001') as client:
             while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
                 client.register()
                 client.update_profile()
