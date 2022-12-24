@@ -806,8 +806,9 @@ class PoshMarkClient(BaseClient):
                     attempts += 1
                     self.sleep(5)
 
-                if response.status_code != requests.codes.ok:
-                    self.logger.info('Registration was not successful')
+                if response.status_code == requests.codes.ok:
+                    self.logger.info('Registration was successful')
+                    self.finish_registration()
                 else:
                     error_code = self.check_for_errors()
                     if error_code == 'CAPTCHA':
