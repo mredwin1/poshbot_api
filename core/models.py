@@ -77,7 +77,7 @@ class PoshUser(models.Model):
     sales = models.PositiveSmallIntegerField(default=0, blank=True)
 
     date_added = models.DateField(auto_now_add=True)
-    date_of_birth = models.DateField(null=True)
+    date_of_birth = models.DateField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
