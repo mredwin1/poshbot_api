@@ -60,7 +60,7 @@ def advanced_sharing_campaign(campaign_id):
 
                             client.check_offers(listing.title)
 
-        response = requests.get('https://portal.mobilehop.com/proxies/a8bf30bf48de4125afd38f809d68bef2/reset')
+        response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
         logger.info(response.text)
         time.sleep(15)
         end_time = time.time()
