@@ -93,7 +93,7 @@ def basic_sharing_campaign(campaign_id):
         start_time = time.time()
 
         if campaign.posh_user.is_registered:
-            with PoshMarkClient(campaign, logger, proxy_hostname='192.154.249.98', proxy_port='8000') as client:
+            with PoshMarkClient(campaign, logger, proxy_hostname='192.154.249.117', proxy_port='8000') as client:
                 all_listings = client.get_all_listings()
 
                 if all_listings:
