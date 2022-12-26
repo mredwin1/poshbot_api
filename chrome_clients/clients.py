@@ -428,11 +428,13 @@ class BaseClient:
                         self.sleep(2)
                         self.cookies_loaded = True
                         self.logger.info('Cookies loaded successfully')
+            else:
+                self.logger.warning('No cookied found to load')
         except Exception as e:
             self.logger.error(traceback.format_exc())
             if os.path.exists(filename):
                 os.remove(filename)
-                self.logger.warning('Problem with cookie file: Deleted file')
+                self.logger.warning('Problem with cookie file: File Deleted')
                 self.load_cookies()
             else:
                 self.logger.warning('Cookies not loaded: Cookie file not found')
