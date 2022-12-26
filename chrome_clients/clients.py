@@ -416,8 +416,9 @@ class BaseClient:
 
     def load_cookies(self):
         self.logger.info('Loading Cookies')
+        filename = f'{self.cookies_path}/{self.cookies_filename}.pkl'
+
         try:
-            filename = f'{self.cookies_path}/{self.cookies_filename}.pkl'
             if os.path.exists(filename):
                 if os.path.getsize(filename) > 0:
                     with open(filename, 'rb') as cookies:
@@ -429,7 +430,11 @@ class BaseClient:
                         self.logger.info('Cookies loaded successfully')
         except Exception as e:
             self.logger.error(traceback.format_exc())
-            self.logger.warning('Cookies not loaded: Cookie file not found')
+            if os.path.exists(filename):
+                os.remove(filename)
+                self.logger.warning('Problem with cookie file: Deleted')
+            else:
+                self.logger.warning('Cookies not loaded: Cookie file not found')
 
     def bot_check(self):
         self.web_driver.get('https://bot.sannysoft.com')
