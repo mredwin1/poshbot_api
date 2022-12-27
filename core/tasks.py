@@ -116,39 +116,49 @@ def basic_sharing_campaign(campaign_id):
 
         start_time = time.time()
 
-        if campaign.posh_user.is_registered:
-            with PoshMarkClient(campaign, logger, proxy_hostname='192.154.244.85', proxy_port='8000') as client:
-                all_listings = client.get_all_listings()
 
-                if all_listings:
-                    for listing_title in all_listings['shareable_listings']:
-                        client.share_item(listing_title)
+        try:
+            if campaign.posh_user.is_registered:
+                with PoshMarkClient(campaign, logger, proxy_hostname='192.154.244.85', proxy_port='8000') as client:
+                    all_listings = client.get_all_listings()
 
-                        today = datetime.datetime.today()
-                        nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
-                                                    minute=0,
-                                                    second=0)
-                        if today > nine_pm:
-                            client.send_offer_to_likers(listing_title)
+                    if all_listings:
+                        for listing_title in all_listings['shareable_listings']:
+                            client.share_item(listing_title)
 
-                        client.check_offers(listing_title)
+                            today = datetime.datetime.today()
+                            nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
+                                                        minute=0,
+                                                        second=0)
+                            if today > nine_pm:
+                                client.send_offer_to_likers(listing_title)
 
-        response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
-        logger.info(response.text)
-        time.sleep(15)
+                            client.check_offers(listing_title)
 
-        end_time = time.time()
-        elapsed_time = round(end_time - start_time, 2)
-        campaign_delay = (delay - elapsed_time) + deviation if elapsed_time > 1 else deviation
+            response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
+            logger.info(response.text)
+            time.sleep(15)
 
-        campaign.refresh_from_db()
-        if campaign.status != Campaign.STOPPED:
-            campaign.status = Campaign.IDLE
-            campaign.save()
-            hours, remainder = divmod(campaign_delay, 3600)
-            minutes, seconds = divmod(remainder, 60)
-            logger.info(
-                f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
-            basic_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
+            end_time = time.time()
+            elapsed_time = round(end_time - start_time, 2)
+            campaign_delay = (delay - elapsed_time) + deviation if elapsed_time > 1 else deviation
+
+            campaign.refresh_from_db()
+            if campaign.status != Campaign.STOPPED:
+                campaign.status = Campaign.IDLE
+                campaign.save()
+                hours, remainder = divmod(campaign_delay, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                logger.info(
+                    f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
+                basic_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
+        except WebDriverException as e:
+            logger.error(f'{traceback.format_exc()}')
+            response = requests.get(
+                'https://portal.mobilehop.com/api/v1/modems/reset/832aeef52d6f4ce59dad8d3b6dcf6868')
+            logger.info(response.text)
+            time.sleep(180)
+
+
 
     print('Campaign ended')
