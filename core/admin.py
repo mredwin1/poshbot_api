@@ -162,7 +162,7 @@ class CampaignAdmin(admin.ModelAdmin):
                 ('status',),
                 ('posh_user',),
                 ('mode',),
-                ('title', 'delay'),
+                ('title', 'delay', 'lowest_price'),
             )
         }),
     )
