@@ -21,6 +21,7 @@ def advanced_sharing_campaign(campaign_id):
     sign = 1 if random.random() < 0.5 else -1
     deviation = random.randint(0, (delay / 2)) * sign
     register_retries = 0
+    campaign_delay = None
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
@@ -69,8 +70,7 @@ def advanced_sharing_campaign(campaign_id):
                         client.check_offers(listing.title)
 
                     if not shared:
-                        campaign.status = Campaign.STOPPED
-                        campaign.save()
+                        campaign_delay = 3600
                 else:
                     campaign.status = Campaign.STOPPED
                     campaign.save()
@@ -80,9 +80,11 @@ def advanced_sharing_campaign(campaign_id):
             response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
             logger.info(response.text)
             time.sleep(15)
-            end_time = time.time()
-            elapsed_time = round(end_time - start_time, 2)
-            campaign_delay = (delay - elapsed_time) + deviation if elapsed_time > 1 else deviation
+
+            if campaign_delay:
+                end_time = time.time()
+                elapsed_time = round(end_time - start_time, 2)
+                campaign_delay = (delay - elapsed_time) + deviation if elapsed_time > 1 else deviation
 
             campaign.status = Campaign.IDLE
             campaign.save()
