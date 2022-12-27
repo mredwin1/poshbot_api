@@ -51,6 +51,7 @@ def advanced_sharing_campaign(campaign_id):
                         if listing.title not in all_listing_titles:
                             listing_images = ListingImage.objects.filter(listing=listing)
                             client.list_item(listing, listing_images)
+                            campaign_delay = 1800  # Custom delay after list
                         elif listing.title in all_listings['shareable_listings']:
                             listing_shared = client.share_item(listing.title)
 
