@@ -71,7 +71,7 @@ def advanced_sharing_campaign(campaign_id):
                         if random.random() < .20 and shared:
                             client.check_offers(listing.title)
 
-                        if not shared:
+                        if not shared and not campaign_delay:
                             campaign_delay = 3600
                     else:
                         campaign.status = Campaign.STOPPED
@@ -83,7 +83,7 @@ def advanced_sharing_campaign(campaign_id):
                 logger.info(response.text)
                 time.sleep(15)
 
-                if campaign_delay:
+                if not campaign_delay:
                     end_time = time.time()
                     elapsed_time = round(end_time - start_time, 2)
                     campaign_delay = (delay - elapsed_time) + deviation if elapsed_time > 1 else deviation
