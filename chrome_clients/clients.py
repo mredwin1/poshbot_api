@@ -580,7 +580,7 @@ class PoshMarkClient(BaseClient):
                         elapsed_time = 9001
                         unit = 'DECADES'
 
-                        self.logger.debug(f'Timestamp: {timestamp}')
+                        self.logger.info(f'Timestamp: {timestamp}')
 
                         space_index = timestamp.find(' ')
 
