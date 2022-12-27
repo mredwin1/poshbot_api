@@ -64,7 +64,7 @@ def advanced_sharing_campaign(campaign_id):
                                                      minute=59, second=59)
                         if nine_pm < today < midnight:
                             client.send_offer_to_likers(listing.title)
-
+                    logger.info(shared)
                     if random.random() < .20 and shared:
                         client.check_offers(listing.title)
 
