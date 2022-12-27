@@ -611,7 +611,7 @@ class PoshMarkClient(BaseClient):
             else:
                 if self.check_inactive():
                     self.posh_user_inactive()
-                    return False
+                return False
 
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
