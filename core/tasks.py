@@ -60,8 +60,8 @@ def advanced_sharing_campaign(campaign_id):
                         today = datetime.datetime.today()
                         nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
                                                     minute=0, second=0)
-                        midnight = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=4,
-                                                     minute=59, second=59)
+                        midnight = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=5,
+                                                     minute=0, second=0)
                         if nine_pm < today < midnight:
                             client.send_offer_to_likers(listing.title)
                     logger.info(shared)
