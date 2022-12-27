@@ -30,13 +30,12 @@ def advanced_sharing_campaign(campaign_id):
         start_time = time.time()
 
         with PoshMarkClient(campaign, logger, proxy_hostname='192.154.244.85', proxy_port='8000') as client:
-            while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and register_retries < 3:
+            while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and campaign.posh_user.is_active and register_retries < 3:
                 client.register()
+                campaign.refresh_from_db()
                 register_retries += 1
 
-            campaign.refresh_from_db()
-
-            if campaign.posh_user.is_registered:
+            if campaign.posh_user.is_registered and campaign.posh_user.is_active:
                 if not campaign.posh_user.profile_updated:
                     client.update_profile()
                 all_listings = client.get_all_listings()
