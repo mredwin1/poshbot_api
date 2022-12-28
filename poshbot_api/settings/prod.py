@@ -5,15 +5,15 @@ DEBUG = False
 SECRET_KEY = os.environ.get('SECRET_KEY')
 
 ALLOWED_HOSTS = [
-    'api.melondova.com'
+    'turtleswags.com'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://api.melondova.com'
+    'https://turtleswags.com'
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'https://api.melondova.com',
+    'https://turtleswags.com',
     'https://melondova.com',
     'https://www.melondova.com'
 ]

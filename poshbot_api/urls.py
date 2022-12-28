@@ -20,7 +20,7 @@ from django.urls import path, include
 
 admin.site.site_header = 'PoshBot Admin'
 admin.site.index_title = 'Admin Panel'
-admin.site.site_url = 'https://www.melondova.com'
+admin.site.site_url = 'https://melondova.com'
 
 urlpatterns = [
     path('', admin.site.urls),
