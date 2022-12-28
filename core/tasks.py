@@ -108,6 +108,10 @@ def advanced_sharing_campaign(campaign_id):
             logger.info(response.text)
             time.sleep(180)
 
+    if not campaign.posh_user.is_active:
+        campaign.status = Campaign.STOPPED
+        campaign.save()
+
     print('Campaign ended')
 
 
@@ -165,5 +169,9 @@ def basic_sharing_campaign(campaign_id):
                 'https://portal.mobilehop.com/api/v1/modems/reset/832aeef52d6f4ce59dad8d3b6dcf6868')
             logger.info(response.text)
             time.sleep(180)
+
+    if not campaign.posh_user.is_active:
+        campaign.status = Campaign.STOPPED
+        campaign.save()
 
     print('Campaign ended')
