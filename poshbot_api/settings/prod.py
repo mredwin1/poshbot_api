@@ -9,8 +9,6 @@ ALLOWED_HOSTS = [
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://turtleswags.com',
-    'https://www.turtleswags.com',
     'https://melondova.com',
     'https://www.melondova.com'
 ]
