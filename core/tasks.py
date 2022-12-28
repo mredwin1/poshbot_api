@@ -78,11 +78,11 @@ def advanced_sharing_campaign(campaign_id):
                         campaign.save()
 
             campaign.refresh_from_db()
-            if campaign.status != Campaign.STOPPED:
-                response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
-                logger.info(response.text)
-                time.sleep(15)
+            response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
+            logger.info(response.text)
+            time.sleep(10)
 
+            if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
                 if not campaign_delay:
                     end_time = time.time()
                     elapsed_time = round(end_time - start_time, 2)
@@ -116,7 +116,6 @@ def basic_sharing_campaign(campaign_id):
 
         start_time = time.time()
 
-
         try:
             if campaign.posh_user.is_registered:
                 with PoshMarkClient(campaign, logger, proxy_hostname='192.154.244.85', proxy_port='8000') as client:
@@ -137,14 +136,14 @@ def basic_sharing_campaign(campaign_id):
 
             response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
             logger.info(response.text)
-            time.sleep(15)
+            time.sleep(10)
 
             end_time = time.time()
             elapsed_time = round(end_time - start_time, 2)
             campaign_delay = (delay - elapsed_time) + deviation if elapsed_time > 1 else deviation
 
             campaign.refresh_from_db()
-            if campaign.status != Campaign.STOPPED:
+            if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
                 campaign.status = Campaign.IDLE
                 campaign.save()
                 hours, remainder = divmod(campaign_delay, 3600)
@@ -158,7 +157,5 @@ def basic_sharing_campaign(campaign_id):
                 'https://portal.mobilehop.com/api/v1/modems/reset/832aeef52d6f4ce59dad8d3b6dcf6868')
             logger.info(response.text)
             time.sleep(180)
-
-
 
     print('Campaign ended')
