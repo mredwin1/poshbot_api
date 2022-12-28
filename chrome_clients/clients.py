@@ -1063,12 +1063,9 @@ class PoshMarkClient(BaseClient):
             self.sleep(2)
 
             if self.is_present(By.XPATH, '//*[@id="app"]/main/div[1]/div/div[2]'):
-                self.logger.error('Error encountered when on the new listing page')
+                self.logger.error('Error encountered when on the new listing page. Setting user inactive.')
                 self.web_driver.save_screenshot('listing_error.png')
-                if self.check_inactive():
-                    self.posh_user_inactive()
-                else:
-                    self.logger.info('User is not inactive')
+                self.posh_user_inactive()
             else:
                 # Set category and sub category
                 self.logger.info('Setting category')
