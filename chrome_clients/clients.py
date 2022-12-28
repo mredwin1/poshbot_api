@@ -347,7 +347,7 @@ class BaseClient:
                 fix_hairline=True,
                 )
         self.web_driver.implicitly_wait(15)
-        self.web_driver.set_page_load_timeout(300)
+        self.web_driver.set_page_load_timeout(60)
         if '--headless' in self.web_driver_options.arguments:
             self.web_driver.set_window_size(1920, 1080)
 
