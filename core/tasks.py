@@ -88,9 +88,10 @@ def advanced_sharing_campaign(campaign_id):
                             campaign.save()
 
             campaign.refresh_from_db()
-            response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
-            logger.info(response.text)
-            time.sleep(10)
+            if proxy_hostname and proxy_port:
+                response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
+                logger.info(response.text)
+                time.sleep(10)
 
             if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
                 if not campaign_delay:
