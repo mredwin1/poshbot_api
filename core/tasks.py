@@ -24,6 +24,7 @@ def advanced_sharing_campaign(campaign_id):
     deviation = random.randint(0, (delay / 2)) * sign
     register_retries = 0
     campaign_delay = None
+    is_new_user = not campaign.posh_user.is_registered
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
@@ -40,42 +41,49 @@ def advanced_sharing_campaign(campaign_id):
                 if campaign.posh_user.is_registered and campaign.posh_user.is_active:
                     if not campaign.posh_user.profile_updated:
                         client.update_profile()
-                    all_listings = client.get_all_listings()
-                    all_listing_titles = []
 
-                    if all_listings:
-                        shared = False
-                        for listings in all_listings.values():
-                            all_listing_titles += listings
-
+                    if is_new_user:
                         for listing in campaign_listings:
-                            if listing.title not in all_listing_titles:
-                                listing_images = ListingImage.objects.filter(listing=listing)
-                                client.list_item(listing, listing_images)
-                                campaign_delay = 1800  # Custom delay after list
-                            elif listing.title in all_listings['shareable_listings']:
-                                listing_shared = client.share_item(listing.title)
-
-                                if not shared:
-                                    shared = listing_shared
-
-                        if random.random() < .10 and shared:
-                            today = datetime.datetime.today()
-                            nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
-                                                        minute=0, second=0)
-                            midnight = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=5,
-                                                         minute=0, second=0)
-                            if nine_pm < today < midnight:
-                                client.send_offer_to_likers(listing.title)
-
-                        if random.random() < .20 and shared:
-                            client.check_offers(listing.title)
-
-                        if not shared and not campaign_delay:
-                            campaign_delay = 3600
+                            listing_images = ListingImage.objects.filter(listing=listing)
+                            client.list_item(listing, listing_images)
+                        campaign_delay = 1800  # Custom delay after list
                     else:
-                        campaign.status = Campaign.STOPPED
-                        campaign.save()
+                        all_listings = client.get_all_listings()
+                        all_listing_titles = []
+
+                        if all_listings:
+                            shared = False
+                            for listings in all_listings.values():
+                                all_listing_titles += listings
+
+                            for listing in campaign_listings:
+                                if listing.title not in all_listing_titles:
+                                    listing_images = ListingImage.objects.filter(listing=listing)
+                                    client.list_item(listing, listing_images)
+                                    campaign_delay = 1800  # Custom delay after list
+                                elif listing.title in all_listings['shareable_listings']:
+                                    listing_shared = client.share_item(listing.title)
+
+                                    if not shared:
+                                        shared = listing_shared
+
+                            if random.random() < .10 and shared:
+                                today = datetime.datetime.today()
+                                nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
+                                                            minute=0, second=0)
+                                midnight = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=5,
+                                                             minute=0, second=0)
+                                if nine_pm < today < midnight:
+                                    client.send_offer_to_likers(listing.title)
+
+                            if random.random() < .20 and shared:
+                                client.check_offers(listing.title)
+
+                            if not shared and not campaign_delay:
+                                campaign_delay = 3600
+                        else:
+                            campaign.status = Campaign.STOPPED
+                            campaign.save()
 
             campaign.refresh_from_db()
             response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
