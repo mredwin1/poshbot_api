@@ -25,6 +25,7 @@ gunicorn = "*"
 celery = "*"
 selenium = "*"
 selenium-stealth = "*"
+pycurl = "*"
 
 [dev-packages]
 
