@@ -169,7 +169,7 @@ CELERY_BROKER_URL = f'redis://redis:6379/1'
 CELERY_RESULT_BACKEND = f'redis://redis:6379/1'
 
 CELERY_TASK_ROUTES = {
-    'core.tasks.basic_sharing': {'queue': 'concurrency', 'routing_key': 'concurrency'},
-    'core.tasks.advanced_sharing': {'queue': 'concurrency', 'routing_key': 'concurrency'},
+    'core.tasks.basic_sharing_campaign': {'queue': 'concurrency', 'routing_key': 'concurrency'},
+    'core.tasks.advanced_sharing_campaign': {'queue': 'concurrency', 'routing_key': 'concurrency'},
     'core.tasks.init_campaign': {'queue': 'no_concurrency', 'routing_key': 'no_concurrency'},
 }
