@@ -62,7 +62,7 @@ def init_campaign(campaign_id):
 
 @shared_task
 def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None):
-    print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
+    logger.info(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     delay = campaign.delay * 60
@@ -160,7 +160,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
         campaign.status = Campaign.STOPPED
         campaign.save()
 
-    print('Campaign ended')
+    logger.info('Campaign ended')
 
 
 @shared_task
