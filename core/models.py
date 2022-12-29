@@ -210,7 +210,7 @@ class ProxyConnection(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, null=True)
     created_date = models.DateTimeField()
     in_use = models.BooleanField(default=True)
-    proxy_license_uuid = models.UUIDField()
+    proxy_license_uuid = models.CharField(max_length=255)
     proxy_name = models.CharField(max_length=255)
 
     @staticmethod
