@@ -45,21 +45,25 @@ def get_proxy():
 @shared_task
 def init_campaign(campaign_id):
     campaign = Campaign.objects.get(id=campaign_id)
-    proxy = None
 
-    logger.info(f'Getting a proxy for the following campaing: {campaign}')
+    if not campaign.posh_user.is_registered:
+        proxy = None
 
-    while not proxy:
-        proxy = get_proxy()
-        if not proxy:
-            logger.info('No proxy available, waiting 30sec')
-            time.sleep(30)
+        logger.info(f'Getting a proxy for the following campaing: {campaign}')
 
-    proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
-    proxy_connection.save()
-    logger.info(f'Proxy connection made: {proxy_connection}')
+        while not proxy:
+            proxy = get_proxy()
+            if not proxy:
+                logger.info('No proxy available, waiting 30sec')
+                time.sleep(30)
 
-    advanced_sharing_campaign.delay(campaign_id, proxy['ip'], proxy['port'])
+        proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
+        proxy_connection.save()
+        logger.info(f'Proxy connection made: {proxy_connection}')
+
+        advanced_sharing_campaign.delay(campaign_id, proxy['ip'], proxy['port'])
+    else:
+        advanced_sharing_campaign.delay(campaign_id)
 
 
 @shared_task
