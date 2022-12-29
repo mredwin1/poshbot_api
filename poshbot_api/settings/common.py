@@ -177,5 +177,5 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_TASK_ROUTES = {
     'core.tasks.basic_sharing_campaign': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
     'core.tasks.advanced_sharing_campaign': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
-    'core.tasks.init_campaign': {'queue': 'campaign_no_concurrency', 'routing_key': 'no_concurrency'},
+    'core.tasks.init_campaign': {'queue': 'campaign_no_concurrency.fifo', 'routing_key': 'no_concurrency'},
 }
