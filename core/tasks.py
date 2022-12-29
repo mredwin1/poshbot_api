@@ -34,7 +34,7 @@ def get_proxy():
             return available_proxy
         else:
             for connection in connections:
-                if (datetime.datetime.today() - connection.created_date).seconds > 900:
+                if (datetime.datetime.utcnow() - connection.created_date).seconds > 900:
                     connection.delete()
 
     return None
@@ -114,7 +114,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                         shared = listing_shared
 
                             if random.random() < .50 and shared:
-                                today = datetime.datetime.today()
+                                today = datetime.datetime.utcnow()
                                 nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
                                                             minute=0, second=0)
                                 midnight = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=5,
@@ -185,7 +185,7 @@ def basic_sharing_campaign(campaign_id):
                         for listing_title in all_listings['shareable_listings']:
                             client.share_item(listing_title)
 
-                            today = datetime.datetime.today()
+                            today = datetime.datetime.utcnow()
                             nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
                                                         minute=0,
                                                         second=0)
