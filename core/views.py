@@ -113,10 +113,6 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         campaign.status = Campaign.IDLE
         campaign.save()
         serializer = self.get_serializer(campaign)
-        import logging
-        logger = logging.getLogger(__name__)
-        logger.info(campaign_mapping[campaign.mode])
-        logger.info(pk)
         campaign_mapping[campaign.mode].delay(pk)
 
         return Response(serializer.data)
