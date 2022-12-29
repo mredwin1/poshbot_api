@@ -225,16 +225,20 @@ class ProxyConnection(models.Model):
         else:
             return None
 
-    def fast_reset(self):
+    def fast_reset(self, proxy_license_uuid=None):
         cookies = self.authenticate()
-        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/reset/{self.proxy_license_uuid}',
+        if not proxy_license_uuid:
+            proxy_license_uuid = self.proxy_license_uuid
+        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/reset/{proxy_license_uuid}',
                                 cookies=cookies)
 
         return response.text
 
-    def hard_rest(self):
+    def hard_rest(self, proxy_license_uuid=None):
         cookies = self.authenticate()
-        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/hard_reset/{self.proxy_license_uuid}',
+        if not proxy_license_uuid:
+            proxy_license_uuid = self.proxy_license_uuid
+        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/hard_reset/{proxy_license_uuid}',
                                 cookies=cookies)
 
         return response.text
