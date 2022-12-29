@@ -20,7 +20,6 @@ def get_proxy():
     list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
 
     available_proxies = list_response.json()['result']
-    logger.info(available_proxies)
 
     for available_proxy in available_proxies:
         connections = ProxyConnection.objects.filter(proxy_license_uuid=available_proxy['uuid'])
@@ -55,8 +54,9 @@ def init_campaign(campaign_id):
             time.sleep(30)
 
     proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.now(), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
-
+    proxy_connection.save()
     logger.info(f'Proxy connection made: {proxy_connection}')
+    logger.info(f'Proxy Details: {proxy}')
 
     advanced_sharing_campaign.delay(campaign_id, proxy['ip'], proxy['port'])
 
