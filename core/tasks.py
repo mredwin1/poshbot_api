@@ -190,7 +190,7 @@ def basic_sharing_campaign(campaign_id):
                             today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                             nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
                                                         minute=0,
-                                                        second=0)
+                                                        second=0).replace(tzinfo=pytz.utc)
                             if today > nine_pm:
                                 client.send_offer_to_likers(listing_title)
 
