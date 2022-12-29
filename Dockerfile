@@ -4,7 +4,7 @@ FROM ghcr.io/mredwin1/chrome:latest
 COPY . .
 
 # Install the dependencies
-RUN pipenv install --system --deploy
+RUN pipenv install --system --deploy --skip-lock
 
 # Run web server through custom manager
 ENTRYPOINT ["python3", "manage.py"]
