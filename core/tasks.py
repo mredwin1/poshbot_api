@@ -54,7 +54,7 @@ def init_campaign(campaign_id):
             logger.info('No proxy available, waiting 30sec')
             time.sleep(30)
 
-    proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.now(), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
+    proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.utcnow(), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
     proxy_connection.save()
     logger.info(f'Proxy connection made: {proxy_connection}')
 
