@@ -76,7 +76,7 @@ services:
     image: ghcr.io/mredwin1/poshbot_api:latest
     container_name: celery_noconcurrency_poshbot_api
     restart: always
-    entrypoint: celery -A poshbot_api worker --concurrency=1 -Q no_concurrency -l INFO
+    entrypoint: celery -A poshbot_api worker --concurrency=1 -Q campaign_no_concurrency.fifo -l INFO
     depends_on:
       - redis
     env_file:
@@ -90,7 +90,7 @@ services:
     image: ghcr.io/mredwin1/poshbot_api:latest
     container_name: celery_concurrency_poshbot_api
     restart: always
-    entrypoint: celery -A poshbot_api worker --autoscale=500,1 -Q concurrency -l INFO
+    entrypoint: celery -A poshbot_api worker --autoscale=500,1 -Q campaign_concurrency.fifo -l INFO
     depends_on:
       - redis
     env_file:
