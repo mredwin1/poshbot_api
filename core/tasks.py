@@ -36,6 +36,7 @@ def get_proxy():
             for connection in connections:
                 if (datetime.datetime.utcnow() - connection.created_date).seconds > 900:
                     connection.delete()
+                    return available_proxy
 
     return None
 
