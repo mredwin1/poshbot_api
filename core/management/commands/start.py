@@ -6,7 +6,7 @@ import time
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db.utils import OperationalError
-from core.models import User, Campaign
+from core.models import User, Campaign, ProxyConnection
 
 
 class Command(BaseCommand):
@@ -47,9 +47,13 @@ class Command(BaseCommand):
 
         logging.info('Setting all campaigns to IDLE status')
         campaigns = Campaign.objects.exclude(status=Campaign.STOPPED)
-        for campaign in campaigns:
-            campaign.status = Campaign.STOPPED
-            campaign.save()
+        if campaigns:
+            campaigns.update(status=Campaign.STOPPED)
+
+        logging.info('Removing all Proxy Connections')
+        proxy_connections = ProxyConnection.objects.all()
+        if proxy_connections:
+            proxy_connections.delete()
 
         logging.info('Starting server...')
         os.system("gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 8 -w 4")
