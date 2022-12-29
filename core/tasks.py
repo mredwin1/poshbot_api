@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import pytz
 import random
 import requests
 import time
@@ -34,7 +35,7 @@ def get_proxy():
             return available_proxy
         else:
             for connection in connections:
-                if (datetime.datetime.utcnow() - connection.created_date).seconds > 900:
+                if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - connection.created_date).seconds > 900:
                     connection.delete()
                     return available_proxy
 
@@ -54,7 +55,7 @@ def init_campaign(campaign_id):
             logger.info('No proxy available, waiting 30sec')
             time.sleep(30)
 
-    proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.utcnow(), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
+    proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
     proxy_connection.save()
     logger.info(f'Proxy connection made: {proxy_connection}')
 
@@ -115,7 +116,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                         shared = listing_shared
 
                             if random.random() < .50 and shared:
-                                today = datetime.datetime.utcnow()
+                                today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
                                                             minute=0, second=0)
                                 midnight = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=5,
@@ -186,7 +187,7 @@ def basic_sharing_campaign(campaign_id):
                         for listing_title in all_listings['shareable_listings']:
                             client.share_item(listing_title)
 
-                            today = datetime.datetime.utcnow()
+                            today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                             nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
                                                         minute=0,
                                                         second=0)
