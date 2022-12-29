@@ -1,6 +1,7 @@
 import logging
 import os
 import sys
+import requests
 import time
 
 from django.core.management import call_command
@@ -54,6 +55,15 @@ class Command(BaseCommand):
         proxy_connections = ProxyConnection.objects.all()
         if proxy_connections:
             proxy_connections.delete()
+
+        logging.info('Resetting all proxy IPs')
+        cookies = ProxyConnection.authenticate()
+        list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
+
+        available_proxies = list_response.json()['result']
+
+        for available_proxy in available_proxies:
+            ProxyConnection.fast_reset(available_proxy['uuid'])
 
         logging.info('Starting server...')
         os.system("gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 8 -w 4")
