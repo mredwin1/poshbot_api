@@ -173,3 +173,5 @@ CELERY_TASK_ROUTES = {
     'core.tasks.advanced_sharing_campaign': {'queue': 'concurrency', 'routing_key': 'concurrency'},
     'core.tasks.init_campaign': {'queue': 'no_concurrency', 'routing_key': 'no_concurrency'},
 }
+
+CELERY_IGNORE_RESULT = True
