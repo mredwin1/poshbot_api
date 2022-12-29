@@ -167,3 +167,9 @@ LOGGING = {
 
 CELERY_BROKER_URL = f'redis://redis:6379/1'
 CELERY_RESULT_BACKEND = f'redis://redis:6379/1'
+
+CELERY_TASK_ROUTES = {
+    'poshmark.tasks.basic_sharing': {'queue': 'concurrency', 'routing_key': 'concurrency'},
+    'poshmark.tasks.advanced_sharing': {'queue': 'concurrency', 'routing_key': 'concurrency'},
+    'poshmark.tasks.init_campaign': {'queue': 'no_concurrency', 'routing_key': 'no_concurrency'},
+}

@@ -13,7 +13,6 @@ services:
     depends_on:
       - redis
       - celery
-#      - celery_beat
     networks:
       - traefik
       - internal
@@ -72,11 +71,11 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/letsencrypt/acme.json:/acme.json"
-  celery:
+  celery_noconcurrency:
     image: ghcr.io/mredwin1/poshbot_api:latest
-    container_name: celery_poshbot_api
+    container_name: celery_noconcurrency_poshbot_api
     restart: always
-    entrypoint: celery -A poshbot_api worker --concurrency=1  -l INFO
+    entrypoint: celery -A poshbot_api worker --concurrency=1 -Q no_concurrency -l INFO
     depends_on:
       - redis
     env_file:
@@ -86,19 +85,20 @@ services:
     volumes:
       - /dev/shm:/dev/shm
       - bot_data:/bot_data
-#  celery_beat:
-#    image: ghcr.io/mredwin1/poshbot_api:latest
-#    container_name: celery_beat_poshbot
-#    restart: always
-#    entrypoint: celery -A poshbot_api beat -l INFO
-#    depends_on:
-#      - redis
-#    env_file:
-#      - .env
-#    networks:
-#      - internal
-#    volumes:
-#      - /dev/shm:/dev/shm
+  celery_concurrency:
+    image: ghcr.io/mredwin1/poshbot_api:latest
+    container_name: celery_concurrency_poshbot_api
+    restart: always
+    entrypoint: celery -A poshbot_api worker --concurrency=1 -Q concurrency -l INFO
+    depends_on:
+      - redis
+    env_file:
+      - .env
+    networks:
+      - internal
+    volumes:
+      - /dev/shm:/dev/shm
+      - bot_data:/bot_data
 
 networks:
   internal:
