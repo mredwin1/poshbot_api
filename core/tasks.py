@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import random
 import requests
 import time
@@ -9,13 +10,53 @@ from celery import shared_task
 from chrome_clients.clients import PoshMarkClient
 from selenium.common.exceptions import WebDriverException
 
-from .models import Campaign, Listing, ListingImage
+from .models import Campaign, Listing, ListingImage, ProxyConnection
 
 logger = logging.getLogger(__name__)
 
 
+def get_proxy():
+    cookies = ProxyConnection.authenticate()
+    list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
+
+    available_proxies = list_response.json()['result']
+
+    for available_proxy in available_proxies:
+        connections = ProxyConnection.objects.filter(proxy_license_uuid=available_proxy['uuid'])
+        connections_in_use = connections.filter(in_use=True)
+        if connections.count() >= int(os.environ.get('MAX_PROXY_CONNECTIONS', '4')) and connections_in_use.count() == 0:
+            first_connection = connections.first()
+            first_connection.fast_reset()
+
+            connections.delete()
+            return available_proxy
+        elif connections.count() < int(os.environ.get('MAX_PROXY_CONNECTIONS', '4')):
+            return available_proxy
+        else:
+            for connection in connections:
+                if (datetime.datetime.today() - connection.created_date).seconds > 900:
+                    connection.delete()
+
+    return None
+
+
 @shared_task
-def advanced_sharing_campaign(campaign_id):
+def init_campaign(campaign_id):
+    campaign = Campaign.objects.get(id=campaign_id)
+    proxy = None
+
+    while not proxy:
+        proxy = get_proxy()
+        if not proxy:
+            time.sleep(30)
+
+    ProxyConnection(campaign=campaign, created_date=datetime.datetime.now(), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
+
+    advanced_sharing_campaign.delay(campaign_id, proxy['ip'], proxy['port'])
+
+
+@shared_task
+def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None):
     print(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
@@ -25,8 +66,6 @@ def advanced_sharing_campaign(campaign_id):
     register_retries = 0
     campaign_delay = None
     is_new_user = not campaign.posh_user.is_registered
-    proxy_hostname = '192.154.244.85' if not campaign.posh_user.is_registered else None
-    proxy_port = '8000' if not campaign.posh_user.is_registered else None
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
@@ -87,11 +126,12 @@ def advanced_sharing_campaign(campaign_id):
                             campaign.status = Campaign.STOPPED
                             campaign.save()
 
-            campaign.refresh_from_db()
             if proxy_hostname and proxy_port:
-                response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
-                logger.info(response.text)
-                time.sleep(10)
+                proxy_connection = ProxyConnection.objects.get(campaign=campaign)
+                proxy_connection.in_use = False
+                proxy_connection.save()
+
+            campaign.refresh_from_db()
 
             if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
                 if not campaign_delay:
@@ -107,8 +147,8 @@ def advanced_sharing_campaign(campaign_id):
                 advanced_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
         except WebDriverException as e:
             logger.error(f'{traceback.format_exc()}')
-            response = requests.get('https://portal.mobilehop.com/api/v1/modems/reset/832aeef52d6f4ce59dad8d3b6dcf6868')
-            logger.info(response.text)
+            proxy_connection = ProxyConnection.objects.get(campaign=campaign)
+            proxy_connection.hard_rest()
             time.sleep(180)
 
     if not campaign.posh_user.is_active:

@@ -1,6 +1,7 @@
 import boto3
 import os
 import random
+import requests
 import string
 
 from django.conf import settings
@@ -203,3 +204,40 @@ class Offer(models.Model):
 
     def __str__(self):
         return f'Offer {self.id}'
+
+
+class ProxyConnection(models.Model):
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, null=True)
+    created_date = models.DateTimeField()
+    in_use = models.BooleanField(default=True)
+    proxy_license_uuid = models.UUIDField()
+    proxy_name = models.CharField(max_length=255)
+
+    @staticmethod
+    def authenticate():
+        login_response = requests.post(
+            'https://portal.mobilehop.com/login',
+            data={'username': os.environ.get('PROXY_USERNAME'), 'password': os.environ.get('PROXY_PASSWORD')}
+        )
+
+        if login_response.status_code == requests.codes.ok:
+            return login_response.cookies
+        else:
+            return None
+
+    def fast_reset(self):
+        cookies = self.authenticate()
+        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/reset/{self.proxy_license_uuid}',
+                                cookies=cookies)
+
+        return response.text
+
+    def hard_rest(self):
+        cookies = self.authenticate()
+        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/hard_reset/{self.proxy_license_uuid}',
+                                cookies=cookies)
+
+        return response.text
+
+    def __str__(self):
+        return f'{self.campaign.title} on {self.proxy_name}'
