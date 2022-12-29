@@ -225,20 +225,31 @@ class ProxyConnection(models.Model):
         else:
             return None
 
-    def fast_reset(self, proxy_license_uuid=None):
+    @staticmethod
+    def reset_all():
+        responses = []
+        cookies = ProxyConnection.authenticate()
+        list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
+
+        available_proxies = list_response.json()['result']
+
+        for available_proxy in available_proxies:
+            response = requests.get(f"https://portal.mobilehop.com/api/v2/proxies/reset/{available_proxy['uuid']}",
+                                    cookies=cookies)
+            responses.append(response.text)
+
+        return responses
+
+    def fast_reset(self):
         cookies = self.authenticate()
-        if not proxy_license_uuid:
-            proxy_license_uuid = self.proxy_license_uuid
-        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/reset/{proxy_license_uuid}',
+        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/reset/{self.proxy_license_uuid}',
                                 cookies=cookies)
 
         return response.text
 
-    def hard_rest(self, proxy_license_uuid=None):
+    def hard_rest(self):
         cookies = self.authenticate()
-        if not proxy_license_uuid:
-            proxy_license_uuid = self.proxy_license_uuid
-        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/hard_reset/{proxy_license_uuid}',
+        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/hard_reset/{self.proxy_license_uuid}',
                                 cookies=cookies)
 
         return response.text
