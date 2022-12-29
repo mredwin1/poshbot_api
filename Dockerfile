@@ -4,7 +4,7 @@ FROM ghcr.io/mredwin1/chrome:latest
 COPY . .
 
 # Install dependencies for pycurl
-RUN apt install libcurl4-openssl-dev libssl-dev
+RUN apt install -y libcurl4-openssl-dev libssl-dev
 
 # Install the dependencies
 RUN pipenv install --system --deploy --skip-lock
