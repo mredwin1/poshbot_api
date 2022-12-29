@@ -165,13 +165,17 @@ LOGGING = {
     }
 }
 
-CELERY_BROKER_URL = f'redis://redis:6379/1'
-CELERY_RESULT_BACKEND = f'redis://redis:6379/1'
-
-CELERY_TASK_ROUTES = {
-    'core.tasks.basic_sharing_campaign': {'queue': 'concurrency', 'routing_key': 'concurrency'},
-    'core.tasks.advanced_sharing_campaign': {'queue': 'concurrency', 'routing_key': 'concurrency'},
-    'core.tasks.init_campaign': {'queue': 'no_concurrency', 'routing_key': 'no_concurrency'},
+CELERY_RESULT_BACKEND = None
+CELERY_IGNORE_RESULT = True
+CELERY_BROKER_URL = f"sqs://{os.environ.get('AWS_SQS_ACCESS_KEY_ID')}:{os.environ.get('AWS_SQS_SECRET_ACCESS_KEY')}@"
+CELERY_BROKER_TRANSPORT_OPTIONS = {
+    'region': '',
+    'visibility_timeout': 7200,
+    'polling_interval': 1
 }
 
-CELERY_IGNORE_RESULT = True
+CELERY_TASK_ROUTES = {
+    'core.tasks.basic_sharing_campaign': {'queue': 'campaign_concurrency.fifo', 'routing_key': 'campaign_concurrency.fifo'},
+    'core.tasks.advanced_sharing_campaign': {'queue': 'campaign_concurrency.fifo', 'routing_key': 'campaign_concurrency.fifo'},
+    'core.tasks.init_campaign': {'queue': 'campaign_no_concurrency.fifo', 'routing_key': 'no_concurrency'},
+}
