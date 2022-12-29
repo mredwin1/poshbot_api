@@ -1029,25 +1029,6 @@ class PoshMarkClient(BaseClient):
         """Will list an item on poshmark for the user"""
         try:
             listing_title = listing.title
-            listing_category = listing.category
-            listing_subcategory = listing.subcategory
-            listing_size = listing.size
-            listing_brand = listing.brand
-            listing_description = listing.description
-            listing_original_price = listing.original_price
-            listing_listing_price = listing.listing_price
-            listing_tags = None
-            listing_image_names = []
-
-            self.logger.info('Downloading all of the listing images')
-
-            listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
-            self.bucket.download_file(listing.cover_photo.name, listing_cover_photo_name)
-
-            for listing_image in listing_images:
-                image_name = listing_image.image.name.split('/')[-1]
-                self.bucket.download_file(listing_image.image.name, image_name)
-                listing_image_names.append(image_name)
 
             self.logger.info(f'Listing the following item: {listing_title}')
 
@@ -1065,6 +1046,26 @@ class PoshMarkClient(BaseClient):
                 self.web_driver.save_screenshot('listing_error.png')
                 self.posh_user_inactive()
             else:
+                listing_category = listing.category
+                listing_subcategory = listing.subcategory
+                listing_size = listing.size
+                listing_brand = listing.brand
+                listing_description = listing.description
+                listing_original_price = listing.original_price
+                listing_listing_price = listing.listing_price
+                listing_tags = None
+                listing_image_names = []
+
+                self.logger.info('Downloading all of the listing images')
+
+                listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
+                self.bucket.download_file(listing.cover_photo.name, listing_cover_photo_name)
+
+                for listing_image in listing_images:
+                    image_name = listing_image.image.name.split('/')[-1]
+                    self.bucket.download_file(listing_image.image.name, image_name)
+                    listing_image_names.append(image_name)
+
                 # Set category and sub category
                 self.logger.info('Setting category')
                 category_dropdown = self.locate(
