@@ -3,6 +3,9 @@ FROM ghcr.io/mredwin1/chrome:latest
 # Copy the project files into working directory
 COPY . .
 
+# Fix missing packages
+RUN apt-get update --fix-missing
+
 # Install dependencies for pycurl
 RUN apt install -y libcurl4-openssl-dev libssl-dev
 
