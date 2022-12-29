@@ -236,7 +236,7 @@ class ProxyConnection(models.Model):
         for available_proxy in available_proxies:
             response = requests.get(f"https://portal.mobilehop.com/api/v2/proxies/reset/{available_proxy['uuid']}",
                                     cookies=cookies)
-            responses.append(response.text)
+            responses.append(response.json()['result'])
 
         return responses
 
