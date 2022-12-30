@@ -27,7 +27,9 @@ def get_proxy():
         connections_in_use = connections.filter(in_use=True)
         if connections.count() >= int(os.environ.get('MAX_PROXY_CONNECTIONS', '4')) and connections_in_use.count() == 0:
             first_connection = connections.first()
-            first_connection.fast_reset()
+            reset_response = first_connection.fast_reset()
+
+            logger.info(reset_response)
 
             connections.delete()
             return available_proxy
