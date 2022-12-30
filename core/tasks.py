@@ -175,6 +175,7 @@ def basic_sharing_campaign(campaign_id):
     logger.info(f'Running Basic Sharing campaign: {campaign})')
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
+    shared = False
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active and campaign.posh_user.is_registered:
         campaign.status = Campaign.RUNNING
@@ -188,16 +189,28 @@ def basic_sharing_campaign(campaign_id):
 
                 if all_listings:
                     for listing_title in all_listings['shareable_listings']:
-                        client.share_item(listing_title)
+                        listing_shared = client.share_item(listing_title)
 
-                        today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                        nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
-                                                    minute=0,
-                                                    second=0).replace(tzinfo=pytz.utc)
-                        if today > nine_pm:
-                            client.send_offer_to_likers(listing_title)
+                        if not shared:
+                            shared = listing_shared
 
-                        client.check_offers(listing_title)
+                        now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                        nine_pm = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=2,
+                                                    minute=0, second=0).replace(tzinfo=pytz.utc)
+                        midnight = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=5,
+                                                     minute=0, second=0).replace(tzinfo=pytz.utc)
+
+                        logger.info(now)
+                        logger.info(nine_pm)
+                        logger.info(midnight)
+                        logger.info(nine_pm < now < midnight)
+
+                        if random.random() < .50 and shared:
+                            if nine_pm < now < midnight:
+                                client.send_offer_to_likers(listing_title)
+
+                        if random.random() < .20 and shared:
+                            client.check_offers(listing_title)
 
             end_time = time.time()
             elapsed_time = round(end_time - start_time, 2)
