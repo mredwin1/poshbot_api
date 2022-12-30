@@ -120,6 +120,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                         shared = listing_shared
 
                             if random.random() < .50 and shared:
+                                logger.info('Seeing if it is time to send offers to likers')
                                 now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 nine_pm = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=2,
                                                             minute=0, second=0).replace(tzinfo=pytz.utc)
@@ -127,6 +128,8 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                                              minute=0, second=0).replace(tzinfo=pytz.utc)
                                 if nine_pm < now < midnight:
                                     client.send_offer_to_likers(listing.title)
+                                else:
+                                    logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
 
                             if random.random() < .20 and shared:
                                 client.check_offers(listing.title)
@@ -194,20 +197,18 @@ def basic_sharing_campaign(campaign_id):
                         if not shared:
                             shared = listing_shared
 
-                        now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                        nine_pm = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=2,
-                                                    minute=0, second=0).replace(tzinfo=pytz.utc)
-                        midnight = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=5,
-                                                     minute=0, second=0).replace(tzinfo=pytz.utc)
-
-                        logger.info(now)
-                        logger.info(nine_pm)
-                        logger.info(midnight)
-                        logger.info(nine_pm < now < midnight)
-
                         if random.random() < .50 and shared:
+                            logger.info('Seeing if it is time to send offers to likers')
+                            now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                            nine_pm = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=2,
+                                                        minute=0, second=0).replace(tzinfo=pytz.utc)
+                            midnight = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=5,
+                                                         minute=0, second=0).replace(tzinfo=pytz.utc)
+
                             if nine_pm < now < midnight:
                                 client.send_offer_to_likers(listing_title)
+                            else:
+                                logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
 
                         if random.random() < .20 and shared:
                             client.check_offers(listing_title)
