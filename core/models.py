@@ -294,14 +294,14 @@ class ProxyConnection(models.Model):
         response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/reset/{self.proxy_license_uuid}',
                                 cookies=cookies)
 
-        return response.text
+        return response.json()['result']
 
     def hard_rest(self):
         cookies = self.authenticate()
         response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/hard_reset/{self.proxy_license_uuid}',
                                 cookies=cookies)
 
-        return response.text
+        return response.json()['result']
 
     def __str__(self):
         return f'{self.campaign.title} on {self.proxy_name}'
