@@ -23,6 +23,8 @@ from selenium_stealth import stealth
 
 from core.models import Campaign, Offer
 
+DEFAULT_IMPLICIT_WAIT = 15
+
 
 class Captcha:
     def __init__(self, google_key, page_url, logger):
@@ -344,7 +346,7 @@ class BaseClient:
                 renderer="Intel Iris OpenGL Engine",
                 fix_hairline=True,
                 )
-        self.web_driver.implicitly_wait(15)
+        self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
         self.web_driver.set_page_load_timeout(300)
         if '--headless' in self.web_driver_options.arguments:
             self.web_driver.set_window_size(1920, 1080)
@@ -944,6 +946,7 @@ class PoshMarkClient(BaseClient):
             self.go_to_closet()
 
             if self.is_present(By.CLASS_NAME, 'card--small'):
+                self.web_driver.implicitly_wait(0)
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
                     title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
@@ -976,9 +979,13 @@ class PoshMarkClient(BaseClient):
                 'sold_listings': sold_listings,
                 'reserved_listings': reserved_listings
             }
+
+            self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
+
             return listings
 
         except Exception as e:
+            self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
             self.logger.error(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot('get_all_listings_error.png')
             if not self.check_logged_in():
