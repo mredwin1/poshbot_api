@@ -126,7 +126,7 @@ class PoshUser(models.Model):
 
             while not PoshUser.check_email_availability(email):
                 email = f'{first_name.lower()}_{last_name.lower()}{random.randint(100, 999)}@{os.environ["DOMAIN"]}'
-            inbox = api_instance.create_inbox(name=f'{first_name} {last_name}', email_address=email)
+            inbox = api_instance.create_inbox(name=f'{first_name} {last_name}')
 
             if forward_to:
                 PoshUser.create_email_forwarder(inbox.id, forward_to)
