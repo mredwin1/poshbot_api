@@ -965,8 +965,8 @@ class PoshMarkClient(BaseClient):
                 if shareable_listings:
                     self.logger.info(f"Found the following listings: {','.join(shareable_listings)}")
                 else:
-                    self.logger.info('\n'.join(sold_listings))
-                    self.logger.info('\n'.join(reserved_listings))
+                    self.logger.info(f"Sold Listings: {'\n'.join(sold_listings)}")
+                    self.logger.info(f"Reserved Listings: {'\n'.join(reserved_listings)}")
                     self.web_driver.save_screenshot('no_listings.png')
                     self.logger.info('No shareable listings found')
 
