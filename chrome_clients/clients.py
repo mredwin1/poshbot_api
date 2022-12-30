@@ -601,8 +601,10 @@ class PoshMarkClient(BaseClient):
                                 elapsed_time = int(timestamp[:space_index]) * 60 * 60
 
                         if elapsed_time > 60:
+                            hours, remainder = divmod(elapsed_time, 3600)
+                            minutes, seconds = divmod(remainder, 60)
                             self.logger.error(f'Sharing does not seem to be working '
-                                              f'Elapsed Time: {elapsed_time} {unit}')
+                                              f'Elapsed Time: {hours} hours, {minutes} minutes, and {seconds} seconds')
                             return False
                         else:
                             self.logger.info(f'Shared successfully')
