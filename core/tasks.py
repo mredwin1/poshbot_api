@@ -120,12 +120,12 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                         shared = listing_shared
 
                             if random.random() < .50 and shared:
-                                today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                                nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
+                                now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                nine_pm = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=2,
                                                             minute=0, second=0).replace(tzinfo=pytz.utc)
-                                midnight = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=5,
+                                midnight = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=5,
                                                              minute=0, second=0).replace(tzinfo=pytz.utc)
-                                if nine_pm < today < midnight:
+                                if nine_pm < now < midnight:
                                     client.send_offer_to_likers(listing.title)
 
                             if random.random() < .20 and shared:
