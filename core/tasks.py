@@ -68,8 +68,8 @@ def init_campaign(campaign_id):
 
 @shared_task
 def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None):
-    logger.info(f'Running Advanced Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
+    logger.info(f'Running Advanced Sharing campaign: {campaign}')
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     delay = campaign.delay * 60
     sign = 1 if random.random() < 0.5 else -1
@@ -171,8 +171,8 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
 
 @shared_task
 def basic_sharing_campaign(campaign_id):
-    print(f'Running Basic Sharing campaign (Campaign ID: {campaign_id})')
     campaign = Campaign.objects.get(id=campaign_id)
+    logger.info(f'Running Basic Sharing campaign: {campaign})')
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
 
