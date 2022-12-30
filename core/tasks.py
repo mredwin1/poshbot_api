@@ -109,11 +109,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                         for listings in all_listings.values():
                             all_available_listings += listings
 
-                        logger.info(', '.join(all_available_listings))
-
-                        listings_not_listed = [listing for listing in campaign.listings if listing.title not in all_available_listings]
-
-                        logger.info(', '.join(listings_not_listed))
+                        listings_not_listed = [listing for listing in campaign_listings if listing.title not in all_available_listings]
 
                         for listing_not_listed in listings_not_listed:
                             listing_images = ListingImage.objects.filter(listing=listing_not_listed)
