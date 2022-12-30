@@ -30,6 +30,7 @@ def get_proxy():
             reset_response = first_connection.fast_reset()
 
             logger.info(reset_response)
+            time.sleep(10)
 
             connections.delete()
             return available_proxy
