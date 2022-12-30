@@ -110,10 +110,12 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         }
 
         campaign = self.get_object()
-        campaign.status = Campaign.IDLE
-        campaign.save()
         serializer = self.get_serializer(campaign)
-        campaign_mapping[campaign.mode].delay(pk)
+
+        if campaign.posh_user:
+            campaign.status = Campaign.IDLE
+            campaign.save()
+            campaign_mapping[campaign.mode].delay(pk)
 
         return Response(serializer.data)
 
