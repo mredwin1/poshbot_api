@@ -142,7 +142,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                 campaign_delay = 3600
                         elif all_listings['reserved_listings']:
                             campaign_delay = 3600
-                        else:
+                        elif not listings_not_listed:
                             campaign.status = Campaign.STOPPED
                             campaign.save()
 
