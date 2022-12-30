@@ -19,13 +19,13 @@ tzdata = "*"
 django-storages = "*"
 boto3 = "*"
 psycopg2-binary = "*"
-redis = "*"
 whitenoise = "*"
 gunicorn = "*"
 celery = "*"
 selenium = "*"
 selenium-stealth = "*"
 pycurl = "*"
+mailslurp-client = "*"
 
 [dev-packages]
 

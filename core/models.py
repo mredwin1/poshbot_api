@@ -1,4 +1,5 @@
 import boto3
+import mailslurp_client
 import os
 import random
 import requests
@@ -9,6 +10,7 @@ from django.contrib.auth.models import AbstractUser
 from django.db import models
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
+from mailslurp_client.rest import ApiException
 from uuid import uuid4
 
 
@@ -74,6 +76,7 @@ class PoshUser(models.Model):
     header_picture = models.ImageField(upload_to='header_pictures', null=True, blank=True)
 
     email = models.EmailField(blank=True)
+    email_id = models.CharField(max_length=255, blank=True)
 
     sales = models.PositiveSmallIntegerField(default=0, blank=True)
 
@@ -97,6 +100,52 @@ class PoshUser(models.Model):
             return 'Running'
         elif self.campaign:
             return 'Assigned'
+
+    @staticmethod
+    def get_mail_slurp_config():
+        configuration = mailslurp_client.Configuration()
+        configuration.api_key['x-api-key'] = os.environ['MAIL_SLURP_API_KEY']
+
+        return configuration
+
+    @staticmethod
+    def check_email_availability(email):
+        with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
+            inbox_controller = mailslurp_client.InboxControllerApi(api_client)
+            inboxes = inbox_controller.get_all_inboxes(page=0)
+
+            all_emails = [content.email_address for content in inboxes.content]
+
+            return email not in all_emails
+
+    @staticmethod
+    def create_email(first_name, last_name, forward_to=None):
+        with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
+            api_instance = mailslurp_client.InboxControllerApi(api_client)
+            email = f'{first_name.lower()}_{last_name.lower()}@{os.environ["DOMAIN"]}'
+
+            while not PoshUser.check_email_availability(email):
+                email = f'{first_name.lower()}_{last_name.lower()}{random.randint(100, 999)}@{os.environ["DOMAIN"]}'
+            inbox = api_instance.create_inbox(name=f'{first_name} {last_name}', email_address=email)
+
+            if forward_to:
+                PoshUser.create_email_forwarder(inbox.id, forward_to)
+
+            return inbox.id, inbox.email_address
+
+    @staticmethod
+    def create_email_forwarder(inbox_id, master_email):
+        with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
+            api_instance = mailslurp_client.InboxForwarderControllerApi(api_client)
+            create_inbox_forwarder_options = mailslurp_client.CreateInboxForwarderOptions()
+            create_inbox_forwarder_options.forward_to_recipients = ['antonylionr@gmail.com']
+
+            try:
+                api_response = api_instance.create_new_inbox_forwarder(create_inbox_forwarder_options=create_inbox_forwarder_options,
+                                                                       inbox_id=inbox_id)
+            except ApiException as e:
+                print(f"Exception when calling InboxForwarderControllerApi->create_new_inbox_forwarder: {e}")
+
 
     def __str__(self):
         return self.username
