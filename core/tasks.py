@@ -176,33 +176,28 @@ def basic_sharing_campaign(campaign_id):
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
 
-    if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
+    if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active and campaign.posh_user.is_registered:
         campaign.status = Campaign.RUNNING
         campaign.save()
 
         start_time = time.time()
 
         try:
-            if campaign.posh_user.is_registered:
-                with PoshMarkClient(campaign, logger) as client:
-                    all_listings = client.get_all_listings()
+            with PoshMarkClient(campaign, logger) as client:
+                all_listings = client.get_all_listings()
 
-                    if all_listings:
-                        for listing_title in all_listings['shareable_listings']:
-                            client.share_item(listing_title)
+                if all_listings:
+                    for listing_title in all_listings['shareable_listings']:
+                        client.share_item(listing_title)
 
-                            today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                            nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
-                                                        minute=0,
-                                                        second=0).replace(tzinfo=pytz.utc)
-                            if today > nine_pm:
-                                client.send_offer_to_likers(listing_title)
+                        today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                        nine_pm = datetime.datetime(year=today.year, month=today.month, day=(today.day + 1), hour=2,
+                                                    minute=0,
+                                                    second=0).replace(tzinfo=pytz.utc)
+                        if today > nine_pm:
+                            client.send_offer_to_likers(listing_title)
 
-                            client.check_offers(listing_title)
-
-            response = requests.get('https://portal.mobilehop.com/proxies/b6e8b8a1f38f4ba3937aa83f6758903a/reset')
-            logger.info(response.text)
-            time.sleep(10)
+                        client.check_offers(listing_title)
 
             end_time = time.time()
             elapsed_time = round(end_time - start_time, 2)
@@ -219,12 +214,8 @@ def basic_sharing_campaign(campaign_id):
                 basic_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
         except WebDriverException as e:
             logger.error(f'{traceback.format_exc()}')
-            response = requests.get(
-                'https://portal.mobilehop.com/api/v1/modems/reset/832aeef52d6f4ce59dad8d3b6dcf6868')
-            logger.info(response.text)
-            time.sleep(180)
 
-    if not campaign.posh_user.is_active:
+    if not campaign.posh_user.is_active or not campaign.posh_user.is_registered:
         campaign.status = Campaign.STOPPED
         campaign.save()
 
