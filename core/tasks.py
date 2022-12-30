@@ -76,6 +76,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
     deviation = random.randint(0, (delay / 2)) * sign
     register_retries = 0
     campaign_delay = None
+    shared = False
     is_new_user = not campaign.posh_user.is_registered
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
@@ -104,7 +105,6 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                         all_listing_titles = []
 
                         if all_listings:
-                            shared = False
                             for listings in all_listings.values():
                                 all_listing_titles += listings
 
