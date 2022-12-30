@@ -219,4 +219,4 @@ def basic_sharing_campaign(campaign_id):
         campaign.status = Campaign.STOPPED
         campaign.save()
 
-    print('Campaign ended')
+    logger.info('Campaign ended')
