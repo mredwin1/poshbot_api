@@ -104,6 +104,16 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                         campaign_delay = 1800  # Custom delay after list
                     else:
                         all_listings = client.get_all_listings()
+                        all_available_listings = []
+
+                        for listings in all_listings.values():
+                            all_available_listings += listings
+
+                        listings_not_listed = [listing for listing in campaign.listings if listing.title not in all_available_listings]
+
+                        for listing_not_listed in listings_not_listed:
+                            listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                            client.list_item(listing_not_listed, listing_images)
 
                         if all_listings['shareable_listings']:
                             for listing_title in all_listings['shareable_listings']:
