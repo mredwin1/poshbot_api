@@ -138,7 +138,7 @@ class PoshUser(models.Model):
         with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
             api_instance = mailslurp_client.InboxForwarderControllerApi(api_client)
             create_inbox_forwarder_options = mailslurp_client.CreateInboxForwarderOptions()
-            create_inbox_forwarder_options.forward_to_recipients = ['antonylionr@gmail.com']
+            create_inbox_forwarder_options.forward_to_recipients = [master_email]
 
             try:
                 api_response = api_instance.create_new_inbox_forwarder(create_inbox_forwarder_options=create_inbox_forwarder_options,
@@ -146,6 +146,11 @@ class PoshUser(models.Model):
             except ApiException as e:
                 print(f"Exception when calling InboxForwarderControllerApi->create_new_inbox_forwarder: {e}")
 
+    def delete_email(self):
+        if self.email_id:
+            with mailslurp_client.ApiClient(self.get_mail_slurp_config()) as api_client:
+                api_instance = mailslurp_client.InboxControllerApi(api_client)
+                api_instance.delete_inbox(self.email_id)
 
     def __str__(self):
         return self.username
