@@ -105,46 +105,50 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                         campaign_delay = 1800  # Custom delay after list
                     else:
                         all_listings = client.get_all_listings()
-                        all_available_listings = []
 
-                        for listings in all_listings.values():
-                            all_available_listings += listings
+                        if all_listings:
+                            all_available_listings = []
 
-                        listings_not_listed = [listing for listing in campaign_listings if listing.title not in all_available_listings]
+                            for listings in all_listings.values():
+                                all_available_listings += listings
 
-                        for listing_not_listed in listings_not_listed:
-                            listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                            client.list_item(listing_not_listed, listing_images)
+                            listings_not_listed = [listing for listing in campaign_listings if listing.title not in all_available_listings]
 
-                        if all_listings['shareable_listings']:
-                            for listing_title in all_listings['shareable_listings']:
-                                listing_shared = client.share_item(listing_title)
+                            for listing_not_listed in listings_not_listed:
+                                listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                                client.list_item(listing_not_listed, listing_images)
 
-                                if not shared:
-                                    shared = listing_shared
+                            if all_listings['shareable_listings']:
+                                for listing_title in all_listings['shareable_listings']:
+                                    listing_shared = client.share_item(listing_title)
 
-                            if random.random() < .20 and shared:
-                                logger.info('Seeing if it is time to send offers to likers')
-                                now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                                nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
-                                                            minute=0, second=0).replace(tzinfo=pytz.utc)
-                                midnight = nine_pm + datetime.timedelta(hours=3)
+                                    if not shared:
+                                        shared = listing_shared
 
-                                if nine_pm < now < midnight:
-                                    client.send_offer_to_likers(listing_title)
-                                else:
-                                    logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
+                                if random.random() < .20 and shared:
+                                    logger.info('Seeing if it is time to send offers to likers')
+                                    now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                    nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
+                                                                minute=0, second=0).replace(tzinfo=pytz.utc)
+                                    midnight = nine_pm + datetime.timedelta(hours=3)
 
-                            if random.random() < .20 and shared:
-                                client.check_offers(listing_title)
+                                    if nine_pm < now < midnight:
+                                        client.send_offer_to_likers(listing_title)
+                                    else:
+                                        logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
 
-                            if not shared and not campaign_delay:
+                                if random.random() < .20 and shared:
+                                    client.check_offers(listing_title)
+
+                                if not shared and not campaign_delay:
+                                    campaign_delay = 3600
+                            elif all_listings['reserved_listings']:
                                 campaign_delay = 3600
-                        elif all_listings['reserved_listings']:
-                            campaign_delay = 3600
-                        elif not listings_not_listed:
-                            campaign.status = Campaign.STOPPED
-                            campaign.save()
+                            elif not listings_not_listed:
+                                campaign.status = Campaign.STOPPED
+                                campaign.save()
+                        else:
+                            campaign_delay = 30
 
             if proxy_hostname and proxy_port:
                 proxy_connection = ProxyConnection.objects.get(campaign=campaign)

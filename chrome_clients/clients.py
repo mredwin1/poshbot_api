@@ -997,6 +997,8 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.log_in()
 
+            return None
+
     def update_profile(self):
         """Updates a user profile with their profile picture and header picture"""
         try:
