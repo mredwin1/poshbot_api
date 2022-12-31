@@ -25,7 +25,7 @@ def get_proxy():
     for available_proxy in available_proxies:
         connections = ProxyConnection.objects.filter(proxy_license_uuid=available_proxy['uuid'])
         connections_in_use = connections.filter(in_use=True)
-        if connections.count() >= int(os.environ.get('MAX_PROXY_CONNECTIONS', '4')) and connections_in_use.count() == 0:
+        if connections.count() >= int(os.environ.get('MAX_PROXY_CONNECTIONS', '2')) and connections_in_use.count() == 0:
             first_connection = connections.first()
             reset_response = first_connection.fast_reset()
 
@@ -34,7 +34,7 @@ def get_proxy():
 
             connections.delete()
             return available_proxy
-        elif connections.count() < int(os.environ.get('MAX_PROXY_CONNECTIONS', '4')):
+        elif connections.count() < int(os.environ.get('MAX_PROXY_CONNECTIONS', '2')):
             return available_proxy
         else:
             for connection in connections:
