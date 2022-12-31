@@ -1074,12 +1074,17 @@ class PoshMarkClient(BaseClient):
 
                 self.logger.info('Downloading all of the listing images')
 
+                folder_exists = os.path.exists(f'{self.campaign.title}')
+
+                if not folder_exists:
+                    os.mkdir(f'{self.campaign.title}')
+
                 listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
-                self.bucket.download_file(listing.cover_photo.name, listing_cover_photo_name)
+                self.bucket.download_file(listing.cover_photo.name, f'{self.campaign.title}/{listing_cover_photo_name}')
 
                 for listing_image in listing_images:
                     image_name = listing_image.image.name.split('/')[-1]
-                    self.bucket.download_file(listing_image.image.name, image_name)
+                    self.bucket.download_file(listing_image.image.name, f'{self.campaign.title}/{image_name}')
                     listing_image_names.append(image_name)
 
                 # Set category and sub category
