@@ -130,6 +130,11 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                                             minute=0, second=0).replace(tzinfo=pytz.utc) + datetime.timedelta(days=1)
                                 midnight = nine_pm + datetime.timedelta(hours=3)
 
+                                logger.info(nine_pm)
+                                logger.info(now)
+                                logger.info(midnight)
+                                logger.info(nine_pm < now < midnight)
+
                                 if nine_pm < now < midnight:
                                     client.send_offer_to_likers(listing_title)
                                 else:
