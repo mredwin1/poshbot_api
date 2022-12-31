@@ -1074,17 +1074,21 @@ class PoshMarkClient(BaseClient):
 
                 self.logger.info('Downloading all of the listing images')
 
-                folder_exists = os.path.exists(f'{self.campaign.title}')
+                campaign_folder_exists = os.path.exists(f'/{self.campaign.title}')
+                listing_folder_exists = os.path.exists(f'/{self.campaign.title}/{listing.title}')
 
-                if not folder_exists:
-                    os.mkdir(f'{self.campaign.title}')
+                if not campaign_folder_exists:
+                    os.mkdir(f'/{self.campaign.title}')
+
+                if not listing_folder_exists:
+                    os.mkdir(f'/{self.campaign.title}/{listing.title}')
 
                 listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
-                self.bucket.download_file(listing.cover_photo.name, f'{self.campaign.title}/{listing_cover_photo_name}')
+                self.bucket.download_file(listing.cover_photo.name, f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')
 
                 for listing_image in listing_images:
                     image_name = listing_image.image.name.split('/')[-1]
-                    self.bucket.download_file(listing_image.image.name, f'{self.campaign.title}/{image_name}')
+                    self.bucket.download_file(listing_image.image.name, f'/{self.campaign.title}/{listing.title}/{image_name}')
                     listing_image_names.append(image_name)
 
                 # Set category and sub category
@@ -1168,7 +1172,7 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Uploading photos')
 
                 cover_photo_field = self.locate(By.ID, 'img-file-input')
-                cover_photo_field.send_keys(f'{self.campaign.title}/{listing_cover_photo_name}')
+                cover_photo_field.send_keys(f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')
                 element = self.locate(By.CLASS_NAME, 'listing-editor__promotion__count')
                 self.web_driver.execute_script("return arguments[0].scrollIntoView(true);", element)
                 self.web_driver.save_screenshot('cover_photo_upload.png')
@@ -1180,7 +1184,7 @@ class PoshMarkClient(BaseClient):
                 for image in listing_image_names:
                     upload_photos_field = self.locate(By.ID, 'img-file-input')
                     upload_photos_field.clear()
-                    upload_photos_field.send_keys(f'{self.campaign.title}/{image}')
+                    upload_photos_field.send_keys(f'/{self.campaign.title}/{listing.title}/{image}')
                     self.sleep(1)
 
                 self.logger.info('Photos uploaded')
