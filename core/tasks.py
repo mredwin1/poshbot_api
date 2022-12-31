@@ -128,8 +128,7 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                 now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 nine_pm = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=2,
                                                             minute=0, second=0).replace(tzinfo=pytz.utc)
-                                midnight = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=5,
-                                                             minute=0, second=0).replace(tzinfo=pytz.utc)
+                                midnight = nine_pm + datetime.timedelta(hours=3)
 
                                 if nine_pm < now < midnight:
                                     client.send_offer_to_likers(listing_title)
@@ -210,8 +209,7 @@ def basic_sharing_campaign(campaign_id):
                         now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                         nine_pm = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=2,
                                                     minute=0, second=0).replace(tzinfo=pytz.utc)
-                        midnight = datetime.datetime(year=now.year, month=now.month, day=(now.day + 1), hour=5,
-                                                     minute=0, second=0).replace(tzinfo=pytz.utc)
+                        midnight = nine_pm + datetime.timedelta(hours=3)
 
                         if nine_pm < now < midnight:
                             client.send_offer_to_likers(listing_title)
