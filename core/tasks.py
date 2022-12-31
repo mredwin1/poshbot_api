@@ -123,7 +123,9 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
                                 if not shared:
                                     shared = listing_shared
 
-                            if random.random() < .50 and shared:
+                            # random.random() < .50 and
+
+                            if shared:
                                 logger.info('Seeing if it is time to send offers to likers')
                                 now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
