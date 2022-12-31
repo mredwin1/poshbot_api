@@ -3,6 +3,7 @@ import botocore
 import datetime
 import os
 import pickle
+import pytz
 import random
 import re
 import requests
@@ -1712,11 +1713,11 @@ class PoshMarkClient(BaseClient):
         """Will send offers to all likers for a given listing"""
         try:
             self.logger.info(f'Sending offers to all likers for the following item: {listing_title}')
-            today = datetime.datetime.today()
+            today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
             start_date = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=0, minute=0,
-                                           second=0)
+                                           second=0).replace(tzinfo=pytz.utc)
             end_date = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=23, minute=59,
-                                         second=59)
+                                         second=59).replace(tzinfo=pytz.utc)
 
             offers = Offer.objects.filter(
                 listing_title=listing_title,
