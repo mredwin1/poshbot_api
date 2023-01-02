@@ -1,7 +1,6 @@
 import logging
 import os
 import sys
-import requests
 import time
 
 from django.core.management import call_command
