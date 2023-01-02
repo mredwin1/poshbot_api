@@ -1,5 +1,4 @@
 import datetime
-import logging
 import os
 import pytz
 import random
@@ -11,12 +10,10 @@ from celery import shared_task
 from chrome_clients.clients import PoshMarkClient
 from selenium.common.exceptions import WebDriverException
 
-from .models import Campaign, Listing, ListingImage, ProxyConnection
-
-logger = logging.getLogger(__name__)
+from .models import Campaign, Listing, ListingImage, ProxyConnection, LogGroup
 
 
-def get_proxy():
+def get_proxy(logger):
     cookies = ProxyConnection.authenticate()
     list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
 
@@ -46,16 +43,17 @@ def get_proxy():
 
 
 @shared_task
-def init_campaign(campaign_id):
+def init_campaign(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
+    logger = Campaign.objects.get(id=logger_id)
 
     if not campaign.posh_user.is_registered:
         proxy = None
 
-        logger.info(f'Getting a proxy for the following campaing: {campaign}')
+        logger.info(f'Getting a proxy for the following campaign: {campaign}')
 
         while not proxy:
-            proxy = get_proxy()
+            proxy = get_proxy(logger)
             if not proxy:
                 logger.info('No proxy available, waiting 30sec')
                 time.sleep(30)
@@ -64,14 +62,15 @@ def init_campaign(campaign_id):
         proxy_connection.save()
         logger.info(f'Proxy connection made: {proxy_connection}')
 
-        advanced_sharing_campaign.delay(campaign_id, proxy['ip'], proxy['port'])
+        advanced_sharing_campaign.delay(campaign_id, logger_id, proxy['ip'], proxy['port'])
     else:
-        advanced_sharing_campaign.delay(campaign_id)
+        advanced_sharing_campaign.delay(campaign_id, logger_id)
 
 
 @shared_task
-def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None):
+def advanced_sharing_campaign(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
     campaign = Campaign.objects.get(id=campaign_id)
+    logger = LogGroup.objects.get(id=logger_id)
     logger.info(f'Running Advanced Sharing campaign: {campaign}')
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     delay = campaign.delay * 60
@@ -183,8 +182,9 @@ def advanced_sharing_campaign(campaign_id, proxy_hostname=None, proxy_port=None)
 
 
 @shared_task
-def basic_sharing_campaign(campaign_id):
+def basic_sharing_campaign(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
+    logger = LogGroup.objects.get(id=logger_id)
     logger.info(f'Running Basic Sharing campaign: {campaign})')
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
