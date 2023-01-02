@@ -15,32 +15,44 @@ from uuid import uuid4
 
 
 def path_and_rename(instance, filename):
-    upload_to = 'listing_images'
     ext = filename.split('.')[-1]
+    rand_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+    filename = None
+    path = None
+    aws_session = boto3.Session()
+    s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+                                     aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+                                     region_name=settings.AWS_S3_REGION_NAME)
 
-    if isinstance(instance, Listing):
-        path = instance.title.replace(' ', '_')
-        filename = f'cover_photo.{ext}'
+    while not filename:
+        if isinstance(instance, Listing):
+            title = instance.title.replace(' ', '_')
+            filename = f'cover_photo_{rand_str}.{ext}'
+            path = os.path.join(instance.user.username, 'listing_images', title, filename)
 
-    else:
-        aws_session = boto3.Session()
-        s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-                                         aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-                                         region_name=settings.AWS_S3_REGION_NAME)
-
-        path = instance.listing.title.replace(' ', '_')
-        filename = None
-
-        while not filename:
-            rand_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        elif isinstance(instance, ListingImage):
+            title = instance.listing.title.replace(' ', '_')
             filename = f'image_{rand_str}.{ext}'
-            try:
-                s3_client.Object(settings.AWS_STORAGE_BUCKET_NAME, os.path.join(upload_to, path, 'images', filename)).load()
-                filename = None
-            except Exception:
-                pass
+            path = os.path.join(instance.listing.user.username, 'listing_images', title, filename)
 
-    return os.path.join(upload_to, path, 'images', filename)
+        elif isinstance(instance, PoshUser):
+            filename = f'image_{rand_str}.{ext}'
+            path = os.path.join(instance.user.username, 'posh_user_images', filename)
+
+        elif isinstance(instance, LogEntry):
+            filename = f'image_{rand_str}.{ext}'
+            path = os.path.join(instance.log_group.campaign.user.username, 'log_images',
+                                instance.log_group.campaign.title, instance.log_group.campaign.posh_user.username,
+                                filename)
+
+        try:
+            s3_client.Object(settings.AWS_STORAGE_BUCKET_NAME, path).load()
+            filename = None
+            rand_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
+        except Exception:
+            pass
+
+    return os.path.join(path, path, 'images', filename)
 
 
 class User(AbstractUser):
@@ -72,8 +84,8 @@ class PoshUser(models.Model):
     phone_number = models.CharField(max_length=20, default='', blank=True)
     profile_picture_id = models.CharField(max_length=200, blank=True)
 
-    profile_picture = models.ImageField(upload_to='profile_pictures', null=True, blank=True)
-    header_picture = models.ImageField(upload_to='header_pictures', null=True, blank=True)
+    profile_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
+    header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
 
     email = models.EmailField(blank=True)
     email_id = models.CharField(max_length=255, blank=True)
