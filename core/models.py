@@ -329,6 +329,7 @@ class ProxyConnection(models.Model):
 
 
 class LogGroup(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
     created_date = models.DateTimeField(editable=False)
@@ -395,6 +396,7 @@ class LogEntry(models.Model):
         (CRITICAL, 'CRITICAL'),
     ]
 
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     level = models.IntegerField()
     log_group = models.ForeignKey(LogGroup, on_delete=models.CASCADE)
     timestamp = models.DateTimeField()
