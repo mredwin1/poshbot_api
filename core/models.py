@@ -9,6 +9,7 @@ import string
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
+from django.core.files.base import ContentFile
 from django.db import models
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
@@ -332,7 +333,7 @@ class LogGroup(models.Model):
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
     created_date = models.DateTimeField(editable=False)
 
-    def log(self, message, log_level=None):
+    def log(self, message, log_level=None, image=None):
         timestamp = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
         log_entries = LogEntry.objects.filter(logger=self).order_by('timestamp')
 
@@ -346,23 +347,26 @@ class LogGroup(models.Model):
             timestamp=timestamp,
             message=message
         )
+        if image:
+            with open(image, 'rb') as image_file:
+                log_entry.image.save(image, ContentFile(image_file.read()), save=False)
 
         log_entry.save()
 
     def critical(self, message, image=None):
-        self.log(message, LogEntry.CRITICAL)
+        self.log(message, LogEntry.CRITICAL, image)
 
     def error(self, message, image=None):
-        self.log(message, LogEntry.ERROR)
+        self.log(message, LogEntry.ERROR, image)
 
     def warning(self, message, image=None):
-        self.log(message, LogEntry.WARNING)
+        self.log(message, LogEntry.WARNING, image)
 
     def info(self, message, image=None):
-        self.log(message, LogEntry.INFO)
+        self.log(message, LogEntry.INFO, image)
 
     def debug(self, message, image=None):
-        self.log(message, LogEntry.DEBUG)
+        self.log(message, LogEntry.DEBUG, image)
 
     def save(self, *args, **kwargs):
         """On save, update timestamps"""
