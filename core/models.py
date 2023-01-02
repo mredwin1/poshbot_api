@@ -148,15 +148,16 @@ class PoshUser(models.Model):
             return inbox.id, inbox.email_address
 
     @staticmethod
-    def create_email_forwarder(inbox_id, master_email):
+    def create_email_forwarder(inbox_id, forward_to):
         with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
             api_instance = mailslurp_client.InboxForwarderControllerApi(api_client)
             create_inbox_forwarder_options = mailslurp_client.CreateInboxForwarderOptions()
-            create_inbox_forwarder_options.forward_to_recipients = [master_email]
+            create_inbox_forwarder_options.forward_to_recipients = [forward_to]
 
             try:
-                api_response = api_instance.create_new_inbox_forwarder(create_inbox_forwarder_options=create_inbox_forwarder_options,
-                                                                       inbox_id=inbox_id)
+                api_response = api_instance.create_new_inbox_forwarder(
+                    create_inbox_forwarder_options=create_inbox_forwarder_options,
+                    inbox_id=inbox_id)
             except ApiException as e:
                 print(f"Exception when calling InboxForwarderControllerApi->create_new_inbox_forwarder: {e}")
 
