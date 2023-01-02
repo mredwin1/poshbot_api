@@ -1,5 +1,4 @@
 import boto3
-import botocore
 import datetime
 import os
 import pickle
