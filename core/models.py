@@ -1,6 +1,8 @@
 import boto3
+import datetime
 import mailslurp_client
 import os
+import pytz
 import random
 import requests
 import string
@@ -322,3 +324,82 @@ class ProxyConnection(models.Model):
 
     def __str__(self):
         return f'{self.campaign.title} on {self.proxy_name}'
+
+
+class LogGroup(models.Model):
+    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
+    posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
+    created_date = models.DateTimeField(editable=False)
+
+    def log(self, message, log_level=None):
+        timestamp = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        log_entries = LogEntry.objects.filter(logger=self).order_by('timestamp')
+
+        if len(log_entries) >= 1000:
+            last_log = log_entries.first()
+            last_log.delete()
+
+        log_entry = LogEntry(
+            level=log_level if log_level else LogEntry.NOTSET,
+            logger=self,
+            timestamp=timestamp,
+            message=message
+        )
+
+        log_entry.save()
+
+    def critical(self, message, image=None):
+        self.log(message, LogEntry.CRITICAL)
+
+    def error(self, message, image=None):
+        self.log(message, LogEntry.ERROR)
+
+    def warning(self, message, image=None):
+        self.log(message, LogEntry.WARNING)
+
+    def info(self, message, image=None):
+        self.log(message, LogEntry.INFO)
+
+    def debug(self, message, image=None):
+        self.log(message, LogEntry.DEBUG)
+
+    def save(self, *args, **kwargs):
+        """On save, update timestamps"""
+        if not self.id:
+            self.created_date = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        return super(LogGroup, self).save(*args, **kwargs)
+
+    def __str__(self):
+        return f'LogGroup {self.campaign.title} for {self.posh_user.username}'
+
+
+class LogEntry(models.Model):
+    CRITICAL = 50
+    ERROR = 40
+    WARNING = 30
+    INFO = 20
+    DEBUG = 10
+    NOTSET = 0
+
+    LOG_LEVELS = [
+        (NOTSET, ''),
+        (DEBUG, 'DEBUG'),
+        (INFO, 'INFO'),
+        (WARNING, 'WARNING'),
+        (ERROR, 'ERROR'),
+        (CRITICAL, 'CRITICAL'),
+    ]
+
+    level = models.IntegerField()
+    log_group = models.ForeignKey(LogGroup, on_delete=models.CASCADE)
+    timestamp = models.DateTimeField()
+    message = models.TextField()
+    image = ProcessedImageField(
+        processors=[
+            Transpose(),
+            ResizeToFill(500, 500)
+        ],
+        format='PNG',
+        options={'quality': 60},
+        upload_to=path_and_rename
+    )
