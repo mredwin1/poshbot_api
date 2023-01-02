@@ -174,7 +174,7 @@ class CampaignAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(models.LogEntry)
+@admin.register(models.LogGroup)
 class LogGroupAdmin(admin.ModelAdmin):
     list_display = ['created_date', 'campaign', 'posh_user']
     readonly_fields = ['campaign', 'posh_user', 'created_date']
