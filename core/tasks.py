@@ -68,10 +68,8 @@ def init_campaign(campaign_id, logger_id):
 
 
 @shared_task
-def advanced_sharing_campaign(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
+def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, proxy_port=None):
     campaign = Campaign.objects.get(id=campaign_id)
-    logger = LogGroup.objects.get(id=logger_id)
-    logger.info(f'Running Advanced Sharing campaign: {campaign}')
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     delay = campaign.delay * 60
     sign = 1 if random.random() < 0.5 else -1
@@ -80,6 +78,14 @@ def advanced_sharing_campaign(campaign_id, logger_id, proxy_hostname=None, proxy
     campaign_delay = None
     shared = False
     is_new_user = not campaign.posh_user.is_registered
+
+    if logger_id:
+        logger = LogGroup.objects.get(id=logger_id)
+    else:
+        logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
+        logger.save()
+
+    logger.info(f'Running Advanced Sharing campaign: {campaign}')
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
         campaign.status = Campaign.RUNNING
@@ -182,14 +188,20 @@ def advanced_sharing_campaign(campaign_id, logger_id, proxy_hostname=None, proxy
 
 
 @shared_task
-def basic_sharing_campaign(campaign_id, logger_id):
+def basic_sharing_campaign(campaign_id, logger_id=None):
     campaign = Campaign.objects.get(id=campaign_id)
-    logger = LogGroup.objects.get(id=logger_id)
-    logger.info(f'Running Basic Sharing campaign: {campaign})')
     delay = campaign.delay * 60
     deviation = random.randint(0, (delay / 2))
     shared = False
     campaign_delay = None
+
+    if logger_id:
+        logger = LogGroup.objects.get(id=logger_id)
+    else:
+        logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
+        logger.save()
+
+    logger.info(f'Running Basic Sharing campaign: {campaign})')
 
     if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active and campaign.posh_user.is_registered:
         campaign.status = Campaign.RUNNING

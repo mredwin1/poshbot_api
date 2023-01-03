@@ -111,10 +111,10 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
         campaign = self.get_object()
         serializer = self.get_serializer(campaign)
-        logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
-        logger.save()
 
         if campaign.posh_user:
+            logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
+            logger.save()
             campaign.status = Campaign.IDLE
             campaign.save()
             campaign_mapping[campaign.mode].delay(pk, logger.id)
