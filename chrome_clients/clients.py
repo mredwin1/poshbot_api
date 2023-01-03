@@ -662,9 +662,7 @@ class PoshMarkClient(BaseClient):
 
             self.logger.info('Form submitted')
 
-            logged_in = self.is_present(By.CLASS_NAME, 'sell')
-
-            if not logged_in:
+            if 'feed' not in self.web_driver.current_url:
                 error_code = self.check_for_errors()
                 if error_code == 'CAPTCHA':
                     password_field = self.locate(By.ID, 'login_form_password')
