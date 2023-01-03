@@ -247,6 +247,29 @@ class ListingSerializer(serializers.ModelSerializer):
         return listing
 
 
+class CampaignSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = Campaign
+        fields = [
+            'id', 'auto_run', 'generate_users', 'title', 'mode', 'delay', 'status',  'posh_user', 'listings']
+        extra_kwargs = {
+            'id': {'read_only': True},
+            'status': {'read_only': True}
+        }
+
+    def create(self, validated_data):
+        listings = validated_data.pop('listings')
+        user = self.context.get('user')
+        campaign = Campaign(**validated_data)
+        campaign.user = user
+        campaign.save()
+
+        for listing in listings:
+            campaign.listings.add(listing)
+
+        return campaign
+
+
 class LogEntrySerializer(serializers.ModelSerializer):
     class Meta:
         model = LogEntry
@@ -285,28 +308,3 @@ class LogGroupSerializer(serializers.ModelSerializer):
         }
 
     log_entries = LogEntrySerializer(many=True, read_only=True)
-
-
-class CampaignSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = Campaign
-        fields = [
-            'id', 'auto_run', 'generate_users', 'title', 'mode', 'delay', 'status',  'posh_user', 'listings', 'log_groups']
-        extra_kwargs = {
-            'id': {'read_only': True},
-            'status': {'read_only': True}
-        }
-
-    log_groups = LogGroupSerializer(many=True, read_only=True)
-
-    def create(self, validated_data):
-        listings = validated_data.pop('listings')
-        user = self.context.get('user')
-        campaign = Campaign(**validated_data)
-        campaign.user = user
-        campaign.save()
-
-        for listing in listings:
-            campaign.listings.add(listing)
-
-        return campaign
