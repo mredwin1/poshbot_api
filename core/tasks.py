@@ -105,6 +105,9 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
         try:
             with PoshMarkClient(campaign, logger, proxy_hostname=proxy_hostname, proxy_port=proxy_port) as client:
                 if registered:
+                    client.load_cookies()
+                    logged_in = client.check_logged_in()
+
                     while not logged_in and login_retries < 3:
                         logged_in = client.login(login_retries)
                         login_retries += 1
