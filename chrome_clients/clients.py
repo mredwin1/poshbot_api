@@ -515,19 +515,17 @@ class PoshMarkClient(BaseClient):
             profile_picture_name = self.posh_user.profile_picture.name.split('/')[-1]
             self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
 
-            self.sleep(2)
-
             profile_picture = self.locate(By.XPATH,
                                           '//*[@id="content"]/div/div[2]/div[1]/label/input')
             profile_picture.send_keys(f'/{profile_picture_name}')
 
-            self.sleep(2)
+            self.sleep(1)
 
             apply_button = self.locate(
                 By.XPATH, '//*[@id="content"]/div/div[2]/div[1]/div/div[2]/div[2]/div/button[2]')
             apply_button.click()
 
-            self.sleep(4)
+            self.sleep(2)
 
             self.logger.info('Profile picture uploaded')
 
@@ -784,17 +782,13 @@ class PoshMarkClient(BaseClient):
 
             self.logger.info('Clicked on edit profile button')
 
-            self.sleep(2)
-
             header_picture_name = self.posh_user.header_picture.name.split('/')[-1]
             self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
-
-            self.sleep(2)
 
             header_picture = self.locate(By.CLASS_NAME, 'image-selector__input-img-files')
             header_picture.send_keys(f'/{header_picture_name}')
 
-            self.sleep(2)
+            self.sleep(1)
 
             apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/div/button[2]')
             apply_button.click()
