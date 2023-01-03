@@ -107,7 +107,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                 if registered:
                     while not logged_in and login_retries < 3:
                         logged_in = client.login(login_retries)
-                        register_retries += 1
+                        login_retries += 1
                 else:
                     while not registered and register_retries < 3:
                         registered = client.register(register_retries)
