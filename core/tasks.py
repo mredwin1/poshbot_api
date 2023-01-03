@@ -115,18 +115,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
 
                 campaign.refresh_from_db()
 
-                if registered:
-                    campaign.posh_user.is_registered = True
-                    campaign.posh_user.save()
-                    while not profile_updated and profile_update_retries < 3:
-                        profile_updated = client.update_profile()
-                        profile_update_retries += 1
-
-                    for listing in campaign_listings:
-                        listing_images = ListingImage.objects.filter(listing=listing)
-                        client.list_item(listing, listing_images)
-                    campaign_delay = 1800  # Custom delay after list
-                elif logged_in:
+                if logged_in:
                     while all_listings is None and all_listings_retries < 3:
                         all_listings = client.get_all_listings()
                         all_listings_retries += 1
@@ -179,6 +168,17 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                     else:
                         campaign.status = Campaign.STOPPED
                         campaign.save()
+                elif registered:
+                    campaign.posh_user.is_registered = True
+                    campaign.posh_user.save()
+                    while not profile_updated and profile_update_retries < 3:
+                        profile_updated = client.update_profile()
+                        profile_update_retries += 1
+
+                    for listing in campaign_listings:
+                        listing_images = ListingImage.objects.filter(listing=listing)
+                        client.list_item(listing, listing_images)
+                    campaign_delay = 1800  # Custom delay after list
                 else:
                     campaign.status = Campaign.STOPPED
                     campaign.save()
