@@ -3,7 +3,7 @@ import os
 from django.db.models.signals import post_delete
 from django.dispatch import receiver
 
-from core.models import PoshUser, Listing, ListingImage, LogEntry
+from core.models import PoshUser, Listing, ListingImage
 
 
 @receiver(post_delete, sender=PoshUser)
@@ -32,6 +32,6 @@ def listing_image_deleted(sender, instance, *args, **kwargs):
     instance.image.delete(save=False)
 
 
-@receiver(post_delete, sender=LogEntry)
-def log_entry_deleted(sender, instance, *args, **kwargs):
-    instance.image.delete(save=False)
+# @receiver(post_delete, sender=LogEntry)
+# def log_entry_deleted(sender, instance, *args, **kwargs):
+#     instance.image.delete(save=False)

@@ -20,9 +20,9 @@ class ListingImageInline(admin.TabularInline):
     extra = 0
 
 
-class LogEntryInline(admin.StackedInline):
-    model = models.LogEntry
-    extra = 0
+# class LogEntryInline(admin.StackedInline):
+#     model = models.LogEntry
+#     extra = 0
 
 
 class PoshUserStatusFilter(admin.SimpleListFilter):
@@ -174,20 +174,20 @@ class CampaignAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(models.LogGroup)
-class LogGroupAdmin(admin.ModelAdmin):
-    list_display = ['created_date', 'campaign', 'posh_user']
-    readonly_fields = ['campaign', 'posh_user', 'created_date']
-    inlines = [LogEntryInline]
-
-    def get_queryset(self, request):
-        return super(LogGroupAdmin, self).get_queryset(request)
-
-    fieldsets = (
-        ('Log Information', {
-            'fields': (
-                ('created_date',),
-                ('campaign', 'posh_user'),
-            )
-        }),
-    )
+# @admin.register(models.LogGroup)
+# class LogGroupAdmin(admin.ModelAdmin):
+#     list_display = ['created_date', 'campaign', 'posh_user']
+#     readonly_fields = ['campaign', 'posh_user', 'created_date']
+#     inlines = [LogEntryInline]
+#
+#     def get_queryset(self, request):
+#         return super(LogGroupAdmin, self).get_queryset(request)
+#
+#     fieldsets = (
+#         ('Log Information', {
+#             'fields': (
+#                 ('created_date',),
+#                 ('campaign', 'posh_user'),
+#             )
+#         }),
+#     )

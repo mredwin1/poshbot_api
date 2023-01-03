@@ -10,7 +10,7 @@ from celery import shared_task
 from chrome_clients.clients import PoshMarkClient
 from selenium.common.exceptions import WebDriverException
 
-from .models import Campaign, Listing, ListingImage, ProxyConnection, LogGroup
+from .models import Campaign, Listing, ListingImage, ProxyConnection
 
 
 def get_proxy(logger):
