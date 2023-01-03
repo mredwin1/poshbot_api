@@ -55,7 +55,7 @@ def path_and_rename(instance, filename):
         except Exception:
             pass
 
-    return os.path.join(path, path, 'images', filename)
+    return path
 
 
 class User(AbstractUser):
