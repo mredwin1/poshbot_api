@@ -552,6 +552,8 @@ class PoshMarkClient(BaseClient):
             start_shopping_button = self.locate(By.XPATH, '//button[@type="submit"]')
             start_shopping_button.click()
 
+            self.sleep(3)
+
             self.save_cookies()
 
             self.logger.info('Registration Complete')
@@ -674,6 +676,8 @@ class PoshMarkClient(BaseClient):
                     return False
                 elif error_code is None:
                     pass
+
+            self.sleep(3)
 
             self.save_cookies()
 

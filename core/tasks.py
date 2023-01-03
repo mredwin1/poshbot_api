@@ -105,6 +105,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
         try:
             with PoshMarkClient(campaign, logger, proxy_hostname=proxy_hostname, proxy_port=proxy_port) as client:
                 if registered:
+                    client.web_driver.get('https://poshmark.com')
                     client.load_cookies()
                     logged_in = client.check_logged_in()
 
