@@ -45,7 +45,7 @@ def get_proxy(logger):
 @shared_task
 def init_campaign(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
-    logger = Campaign.objects.get(id=logger_id)
+    logger = LogGroup.objects.get(id=logger_id)
 
     if not campaign.posh_user.is_registered:
         proxy = None
