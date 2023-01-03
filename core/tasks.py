@@ -120,6 +120,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                     campaign.posh_user.save()
                     while not profile_updated and profile_update_retries < 3:
                         profile_updated = client.update_profile()
+                        profile_update_retries += 1
 
                     for listing in campaign_listings:
                         listing_images = ListingImage.objects.filter(listing=listing)

@@ -801,6 +801,7 @@ class PoshMarkClient(BaseClient):
             self.posh_user.save()
         except Exception as e:
             self.handle_error('Error while updating profile', 'update_profile_error.png')
+            return False
 
     def list_item(self, listing, listing_images):
         """Will list an item on poshmark for the user"""
