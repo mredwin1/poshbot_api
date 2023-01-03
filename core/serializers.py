@@ -174,6 +174,8 @@ class PoshUserSerializer(serializers.ModelSerializer):
                         img_temp.write(data)
 
                 response.release_conn()
+                posh_user.user = user
+                posh_user.save()
 
                 with open(file_name, 'rb') as img_temp:
                     if key == 'profile_picture':
@@ -183,7 +185,6 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
                 os.remove(file_name)
 
-                posh_user.user = user
                 posh_user.save()
 
         else:
