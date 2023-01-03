@@ -129,3 +129,13 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         serializer = self.get_serializer(campaign)
 
         return Response(serializer.data)
+
+
+class LogGroupViewSet(RetrieveModelMixin, ListModelMixin, GenericViewSet):
+    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
+    permission_classes = [IsAuthenticated]
+
+    def get_queryset(self):
+        queryset = LogGroup.objects.filter(user=self.request.user)
+
+        return queryset
