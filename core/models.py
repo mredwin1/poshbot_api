@@ -332,7 +332,7 @@ class LogGroup(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
-    created_date = models.DateTimeField(editable=False, null=True, blank=True)
+    created_date = models.DateTimeField(auto_now_add=True)
 
     def log(self, message, log_level=None, image=None):
         timestamp = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
@@ -368,12 +368,6 @@ class LogGroup(models.Model):
 
     def debug(self, message, image=None):
         self.log(message, LogEntry.DEBUG, image)
-
-    def save(self, *args, **kwargs):
-        """On save, update timestamps"""
-        if not self.id:
-            self.created_date = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-        return super(LogGroup, self).save(*args, **kwargs)
 
     def __str__(self):
         return f'LogGroup {self.campaign.title} for {self.posh_user.username}'
