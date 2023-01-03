@@ -664,6 +664,7 @@ class PoshMarkClient(BaseClient):
                     self.sleep(1)
                     password_field.send_keys(Keys.RETURN)
                     self.logger.info('Form resubmitted')
+                    self.sleep(2, 3)
                 elif error_code == 'ERROR_FORM_ERROR':
                     self.posh_user_inactive()
                     return False
