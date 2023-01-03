@@ -23,6 +23,7 @@ class ListingImageInline(admin.TabularInline):
 class LogEntryInline(admin.StackedInline):
     model = models.LogEntry
     extra = 0
+    readonly_fields = ['level', 'timestamp', 'message', 'image']
 
 
 class PoshUserStatusFilter(admin.SimpleListFilter):
