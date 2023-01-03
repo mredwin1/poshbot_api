@@ -655,7 +655,7 @@ class PoshMarkClient(BaseClient):
 
             self.logger.info('Form submitted')
 
-            logged_in = self.locate(By.CLASS_NAME, 'sell')
+            logged_in = self.is_present(By.CLASS_NAME, 'sell')
 
             if not logged_in:
                 error_code = self.check_for_errors()
