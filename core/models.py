@@ -395,10 +395,6 @@ class LogEntry(models.Model):
     timestamp = models.DateTimeField()
     message = models.TextField()
     image = ProcessedImageField(
-        processors=[
-            Transpose(),
-            ResizeToFill(500, 500)
-        ],
         format='PNG',
         options={'quality': 60},
         upload_to=path_and_rename
