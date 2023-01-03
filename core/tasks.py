@@ -77,7 +77,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
     sign = 1 if random.random() < 0.5 else -1
     deviation = random.randint(0, (delay / 2)) * sign
     register_retries = 0
-    profile_update_retries = 0
+    update_profile_retries = 0
     listing_shared_retries = 0
     all_listings_retries = 0
     login_retries = 0
@@ -117,9 +117,9 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         registered = client.register(register_retries)
                         register_retries += 1
 
-                while not profile_updated and profile_update_retries < 3 and (logged_in or registered):
-                    profile_updated = client.update_profile()
-                    profile_update_retries += 1
+                while not profile_updated and update_profile_retries < 3 and (logged_in or registered):
+                    profile_updated = client.update_profile(update_profile_retries)
+                    update_profile_retries += 1
 
                 if profile_updated:
                     campaign.posh_user.profile_updated = True
@@ -229,6 +229,7 @@ def basic_sharing_campaign(campaign_id, logger_id=None):
     deviation = random.randint(0, (delay / 2))
     shared = False
     campaign_delay = None
+    login_retries = 0
 
     if logger_id:
         logger = LogGroup.objects.get(id=logger_id)
@@ -246,6 +247,14 @@ def basic_sharing_campaign(campaign_id, logger_id=None):
 
         try:
             with PoshMarkClient(campaign, logger) as client:
+                client.web_driver.get('https://poshmark.com')
+                client.load_cookies()
+                logged_in = client.check_logged_in()
+
+                while not logged_in and login_retries < 3:
+                    logged_in = client.login(login_retries)
+                    login_retries += 1
+
                 all_listings = client.get_all_listings()
 
                 if all_listings['shareable_listings']:
