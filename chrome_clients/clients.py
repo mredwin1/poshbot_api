@@ -511,13 +511,14 @@ class PoshMarkClient(BaseClient):
 
         # Next Section - Profile
         self.logger.info('Uploading profile picture')
-        profile_picture_name = self.posh_user.profile_picture.name.split('/')[1]
+        profile_picture_name = self.posh_user.profile_picture.name.split('/')[-1]
         self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
 
         self.sleep(2)
 
         profile_picture = self.locate(By.XPATH,
                                       '//*[@id="content"]/div/div[2]/div[1]/label/input')
+        self.logger.info(profile_picture_name)
         profile_picture.send_keys(f'/{profile_picture_name}')
 
         self.sleep(2)
@@ -614,15 +615,16 @@ class PoshMarkClient(BaseClient):
                     done_button = self.locate(By.XPATH, '//button[@type="submit"]')
                     done_button.click()
                     self.logger.info('Resubmitted form after entering captcha')
-
-                    return self.finish_registration()
+                    self.finish_registration()
+                    return True
                 elif error_code == 'ERROR_FORM_ERROR':
                     self.posh_user_inactive()
                     return False
                 elif error_code == 'UNKNOWN':
                     return False
                 elif error_code is None:
-                    return self.finish_registration()
+                    self.finish_registration()
+                    return True
 
         except Exception:
             image_path = f'/log_images/{self.campaign.title}/register_error.png'
@@ -782,13 +784,13 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(2)
 
-            header_picture_name = self.posh_user.header_picture.name.split('/')[1]
+            header_picture_name = self.posh_user.header_picture.name.split('/')[-1]
             self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
 
             self.sleep(2)
 
             header_picture = self.locate(By.CLASS_NAME, 'image-selector__input-img-files')
-            header_picture.send_keys(f'/{header_picture_name}')
+            header_picture.send_keys(f'{header_picture_name}')
 
             self.sleep(2)
 
