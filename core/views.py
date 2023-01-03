@@ -8,7 +8,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
-from .models import PoshUser, Campaign, Listing, ListingImage
+from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup
 from .tasks import init_campaign, basic_sharing_campaign
 from . import serializers
 
@@ -111,13 +111,13 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
         campaign = self.get_object()
         serializer = self.get_serializer(campaign)
-        # logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
-        # logger.save()
+        logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
+        logger.save()
 
         if campaign.posh_user:
             campaign.status = Campaign.IDLE
             campaign.save()
-            campaign_mapping[campaign.mode].delay(pk)
+            campaign_mapping[campaign.mode].delay(pk, logger.id)
 
         return Response(serializer.data)
 
