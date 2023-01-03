@@ -253,6 +253,7 @@ class PoshMarkClient(BaseClient):
         self.requests_proxy = {}
         if proxy_hostname and proxy_port:
             self.requests_proxy['https'] = f'http://{proxy_hostname}:{proxy_port}'
+        self.create_error_dir()
 
     def create_error_dir(self):
         if not os.path.isdir(f'/log_images/{self.campaign.title}'):
