@@ -132,6 +132,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
 
 class LogGroupViewSet(RetrieveModelMixin, ListModelMixin, GenericViewSet):
+    serializer_class = serializers.LogGroupSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     permission_classes = [IsAuthenticated]
 
