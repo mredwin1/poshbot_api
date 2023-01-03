@@ -964,7 +964,7 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Photos uploaded')
 
                 # Get all necessary fields
-                self.logger.info('Putting in the rest of the field')
+                self.logger.info('Putting in the rest of the fields')
                 title_field = self.locate(
                     By.XPATH, '//*[@id="content"]/div/div[1]/div[2]/section[2]/div[1]/div[2]/div/div[1]/div/div/input'
                 )
