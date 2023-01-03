@@ -23,7 +23,7 @@ from selenium_stealth import stealth
 
 from core.models import Campaign, Offer
 
-DEFAULT_IMPLICIT_WAIT = 15
+DEFAULT_IMPLICIT_WAIT = 5
 
 
 class Captcha:
