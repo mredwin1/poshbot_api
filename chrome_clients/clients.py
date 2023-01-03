@@ -795,7 +795,7 @@ class PoshMarkClient(BaseClient):
             self.sleep(2)
 
             header_picture = self.locate(By.CLASS_NAME, 'image-selector__input-img-files')
-            header_picture.send_keys(f'{header_picture_name}')
+            header_picture.send_keys(f'/{header_picture_name}')
 
             self.sleep(2)
 
