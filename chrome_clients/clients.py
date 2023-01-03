@@ -672,6 +672,9 @@ class PoshMarkClient(BaseClient):
                 elif error_code == 'ERROR_FORM_ERROR':
                     self.posh_user_inactive()
                     return False
+                elif error_code == 'ERROR_USERNAME_PASSWORD':
+                    self.posh_user_inactive()
+                    return False
                 elif error_code == 'UNKNOWN':
                     return False
                 elif error_code is None:
