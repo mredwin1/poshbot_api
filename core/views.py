@@ -136,6 +136,6 @@ class LogGroupViewSet(RetrieveModelMixin, ListModelMixin, GenericViewSet):
     permission_classes = [IsAuthenticated]
 
     def get_queryset(self):
-        queryset = LogGroup.objects.filter(user=self.request.user)
+        queryset = LogGroup.objects.filter(campaign_id=self.kwargs['campaign_pk'])
 
         return queryset
