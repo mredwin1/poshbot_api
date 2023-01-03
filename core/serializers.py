@@ -132,8 +132,8 @@ class PoshUserSerializer(serializers.ModelSerializer):
         while username in posh_user_info['usernames']:
             username = self.generate_username(first_name, last_name)
 
-        user = self.context.get('user')
-        email_id, email = PoshUser.create_email(first_name, last_name, user.email)
+        # user = self.context.get('user')
+        email_id, email = PoshUser.create_email(first_name, last_name)
 
         new_user_info = {
             'first_name': first_name,
