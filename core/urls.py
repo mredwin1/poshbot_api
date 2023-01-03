@@ -19,3 +19,4 @@ urlpatterns = [
 ]
 urlpatterns += router.urls
 urlpatterns += listings_router.urls
+urlpatterns += campaigns_router.urls
