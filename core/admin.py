@@ -24,6 +24,7 @@ class LogEntryInline(admin.StackedInline):
     model = models.LogEntry
     extra = 0
     readonly_fields = ['level', 'timestamp', 'message', 'image']
+    ordering = ['timestamp']
 
 
 class PoshUserStatusFilter(admin.SimpleListFilter):
