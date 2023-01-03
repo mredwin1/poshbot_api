@@ -336,7 +336,7 @@ class LogGroup(models.Model):
 
     def log(self, message, log_level=None, image=None):
         timestamp = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-        log_entries = LogEntry.objects.filter(logger_group=self).order_by('timestamp')
+        log_entries = LogEntry.objects.filter(log_group=self).order_by('timestamp')
 
         if len(log_entries) >= 1000:
             last_log = log_entries.first()
