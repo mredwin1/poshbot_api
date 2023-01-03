@@ -506,57 +506,59 @@ class PoshMarkClient(BaseClient):
             return None
 
     def finish_registration(self):
-        self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/registration_finished.png')
-        self.logger.info(f'Successfully registered {self.posh_user.username}', image=f'/log_images/{self.campaign.title}/registration_finished.png')
+        try:
+            self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/registration_finished.png')
+            self.logger.info(f'Successfully registered {self.posh_user.username}', image=f'/log_images/{self.campaign.title}/registration_finished.png')
 
-        # Next Section - Profile
-        self.logger.info('Uploading profile picture')
-        profile_picture_name = self.posh_user.profile_picture.name.split('/')[-1]
-        self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
+            # Next Section - Profile
+            self.logger.info('Uploading profile picture')
+            profile_picture_name = self.posh_user.profile_picture.name.split('/')[-1]
+            self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
 
-        self.sleep(2)
+            self.sleep(2)
 
-        profile_picture = self.locate(By.XPATH,
-                                      '//*[@id="content"]/div/div[2]/div[1]/label/input')
-        self.logger.info(profile_picture_name)
-        profile_picture.send_keys(f'/{profile_picture_name}')
+            profile_picture = self.locate(By.XPATH,
+                                          '//*[@id="content"]/div/div[2]/div[1]/label/input')
+            profile_picture.send_keys(f'/{profile_picture_name}')
 
-        self.sleep(2)
+            self.sleep(2)
 
-        apply_button = self.locate(
-            By.XPATH, '//*[@id="content"]/div/div[2]/div[1]/div/div[2]/div[2]/div/button[2]')
-        apply_button.click()
+            apply_button = self.locate(
+                By.XPATH, '//*[@id="content"]/div/div[2]/div[1]/div/div[2]/div[2]/div/button[2]')
+            apply_button.click()
 
-        self.sleep(4)
+            self.sleep(4)
 
-        self.logger.info('Profile picture uploaded')
+            self.logger.info('Profile picture uploaded')
 
-        next_button = self.locate(By.XPATH, '//button[@type="submit"]')
-        next_button.click()
+            next_button = self.locate(By.XPATH, '//button[@type="submit"]')
+            next_button.click()
 
-        # Next Section - Select Brands (will not select brands)
-        self.sleep(2, 4)  # Sleep for realism
-        self.logger.info('Selecting random brands')
-        brands = self.web_driver.find_elements(By.CLASS_NAME, 'content-grid-item')
-        next_button = self.locate(By.XPATH, '//button[@type="submit"]')
+            # Next Section - Select Brands (will not select brands)
+            self.sleep(2, 4)  # Sleep for realism
+            self.logger.info('Selecting random brands')
+            brands = self.web_driver.find_elements(By.CLASS_NAME, 'content-grid-item')
+            next_button = self.locate(By.XPATH, '//button[@type="submit"]')
 
-        # Select random brands then click next
-        for x in range(random.randint(3, 5)):
-            try:
-                brand = random.choice(brands)
-                brand.click()
-            except IndexError:
-                pass
-        next_button.click()
+            # Select random brands then click next
+            for x in range(random.randint(3, 5)):
+                try:
+                    brand = random.choice(brands)
+                    brand.click()
+                except IndexError:
+                    pass
+            next_button.click()
 
-        # Next Section - All Done Page
-        self.sleep(1, 3)  # Sleep for realism
-        start_shopping_button = self.locate(By.XPATH, '//button[@type="submit"]')
-        start_shopping_button.click()
+            # Next Section - All Done Page
+            self.sleep(1, 3)  # Sleep for realism
+            start_shopping_button = self.locate(By.XPATH, '//button[@type="submit"]')
+            start_shopping_button.click()
 
-        self.save_cookies()
+            self.save_cookies()
 
-        self.logger.info('Registration Complete')
+            self.logger.info('Registration Complete')
+        except Exception:
+            self.handle_error('Error while finishing registration', 'finish_registration.png')
 
     def register(self, register_retries=0):
         """Will register a given user to poshmark"""
@@ -595,6 +597,8 @@ class PoshMarkClient(BaseClient):
 
             self.logger.info('Form submitted')
 
+            self.sleep(7)
+
             attempts = 0
             response = requests.get(f'https://poshmark.com/closet/{self.posh_user.username}',
                                     proxies=self.requests_proxy, timeout=30)
@@ -609,6 +613,7 @@ class PoshMarkClient(BaseClient):
             if response.status_code == requests.codes.ok:
                 self.logger.info('Registration was successful')
                 self.finish_registration()
+                return True
             else:
                 error_code = self.check_for_errors()
                 if error_code == 'CAPTCHA':
