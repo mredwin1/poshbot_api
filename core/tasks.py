@@ -7,9 +7,9 @@ import time
 import traceback
 
 from celery import shared_task
-from chrome_clients.clients import PoshMarkClient
 from selenium.common.exceptions import WebDriverException
 
+from chrome_clients.clients import PoshMarkClient
 from .models import Campaign, Listing, ListingImage, ProxyConnection, LogGroup
 
 
@@ -58,7 +58,9 @@ def init_campaign(campaign_id, logger_id):
                 logger.info('No proxy available, waiting 30sec')
                 time.sleep(30)
 
-        proxy_connection = ProxyConnection(campaign=campaign, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc), proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
+        proxy_connection = ProxyConnection(campaign=campaign,
+                                           created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc),
+                                           proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
         proxy_connection.save()
         logger.info(f'Proxy connection made: {proxy_connection}')
 
@@ -86,7 +88,6 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
     listing_shared = None
     all_listings = None
     logged_in = None
-    is_new_user = not campaign.posh_user.is_registered
 
     if logger_id:
         logger = LogGroup.objects.get(id=logger_id)
@@ -135,7 +136,8 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         for listings in all_listings.values():
                             all_available_listings += listings
 
-                        listings_not_listed = [listing for listing in campaign_listings if listing.title not in all_available_listings]
+                        listings_not_listed = [listing for listing in campaign_listings if
+                                               listing.title not in all_available_listings]
 
                         for listing_not_listed in listings_not_listed:
                             listing_images = ListingImage.objects.filter(listing=listing_not_listed)
@@ -249,7 +251,7 @@ def basic_sharing_campaign(campaign_id, logger_id=None):
                         logger.info('Seeing if it is time to send offers to likers')
                         now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                         nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
-                                                            minute=0, second=0).replace(tzinfo=pytz.utc)
+                                                    minute=0, second=0).replace(tzinfo=pytz.utc)
                         midnight = nine_pm + datetime.timedelta(hours=3)
 
                         if nine_pm < now < midnight:

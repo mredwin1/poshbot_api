@@ -481,7 +481,7 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(1, 2)
 
-            result = not self.is_present(By.ID, 'login_form_username_email')
+            result = self.is_present(By.CLASS_NAME, 'seller')
 
             if result:
                 self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/logged_in.png')
