@@ -75,8 +75,17 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
     sign = 1 if random.random() < 0.5 else -1
     deviation = random.randint(0, (delay / 2)) * sign
     register_retries = 0
+    profile_update_retries = 0
+    listing_shared_retries = 0
+    all_listings_retries = 0
+    login_retries = 0
+    registered = campaign.posh_user.is_registered
+    profile_updated = campaign.posh_user.profile_updated
     campaign_delay = None
     shared = False
+    listing_shared = None
+    all_listings = None
+    logged_in = None
     is_new_user = not campaign.posh_user.is_registered
 
     if logger_id:
@@ -94,66 +103,82 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
         start_time = time.time()
         try:
             with PoshMarkClient(campaign, logger, proxy_hostname=proxy_hostname, proxy_port=proxy_port) as client:
-                while not campaign.posh_user.is_registered and not campaign.posh_user.profile_updated and campaign.posh_user.is_active and register_retries < 3:
-                    client.register()
-                    campaign.refresh_from_db()
-                    register_retries += 1
+                if registered:
+                    while not logged_in and login_retries < 3:
+                        logged_in = client.login(login_retries)
+                        register_retries += 1
+                else:
+                    while not registered and register_retries < 3:
+                        registered = client.register(register_retries)
+                        register_retries += 1
 
-                if campaign.posh_user.is_registered and campaign.posh_user.is_active:
-                    if not campaign.posh_user.profile_updated:
-                        client.update_profile()
+                campaign.refresh_from_db()
 
-                    if is_new_user:
-                        for listing in campaign_listings:
-                            listing_images = ListingImage.objects.filter(listing=listing)
-                            client.list_item(listing, listing_images)
-                        campaign_delay = 1800  # Custom delay after list
-                    else:
+                if registered:
+                    campaign.posh_user.is_registered = True
+                    campaign.posh_user.save()
+                    while not profile_updated and profile_update_retries < 3:
+                        profile_updated = client.update_profile()
+
+                    for listing in campaign_listings:
+                        listing_images = ListingImage.objects.filter(listing=listing)
+                        client.list_item(listing, listing_images)
+                    campaign_delay = 1800  # Custom delay after list
+                elif logged_in:
+                    while all_listings is None and all_listings_retries < 3:
                         all_listings = client.get_all_listings()
+                        all_listings_retries += 1
 
-                        if all_listings:
-                            all_available_listings = []
+                    if all_listings:
+                        all_available_listings = []
 
-                            for listings in all_listings.values():
-                                all_available_listings += listings
+                        for listings in all_listings.values():
+                            all_available_listings += listings
 
-                            listings_not_listed = [listing for listing in campaign_listings if listing.title not in all_available_listings]
+                        listings_not_listed = [listing for listing in campaign_listings if listing.title not in all_available_listings]
 
-                            for listing_not_listed in listings_not_listed:
-                                listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                                client.list_item(listing_not_listed, listing_images)
+                        for listing_not_listed in listings_not_listed:
+                            listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                            client.list_item(listing_not_listed, listing_images)
 
-                            if all_listings['shareable_listings']:
-                                for listing_title in all_listings['shareable_listings']:
+                        if all_listings['shareable_listings']:
+                            for listing_title in all_listings['shareable_listings']:
+                                while listing_shared is None and listing_shared_retries < 3:
                                     listing_shared = client.share_item(listing_title)
+                                    listing_shared_retries += 1
 
-                                    if not shared:
-                                        shared = listing_shared
+                                if not shared:
+                                    shared = listing_shared
+                                listing_shared = None
 
-                                if random.random() < .20 and shared:
-                                    logger.info('Seeing if it is time to send offers to likers')
-                                    now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                                    nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
-                                                                minute=0, second=0).replace(tzinfo=pytz.utc)
-                                    midnight = nine_pm + datetime.timedelta(hours=3)
+                            if random.random() < .20 and shared:
+                                logger.info('Seeing if it is time to send offers to likers')
+                                now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
+                                                            minute=0, second=0).replace(tzinfo=pytz.utc)
+                                midnight = nine_pm + datetime.timedelta(hours=3)
 
-                                    if nine_pm < now < midnight:
-                                        client.send_offer_to_likers(listing_title)
-                                    else:
-                                        logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
+                                if nine_pm < now < midnight:
+                                    client.send_offer_to_likers(listing_title)
+                                else:
+                                    logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
 
-                                if random.random() < .20 and shared:
-                                    client.check_offers(listing_title)
+                            if random.random() < .20 and shared:
+                                client.check_offers(listing_title)
 
-                                if not shared and not campaign_delay:
-                                    campaign_delay = 3600
-                            elif all_listings['reserved_listings']:
+                            if not shared and not campaign_delay:
                                 campaign_delay = 3600
-                            elif not listings_not_listed:
-                                campaign.status = Campaign.STOPPED
-                                campaign.save()
-                        else:
-                            campaign_delay = 30
+                        elif all_listings['reserved_listings']:
+                            campaign_delay = 3600
+                        elif not listings_not_listed:
+                            campaign.status = Campaign.STOPPED
+                            campaign.save()
+                    else:
+                        campaign.status = Campaign.STOPPED
+                        campaign.save()
+                else:
+                    campaign.status = Campaign.STOPPED
+                    campaign.save()
 
             if proxy_hostname and proxy_port:
                 proxy_connection = ProxyConnection.objects.get(campaign=campaign)
