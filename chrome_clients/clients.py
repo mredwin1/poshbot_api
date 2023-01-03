@@ -611,7 +611,6 @@ class PoshMarkClient(BaseClient):
                 self.sleep(5)
 
             if response.status_code == requests.codes.ok:
-                self.logger.info('Registration was successful')
                 self.finish_registration()
                 return True
             else:
@@ -773,10 +772,10 @@ class PoshMarkClient(BaseClient):
         except Exception as e:
             self.handle_error('Error while getting all listings', 'get_all_listings_error.png')
 
-    def update_profile(self):
+    def update_profile(self, update_profile_retries=0):
         """Updates a user profile with their profile picture and header picture"""
         try:
-            self.logger.info('Updating Profile')
+            self.logger.info(f'Profile update Attempt # {update_profile_retries + 1} for {self.campaign.posh_user.username}')
 
             self.go_to_closet()
 
@@ -809,8 +808,7 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(1, 3)
 
-            self.posh_user.profile_updated = True
-            self.posh_user.save()
+            return True
         except Exception as e:
             self.handle_error('Error while updating profile', 'update_profile_error.png')
             return False

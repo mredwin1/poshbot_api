@@ -116,7 +116,13 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         registered = client.register(register_retries)
                         register_retries += 1
 
-                campaign.refresh_from_db()
+                while not profile_updated and profile_update_retries < 3 and (logged_in or registered):
+                    profile_updated = client.update_profile()
+                    profile_update_retries += 1
+
+                if profile_updated:
+                    campaign.posh_user.profile_updated = True
+                    campaign.save()
 
                 if logged_in:
                     while all_listings is None and all_listings_retries < 3:
@@ -174,9 +180,6 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                 elif registered:
                     campaign.posh_user.is_registered = True
                     campaign.posh_user.save()
-                    while not profile_updated and profile_update_retries < 3:
-                        profile_updated = client.update_profile()
-                        profile_update_retries += 1
 
                     for listing in campaign_listings:
                         listing_images = ListingImage.objects.filter(listing=listing)
