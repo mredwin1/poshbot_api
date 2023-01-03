@@ -344,7 +344,7 @@ class LogGroup(models.Model):
 
         log_entry = LogEntry(
             level=log_level if log_level else LogEntry.NOTSET,
-            logger=self,
+            log_group=self,
             timestamp=timestamp,
             message=message
         )
