@@ -152,8 +152,7 @@ class PoshUser(models.Model):
     def create_email_forwarder(inbox_id, forward_to):
         with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
             api_instance = mailslurp_client.InboxForwarderControllerApi(api_client)
-            create_inbox_forwarder_options = mailslurp_client.CreateInboxForwarderOptions()
-            create_inbox_forwarder_options.forward_to_recipients = [forward_to]
+            create_inbox_forwarder_options = mailslurp_client.CreateInboxForwarderOptions(field='SENDER', match='*', forward_to_recipients=[forward_to])
 
             try:
                 api_response = api_instance.create_new_inbox_forwarder(
