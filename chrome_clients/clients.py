@@ -511,13 +511,16 @@ class PoshMarkClient(BaseClient):
             self.logger.info(f'Successfully registered {self.posh_user.username}', image=f'/log_images/{self.campaign.title}/registration_finished.png')
 
             # Next Section - Profile
-            self.logger.info('Uploading profile picture')
-            profile_picture_name = self.posh_user.profile_picture.name.split('/')[-1]
-            self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
+            if self.posh_user.profile_picture:
+                self.logger.info('Uploading profile picture')
+                profile_picture_name = self.posh_user.profile_picture.name.split('/')[-1]
+                self.bucket.download_file(self.posh_user.profile_picture.name, profile_picture_name)
 
-            profile_picture = self.locate(By.XPATH,
-                                          '//*[@id="content"]/div/div[2]/div[1]/label/input')
-            profile_picture.send_keys(f'/{profile_picture_name}')
+                profile_picture = self.locate(By.XPATH,
+                                              '//*[@id="content"]/div/div[2]/div[1]/label/input')
+                profile_picture.send_keys(f'/{profile_picture_name}')
+            else:
+                self.logger.warning('Profile picture not found. Skipping upload')
 
             self.sleep(1)
 
@@ -782,32 +785,35 @@ class PoshMarkClient(BaseClient):
         try:
             self.logger.info(f'Profile update Attempt # {update_profile_retries + 1} for {self.campaign.posh_user.username}')
 
-            self.go_to_closet()
+            if self.posh_user.header_picture:
+                self.go_to_closet()
 
-            edit_profile_button = self.locate(By.XPATH, '//a[@href="/user/edit-profile"]')
-            edit_profile_button.click()
+                edit_profile_button = self.locate(By.XPATH, '//a[@href="/user/edit-profile"]')
+                edit_profile_button.click()
 
-            self.logger.info('Clicked on edit profile button')
+                self.logger.info('Clicked on edit profile button')
 
-            header_picture_name = self.posh_user.header_picture.name.split('/')[-1]
-            self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
+                header_picture_name = self.posh_user.header_picture.name.split('/')[-1]
+                self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
 
-            header_picture = self.locate(By.CLASS_NAME, 'image-selector__input-img-files')
-            header_picture.send_keys(f'/{header_picture_name}')
+                header_picture = self.locate(By.CLASS_NAME, 'image-selector__input-img-files')
+                header_picture.send_keys(f'/{header_picture_name}')
 
-            self.sleep(1)
+                self.sleep(1)
 
-            apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/div/button[2]')
-            apply_button.click()
+                apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div[2]/div/div[1]/div[2]/div/div[2]/div[2]/div/button[2]')
+                apply_button.click()
 
-            self.sleep(1, 2)
+                self.sleep(1, 2)
 
-            save_button = self.locate(By.CLASS_NAME, 'btn--primary')
-            save_button.click()
+                save_button = self.locate(By.CLASS_NAME, 'btn--primary')
+                save_button.click()
 
-            self.logger.info('Profile saved')
+                self.logger.info('Profile saved')
 
-            self.sleep(1, 3)
+                self.sleep(1, 3)
+            else:
+                self.logger.warning('No header picture found to upload')
 
             return True
         except Exception as e:
