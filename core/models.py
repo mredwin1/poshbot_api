@@ -178,11 +178,13 @@ class Campaign(models.Model):
     RUNNING = '1'
     IDLE = '2'
     STOPPED = '3'
+    STARTING = '4'
 
     STATUS_CHOICES = [
         (RUNNING, 'RUNNING'),
         (IDLE, 'IDLE'),
         (STOPPED, 'STOPPED'),
+        (STARTING, 'STARTING'),
     ]
 
     ADVANCED_SHARING = '0'
