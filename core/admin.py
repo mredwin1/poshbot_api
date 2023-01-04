@@ -158,7 +158,7 @@ class CampaignAdmin(admin.ModelAdmin):
         return campaign.posh_user
 
     @admin.display(ordering='user')
-    def associated_posh_user(self, campaign):
+    def associated_user(self, campaign):
         if campaign.user:
             url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(campaign.user.id)})}"
             return format_html('<a href="{}">{}</a>', url, campaign.user)
@@ -187,7 +187,7 @@ class CampaignAdmin(admin.ModelAdmin):
 class LogGroupAdmin(admin.ModelAdmin):
     list_display = ['created_date', 'campaign', 'posh_user']
     readonly_fields = ['campaign', 'posh_user', 'created_date']
-    list_filter = ['campaign', 'user', 'created_date']
+    list_filter = ['campaign', 'created_date']
     inlines = [LogEntryInline]
 
     def get_queryset(self, request):
