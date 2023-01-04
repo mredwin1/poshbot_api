@@ -41,8 +41,11 @@ def get_proxy(logger):
                         return available_proxy
 
         return None
-    except Exception:
+    except Exception as e:
+        logger.debug(f'{traceback.format_exc()}')
+
         return None
+
 
 @shared_task
 def init_campaign(campaign_id, logger_id):
