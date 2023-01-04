@@ -142,9 +142,9 @@ class ListingAdmin(admin.ModelAdmin):
 class CampaignAdmin(admin.ModelAdmin):
     autocomplete_fields = ['posh_user']
     readonly_fields = ['status']
-    list_display = ['title', 'status', 'associated_posh_user', 'listings_count']
-    search_fields = ['title__istartswith']
-    list_filter = ['status', 'posh_user']
+    list_display = ['title', 'status', 'associated_user', 'associated_posh_user', 'listings_count']
+    search_fields = ['title__istartswith', 'associated_posh_user__istartswith']
+    list_filter = ['status', 'user']
     inlines = [ListingInline]
 
     def get_queryset(self, request):
@@ -156,6 +156,13 @@ class CampaignAdmin(admin.ModelAdmin):
             url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(campaign.posh_user.id)})}"
             return format_html('<a href="{}">{}</a>', url, campaign.posh_user)
         return campaign.posh_user
+
+    @admin.display(ordering='user')
+    def associated_posh_user(self, campaign):
+        if campaign.user:
+            url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(campaign.user.id)})}"
+            return format_html('<a href="{}">{}</a>', url, campaign.user)
+        return campaign.user
 
     @admin.display(ordering='listings_count')
     def listings_count(self, campaign):
@@ -180,6 +187,7 @@ class CampaignAdmin(admin.ModelAdmin):
 class LogGroupAdmin(admin.ModelAdmin):
     list_display = ['created_date', 'campaign', 'posh_user']
     readonly_fields = ['campaign', 'posh_user', 'created_date']
+    list_filter = ['campaign', 'user', 'created_date']
     inlines = [LogEntryInline]
 
     def get_queryset(self, request):
