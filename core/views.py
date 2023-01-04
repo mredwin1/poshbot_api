@@ -107,7 +107,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         campaign = self.get_object()
         serializer = self.get_serializer(campaign)
 
-        if campaign.mode == Campaign.ADVANCED_SHARING and campaign.posh_user.is_registered:
+        if campaign.mode == Campaign.ADVANCED_SHARING and not campaign.posh_user.is_registered:
             advanced_sharing = init_campaign
         else:
             advanced_sharing = advanced_sharing_campaign
