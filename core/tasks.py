@@ -89,11 +89,13 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
     listing_shared_retries = 0
     all_listings_retries = 0
     login_retries = 0
+    list_item_retries = 0
     registered = campaign.posh_user.is_registered
     profile_updated = campaign.posh_user.profile_updated
     campaign_delay = None
     shared = False
     listing_shared = None
+    item_listed = None
     all_listings = None
     logged_in = None
 
@@ -148,7 +150,9 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
 
                     for listing_not_listed in listings_not_listed:
                         listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                        client.list_item(listing_not_listed, listing_images)
+                        while item_listed is None and list_item_retries < 3:
+                            item_listed = client.list_item(listing_not_listed, listing_images, list_item_retries)
+                            list_item_retries += 1
 
                     if all_listings:
                         if all_listings['shareable_listings']:
@@ -183,7 +187,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         elif not listings_not_listed:
                             campaign.status = Campaign.STOPPED
                             campaign.save()
-                    elif not listings_not_listed:
+                    elif not item_listed:
                         campaign.status = Campaign.STOPPED
                         campaign.save()
                 elif registered:

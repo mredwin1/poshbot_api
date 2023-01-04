@@ -820,12 +820,12 @@ class PoshMarkClient(BaseClient):
             self.handle_error('Error while updating profile', 'update_profile_error.png')
             return False
 
-    def list_item(self, listing, listing_images):
+    def list_item(self, listing, listing_images, list_item_retries=0):
         """Will list an item on poshmark for the user"""
         try:
             listing_title = listing.title
 
-            self.logger.info(f'Listing the following item: {listing_title}')
+            self.logger.info(f'Attempt # {list_item_retries + 1} to list {listing_title} for {self.posh_user.username}')
 
             self.web_driver.get('https://poshmark.com/create-listing')
 
@@ -838,6 +838,8 @@ class PoshMarkClient(BaseClient):
                 self.web_driver.save_screenshot(image_path)
                 self.logger.error('Error encountered when on the new listing page. Setting user inactive.', image_path)
                 self.posh_user_inactive()
+
+                return False
             else:
                 listing_category = listing.category
                 listing_subcategory = listing.subcategory
@@ -1028,10 +1030,10 @@ class PoshMarkClient(BaseClient):
                     else:
                         self.logger.info('Item listed successfully')
 
-                return listing_title
+                return True
 
         except Exception as e:
-            self.handle_error('Error while listing', 'list_item_error.png')
+            return self.handle_error('Error while listing', 'list_item_error.png')
 
     def share_item(self, listing_title):
         """Will share an item in the closet"""
