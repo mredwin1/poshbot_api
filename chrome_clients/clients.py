@@ -752,8 +752,9 @@ class PoshMarkClient(BaseClient):
 
                     self.logger.info(f'Sold Listings: {sold_listings_str}')
                     self.logger.info(f'Reserved Listings: {reserved_listings_str}')
-                    self.web_driver.save_screenshot('no_listings.png')
-                    self.logger.info('No shareable listings found')
+                    image_path = f'/log_images/{self.campaign.title}/no_listings.png'
+                    self.web_driver.save_screenshot(image_path)
+                    self.logger.info('No shareable listings found', image=image_path)
             else:
                 is_logged_in = self.check_logged_in()
                 if is_logged_in:
