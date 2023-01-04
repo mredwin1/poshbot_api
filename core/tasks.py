@@ -14,33 +14,35 @@ from .models import Campaign, Listing, ListingImage, ProxyConnection, LogGroup
 
 
 def get_proxy(logger):
-    cookies = ProxyConnection.authenticate()
-    list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
+    try:
+        cookies = ProxyConnection.authenticate()
+        list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
 
-    available_proxies = list_response.json()['result']
+        available_proxies = list_response.json()['result']
 
-    for available_proxy in available_proxies:
-        connections = ProxyConnection.objects.filter(proxy_license_uuid=available_proxy['uuid'])
-        connections_in_use = connections.filter(in_use=True)
-        if connections.count() >= int(os.environ.get('MAX_PROXY_CONNECTIONS', '1')) and connections_in_use.count() == 0:
-            first_connection = connections.first()
-            reset_response = first_connection.fast_reset()
+        for available_proxy in available_proxies:
+            connections = ProxyConnection.objects.filter(proxy_license_uuid=available_proxy['uuid'])
+            connections_in_use = connections.filter(in_use=True)
+            if connections.count() >= int(os.environ.get('MAX_PROXY_CONNECTIONS', '1')) and connections_in_use.count() == 0:
+                first_connection = connections.first()
+                reset_response = first_connection.fast_reset()
 
-            logger.info(reset_response)
-            time.sleep(10)
+                logger.info(reset_response)
+                time.sleep(10)
 
-            connections.delete()
-            return available_proxy
-        elif connections.count() < int(os.environ.get('MAX_PROXY_CONNECTIONS', '1')):
-            return available_proxy
-        else:
-            for connection in connections:
-                if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - connection.created_date).seconds > 900:
-                    connection.delete()
-                    return available_proxy
+                connections.delete()
+                return available_proxy
+            elif connections.count() < int(os.environ.get('MAX_PROXY_CONNECTIONS', '1')):
+                return available_proxy
+            else:
+                for connection in connections:
+                    if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - connection.created_date).seconds > 900:
+                        connection.delete()
+                        return available_proxy
 
-    return None
-
+        return None
+    except Exception:
+        return None
 
 @shared_task
 def init_campaign(campaign_id, logger_id):
