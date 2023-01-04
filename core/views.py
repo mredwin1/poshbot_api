@@ -9,7 +9,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup
-from .tasks import init_campaign, basic_sharing_campaign
+from .tasks import init_campaign, basic_sharing_campaign, advanced_sharing_campaign
 from . import serializers
 
 
@@ -104,19 +104,25 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
     @action(detail=True, methods=['POST'])
     def start(self, request, pk):
-        campaign_mapping = {
-            Campaign.BASIC_SHARING: basic_sharing_campaign,
-            Campaign.ADVANCED_SHARING: init_campaign
-        }
-
         campaign = self.get_object()
         serializer = self.get_serializer(campaign)
+
+        if campaign.mode == Campaign.ADVANCED_SHARING and campaign.posh_user.is_registered:
+            advanced_sharing = init_campaign
+        else:
+            advanced_sharing = advanced_sharing_campaign
+
+        campaign_mapping = {
+            Campaign.BASIC_SHARING: basic_sharing_campaign,
+            Campaign.ADVANCED_SHARING: advanced_sharing
+        }
 
         if campaign.posh_user:
             logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
             logger.save()
             campaign.status = Campaign.IDLE
             campaign.save()
+
             campaign_mapping[campaign.mode].delay(pk, logger.id)
 
         return Response(serializer.data)
