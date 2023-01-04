@@ -135,19 +135,19 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         all_listings = client.get_all_listings()
                         all_listings_retries += 1
 
+                    all_available_listings = []
                     if all_listings:
-                        all_available_listings = []
-
                         for listings in all_listings.values():
                             all_available_listings += listings
 
-                        listings_not_listed = [listing for listing in campaign_listings if
-                                               listing.title not in all_available_listings]
+                    listings_not_listed = [listing for listing in campaign_listings if
+                                           listing.title not in all_available_listings]
 
-                        for listing_not_listed in listings_not_listed:
-                            listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                            client.list_item(listing_not_listed, listing_images)
+                    for listing_not_listed in listings_not_listed:
+                        listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                        client.list_item(listing_not_listed, listing_images)
 
+                    if all_listings:
                         if all_listings['shareable_listings']:
                             for listing_title in all_listings['shareable_listings']:
                                 while listing_shared is None and listing_shared_retries < 3:
@@ -180,7 +180,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         elif not listings_not_listed:
                             campaign.status = Campaign.STOPPED
                             campaign.save()
-                    else:
+                    elif not listings_not_listed:
                         campaign.status = Campaign.STOPPED
                         campaign.save()
                 elif registered:
