@@ -50,15 +50,18 @@ def init_campaign(campaign_id, logger_id):
     logger = LogGroup.objects.get(id=logger_id)
 
     if not campaign.posh_user.is_registered:
+        campaign.status = Campaign.STARTING
+        campaign.save()
         proxy = None
 
         logger.info(f'Getting a proxy for the following campaign: {campaign}')
 
-        while not proxy:
+        while not proxy and campaign.status != Campaign.STOPPED:
             proxy = get_proxy(logger)
             if not proxy:
                 logger.info('No proxy available, waiting 30sec')
                 time.sleep(30)
+                campaign.refresh_from_db()
 
         proxy_connection = ProxyConnection(campaign=campaign,
                                            created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc),
