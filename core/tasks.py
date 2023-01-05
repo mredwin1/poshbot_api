@@ -142,19 +142,19 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                             all_listings = client.get_all_listings()
                             all_listings_retries += 1
 
-                        # all_available_listings = []
-                        # if all_listings:
-                        #     for listings in all_listings.values():
-                        #         all_available_listings += listings
-                        #
-                        # listings_not_listed = [listing for listing in campaign_listings if
-                        #                        listing.title not in all_available_listings]
-                        #
-                        # for listing_not_listed in listings_not_listed:
-                        #     listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                        #     while item_listed is None and list_item_retries < 3:
-                        #         item_listed = client.list_item(listing_not_listed, listing_images, list_item_retries)
-                        #         list_item_retries += 1
+                        all_available_listings = []
+                        if all_listings:
+                            for listings in all_listings.values():
+                                all_available_listings += listings
+
+                        listings_not_listed = [listing for listing in campaign_listings if
+                                               listing.title not in all_available_listings]
+
+                        for listing_not_listed in listings_not_listed:
+                            listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                            while item_listed is None and list_item_retries < 3:
+                                item_listed = client.list_item(listing_not_listed, listing_images, list_item_retries)
+                                list_item_retries += 1
 
                         if all_listings:
                             if all_listings['shareable_listings']:
