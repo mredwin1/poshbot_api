@@ -87,7 +87,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
         return username
 
-    def get_new_posh_user(self):
+    def get_new_posh_user(self, email=None):
         headers = {
             'User-Agent': 'Mozilla/5.0 (X11; CrOS x86_64 12871.102.0) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/81.0.4044.141 Safari/537.36'
         }
@@ -118,6 +118,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
         username = self.generate_username(first_name, last_name)
         profile_image_url = f'https://source.unsplash.com/600x600/?{user_info["gender"]}'
         date_of_birth = datetime.strptime(user_info['dob']['date'][:-5], '%Y-%m-%dT%H:%M:%S')
+        email_id = ''
 
         header_image_response = requests.get(header_image_url, timeout=10, headers=headers)
 
@@ -132,8 +133,10 @@ class PoshUserSerializer(serializers.ModelSerializer):
         while username in posh_user_info['usernames']:
             username = self.generate_username(first_name, last_name)
 
-        # user = self.context.get('user')
-        email_id, email = PoshUser.create_email(first_name, last_name)
+
+        if not email:
+            # user = self.context.get('user')
+            email_id, email = PoshUser.create_email(first_name, last_name)
 
         new_user_info = {
             'first_name': first_name,
@@ -154,7 +157,13 @@ class PoshUserSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         path = self.context.get('path')
         if 'generate' in path:
-            all_data = {**validated_data, **self.get_new_posh_user()}
+            email = None
+            try:
+                email = validated_data.pop('email')
+            except KeyError:
+                pass
+            all_data = {**validated_data, **self.get_new_posh_user(email)}
+
             picture_urls = {
                 'profile_picture': all_data.pop('profile_picture_url'),
                 'header_picture': all_data.pop('header_picture_url')
