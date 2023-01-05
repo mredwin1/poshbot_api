@@ -189,7 +189,8 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
         else:
             posh_user = PoshUser(**validated_data)
-
+            
+            posh_user.is_registered = True
             posh_user.user = user
             posh_user.save()
 
