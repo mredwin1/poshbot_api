@@ -1,3 +1,5 @@
+import logging
+
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
 from rest_framework import status
@@ -11,6 +13,9 @@ from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup
 from .tasks import init_campaign, basic_sharing_campaign, advanced_sharing_campaign
 from . import serializers
+
+
+logger = logging.getLogger(__name__)
 
 
 class TokenObtainPairView(BaseTokenObtainPairView):
@@ -63,6 +68,8 @@ class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, Des
         return queryset
 
     def get_serializer_context(self):
+        logger.info(self.request)
+
         context = super(ListingViewSet, self).get_serializer_context()
         context.update({'user': self.request.user})
         context.update({'files': self.request.FILES})
