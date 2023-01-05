@@ -68,7 +68,7 @@ class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, Des
         return queryset
 
     def get_serializer_context(self):
-        logger.info(self.request)
+        logger.info(self.request.data)
 
         context = super(ListingViewSet, self).get_serializer_context()
         context.update({'user': self.request.user})
