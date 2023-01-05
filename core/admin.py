@@ -187,7 +187,7 @@ class CampaignAdmin(admin.ModelAdmin):
 class LogGroupAdmin(admin.ModelAdmin):
     list_display = ['created_date', 'campaign', 'posh_user']
     readonly_fields = ['campaign', 'posh_user', 'created_date']
-    list_filter = ['campaign', 'created_date']
+    list_filter = ['posh_user', 'campaign', 'created_date']
     inlines = [LogEntryInline]
 
     def get_queryset(self, request):
