@@ -642,6 +642,11 @@ class PoshMarkClient(BaseClient):
             password_field.send_keys(self.posh_user.password)
             gender_field.click()
             self.sleep(1)
+
+            image_name = f'/log_images/{self.campaign.title}/gender_field_clicked.png'
+            self.web_driver.save_screenshot(image_name)
+            self.logger.info('Gender Field clicked', image=image_name)
+
             gender_options = self.web_driver.find_elements(By.CLASS_NAME, 'dropdown__menu__item')
             done_button = self.locate(By.XPATH, '//button[@type="submit"]')
 
