@@ -664,11 +664,10 @@ class PoshMarkClient(BaseClient):
             self.sleep(1)
 
             # Submit the form
-            done_button = self.locate(By.XPATH, '//button[@type="submit"]')
             image_name = f'/log_images/{self.campaign.title}/register_form_submitted.png'
             self.web_driver.save_screenshot(image_name)
             self.logger.info('Form submitted', image=image_name)
-            done_button.click()
+            password_field.send_keys(Keys.ENTER)
 
             self.sleep(7)
 
