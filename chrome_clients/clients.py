@@ -10,6 +10,7 @@ import time
 import traceback
 
 from django.conf import settings
+from fake_useragent import UserAgent
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
@@ -93,6 +94,7 @@ class BaseClient:
         hostname = proxy_ip if proxy_ip and proxy_port else ''
         port = proxy_port if proxy_ip and proxy_port else ''
         proxy.proxy_type = ProxyType.MANUAL if proxy_ip and proxy_port else ProxyType.SYSTEM
+        user_agent = UserAgent()
 
         if proxy_ip:
             proxy.http_proxy = f'{hostname}:{port}'
@@ -109,8 +111,7 @@ class BaseClient:
         self.web_driver_options.add_experimental_option('useAutomationExtension', False)
         self.web_driver_options.add_argument('--disable-extensions')
         self.web_driver_options.add_argument('--headless')
-        self.web_driver_options.add_argument('--user-agent=Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
-                                             ' (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36')
+        self.web_driver_options.add_argument(f'user-agent={user_agent.chrome}')
         self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
         self.web_driver_options.add_argument("--disable-bundled-ppapi-flash")
@@ -143,8 +144,6 @@ class BaseClient:
                 )
         tz_params = {'timezoneId': 'America/New_York'}
         self.web_driver.execute_cdp_cmd('Emulation.setTimezoneOverride', tz_params)
-        self.web_driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
-        self.web_driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'})
         self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
         self.web_driver.set_page_load_timeout(300)
         if '--headless' in self.web_driver_options.arguments:
