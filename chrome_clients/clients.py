@@ -647,13 +647,14 @@ class PoshMarkClient(BaseClient):
 
             gender = 'Male' if self.posh_user.gender == 'M' else 'Female'
             for element in gender_options:
-                if element.text == gender:
+                if element.text.strip() == gender:
                     element.click()
 
             # Submit the form
             done_button.click()
-
-            self.logger.info('Form submitted')
+            image_name = f'/log_images/{self.campaign.title}/register_form_submitted.png'
+            self.web_driver.save_screenshot(image_name)
+            self.logger.info('Form submitted', image=image_name)
 
             self.sleep(7)
 
