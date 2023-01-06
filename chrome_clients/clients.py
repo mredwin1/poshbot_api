@@ -238,6 +238,7 @@ class BaseClient:
         self.sleep(3)
 
         self.web_driver.save_screenshot('/log_images/bot_results1.png')
+        self.sleep(1)
         self.logger.info('First bot test complete', image='/log_images/bot_result1.png')
 
         self.logger.info('Starting VPN test')
@@ -245,6 +246,7 @@ class BaseClient:
         self.sleep(8)
 
         self.web_driver.save_screenshot('/log_images/bot_results_vpn.png')
+        self.sleep(1)
         self.logger.info('VPN test complete', image='/log_images/bot_results_vpn.png')
 
         self.logger.info('Starting second bot test')
