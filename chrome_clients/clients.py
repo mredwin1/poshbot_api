@@ -642,7 +642,7 @@ class PoshMarkClient(BaseClient):
             password_field.send_keys(self.posh_user.password)
             gender_field.click()
             self.sleep(1)
-            gender_options = self.web_driver.find_elements(By.CLASS_NAME, 'dropdown__link')
+            gender_options = self.web_driver.find_elements(By.CLASS_NAME, 'dropdown__menu__item')
             done_button = self.locate(By.XPATH, '//button[@type="submit"]')
 
             gender = 'Male' if self.posh_user.gender == 'M' else 'Female'
