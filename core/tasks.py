@@ -10,7 +10,7 @@ import traceback
 from celery import shared_task
 from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 
-from chrome_clients.clients import PoshMarkClient
+from chrome_clients.clients import PoshMarkClient, BaseClient
 from .models import Campaign, Listing, ListingImage, ProxyConnection, LogGroup
 
 
@@ -53,6 +53,12 @@ def init_campaign(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
     logger = LogGroup.objects.get(id=logger_id)
 
+    campaign_mapping = {
+        Campaign.BASIC_SHARING: basic_sharing_campaign,
+        Campaign.ADVANCED_SHARING: advanced_sharing_campaign,
+        Campaign.BOT_TESTS: bot_tests
+    }
+
     if not campaign.posh_user.is_registered:
         campaign.status = Campaign.STARTING
         campaign.save()
@@ -73,9 +79,9 @@ def init_campaign(campaign_id, logger_id):
         proxy_connection.save()
         logger.info(f'Proxy connection made: {proxy_connection}')
 
-        advanced_sharing_campaign.delay(campaign_id, logger_id, proxy['ip'], proxy['port'])
+        campaign_mapping[campaign.mode].delay(campaign_id, logger.id, proxy['ip'], proxy['port'])
     else:
-        advanced_sharing_campaign.delay(campaign_id, logger_id)
+        campaign_mapping[campaign.mode].delay(campaign_id, logger.id)
 
 
 @shared_task
@@ -330,3 +336,22 @@ def basic_sharing_campaign(campaign_id, logger_id=None):
     else:
         logger = logging.getLogger(__name__)
         logger.error(f'Error while starting {campaign}: No Posh User Assigned')
+
+
+@shared_task
+def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
+    campaign = Campaign.objects.get(id=campaign_id)
+    logger = LogGroup.objects.get(id=logger_id)
+
+    campaign.status = Campaign.RUNNING
+    campaign.save()
+    logger.info(f'Running Bot Test Campaign: {campaign.title}')
+
+    with BaseClient(logger, proxy_ip=proxy_hostname, proxy_port=proxy_port) as client:
+        client.bot_check()
+
+    campaign.status = Campaign.STOPPED
+    campaign.save()
+
+    logger.info('Campaign ended')
+

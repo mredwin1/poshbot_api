@@ -230,11 +230,43 @@ class BaseClient:
             return False
 
     def bot_check(self):
+        self.logger.info('Starting first bot test')
         self.web_driver.get('https://bot.sannysoft.com')
         self.sleep(3)
 
-        self.web_driver.save_screenshot('/log_images/bot_result.png')
-        self.logger.debug('Bot results checked', image='/log_images/bot_result.png')
+        self.web_driver.save_screenshot('/log_images/bot_results1.png')
+        self.logger.info('First bot test complete', image='/log_images/bot_result1.png')
+
+        self.logger.info('Starting VPN test')
+        self.web_driver.get('https://bot.incolumitas.com/proxy_detect.html')
+        self.sleep(8)
+
+        self.web_driver.save_screenshot('/log_images/bot_results_vpn.png')
+        self.logger.info('VPN test complete', image='/log_images/bot_results_vpn.png')
+
+        self.logger.info('Starting second bot test')
+        self.web_driver.get('https://bot.incolumitas.com/')
+        self.sleep(4)
+
+        new_tests = self.locate(By.ID, 'new-tests')
+        self.logger.info(f'New test results:\n{new_tests.text}')
+
+        old_tests = self.locate(By.ID, 'detection-tests')
+        self.logger.info(f'Old test results:\n{old_tests.text}')
+
+        data_center_ip = self.locate(By.ID, 'datacenter-ip-api-data')
+        self.logger.info(f'Data center IP results:\n{data_center_ip.text}')
+
+        headers = self.locate(By.ID, 'httpHeaders')
+        self.logger.info(f'HTTP Headers:\n{headers.text}')
+
+        tls_fingerprint = self.locate(By.ID, 'tls-fingerprint')
+        self.logger.info(f'TSL Fingerprint:\n{tls_fingerprint.text}')
+
+        navigation_prop = self.locate(By.ID, 'webWorkerRes')
+        self.logger.info(f'Web Worker Navigation Properties:\n{navigation_prop.text}')
+
+        self.logger.info('All tests complete')
 
 
 class PoshMarkClient(BaseClient):
