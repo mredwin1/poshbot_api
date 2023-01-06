@@ -647,6 +647,7 @@ class PoshMarkClient(BaseClient):
 
             gender = 'Male' if self.posh_user.gender == 'M' else 'Female'
             for element in gender_options:
+                self.logger.info(f'{element.text.strip()} | {gender}')
                 if element.text.strip() == gender:
                     element.click()
 
