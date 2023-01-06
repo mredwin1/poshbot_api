@@ -261,7 +261,6 @@ class BaseClient:
             else:
                 self.logger.info('All VPN tests passed')
 
-
         self.logger.info('Starting second bot test')
         self.web_driver.get('https://bot.incolumitas.com/')
         self.sleep(4)
