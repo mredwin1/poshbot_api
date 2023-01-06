@@ -242,6 +242,11 @@ class BaseClient:
 
         self.logger.info('Starting VPN test')
         self.web_driver.get('https://bot.incolumitas.com/proxy_detect.html')
+        rate_limit = self.is_present(By.ID, 'rateLimitMessage')
+        while rate_limit:
+            self.logger.info('Rate limited, refershing...')
+            self.web_driver.refresh()
+            rate_limit = self.is_present(By.ID, 'rateLimitMessage')
         self.sleep(8)
 
         self.web_driver.save_screenshot('/log_images/bot_results_vpn.png')
