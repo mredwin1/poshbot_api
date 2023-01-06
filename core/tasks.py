@@ -350,6 +350,11 @@ def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
     with BaseClient(logger, proxy_ip=proxy_hostname, proxy_port=proxy_port) as client:
         client.bot_check()
 
+    if proxy_hostname and proxy_port:
+        proxy_connection = ProxyConnection.objects.get(campaign=campaign)
+        proxy_connection.in_use = False
+        proxy_connection.save()
+
     campaign.status = Campaign.STOPPED
     campaign.save()
 
