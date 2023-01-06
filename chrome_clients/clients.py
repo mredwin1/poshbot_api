@@ -113,6 +113,8 @@ class BaseClient:
                                              ' (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36')
         self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
+        self.web_driver_options.add_argument("--disable-bundled-ppapi-flash")
+        self.web_driver_options.add_argument("--disable-plugins-discovery")
         # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
         self.cookies_filename = cookies_filename
@@ -139,6 +141,8 @@ class BaseClient:
                 renderer="Intel Iris OpenGL Engine",
                 fix_hairline=True,
                 )
+        tz_params = {'timezoneId': 'America/New_York'}
+        self.web_driver.execute_cdp_cmd('Emulation.setTimezoneOverride', tz_params)
         self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
         self.web_driver.set_page_load_timeout(300)
         if '--headless' in self.web_driver_options.arguments:
