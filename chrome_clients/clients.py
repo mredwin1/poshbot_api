@@ -242,16 +242,7 @@ class BaseClient:
 
         self.logger.info('Starting VPN test')
         self.web_driver.get('https://bot.incolumitas.com/proxy_detect.html')
-        time.sleep(3)
-
-        rate_limit = self.is_present(By.XPATH, '//*[@id="rateLimitMessage"]')
-        while rate_limit:
-            self.web_driver.save_screenshot('/log_images/bot_results_rate_limit_error.png')
-            self.logger.info('Rate limited, refershing...', image='/log_images/bot_results_rate_limit_error.png')
-            self.web_driver.refresh()
-            time.sleep(4)
-            rate_limit = self.is_present(By.ID, 'rateLimitMessage')
-        self.sleep(8)
+        self.sleep(10)
 
         self.web_driver.save_screenshot('/log_images/bot_results_vpn.png')
         self.logger.info('VPN test complete', image='/log_images/bot_results_vpn.png')
