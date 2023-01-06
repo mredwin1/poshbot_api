@@ -117,6 +117,9 @@ class BaseClient:
 
         self.cookies_filename = cookies_filename
 
+        if not os.path.isdir('/log_images'):
+            os.mkdir('log_images')
+
     def __enter__(self):
         self.open()
 
@@ -288,8 +291,6 @@ class PoshMarkClient(BaseClient):
             self.requests_proxy['https'] = f'http://{proxy_hostname}:{proxy_port}'
 
         if not os.path.isdir(f'/log_images/{self.campaign.title}'):
-            if not os.path.isdir('/log_images'):
-                os.mkdir('log_images')
             os.mkdir(f'/log_images/{self.campaign.title}')
 
     def handle_error(self, error_message, filename):
