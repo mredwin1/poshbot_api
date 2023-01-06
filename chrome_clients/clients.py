@@ -256,10 +256,19 @@ class BaseClient:
         tests_failed = self.is_present(By.XPATH, "//span[@style='color: red;']")
         if tests_failed:
             failed_tests = self.locate_all(By.XPATH, "//span[@style='color: red;']")
-            if failed_tests:
-                self.logger.info(failed_tests[0].get_property('id'))
-            else:
-                self.logger.info('All VPN tests passed')
+            for failed_test in failed_tests:
+                failed_test_name = failed_test.find_element(By.XPATH, './../..')
+                failed_test_id = failed_test.get_property('id')
+                button_id =failed_test_id.replace('res', 'data')
+                more_info_button = self.locate(By.ID, button_id)
+                more_info_button.click()
+
+                failed_test_data = self.locate(By.ID, 'display-test-data')
+                self.logger.info(f'Failed Test: {failed_test_name.text}\n\nTest Data Results:\n{failed_test_data.text}')
+                failed_test_close_btn = self.locate(By.XPATH, '/html/body/section/div/div/div/div/div[3]/div[2]/header/button')
+                failed_test_close_btn.click()
+        else:
+            self.logger.info('All VPN tests passed')
 
         self.logger.info('Starting second bot test')
         self.web_driver.get('https://bot.incolumitas.com/')
