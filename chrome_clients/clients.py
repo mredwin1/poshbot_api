@@ -239,7 +239,7 @@ class BaseClient:
 
         self.web_driver.save_screenshot('/log_images/bot_results1.png')
         self.sleep(1)
-        self.logger.info('First bot test complete', image='/log_images/bot_result1.png')
+        self.logger.info('First bot test complete', image='/log_images/bot_results1.png')
 
         self.logger.info('Starting VPN test')
         self.web_driver.get('https://bot.incolumitas.com/proxy_detect.html')
