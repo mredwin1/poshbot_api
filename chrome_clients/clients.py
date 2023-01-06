@@ -143,6 +143,8 @@ class BaseClient:
                 )
         tz_params = {'timezoneId': 'America/New_York'}
         self.web_driver.execute_cdp_cmd('Emulation.setTimezoneOverride', tz_params)
+        self.web_driver.execute_script("Object.defineProperty(navigator, 'webdriver', {get: () => undefined})")
+        self.web_driver.execute_cdp_cmd('Network.setUserAgentOverride', {"userAgent": 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'})
         self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
         self.web_driver.set_page_load_timeout(300)
         if '--headless' in self.web_driver_options.arguments:
@@ -250,6 +252,13 @@ class BaseClient:
 
         self.web_driver.save_screenshot('/log_images/bot_results_vpn.png')
         self.logger.info('VPN test complete', image='/log_images/bot_results_vpn.png')
+
+        test_fails = self.locate_all(By.XPATH, "//span[@style='color: red;']")
+        if test_fails:
+            self.logger.info(test_fails[0].get_property('id'))
+        else:
+            self.logger.info('All VPN tests passed')
+
 
         self.logger.info('Starting second bot test')
         self.web_driver.get('https://bot.incolumitas.com/')
