@@ -338,7 +338,9 @@ class PoshMarkClient(BaseClient):
 
     def check_for_errors(self):
         """This will check for errors on the current page and handle them as necessary"""
-        self.logger.info('Checking for errors')
+        image_name = f'/log_images/{self.campaign.title}/error_check.png'
+        self.web_driver.save_screenshot(image_name)
+        self.logger.info('Checking for errors', image=image_name)
         captcha_errors = [
             'Invalid captcha',
             'Please enter your login information and complete the captcha to continue.'
@@ -358,17 +360,13 @@ class PoshMarkClient(BaseClient):
             if 'form__error' in present_error_class:
                 errors = self.locate_all(By.CLASS_NAME, present_error_class)
                 error_texts = [error.text for error in errors]
-                image_path = f'/log_images/{self.campaign.title}/form_error.png'
-                self.web_driver.save_screenshot(image_path)
-                self.logger.error(f"The following form errors were found: {','.join(error_texts)}", image=image_path)
+                self.logger.error(f"The following form errors were found: {','.join(error_texts)}")
 
                 return 'ERROR_FORM_ERROR'
             else:
                 error = self.locate(By.CLASS_NAME, present_error_class)
                 if error.text == 'Invalid Username or Password':
-                    image_path = f'/log_images/{self.campaign.title}/invalid_user_pass.png'
-                    self.web_driver.save_screenshot(image_path)
-                    self.logger.error(f'Invalid Username or Password', image=image_path)
+                    self.logger.error(f'Invalid Username or Password')
 
                     return 'ERROR_USERNAME_PASSWORD'
 
@@ -401,9 +399,7 @@ class PoshMarkClient(BaseClient):
 
                     return 'CAPTCHA'
                 else:
-                    image_name = f'/error_logs/{self.campaign.title}/unknown_form_error.png'
-                    self.web_driver.save_screenshot(image_name)
-                    self.logger.error('Unknown error encountered', image_name)
+                    self.logger.error('Unknown error encountered')
 
                     return 'UNKNOWN'
 
@@ -699,9 +695,7 @@ class PoshMarkClient(BaseClient):
                 elif error_code == 'UNKNOWN':
                     return False
                 elif error_code is None:
-                    image_name = f'/log_images/{self.campaign.title}/register_no_error.png'
-                    self.web_driver.save_screenshot(image_name)
-                    self.logger.info('Assuming registration did not work', image=image_name)
+                    self.logger.info('Assuming registration did not work')
                     return False
 
         except Exception:
