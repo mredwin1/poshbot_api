@@ -79,6 +79,8 @@ def init_campaign(campaign_id, logger_id):
         proxy_connection.save()
         logger.info(f'Proxy connection made: {proxy_connection}')
 
+        logger.info(f'{campaign_mapping}')
+        logger.info(f'{campaign.mode}')
         campaign_mapping[campaign.mode].delay(campaign_id, logger.id, proxy['ip'], proxy['port'])
     else:
         campaign_mapping[campaign.mode].delay(campaign_id, logger.id)
