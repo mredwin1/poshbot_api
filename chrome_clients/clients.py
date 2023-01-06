@@ -253,11 +253,13 @@ class BaseClient:
         self.web_driver.save_screenshot('/log_images/bot_results_vpn.png')
         self.logger.info('VPN test complete', image='/log_images/bot_results_vpn.png')
 
-        test_fails = self.locate_all(By.XPATH, "//span[@style='color: red;']")
-        if test_fails:
-            self.logger.info(test_fails[0].get_property('id'))
-        else:
-            self.logger.info('All VPN tests passed')
+        tests_failed = self.is_present(By.XPATH, "//span[@style='color: red;']")
+        if tests_failed:
+            failed_tests = self.locate_all(By.XPATH, "//span[@style='color: red;']")
+            if failed_tests:
+                self.logger.info(failed_tests[0].get_property('id'))
+            else:
+                self.logger.info('All VPN tests passed')
 
 
         self.logger.info('Starting second bot test')
