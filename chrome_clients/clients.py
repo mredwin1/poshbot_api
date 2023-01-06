@@ -663,7 +663,8 @@ class PoshMarkClient(BaseClient):
             image_name = f'/log_images/{self.campaign.title}/register_form_submitted.png'
             self.web_driver.save_screenshot(image_name)
             self.logger.info('Form submitted', image=image_name)
-            password_field.send_keys(Keys.ENTER)
+            submit_button = self.locate(By.CLASS_NAME, 'signup__footer--submit')
+            submit_button.click()
 
             self.sleep(7)
 
