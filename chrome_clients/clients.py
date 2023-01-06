@@ -244,7 +244,7 @@ class BaseClient:
         self.web_driver.get('https://bot.incolumitas.com/proxy_detect.html')
         time.sleep(3)
 
-        rate_limit = self.is_present(By.CLASS_NAME, 'notification')
+        rate_limit = self.is_present(By.XPATH, '//*[@id="rateLimitMessage"]')
         while rate_limit:
             self.web_driver.save_screenshot('/log_images/bot_results_rate_limit_error.png')
             self.logger.info('Rate limited, refershing...', image='/log_images/bot_results_rate_limit_error.png')
