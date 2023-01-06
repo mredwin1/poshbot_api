@@ -625,30 +625,28 @@ class PoshMarkClient(BaseClient):
             self.web_driver.get('https://poshmark.com/signup')
             self.logger.info(f'At signup page - {self.web_driver.current_url}')
 
+            self.sleep(2)
+
+            self.logger.info('Filling out form')
+
             # Get all fields for sign up
             first_name_field = self.locate(By.ID, 'firstName')
             last_name_field = self.locate(By.ID, 'lastName')
             email_field = self.locate(By.ID, 'email')
             username_field = self.locate(By.NAME, 'userName')
             password_field = self.locate(By.ID, 'password')
-            gender_field = self.locate(By.CLASS_NAME, 'dropdown__selector--select-tag')
+            gender_field = self.locate(By.CLASS_NAME, 'ellipses')
 
-            # Send keys and select gender
-            self.logger.info('Filling out form')
-            first_name_field.send_keys(self.posh_user.first_name)
-            last_name_field.send_keys(self.posh_user.last_name)
-            email_field.send_keys(self.posh_user.email)
-            username_field.send_keys(self.posh_user.username)
-            password_field.send_keys(self.posh_user.password)
+            self.logger.info('Selecting Gender')
             gender_field.click()
+
             self.sleep(1)
 
             image_name = f'/log_images/{self.campaign.title}/gender_field_clicked.png'
             self.web_driver.save_screenshot(image_name)
             self.logger.info('Gender Field clicked', image=image_name)
 
-            gender_options = self.web_driver.find_elements(By.CLASS_NAME, 'dropdown__menu__item')
-            done_button = self.locate(By.XPATH, '//button[@type="submit"]')
+            gender_options = self.web_driver.find_elements(By.CLASS_NAME, 'dropdown__link')
 
             gender = 'Male' if self.posh_user.gender == 'M' else 'Female'
             for element in gender_options:
@@ -656,7 +654,17 @@ class PoshMarkClient(BaseClient):
                 if element.text.strip() == gender:
                     element.click()
 
+            # Send keys
+            self.logger.info('Sending the rest of the fields')
+            first_name_field.send_keys(self.posh_user.first_name)
+            last_name_field.send_keys(self.posh_user.last_name)
+            email_field.send_keys(self.posh_user.email)
+            username_field.send_keys(self.posh_user.username)
+            password_field.send_keys(self.posh_user.password)
+            self.sleep(1)
+
             # Submit the form
+            done_button = self.locate(By.XPATH, '//button[@type="submit"]')
             image_name = f'/log_images/{self.campaign.title}/register_form_submitted.png'
             self.web_driver.save_screenshot(image_name)
             self.logger.info('Form submitted', image=image_name)
