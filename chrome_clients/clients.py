@@ -246,6 +246,7 @@ class BaseClient:
         while rate_limit:
             self.logger.info('Rate limited, refershing...')
             self.web_driver.refresh()
+            time.sleep(4)
             rate_limit = self.is_present(By.ID, 'rateLimitMessage')
         self.sleep(8)
 
