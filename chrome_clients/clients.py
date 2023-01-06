@@ -687,8 +687,10 @@ class PoshMarkClient(BaseClient):
                 elif error_code == 'UNKNOWN':
                     return False
                 elif error_code is None:
-                    self.finish_registration()
-                    return True
+                    image_name = f'/log_images/{self.campaign.title}/register_no_error.png'
+                    self.web_driver.save_screenshot(image_name)
+                    self.logger.info('Assuming registration did not work', image=image_name)
+                    return False
 
         except Exception:
             image_path = f'/log_images/{self.campaign.title}/register_error.png'
