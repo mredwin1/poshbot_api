@@ -652,10 +652,10 @@ class PoshMarkClient(BaseClient):
                     element.click()
 
             # Submit the form
-            done_button.click()
             image_name = f'/log_images/{self.campaign.title}/register_form_submitted.png'
             self.web_driver.save_screenshot(image_name)
             self.logger.info('Form submitted', image=image_name)
+            done_button.click()
 
             self.sleep(7)
 
