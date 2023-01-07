@@ -890,11 +890,16 @@ class PoshMarkClient(BaseClient):
 
             self.logger.info(f'Attempt # {list_item_retries + 1} to list {listing_title} for {self.posh_user.username}')
 
-            self.web_driver.get('https://poshmark.com/create-listing')
+            self.go_to_closet()
 
-            self.logger.info(f'Current URL: {self.web_driver.current_url}')
+            self.logger.info('Clicking sell button')
+
+            sell_button = self.locate(By.CLASS_NAME, 'sell')
+            sell_button.click()
 
             self.sleep(2)
+
+            self.logger.info(f'Current URL: {self.web_driver.current_url}')
 
             if self.is_present(By.XPATH, '//*[@id="app"]/main/div[1]/div/div[2]'):
                 image_path = f'/log_images/{self.campaign.title}/listing_error.png'
@@ -976,6 +981,9 @@ class PoshMarkClient(BaseClient):
                 )
                 actions = ActionChains(self.web_driver)
                 actions.move_to_element(size_dropdown).perform()
+
+                time.sleep(1)
+
                 size_dropdown.click()
                 size_buttons = self.locate_all(By.CLASS_NAME, 'navigation--horizontal__tab')
 
