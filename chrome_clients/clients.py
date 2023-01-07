@@ -293,7 +293,7 @@ class BaseClient:
 
         self.logger.info('Starting third bot test')
         self.web_driver.get('https://nowsecure.nl')
-        self.sleep(5)
+        self.sleep(10)
 
         self.web_driver.save_screenshot('/log_images/bot_results3.png')
         self.logger.info('Third test complete', image='/log_images/bot_results3.png')
