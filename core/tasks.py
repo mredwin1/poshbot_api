@@ -231,7 +231,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                     advanced_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
             except (WebDriverException, SessionNotCreatedException) as e:
                 logger.error(f'{traceback.format_exc()}')
-                proxy_connection = ProxyConnection.objects.get(campaign=campaign)
+                proxy_connection = ProxyConnection.objects.get(campaign=campaign, in_use=True)
                 proxy_connection.hard_rest()
                 advanced_sharing_campaign.apply_async(countdown=delay + 180, kwargs={'campaign_id': campaign_id})
 
@@ -351,7 +351,7 @@ def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
         client.bot_check()
 
     if proxy_hostname and proxy_port:
-        proxy_connection = ProxyConnection.objects.get(campaign=campaign)
+        proxy_connection = ProxyConnection.objects.get(campaign=campaign, in_use=True)
         proxy_connection.in_use = False
         proxy_connection.save()
 
