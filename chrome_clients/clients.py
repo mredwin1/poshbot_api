@@ -94,7 +94,7 @@ class BaseClient:
         hostname = proxy_ip if proxy_ip and proxy_port else ''
         port = proxy_port if proxy_ip and proxy_port else ''
         proxy.proxy_type = ProxyType.MANUAL if proxy_ip and proxy_port else ProxyType.SYSTEM
-        user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
+        # user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
 
         if proxy_ip:
             proxy.http_proxy = f'{hostname}:{port}'
@@ -111,7 +111,7 @@ class BaseClient:
         self.web_driver_options.add_experimental_option('useAutomationExtension', False)
         self.web_driver_options.add_argument('--disable-extensions')
         self.web_driver_options.add_argument('--headless')
-        self.web_driver_options.add_argument(f'user-agent={user_agent}')
+        # self.web_driver_options.add_argument(f'user-agent={user_agent}')
         self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
         self.web_driver_options.add_argument("--disable-bundled-ppapi-flash")
@@ -631,24 +631,20 @@ class PoshMarkClient(BaseClient):
             email_field = self.locate(By.ID, 'email')
             username_field = self.locate(By.NAME, 'userName')
             password_field = self.locate(By.ID, 'password')
-            gender_field = self.locate(By.CLASS_NAME, 'ellipses')
+            gender_field = self.locate(By.CLASS_NAME, 'dropdown__selector--select-tag')
 
             self.logger.info('Selecting Gender')
             gender_field.click()
 
             self.sleep(1)
 
-            image_name = f'/log_images/{self.campaign.title}/gender_field_clicked.png'
-            self.web_driver.save_screenshot(image_name)
-            self.logger.info('Gender Field clicked', image=image_name)
-
             gender_options = self.web_driver.find_elements(By.CLASS_NAME, 'dropdown__link')
 
             gender = 'Male' if self.posh_user.gender == 'M' else 'Female'
             for element in gender_options:
-                self.logger.info(f'{element.text.strip()} | {gender}')
                 if element.text.strip() == gender:
                     element.click()
+                    break
 
             # Send keys
             self.logger.info('Sending the rest of the fields')
