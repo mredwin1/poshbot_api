@@ -291,6 +291,13 @@ class BaseClient:
         navigation_prop = self.locate(By.ID, 'webWorkerRes')
         self.logger.info(f'Web Worker Navigation Properties:\n{navigation_prop.text}')
 
+        self.logger.info('Starting third bot test')
+        self.web_driver.get('https://bot.sannysoft.com')
+        self.sleep(5)
+
+        self.web_driver.save_screenshot('/log_images/bot_results3.png')
+        self.logger.info('Third test complete', image='/log_images/bot_results3.png')
+
         self.logger.info('All tests complete')
 
 
