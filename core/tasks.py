@@ -229,11 +229,19 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                     minutes, seconds = divmod(remainder, 60)
                     logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
                     advanced_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
-            except (WebDriverException, SessionNotCreatedException) as e:
+            except SessionNotCreatedException as e:
                 logger.error(f'{traceback.format_exc()}')
                 proxy_connection = ProxyConnection.objects.get(campaign=campaign, in_use=True)
-                proxy_connection.hard_rest()
-                advanced_sharing_campaign.apply_async(countdown=delay + 180, kwargs={'campaign_id': campaign_id})
+                reset_response = proxy_connection.hard_rest()
+                logger.warning(reset_response)
+                time.sleep(180)
+                advanced_sharing_campaign.apply_async(countdown=delay, kwargs={'campaign_id': campaign_id})
+            except WebDriverException as e:
+                logger.error(f'{traceback.format_exc()}')
+                hours, remainder = divmod(delay, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
+                advanced_sharing_campaign.apply_async(countdown=delay, kwargs={'campaign_id': campaign_id})
 
         if not campaign.posh_user.is_active:
             campaign.status = Campaign.STOPPED
@@ -324,9 +332,20 @@ def basic_sharing_campaign(campaign_id, logger_id=None):
                     minutes, seconds = divmod(remainder, 60)
                     logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
                     basic_sharing_campaign.apply_async(countdown=campaign_delay, kwargs={'campaign_id': campaign_id})
-            except (WebDriverException, SessionNotCreatedException) as e:
+            except SessionNotCreatedException as e:
                 logger.error(f'{traceback.format_exc()}')
-                advanced_sharing_campaign.apply_async(countdown=delay + 180, kwargs={'campaign_id': campaign_id})
+                proxy_connection = ProxyConnection.objects.get(campaign=campaign, in_use=True)
+                reset_response = proxy_connection.hard_rest()
+                logger.warning(reset_response)
+                time.sleep(180)
+                advanced_sharing_campaign.apply_async(countdown=delay, kwargs={'campaign_id': campaign_id})
+            except WebDriverException as e:
+                logger.error(f'{traceback.format_exc()}')
+                hours, remainder = divmod(delay, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                logger.info(
+                    f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
+                advanced_sharing_campaign.apply_async(countdown=delay, kwargs={'campaign_id': campaign_id})
 
         if not campaign.posh_user.is_active or not campaign.posh_user.is_registered:
             campaign.status = Campaign.STOPPED
