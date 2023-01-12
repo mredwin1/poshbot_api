@@ -112,7 +112,7 @@ class BaseClient:
         self.web_driver_options.add_argument('--disable-extensions')
         self.web_driver_options.add_argument('--headless')
         self.web_driver_options.add_argument(f'user-agent={user_agent}')
-        # self.web_driver_options.add_argument('--incognito')
+        self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
         self.web_driver_options.add_argument("--disable-bundled-ppapi-flash")
         self.web_driver_options.add_argument("--disable-plugins-discovery")
