@@ -24,8 +24,6 @@ from selenium_stealth import stealth
 
 from core.models import Campaign, Offer
 
-DEFAULT_IMPLICIT_WAIT = 5
-
 
 class Captcha:
     def __init__(self, google_key, page_url, logger):
@@ -144,8 +142,6 @@ class BaseClient:
                 )
         tz_params = {'timezoneId': 'America/New_York'}
         self.web_driver.execute_cdp_cmd('Emulation.setTimezoneOverride', tz_params)
-        self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
-        self.web_driver.set_page_load_timeout(300)
         if '--headless' in self.web_driver_options.arguments:
             self.web_driver.set_window_size(1920, 1080)
 
@@ -155,7 +151,7 @@ class BaseClient:
 
     def locate(self, by, locator, location_type=None):
         """Locates the first elements with the given By"""
-        wait = WebDriverWait(self.web_driver, 30)
+        wait = WebDriverWait(self.web_driver, 5)
         if location_type:
             if location_type == 'visibility':
                 return wait.until(expected_conditions.visibility_of_element_located((by, locator)))
@@ -168,7 +164,7 @@ class BaseClient:
 
     def locate_all(self, by, locator, location_type=None):
         """Locates all web elements with the given By and returns a list of them"""
-        wait = WebDriverWait(self.web_driver, 30)
+        wait = WebDriverWait(self.web_driver, 5)
         if location_type:
             if location_type == 'visibility':
                 return wait.until(expected_conditions.visibility_of_all_elements_located((by, locator)))
@@ -797,7 +793,6 @@ class PoshMarkClient(BaseClient):
             self.go_to_closet()
 
             if self.is_present(By.CLASS_NAME, 'card--small'):
-                self.web_driver.implicitly_wait(0)
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
                     title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
@@ -842,8 +837,6 @@ class PoshMarkClient(BaseClient):
                 'sold_listings': sold_listings,
                 'reserved_listings': reserved_listings
             }
-
-            self.web_driver.implicitly_wait(DEFAULT_IMPLICIT_WAIT)
 
             return listings
 
