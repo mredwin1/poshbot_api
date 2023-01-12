@@ -328,7 +328,6 @@ class ProxyConnection(models.Model):
         return response.json()['result']
 
     def change_location(self):
-        responses = []
         cookies = self.authenticate()
         list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/availability',
                                      cookies=cookies)
@@ -346,15 +345,11 @@ class ProxyConnection(models.Model):
             f'https://portal.mobilehop.com/api/v2/proxies/connect/{self.proxy_license_uuid}/{location_id}',
             cookies=cookies).json()
 
-        responses.append(connect_response['result'])
-
         set_ip_response = requests.get(
             f"https://portal.mobilehop.com/api/v2/proxies/ipwhitelist/{self.proxy_license_uuid}/{os.environ.get('SERVER_IP')}",
             cookies=cookies).json()
 
-        responses.append(set_ip_response['result'])
-
-        return responses
+        return connect_response['result']
 
     def __str__(self):
         return f'{self.campaign.title} on {self.proxy_name}'

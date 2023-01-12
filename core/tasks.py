@@ -31,10 +31,10 @@ def get_proxy(logger):
 
                 change_response = first_connection.change_location()
 
-                logger.info('\n'.join(change_response))
+                logger.info(f"Location changed to: {change_response['location_id']}")
 
                 connections.delete()
-                return available_proxy
+                return change_response
             elif connections.count() < int(os.environ.get('MAX_PROXY_CONNECTIONS', '1')):
                 return available_proxy
             else:
