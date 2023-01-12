@@ -333,8 +333,7 @@ class ProxyConnection(models.Model):
                                      cookies=cookies)
 
         approved_locations = ['MKE', 'NYC', 'PHL', 'BNA', 'BUF', 'CLT', 'DTW', 'ATL', 'ORF', 'CMH', 'IND', 'BHM', 'JAX',
-                              'NYCA',
-                              'ORDA', 'BDL', 'HSV', 'BOS', 'EWR', 'PWM', 'ORD', 'RIC']
+                              'NYCA', 'ORDA', 'BDL', 'BOS', 'EWR', 'PWM', 'ORD', 'RIC']
 
         available_location = [location for location in list_response.json()['result'] if
                               location['id'] in approved_locations and location['available'] == 1]
