@@ -20,16 +20,18 @@ def get_proxy(logger):
         list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
 
         available_proxies = list_response.json()['result']
+        available_proxies = [proxy for proxy in available_proxies if
+                             proxy['uuid'] != 'b6e8b8a1f38f4ba3937aa83f6758903a']
 
         for available_proxy in available_proxies:
             connections = ProxyConnection.objects.filter(proxy_license_uuid=available_proxy['uuid'])
             connections_in_use = connections.filter(in_use=True)
             if connections.count() >= int(os.environ.get('MAX_PROXY_CONNECTIONS', '1')) and connections_in_use.count() == 0:
                 first_connection = connections.first()
-                reset_response = first_connection.fast_reset()
 
-                logger.info(reset_response)
-                time.sleep(10)
+                change_response = first_connection.change_location()
+
+                logger.info('\n'.join(change_response))
 
                 connections.delete()
                 return available_proxy

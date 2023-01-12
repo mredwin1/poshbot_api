@@ -327,6 +327,35 @@ class ProxyConnection(models.Model):
 
         return response.json()['result']
 
+    def change_location(self):
+        responses = []
+        cookies = self.authenticate()
+        list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/availability',
+                                     cookies=cookies)
+
+        approved_locations = ['MKE', 'NYC', 'PHL', 'BNA', 'BUF', 'CLT', 'DTW', 'ATL', 'ORF', 'CMH', 'IND', 'BHM', 'JAX',
+                              'NYCA',
+                              'ORDA', 'BDL', 'HSV', 'BOS', 'EWR', 'PWM', 'ORD', 'RIC']
+
+        available_location = [location for location in list_response.json()['result'] if
+                              location['id'] in approved_locations and location['available'] == 1]
+
+        location_id = random.choice(available_location)['id']
+
+        connect_response = requests.get(
+            f'https://portal.mobilehop.com/api/v2/proxies/connect/{self.proxy_license_uuid}/{location_id}',
+            cookies=cookies).json()
+
+        responses.append(connect_response['result'])
+
+        set_ip_response = requests.get(
+            f"https://portal.mobilehop.com/api/v2/proxies/ipwhitelist/{self.proxy_license_uuid}/{os.environ.get('SERVER_IP')}",
+            cookies=cookies).json()
+
+        responses.append(set_ip_response['result'])
+
+        return responses
+
     def __str__(self):
         return f'{self.campaign.title} on {self.proxy_name}'
 
