@@ -94,7 +94,7 @@ class BaseClient:
         hostname = proxy_ip if proxy_ip and proxy_port else ''
         port = proxy_port if proxy_ip and proxy_port else ''
         proxy.proxy_type = ProxyType.MANUAL if proxy_ip and proxy_port else ProxyType.SYSTEM
-        # user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
+        user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
 
         if proxy_ip:
             proxy.http_proxy = f'{hostname}:{port}'
@@ -111,7 +111,7 @@ class BaseClient:
         self.web_driver_options.add_experimental_option('useAutomationExtension', False)
         self.web_driver_options.add_argument('--disable-extensions')
         self.web_driver_options.add_argument('--headless')
-        # self.web_driver_options.add_argument(f'user-agent={user_agent}')
+        self.web_driver_options.add_argument(f'user-agent={user_agent}')
         # self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
         self.web_driver_options.add_argument("--disable-bundled-ppapi-flash")
