@@ -390,7 +390,7 @@ class LogEntry(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     level = models.IntegerField()
-    log_group = models.ForeignKey(LogGroup, on_delete=models.CASCADE)
+    log_group = models.ForeignKey(LogGroup, on_delete=models.CASCADE, related_name='log_entries')
     timestamp = models.DateTimeField()
     message = models.TextField()
     image = ProcessedImageField(
