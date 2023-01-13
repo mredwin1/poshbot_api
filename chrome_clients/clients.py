@@ -1089,9 +1089,13 @@ class PoshMarkClient(BaseClient):
                 sell_button = self.is_present(By.XPATH, '//*[@id="app"]/header/nav[2]/div[1]/ul[2]/li[2]/a')
 
                 attempts = 0
+                self.logger.info('Sell button clicked')
+                self.sleep(5)
+                image_name = f'/log_images/{self.campaign.title}/not_done_listing.png'
 
                 while not sell_button and attempts < 10:
-                    self.logger.warning('Not done listing item. Checking again...')
+                    self.web_driver.save_screenshot(image_name)
+                    self.logger.warning('Not done listing item. Checking again...', image=image_name)
                     sell_button = self.is_present(By.XPATH, '//*[@id="app"]/header/nav[2]/div[1]/ul[2]/li[2]/a')
                     attempts += 1
                     self.sleep(5)
