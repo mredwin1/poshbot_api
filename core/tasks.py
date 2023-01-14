@@ -210,10 +210,12 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         campaign.status = Campaign.STOPPED
                         campaign.save()
 
-                if proxy_hostname and proxy_port:
-                    proxy_connection = ProxyConnection.objects.get(campaign=campaign)
-                    proxy_connection.in_use = False
-                    proxy_connection.save()
+
+
+
+
+
+
 
                 campaign.refresh_from_db()
 
@@ -242,6 +244,11 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                 minutes, seconds = divmod(remainder, 60)
                 logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
                 advanced_sharing_campaign.apply_async(countdown=delay, kwargs={'campaign_id': campaign_id})
+
+        if proxy_hostname and proxy_port:
+            proxy_connection = ProxyConnection.objects.get(campaign=campaign)
+            proxy_connection.in_use = False
+            proxy_connection.save()
 
         if not campaign.posh_user.is_active:
             campaign.status = Campaign.STOPPED
