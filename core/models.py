@@ -190,11 +190,13 @@ class Campaign(models.Model):
     ADVANCED_SHARING = '0'
     BASIC_SHARING = '1'
     BOT_TESTS = '2'
+    REGISTER = '3'
 
     MODE_CHOICES = [
         (ADVANCED_SHARING, 'Advanced Sharing'),
         (BASIC_SHARING, 'Basic Sharing'),
         (BOT_TESTS, 'Bot Tests'),
+        (REGISTER, 'Register'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)

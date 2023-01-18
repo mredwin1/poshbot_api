@@ -11,7 +11,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup
-from .tasks import init_campaign, basic_sharing_campaign, advanced_sharing_campaign, bot_tests
+from .tasks import init_campaign, basic_sharing_campaign, advanced_sharing_campaign, register
 from . import serializers
 
 
@@ -117,7 +117,8 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         campaign_mapping = {
             Campaign.BASIC_SHARING: basic_sharing_campaign,
             Campaign.ADVANCED_SHARING: advanced_sharing,
-            Campaign.BOT_TESTS: init_campaign
+            Campaign.BOT_TESTS: init_campaign,
+            Campaign.REGISTER: register
         }
 
         if campaign.posh_user:

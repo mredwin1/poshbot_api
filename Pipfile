@@ -27,6 +27,7 @@ selenium-stealth = "*"
 pycurl = "*"
 mailslurp-client = "*"
 fake-useragent = "*"
+appium-python-client = "*"
 
 [dev-packages]
 

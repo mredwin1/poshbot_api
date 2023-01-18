@@ -179,4 +179,5 @@ CELERY_TASK_ROUTES = {
     'core.tasks.advanced_sharing_campaign': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
     'core.tasks.init_campaign': {'queue': 'campaign_no_concurrency.fifo', 'routing_key': 'no_concurrency'},
     'core.tasks.bot_tests': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
+    'core.tasks.register': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
 }

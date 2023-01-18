@@ -10,6 +10,7 @@ import traceback
 from celery import shared_task
 from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 
+from appium_clients.clients import AppiumClient
 from chrome_clients.clients import PoshMarkClient, BaseClient
 from .models import Campaign, Listing, ListingImage, ProxyConnection, LogGroup
 
@@ -386,3 +387,11 @@ def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
 
     logger.info('Campaign ended')
 
+
+@shared_task
+def register(campaign_id, logger_id):
+    campaign = Campaign.objects.get(id=campaign_id)
+    logger = LogGroup.objects.get(id=logger_id)
+
+    with AppiumClient(campaign, logger) as client:
+        client.register()
