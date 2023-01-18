@@ -393,5 +393,11 @@ def register(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
     logger = LogGroup.objects.get(id=logger_id)
 
+    campaign.status = Campaign.RUNNING
+    campaign.save()
+
     with AppiumClient(campaign, logger) as client:
         client.register()
+
+    campaign.status = Campaign.STOPPED
+    campaign.save()

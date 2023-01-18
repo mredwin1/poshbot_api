@@ -125,7 +125,7 @@ class AppiumClient:
         password = self.locate(AppiumBy.ID, 'com.poshmark.app:id/password')
         # profile_picture = self.locate(AppiumBy.ID, 'com.poshmark.app:id/addPictureButton')
 
-        print(username.text)
+        posh_username = username.text
 
         password.send_keys('Akatt12345')
         # profile_picture.click()
@@ -142,7 +142,8 @@ class AppiumClient:
         # time.sleep(5)
         continue_btn.click()
         time.sleep(10)
-        self.campaign.posh_user.username = username.text
+        self.campaign.posh_user.username = posh_username
+        self.campaign.posh_user.is_registered = True
         self.campaign.posh_user.save()
 
     def list_item(self):
