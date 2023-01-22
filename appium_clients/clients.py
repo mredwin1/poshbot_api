@@ -156,11 +156,11 @@ class AppiumClient:
         password = self.locate(AppiumBy.ID, 'com.poshmark.app:id/password')
         create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
 
-        first_name.send_keys('Thomas')
-        last_name.send_keys('Del Flow')
-        email.send_keys('soemthing@gmail.com')
-        username.send_keys('soemthing@gmail.com')
-        password.send_keys('soemthing@gmail.com')
+        first_name.send_keys(self.campaign.posh_user.first_name)
+        last_name.send_keys(self.campaign.posh_user.last_name)
+        email.send_keys(self.campaign.posh_user.email)
+        username.send_keys(self.campaign.posh_user.username)
+        password.send_keys(self.campaign.posh_user.password)
         create_button.click()
 
         if self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
