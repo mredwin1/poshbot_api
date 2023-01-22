@@ -246,22 +246,24 @@ class AppiumClient:
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
 
-        self.sleep(1)
-
-        add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
-        add_more_button.click()
-
-        while self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
-            deny_button = self.locate(AppiumBy.ID,
-                                      'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
-            deny_button.click()
-
-            self.sleep(1)
-
-        gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
-        gallery_button.click()
 
         for index, listing_image in enumerate(listing_images):
+            self.sleep(1)
+
+            add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
+            add_more_button.click()
+
+            while self.is_present(AppiumBy.ID,
+                                  'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
+                deny_button = self.locate(AppiumBy.ID,
+                                          'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
+                deny_button.click()
+
+                self.sleep(1)
+
+            gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
+            gallery_button.click()
+
             image_name = listing_image.image.name.split("/")[-1]
             self.tap_img(image_name)
 
@@ -271,12 +273,6 @@ class AppiumClient:
             next_button.click()
 
             self.sleep(1)
-
-            add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
-            add_more_button.click()
-
-            gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
-            gallery_button.click()
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
         description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
