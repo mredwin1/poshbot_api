@@ -6,7 +6,6 @@ import time
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from django.conf import settings
-from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support import expected_conditions
