@@ -285,7 +285,9 @@ class AppiumClient:
         description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_editor')
         for text in listing.description.split('\n'):
             description_input.send_keys(text)
-            description_input.send_keys(Keys.ENTER)
+            ActionChains(self.driver).key_down(Keys.SHIFT).key_down(Keys.ENTER).key_up(Keys.SHIFT).key_up(
+                Keys.ENTER).perform()
+            self.sleep(1)
 
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         done_button.click()
