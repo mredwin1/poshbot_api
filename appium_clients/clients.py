@@ -193,6 +193,8 @@ class AppiumClient:
         search_input = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/search_src_text')
         search_input.send_keys(name)
 
+        self.sleep(1)
+
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
         img.click()
 
