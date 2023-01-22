@@ -186,6 +186,16 @@ class AppiumClient:
                 self.logger.warning('Next button could not be found')
                 time.sleep(2)
 
+    def tap_img(self, name):
+        search_box = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/searchbar_title')
+        search_box.click()
+
+        search_input = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/search_src_text')
+        search_input.send_keys(name)
+
+        img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
+        img.click()
+
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         campaign_folder = f'/{self.campaign.title}'
         listing_folder = f'/{self.campaign.title}/{listing.title}'
@@ -226,9 +236,7 @@ class AppiumClient:
             allow_button.click()
 
         self.sleep(4)
-        self.logger.info(cover_photo_key.split("/")[-1])
-        cover_photo = self.locate(AppiumBy.XPATH, f'//android.widget.FrameLayout[contains(@content-desc, "{cover_photo_key.split("/")[-1]}")]').parent
-        cover_photo.click()
+        self.tap_img(cover_photo_key.split("/")[-1])
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
@@ -251,18 +259,18 @@ class AppiumClient:
 
         for index, listing_image in enumerate(listing_images):
             image_name = listing_image.image.name.split("/")[-1]
-            image = self.locate(AppiumBy.XPATH, f'//android.widget.FrameLayout[contains(@content-desc, "{image_name.split("/")[-1]}")]').parent
-            if index == 1:
-                actions = ActionChains(self.driver)
-                actions.click_and_hold(image).pause(1).release(image).perform()
-            else:
-                image.click()
+            self.tap_img(image_name)
 
-        select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
-        select_button.click()
+            time.sleep(1)
 
-        next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+            next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+            next_button.click()
+
+            add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
+            add_more_button.click()
+
+            gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
+            gallery_button.click()
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
         description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
