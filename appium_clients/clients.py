@@ -179,6 +179,7 @@ class AppiumClient:
 
                 next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
                 next_button.click()
+                next_button_clicks += 1
             except TimeoutException:
                 continue
 
