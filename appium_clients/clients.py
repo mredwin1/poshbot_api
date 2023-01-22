@@ -130,7 +130,7 @@ class AppiumClient:
         self.download_and_send_file(profile_picture_key, campaign_folder)
 
         retries = 0
-        while not self.locate(AppiumBy.ID, 'com.poshmark.app:id/sign_up_option') and retries < 10:
+        while not self.is_present(AppiumBy.ID, 'com.poshmark.app:id/sign_up_option') and retries < 10:
             self.sleep(7)
             retries += 1
 
