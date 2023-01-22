@@ -251,7 +251,7 @@ class AppiumClient:
         add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
         add_more_button.click()
 
-        while self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
+        while self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
             deny_button = self.locate(AppiumBy.ID,
                                       'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
             deny_button.click()
