@@ -6,6 +6,7 @@ import time
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from django.conf import settings
+from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support import expected_conditions
@@ -314,6 +315,9 @@ class AppiumClient:
 
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         done_button.click()
+
+        action = ActionChains(self.driver).scroll_by_amount(delta_y=800)
+        action.perform()
 
         size_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/size_edit_text')
         size_button.click()
