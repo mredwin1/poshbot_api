@@ -225,6 +225,8 @@ class AppiumClient:
             image_key = listing_image.image.name
             self.download_and_send_file(image_key, listing_folder)
 
+        self.sleep(4)
+
         cover_photo = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{cover_photo_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
         cover_photo.click()
 
