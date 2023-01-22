@@ -7,6 +7,7 @@ from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from django.conf import settings
 from selenium.webdriver.common.action_chains import ActionChains
+from selenium.webdriver.common.keys import Keys
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
@@ -22,7 +23,6 @@ class AppiumClient:
         self.driver = None
         self.campaign = campaign
         self.logger = logger
-        self.alert_clicked = None
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
                                          aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
@@ -114,10 +114,14 @@ class AppiumClient:
 
     def alert_check(self):
         if self.is_present(AppiumBy.ID, 'android:id/content'):
-            cancel = self.locate(AppiumBy.ID, 'android:id/button2')
-            cancel.click()
+            if self.is_present(AppiumBy.ID, 'android:id/title_template'):
+                title = self.locate(AppiumBy.ID, 'android:id/title_template').text
 
-            return True
+                if 'party' in title.lower():
+                    cancel = self.locate(AppiumBy.ID, 'android:id/button2')
+                    cancel.click()
+
+                    return True
         return False
 
     def register(self):
@@ -175,9 +179,6 @@ class AppiumClient:
 
         while next_button_clicks < 3:
             try:
-                # if not self.alert_clicked:
-                #     self.alert_clicked = self.alert_check()
-
                 next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
                 next_button.click()
                 next_button_clicks += 1
@@ -217,11 +218,11 @@ class AppiumClient:
             image_key = listing_image.image.name
             self.download_and_send_file(image_key, listing_folder)
 
-        # alert_check_retries = 0
-        #
-        # while not self.alert_clicked and alert_check_retries < 5:
-        #     self.alert_clicked = self.alert_check()
-        #     self.sleep(5)
+        alert_check_retries = 0
+
+        while alert_check_retries < 2:
+            self.alert_clicked = self.alert_check()
+            self.sleep(5)
 
         sell_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/sellTab')
         sell_button.click()
@@ -246,20 +247,21 @@ class AppiumClient:
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
 
-
         for index, listing_image in enumerate(listing_images):
             self.sleep(1)
 
             add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
             add_more_button.click()
 
-            while self.is_present(AppiumBy.ID,
-                                  'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
-                deny_button = self.locate(AppiumBy.ID,
-                                          'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
-                deny_button.click()
+            if index == 1:
+                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
+                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
+                    deny_button.click()
 
-                self.sleep(1)
+                    self.sleep(1)
+                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
+                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
+                    deny_button.click()
 
             gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
             gallery_button.click()
@@ -275,10 +277,18 @@ class AppiumClient:
             self.sleep(1)
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
-        description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
-
         title_input.send_keys(listing.title)
-        description_input.send_keys(listing.description)
+
+        description_body = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
+        description_body.click()
+
+        description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_editor')
+        for text in listing.description.split('\n'):
+            description_input.send_keys(text)
+            description_input.send_keys(Keys.ENTER)
+
+        done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+        done_button.click()
 
         listing_category = listing.category
         space_index = listing_category.find(' ')
