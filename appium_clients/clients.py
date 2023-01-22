@@ -175,8 +175,8 @@ class AppiumClient:
 
         while next_button_clicks < 3:
             try:
-                if not self.alert_clicked:
-                    self.alert_clicked = self.alert_check()
+                # if not self.alert_clicked:
+                #     self.alert_clicked = self.alert_check()
 
                 next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
                 next_button.click()
@@ -184,6 +184,7 @@ class AppiumClient:
                 self.logger.info('Next button clicked')
             except TimeoutException:
                 self.logger.warning('Next button could not be found')
+                time.sleep(2)
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         alert_check_retries = 0
