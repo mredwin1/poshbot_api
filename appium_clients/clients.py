@@ -226,7 +226,7 @@ class AppiumClient:
             allow_button.click()
 
         self.sleep(4)
-
+        self.logger.info(cover_photo_key.split("/")[-1])
         cover_photo = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{cover_photo_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
         cover_photo.click()
 
