@@ -118,6 +118,7 @@ class AppiumClient:
             cancel.click()
 
             return True
+        return False
 
     def register(self):
         campaign_folder = f'/{self.campaign.title}'
@@ -180,8 +181,9 @@ class AppiumClient:
                 next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
                 next_button.click()
                 next_button_clicks += 1
+                self.logger.info('Next button clicked')
             except TimeoutException:
-                continue
+                self.logger.warning('Next button could not be found')
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         alert_check_retries = 0
