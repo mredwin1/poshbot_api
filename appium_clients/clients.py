@@ -187,6 +187,24 @@ class AppiumClient:
                 time.sleep(2)
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
+        campaign_folder = f'/{self.campaign.title}'
+        listing_folder = f'/{self.campaign.title}/{listing.title}'
+        campaign_folder_exists = os.path.exists(campaign_folder)
+        listing_folder_exists = os.path.exists(listing_folder)
+
+        if not campaign_folder_exists:
+            os.mkdir(f'/{self.campaign.title}')
+
+        if not listing_folder_exists:
+            os.mkdir(f'/{self.campaign.title}/{listing.title}')
+
+        cover_photo_key = listing.cover_photo.name
+        self.download_and_send_file(cover_photo_key, listing_folder)
+
+        for listing_image in listing_images:
+            image_key = listing_image.image.name
+            self.download_and_send_file(image_key, listing_folder)
+
         alert_check_retries = 0
 
         while not self.alert_clicked and alert_check_retries < 5:
@@ -206,24 +224,6 @@ class AppiumClient:
         if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button'):
             allow_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button')
             allow_button.click()
-
-        campaign_folder = f'/{self.campaign.title}'
-        listing_folder = f'/{self.campaign.title}/{listing.title}'
-        campaign_folder_exists = os.path.exists(campaign_folder)
-        listing_folder_exists = os.path.exists(listing_folder)
-
-        if not campaign_folder_exists:
-            os.mkdir(f'/{self.campaign.title}')
-
-        if not listing_folder_exists:
-            os.mkdir(f'/{self.campaign.title}/{listing.title}')
-
-        cover_photo_key = listing.cover_photo.name
-        self.download_and_send_file(cover_photo_key, listing_folder)
-
-        for listing_image in listing_images:
-            image_key = listing_image.image.name
-            self.download_and_send_file(image_key, listing_folder)
 
         self.sleep(4)
 
