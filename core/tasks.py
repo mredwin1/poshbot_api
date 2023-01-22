@@ -211,13 +211,6 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         campaign.status = Campaign.STOPPED
                         campaign.save()
 
-
-
-
-
-
-
-
                 campaign.refresh_from_db()
 
                 if campaign.status != Campaign.STOPPED and campaign.posh_user.is_active:
@@ -391,6 +384,7 @@ def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
 @shared_task
 def register(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
+    campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     logger = LogGroup.objects.get(id=logger_id)
 
     campaign.status = Campaign.RUNNING
@@ -398,6 +392,9 @@ def register(campaign_id, logger_id):
 
     with AppiumClient(campaign, logger) as client:
         client.register()
+        for listing_not_listed in campaign_listings:
+            listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+            client.list_item(listing_not_listed, listing_images)
 
     campaign.status = Campaign.STOPPED
     campaign.save()

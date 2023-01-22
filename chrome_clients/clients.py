@@ -10,7 +10,6 @@ import time
 import traceback
 
 from django.conf import settings
-from fake_useragent import UserAgent
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
