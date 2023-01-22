@@ -32,8 +32,8 @@ class AppiumClient:
         self.capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            deviceName='Galaxy S10',
-            udid='R38M20JTJZJ',
+            deviceName='Pixel3_1',
+            udid='94TXS0P38',
             appPackage='com.poshmark.app',
             appActivity='com.poshmark.ui.MainActivity',
             language='en',
