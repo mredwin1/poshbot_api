@@ -285,8 +285,7 @@ class AppiumClient:
         description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_editor')
         for text in listing.description.split('\n'):
             description_input.send_keys(text)
-            ActionChains(self.driver).key_down(Keys.SHIFT).key_down(Keys.ENTER).key_up(Keys.SHIFT).key_up(
-                Keys.ENTER).perform()
+            description_input.send_keys(Keys.ENTER)
             self.sleep(1)
 
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
@@ -318,7 +317,8 @@ class AppiumClient:
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         done_button.click()
 
-        action = ActionChains(self.driver).scroll_by_amount(delta_x=0, delta_y=800)
+        category = self.locate(AppiumBy.ID, 'com.poshmark.app:id/catalog_edit_text')
+        action = ActionChains(self.driver).click_and_hold(on_element=category).move_by_offset(xoffset=0, yoffset=800)
         action.perform()
 
         size_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/size_edit_text')
