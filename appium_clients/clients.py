@@ -316,7 +316,7 @@ class AppiumClient:
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         done_button.click()
 
-        action = ActionChains(self.driver).scroll_by_amount(delta_y=800)
+        action = ActionChains(self.driver).scroll_by_amount(delta_x=0, delta_y=800)
         action.perform()
 
         size_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/size_edit_text')
