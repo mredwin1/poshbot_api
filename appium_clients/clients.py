@@ -227,7 +227,7 @@ class AppiumClient:
 
         self.sleep(4)
         self.logger.info(cover_photo_key.split("/")[-1])
-        cover_photo = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{cover_photo_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+        cover_photo = self.locate(AppiumBy.XPATH, f'//android.widget.FrameLayout[contains(@content-desc, "{cover_photo_key.split("/")[-1]}")]').parent
         cover_photo.click()
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
@@ -251,7 +251,7 @@ class AppiumClient:
 
         for index, listing_image in enumerate(listing_images):
             image_name = listing_image.image.name.split("/")[-1]
-            image = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{image_name}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+            image = self.locate(AppiumBy.XPATH, f'//android.widget.FrameLayout[contains(@content-desc, "{image_name.split("/")[-1]}")]').parent
             if index == 1:
                 actions = ActionChains(self.driver)
                 actions.click_and_hold(image).pause(1).release(image).perform()
