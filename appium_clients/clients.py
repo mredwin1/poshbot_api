@@ -184,7 +184,7 @@ class AppiumClient:
                 self.logger.info('Next button clicked')
             except TimeoutException:
                 self.logger.warning('Next button could not be found')
-                time.sleep(2)
+                self.sleep(2)
 
     def tap_img(self, name):
         search_box = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/searchbar_title')
@@ -246,6 +246,8 @@ class AppiumClient:
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
 
+        self.sleep(1)
+
         add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
         add_more_button.click()
 
@@ -263,10 +265,12 @@ class AppiumClient:
             image_name = listing_image.image.name.split("/")[-1]
             self.tap_img(image_name)
 
-            time.sleep(1)
+            self.sleep(1)
 
             next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
             next_button.click()
+
+            self.sleep(1)
 
             add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
             add_more_button.click()
