@@ -373,3 +373,6 @@ class AppiumClient:
                 self.logger.info('Item listed successfully')
 
         return True
+
+    def reset_data(self):
+        self.driver.reset()

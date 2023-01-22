@@ -395,6 +395,7 @@ def register(campaign_id, logger_id):
         for listing_not_listed in campaign_listings:
             listing_images = ListingImage.objects.filter(listing=listing_not_listed)
             client.list_item(listing_not_listed, listing_images)
+        client.reset_data()
 
     campaign.status = Campaign.STOPPED
     campaign.save()
