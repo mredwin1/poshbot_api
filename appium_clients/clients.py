@@ -237,12 +237,7 @@ class AppiumClient:
             image_key = listing_image.image.name
             self.download_and_send_file(image_key, listing_folder)
 
-        alert_check_retries = 0
-        alert_clicked = False
-
-        while not alert_clicked and alert_check_retries < 2:
-            alert_clicked = self.alert_check()
-            self.sleep(5)
+        self.alert_check()
 
         sell_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/sellTab')
         sell_button.click()
