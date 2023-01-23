@@ -113,14 +113,18 @@ class AppiumClient:
         self.driver.push_file(destination_path=f'/sdcard/Pictures/{filename}', source_path=download_location)
 
     def alert_check(self):
+        self.logger.info('Checking for posh party alert')
         if self.is_present(AppiumBy.ID, 'android:id/title_template'):
             title = self.locate(AppiumBy.ID, 'android:id/title_template').text
 
             if 'party' in title.lower():
+                self.logger.info('Alert found, clicking cancel button')
                 cancel = self.locate(AppiumBy.ID, 'android:id/button2')
                 cancel.click()
 
                 return True
+        else:
+            self.logger.info('No posh party alert')
         return False
 
     def tap_img(self, name):
@@ -233,11 +237,12 @@ class AppiumClient:
             image_key = listing_image.image.name
             self.download_and_send_file(image_key, listing_folder)
 
-        # alert_check_retries = 0
-        #
-        # while alert_check_retries < 2:
-        #     self.alert_clicked = self.alert_check()
-        #     self.sleep(5)
+        alert_check_retries = 0
+        alert_clicked = False
+
+        while not alert_clicked and alert_check_retries < 2:
+            alert_clicked = self.alert_check()
+            self.sleep(5)
 
         sell_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/sellTab')
         sell_button.click()
