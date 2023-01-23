@@ -114,8 +114,8 @@ class AppiumClient:
 
     def alert_check(self):
         self.logger.info('Checking for posh party alert')
-        if self.is_present(AppiumBy.ID, 'android:id/title_template'):
-            title = self.locate(AppiumBy.ID, 'android:id/title_template').text
+        if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
+            title = self.locate(AppiumBy.ID, 'android:id/alertTitle').text
 
             if 'party' in title.lower():
                 self.logger.info('Alert found, clicking cancel button')
@@ -290,7 +290,7 @@ class AppiumClient:
             else:
                 img.click()
 
-            if x % 2 == 0:
+            if x % 2 == 1:
                 img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{x + 1}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
                 action = ActionChains(self.driver).click_and_hold(on_element=img).move_by_offset(xoffset=0, yoffset=-600)
                 action.perform()
