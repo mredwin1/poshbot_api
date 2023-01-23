@@ -108,7 +108,7 @@ class AppiumClient:
 
     def scroll(self, element, y_offset):
         action = ActionChains(self.driver).click_and_hold(on_element=element)
-        action.move_by_offset(xoffset=0, y_offset=y_offset)
+        action.move_by_offset(xoffset=0, yoffset=y_offset)
         action.perform()
 
     def download_and_send_file(self, key, download_folder):
