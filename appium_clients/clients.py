@@ -290,20 +290,18 @@ class AppiumClient:
             else:
                 img.click()
 
-            if x % 2 == 1:
+            if x % 2 == 1 and x != len(listing_images):
                 img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{x + 1}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
                 action = ActionChains(self.driver).click_and_hold(on_element=img).move_by_offset(xoffset=0, yoffset=-600)
                 action.perform()
 
-            self.sleep(1)
-
         select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
         select_button.click()
 
-        self.sleep(1)
+        self.sleep(2)
 
         info_pop = self.locate(AppiumBy.ID, 'com.poshmark.app:id/shareClosetButton')
-        ActionChains(self.driver).move_to_element(info_pop).move_by_offset(xoffset=200, yoffset=400).click().perform()
+        ActionChains(self.driver).move_to_element(info_pop).move_by_offset(xoffset=100, yoffset=400).click().perform()
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
