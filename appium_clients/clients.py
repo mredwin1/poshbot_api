@@ -113,15 +113,14 @@ class AppiumClient:
         self.driver.push_file(destination_path=f'/sdcard/Pictures/{filename}', source_path=download_location)
 
     def alert_check(self):
-        if self.is_present(AppiumBy.ID, 'android:id/content'):
-            if self.is_present(AppiumBy.ID, 'android:id/title_template'):
-                title = self.locate(AppiumBy.ID, 'android:id/title_template').text
+        if self.is_present(AppiumBy.ID, 'android:id/title_template'):
+            title = self.locate(AppiumBy.ID, 'android:id/title_template').text
 
-                if 'party' in title.lower():
-                    cancel = self.locate(AppiumBy.ID, 'android:id/button2')
-                    cancel.click()
+            if 'party' in title.lower():
+                cancel = self.locate(AppiumBy.ID, 'android:id/button2')
+                cancel.click()
 
-                    return True
+                return True
         return False
 
     def tap_img(self, name):
@@ -380,7 +379,8 @@ class AppiumClient:
         while not sell_button_present and list_attempts < 10:
             sell_button_present = self.is_present(AppiumBy.ID, 'com.poshmark.app:id/sellTab')
             list_attempts += 1
-            self.sleep(5)
+            self.logger.info('Item not listed yet')
+            self.sleep(10)
         else:
             if list_attempts >= 10:
                 self.logger.error(f'Attempted to locate the sell button {list_attempts} times but could not find it.')
