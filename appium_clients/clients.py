@@ -87,7 +87,8 @@ class AppiumClient:
     def is_present(self, by, locator):
         """Checks if a web element is present"""
         try:
-            self.locate(by, locator)
+            wait = WebDriverWait(self.driver, 5)
+            wait.until(expected_conditions.presence_of_element_located((by, locator)))
         except (NoSuchElementException, TimeoutException):
             return False
         return True
