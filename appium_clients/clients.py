@@ -124,6 +124,18 @@ class AppiumClient:
                     return True
         return False
 
+    def tap_img(self, name):
+        search_box = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/searchbar_title')
+        search_box.click()
+
+        search_input = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/search_src_text')
+        search_input.send_keys(name)
+
+        self.sleep(1)
+
+        img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
+        img.click()
+
     def register(self):
         campaign_folder = f'/{self.campaign.title}'
         campaign_folder_exists = os.path.exists(campaign_folder)
@@ -175,6 +187,13 @@ class AppiumClient:
             not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
             not_now.click()
 
+        if self.is_present(AppiumBy.ID, 'com.poshmark.app:id/popupContainer'):
+            new_username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/item')
+            new_username.click()
+
+            create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+            create_button.click()
+
         next_button_clicks = 0
 
         while next_button_clicks < 3:
@@ -186,18 +205,6 @@ class AppiumClient:
             except TimeoutException:
                 self.logger.warning('Next button could not be found')
                 self.sleep(2)
-
-    def tap_img(self, name):
-        search_box = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/searchbar_title')
-        search_box.click()
-
-        search_input = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/search_src_text')
-        search_input.send_keys(name)
-
-        self.sleep(1)
-
-        img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
-        img.click()
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         campaign_folder = f'/{self.campaign.title}'
