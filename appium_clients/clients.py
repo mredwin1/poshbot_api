@@ -324,7 +324,7 @@ class AppiumClient:
         self.sleep(1)
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
-        action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=-1900)
+        action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=-1900).release(title_input)
         action.perform()
 
         listing_category = listing.category
@@ -341,7 +341,7 @@ class AppiumClient:
         self.sleep(1)
 
         primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
-        action = ActionChains(self.driver).click_and_hold(on_element=primary_category_button).move_by_offset(xoffset=0, yoffset=-400)
+        action = ActionChains(self.driver).click_and_hold(on_element=primary_category_button).move_by_offset(xoffset=0, yoffset=-400).release(primary_category_button)
         action.perform()
 
         secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
@@ -350,7 +350,7 @@ class AppiumClient:
         self.sleep(1)
 
         secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
-        action = ActionChains(self.driver).click_and_hold(on_element=secondary_category_button).move_by_offset(xoffset=0, yoffset=-400)
+        action = ActionChains(self.driver).click_and_hold(on_element=secondary_category_button).move_by_offset(xoffset=0, yoffset=-400).release(secondary_category_button)
         action.perform()
 
         subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower())
