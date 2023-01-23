@@ -302,7 +302,7 @@ class AppiumClient:
 
         self.sleep(1)
 
-        ActionChains(self.driver).click()
+        ActionChains(self.driver).click().perform()
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
