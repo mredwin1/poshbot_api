@@ -233,6 +233,7 @@ class AppiumClient:
         cover_photo_key = listing.cover_photo.name
         self.download_and_send_file(cover_photo_key, listing_folder)
 
+        listing_images.reverse()
         for listing_image in listing_images:
             image_key = listing_image.image.name
             self.download_and_send_file(image_key, listing_folder)
@@ -262,13 +263,13 @@ class AppiumClient:
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
 
-        for index, listing_image in enumerate(listing_images):
-            self.sleep(1)
+        self.sleep(1)
 
-            add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
-            add_more_button.click()
+        add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
+        add_more_button.click()
 
-            if index == 0:
+        for x in range(len(listing_images)):
+            if x == 0:
                 if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
                     deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
                     deny_button.click()
@@ -278,18 +279,28 @@ class AppiumClient:
                     deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
                     deny_button.click()
 
-            gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
-            gallery_button.click()
+            img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{x}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
 
-            image_name = listing_image.image.name.split("/")[-1]
-            self.tap_img(image_name)
+            if x == 0:
+                actions = ActionChains(self.driver).click_and_hold(img).pause(1).release(img)
+                actions.perform()
+            else:
+                img.click()
 
-            self.sleep(1)
+            if x % 2 == 0:
+                img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{x}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+                action = ActionChains(self.driver).click_and_hold(on_element=img).move_by_offset(xoffset=0, yoffset=-400)
+                action.perform()
 
-            next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-            next_button.click()
+        select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
+        select_button.click()
 
-            self.sleep(1)
+        self.sleep(1)
+
+        next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+        next_button.click()
+
+        self.sleep(2)
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
         title_input.send_keys(listing.title)
