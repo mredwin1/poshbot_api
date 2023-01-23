@@ -5,6 +5,7 @@ import time
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
+from appium.webdriver.common.touch_action import TouchAction
 from django.conf import settings
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -300,8 +301,7 @@ class AppiumClient:
 
         self.sleep(2)
 
-        info_pop = self.locate(AppiumBy.ID, 'com.poshmark.app:id/shareClosetButton')
-        ActionChains(self.driver).move_to_element(info_pop).move_by_offset(xoffset=100, yoffset=400).click().perform()
+        TouchAction(self.driver).tap(x=100, y=100).perform()
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
