@@ -324,7 +324,7 @@ class AppiumClient:
 
         self.sleep(1)
 
-        description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_editor')
+        description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
         action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=(-1458 - description_input.height))
         action.perform()
 
