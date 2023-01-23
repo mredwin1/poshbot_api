@@ -191,6 +191,12 @@ class AppiumClient:
             new_username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/item')
             new_username.click()
 
+            self.sleep(1)
+
+            username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/username')
+            self.campaign.posh_user.username = username.text
+            self.campaign.posh_user.save()
+
             create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
             create_button.click()
 
