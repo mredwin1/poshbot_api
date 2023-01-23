@@ -397,9 +397,10 @@ def register(campaign_id, logger_id):
                 client.list_item(listing_not_listed, listing_images)
             client.reset_data()
 
-        campaign.status = Campaign.STOPPED
-        campaign.save()
     except TimeoutError:
         import logging
         logger = logging.getLogger(__name__)
         logger.error(f'{traceback.format_exc()}')
+
+    campaign.status = Campaign.STOPPED
+    campaign.save()
