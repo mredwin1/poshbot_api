@@ -292,7 +292,7 @@ class AppiumClient:
 
             if x % 2 == 0:
                 img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{x + 1}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-                action = ActionChains(self.driver).click_and_hold(on_element=img).move_by_offset(xoffset=0, yoffset=-600).release(img)
+                action = ActionChains(self.driver).click_and_hold(on_element=img).move_by_offset(xoffset=0, yoffset=-600)
                 action.perform()
 
             self.sleep(1)
@@ -301,6 +301,8 @@ class AppiumClient:
         select_button.click()
 
         self.sleep(1)
+
+        ActionChains(self.driver).click()
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
@@ -324,7 +326,7 @@ class AppiumClient:
         self.sleep(1)
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
-        action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=-1900).release(title_input)
+        action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=-1900)
         action.perform()
 
         listing_category = listing.category
@@ -341,7 +343,7 @@ class AppiumClient:
         self.sleep(1)
 
         primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
-        action = ActionChains(self.driver).click_and_hold(on_element=primary_category_button).move_by_offset(xoffset=0, yoffset=-400).release(primary_category_button)
+        action = ActionChains(self.driver).click_and_hold(on_element=primary_category_button).move_by_offset(xoffset=0, yoffset=-400)
         action.perform()
 
         secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
@@ -350,7 +352,7 @@ class AppiumClient:
         self.sleep(1)
 
         secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
-        action = ActionChains(self.driver).click_and_hold(on_element=secondary_category_button).move_by_offset(xoffset=0, yoffset=-400).release(secondary_category_button)
+        action = ActionChains(self.driver).click_and_hold(on_element=secondary_category_button).move_by_offset(xoffset=0, yoffset=-400)
         action.perform()
 
         subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower())
