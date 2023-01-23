@@ -1,6 +1,7 @@
 import boto3
 import os
 import random
+import requests
 import time
 
 from appium import webdriver
@@ -178,34 +179,53 @@ class AppiumClient:
         email = self.locate(AppiumBy.ID, 'com.poshmark.app:id/email')
         username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/username')
         password = self.locate(AppiumBy.ID, 'com.poshmark.app:id/password')
-        create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
 
         first_name.send_keys(self.campaign.posh_user.first_name)
         last_name.send_keys(self.campaign.posh_user.last_name)
         email.send_keys(self.campaign.posh_user.email)
         username.send_keys(self.campaign.posh_user.username)
         password.send_keys(self.campaign.posh_user.password)
-        create_button.click()
 
-        if self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
-            not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
-            not_now.click()
-
-        if self.is_present(AppiumBy.ID, 'com.poshmark.app:id/popupContainer'):
-            new_username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/item')
-            new_username.click()
-
-            self.sleep(1)
-
-            username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/username')
-            self.campaign.posh_user.username = username.text
-            self.campaign.posh_user.save()
-
+        while not self.campaign.posh_user.is_registered:
             create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
             create_button.click()
 
-        self.campaign.posh_user.is_registered = True
-        self.campaign.posh_user.save()
+            progress_bar_checks = 0
+            while self.is_present(AppiumBy.ID, 'com.poshmark.app:id/progressBar') and progress_bar_checks < 40:
+                self.logger.info('Registration still in progress')
+                progress_bar_checks += 1
+                self.sleep(5)
+
+            response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
+            if response.status_code != requests.codes.ok:
+                message_handled = False
+                if self.is_present(AppiumBy.ID, 'android:id/message'):
+                    ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                    ok_button.click()
+                    message_handled = True
+
+                elif self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
+                    not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
+                    not_now.click()
+                    message_handled = True
+
+                elif self.is_present(AppiumBy.ID, 'com.poshmark.app:id/popupContainer'):
+                    new_username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/item')
+                    new_username.click()
+                    message_handled = True
+
+                    self.sleep(1)
+
+                    username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/username')
+                    self.campaign.posh_user.username = username.text
+                    self.campaign.posh_user.save()
+
+                if message_handled:
+                    create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+                    create_button.click()
+            else:
+                self.campaign.posh_user.is_registered = True
+                self.campaign.posh_user.save()
 
         next_button_clicks = 0
 
