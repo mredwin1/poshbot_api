@@ -328,7 +328,6 @@ class AppiumClient:
         action = ActionChains(self.driver).click_and_hold(on_element=primary_category_button).move_by_offset(xoffset=0, yoffset=-400)
         action.perform()
 
-
         secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
         secondary_category_button.click()
 
