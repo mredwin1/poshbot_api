@@ -389,13 +389,17 @@ def register(campaign_id, logger_id):
 
     campaign.status = Campaign.RUNNING
     campaign.save()
+    try:
+        with AppiumClient(campaign, logger) as client:
+            client.register()
+            for listing_not_listed in campaign_listings:
+                listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                client.list_item(listing_not_listed, listing_images)
+            client.reset_data()
 
-    with AppiumClient(campaign, logger) as client:
-        client.register()
-        for listing_not_listed in campaign_listings:
-            listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-            client.list_item(listing_not_listed, listing_images)
-        client.reset_data()
-
-    campaign.status = Campaign.STOPPED
-    campaign.save()
+        campaign.status = Campaign.STOPPED
+        campaign.save()
+    except TimeoutError:
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.error(f'{traceback.format_exc()}')
