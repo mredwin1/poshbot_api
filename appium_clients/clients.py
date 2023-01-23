@@ -302,7 +302,8 @@ class AppiumClient:
 
         self.sleep(1)
 
-        ActionChains(self.driver).click().perform()
+        info_pop = self.locate(AppiumBy.ID, 'com.poshmark.app:id/shareClosetButton')
+        ActionChains(self.driver).move_to_element(info_pop).move_by_offset(xoffset=200, yoffset=400).click().perform()
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         next_button.click()
