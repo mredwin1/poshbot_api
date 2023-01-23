@@ -200,6 +200,9 @@ class AppiumClient:
             create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
             create_button.click()
 
+        self.campaign.posh_user.is_registered = True
+        self.campaign.posh_user.save()
+
         next_button_clicks = 0
 
         while next_button_clicks < 3:
