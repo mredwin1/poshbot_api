@@ -106,10 +106,6 @@ class AppiumClient:
             self.logger.info(f'Sleeping for about {round(duration, 2)} {word}')
             time.sleep(seconds)
 
-    def scroll(self, element, y_offset):
-        action = ActionChains(self.driver).click_and_hold(on_element=element).move_by_offset(xoffset=0, yoffset=y_offset)
-        action.perform()
-
     def download_and_send_file(self, key, download_folder):
         filename = key.split('/')[-1]
         download_location = f'/{download_folder}/{filename}'
@@ -312,7 +308,8 @@ class AppiumClient:
         self.sleep(1)
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
-        self.scroll(title_input, 1600)
+        action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=1600)
+        action.perform()
 
         listing_category = listing.category
         space_index = listing_category.find(' ')
@@ -332,7 +329,8 @@ class AppiumClient:
 
         self.sleep(1)
 
-        self.scroll(secondary_category_button, 100)
+        action = ActionChains(self.driver).click_and_hold(on_element=secondary_category_button).move_by_offset(xoffset=0, yoffset=100)
+        action.perform()
 
         subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower())
         subcategory_button.click()
