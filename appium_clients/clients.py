@@ -306,7 +306,7 @@ class AppiumClient:
         self.sleep(1)
 
         title_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/title_edit_text')
-        action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=-1600)
+        action = ActionChains(self.driver).click_and_hold(on_element=title_input).move_by_offset(xoffset=0, yoffset=-1900)
         action.perform()
 
         listing_category = listing.category
