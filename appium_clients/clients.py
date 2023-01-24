@@ -34,7 +34,7 @@ class AppiumClient:
         self.capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            deviceName='Pixel3_1',
+            deviceName='Pixel 3',
             udid='94TXS0P38',
             appPackage='com.poshmark.app',
             appActivity='com.poshmark.ui.MainActivity',
