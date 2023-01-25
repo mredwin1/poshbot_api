@@ -344,7 +344,7 @@ class AppiumClient:
 
         media_items = self.locate(AppiumBy.ID, 'com.poshmark.app:id/media_items')
         description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
-        action = ActionChains(self.driver).click_and_hold(on_element=description_input).move_by_offset(xoffset=0, yoffset=(-1383 - media_items.size['height'] - description_input.size['height']))
+        action = ActionChains(self.driver).click_and_hold(on_element=description_input).move_by_offset(xoffset=0, yoffset=(-1083 - media_items.size['height'] - description_input.size['height']))
         action.perform()
 
         listing_category = listing.category
