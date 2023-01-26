@@ -106,6 +106,7 @@ class BaseClient:
         self.web_driver_options = Options()
         self.web_driver_options.add_experimental_option("excludeSwitches", ["enable-automation"])
         self.web_driver_options.add_experimental_option('useAutomationExtension', False)
+        self.web_driver_options.add_experimental_option('prefs', {"enable_do_not_track": True})
         self.web_driver_options.add_argument('--disable-extensions')
         self.web_driver_options.add_argument('--headless')
         self.web_driver_options.add_argument(f'user-agent={user_agent}')
