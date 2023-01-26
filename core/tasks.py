@@ -144,6 +144,8 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
                         campaign.posh_user.profile_updated = True
                         campaign.save()
 
+                    campaign.refresh_from_db()
+
                     if logged_in:
                         while all_listings is None and all_listings_retries < 3:
                             all_listings = client.get_all_listings()

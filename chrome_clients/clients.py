@@ -874,10 +874,10 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Profile saved')
 
                 self.sleep(1, 3)
+
+                return True
             else:
                 self.logger.warning('No header picture found to upload')
-
-            return True
         except Exception as e:
             self.handle_error('Error while updating profile', 'update_profile_error.png')
             return False
