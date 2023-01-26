@@ -12,7 +12,7 @@ from selenium.common.exceptions import WebDriverException, SessionNotCreatedExce
 
 from appium_clients.clients import AppiumClient
 from chrome_clients.clients import PoshMarkClient, BaseClient
-from .models import Campaign, Listing, ListingImage, ProxyConnection, LogGroup
+from .models import Campaign, Listing, ListingImage, ProxyConnection
 
 
 def get_proxy(logger):
@@ -50,9 +50,9 @@ def get_proxy(logger):
 
 
 @shared_task
-def init_campaign(campaign_id, logger_id):
+def init_campaign(campaign_id):
     campaign = Campaign.objects.get(id=campaign_id)
-    logger = LogGroup.objects.get(id=logger_id)
+    logger = logging.getLogger(__name__)
 
     campaign_mapping = {
         Campaign.BASIC_SHARING: basic_sharing_campaign,
@@ -109,10 +109,10 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
         logged_in = None
 
         if logger_id:
-            logger = LogGroup.objects.get(id=logger_id)
+            logger = logging.getLogger(__name__)
         else:
-            logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
-            logger.save()
+            logger = logging.getLogger(__name__)
+            # logger.save()
 
         logger.info(f'Running Advanced Sharing campaign: {campaign}')
 
@@ -267,10 +267,10 @@ def basic_sharing_campaign(campaign_id, logger_id=None):
         login_retries = 0
 
         if logger_id:
-            logger = LogGroup.objects.get(id=logger_id)
+            logger = logging.getLogger(__name__)
         else:
-            logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
-            logger.save()
+            logger = logging.getLogger(__name__)
+            # logger.save()
 
         logger.info(f'Running Basic Sharing campaign: {campaign})')
 
@@ -363,7 +363,7 @@ def basic_sharing_campaign(campaign_id, logger_id=None):
 @shared_task
 def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
     campaign = Campaign.objects.get(id=campaign_id)
-    logger = LogGroup.objects.get(id=logger_id)
+    logger = logging.getLogger(__name__)
 
     campaign.status = Campaign.RUNNING
     campaign.save()
@@ -387,7 +387,7 @@ def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
 def register(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
-    logger = LogGroup.objects.get(id=logger_id)
+    logger = logging.getLogger(__name__)
 
     campaign.status = Campaign.RUNNING
     campaign.save()
