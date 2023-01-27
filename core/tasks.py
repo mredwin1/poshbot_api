@@ -400,7 +400,6 @@ def register(campaign_id):
             client.reset_data()
 
     except (TimeoutError, WebDriverException):
-        import logging
         logger = logging.getLogger(__name__)
         logger.error(f'{traceback.format_exc()}')
 
