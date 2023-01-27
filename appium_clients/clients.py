@@ -109,6 +109,77 @@ class AppiumClient:
             self.logger.info(f'Sleeping for about {round(duration, 2)} {word}')
             time.sleep(seconds)
 
+    def click(self, element=None, x=None, y=None):
+        if element:
+            width = element.size['width']
+            height = element.size['height']
+            center_x = width / 2
+            center_y = height / 2
+
+            xoffset = int(center_x) - random.randint(int(center_x * .2), int(center_x * .8))
+            yoffset = int(center_y) - random.randint(int(center_y * .2), int(center_y * .8))
+            action = ActionChains(self.driver).move_to_element_with_offset(element, xoffset, yoffset).click()
+            action.perform()
+        else:
+            self.driver.execute_script('mobile: clickGesture', {'x': x, 'y': y})
+
+    def long_click(self, element, duration=500):
+        width = element.size['width']
+        height = element.size['height']
+
+        xoffset = random.randint(int(width * .2), int(width * .8))
+        yoffset = random.randint(int(height * .2), int(height * .8))
+
+        self.driver.execute_script('mobile: longClickGesture', {'x': xoffset, 'y': yoffset, 'elementId': element.id, 'duration': duration})
+
+    def swipe(self, direction, scroll_amount):
+        window_size = self.driver.get_window_size()
+        if direction in ('up', 'down'):
+            bounding_box_xpercent_min = .5
+            bounding_box_xpercent_max = .9
+            bounding_box_ypercent_min = .1
+            bounding_box_ypercent_max = .8
+        else:
+            bounding_box_xpercent_min = .1
+            bounding_box_xpercent_max = .9
+            bounding_box_ypercent_min = .7
+            bounding_box_ypercent_max = .8
+
+        scroll_x = bounding_box_xpercent_min * window_size['width']
+        scroll_y = bounding_box_ypercent_min * window_size['height']
+        scroll_width = (window_size['width'] * bounding_box_xpercent_max) - (
+                    window_size['width'] * bounding_box_xpercent_min)
+        scroll_height = (window_size['height'] * bounding_box_ypercent_max) - (
+                    window_size['height'] * bounding_box_ypercent_min)
+
+        full_scrolls = int(scroll_amount / scroll_height)
+        last_scroll = round(scroll_amount / scroll_height % 1, 2)
+        scroll_percents = [1.0] * full_scrolls + [last_scroll]
+
+        total_scroll = 0
+
+        for index, scroll_percent in enumerate(scroll_percents):
+            total_scroll += scroll_height * scroll_percent
+            self.driver.execute_script('mobile: swipeGesture', {
+                'left': scroll_x, 'top': scroll_y, 'width': scroll_width, 'height': scroll_height,
+                'direction': direction,
+                'percent': scroll_percent,
+                'speed': 1200
+            })
+            if index + 1 != len(scroll_percents):
+                self.sleep(.5)
+
+    def send_keys(self, element, text):
+        self.click(element)
+        action = ActionChains(self.driver)
+        for index, line in enumerate(text.split('\n')):
+            if index != 0:
+                action.send_keys(Keys.ENTER)
+            for char in line:
+                action.send_keys(char).pause(random.uniform(.1, .28))
+        action.perform()
+        self.driver.back()
+
     def download_and_send_file(self, key, download_folder):
         filename = key.split('/')[-1]
         download_location = f'/{download_folder}/{filename}'
@@ -123,7 +194,7 @@ class AppiumClient:
             if 'party' in title.lower():
                 self.logger.info('Alert found, clicking cancel button')
                 cancel = self.locate(AppiumBy.ID, 'android:id/button2')
-                cancel.click()
+                self.click(cancel)
 
                 return True
         else:
@@ -132,7 +203,7 @@ class AppiumClient:
 
     def tap_img(self, name):
         search_box = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/searchbar_title')
-        search_box.click()
+        self.click(search_box)
 
         search_input = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/search_src_text')
         search_input.send_keys(name)
@@ -140,7 +211,7 @@ class AppiumClient:
         self.sleep(1)
 
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
-        img.click()
+        self.click(img)
 
     def register(self):
         campaign_folder = f'/{self.campaign.title}'
@@ -159,25 +230,25 @@ class AppiumClient:
             retries += 1
 
         sign_up = self.locate(AppiumBy.ID, 'com.poshmark.app:id/sign_up_option')
-        sign_up.click()
+        self.click(sign_up)
 
         if self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
             none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
-            none_of_the_above.click()
+            self.click(none_of_the_above)
 
         picture_elem = self.locate(AppiumBy.ID, 'com.poshmark.app:id/avataarImageView')
-        picture_elem.click()
+        self.click(picture_elem)
 
         photo_albums = self.locate(AppiumBy.ID, 'com.poshmark.app:id/galleryTv')
-        photo_albums.click()
+        self.click(photo_albums)
 
         profile_picture = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{profile_picture_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-        profile_picture.click()
+        self.click(profile_picture)
 
         self.sleep(1)
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+        self.click(next_button)
 
         first_name = self.locate(AppiumBy.ID, 'com.poshmark.app:id/firstname')
         last_name = self.locate(AppiumBy.ID, 'com.poshmark.app:id/lastname')
@@ -185,19 +256,19 @@ class AppiumClient:
         username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/username')
         password = self.locate(AppiumBy.ID, 'com.poshmark.app:id/password')
 
-        first_name.send_keys(self.campaign.posh_user.first_name)
-        last_name.send_keys(self.campaign.posh_user.last_name)
-        email.send_keys(self.campaign.posh_user.email)
-        username.send_keys(self.campaign.posh_user.username)
-        password.send_keys(self.campaign.posh_user.password)
+        self.send_keys(first_name, self.campaign.posh_user.first_name)
+        self.send_keys(last_name, self.campaign.posh_user.last_name)
+        self.send_keys(email, self.campaign.posh_user.email)
+        self.send_keys(username, self.campaign.posh_user.username)
+        self.send_keys(password, self.campaign.posh_user.password)
 
         while not self.campaign.posh_user.is_registered:
             create_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-            create_button.click()
+            self.click(create_button)
 
             if self.is_present(AppiumBy.ID, 'com.poshmark.app:id/popupContainer'):
                 new_username = self.locate(AppiumBy.ID, 'com.poshmark.app:id/item')
-                new_username.click()
+                self.click(new_username)
 
                 self.sleep(1)
 
@@ -215,11 +286,11 @@ class AppiumClient:
             if response.status_code != requests.codes.ok:
                 if self.is_present(AppiumBy.ID, 'android:id/message'):
                     ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                    ok_button.click()
+                    self.click(ok_button)
 
                 elif self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
                     not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
-                    not_now.click()
+                    self.click(not_now)
 
             else:
                 self.campaign.posh_user.is_registered = True
@@ -230,7 +301,7 @@ class AppiumClient:
         while next_button_clicks < 3:
             try:
                 next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-                next_button.click()
+                self.click(next_button)
                 next_button_clicks += 1
                 self.logger.info('Next button clicked')
             except TimeoutException:
@@ -260,69 +331,81 @@ class AppiumClient:
         self.alert_check()
 
         sell_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/sellTab')
-        sell_button.click()
+        self.click(sell_button)
 
         if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
             deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
-            deny_button.click()
+            self.click(deny_button)
 
         gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
-        gallery_button.click()
+        self.click(gallery_button)
 
         if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button'):
             allow_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button')
-            allow_button.click()
+            self.click(allow_button)
 
         self.sleep(4)
         self.tap_img(cover_photo_key.split("/")[-1])
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+        self.click(next_button)
+
+        self.sleep(1)
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+        self.click(next_button)
 
         self.sleep(1)
 
         add_more_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/add_more')
-        add_more_button.click()
+        self.click(add_more_button)
 
-        for x in range(len(listing_images)):
-            if x == 0:
-                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
-                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
-                    deny_button.click()
+        if self.is_present(AppiumBy.ID,
+                           'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
+            deny_button = self.locate(AppiumBy.ID,
+                                      'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
+            self.click(deny_button)
 
-                    self.sleep(1)
-                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
-                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
-                    deny_button.click()
+            self.sleep(1)
+        if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
+            deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
+            self.click(deny_button)
 
-                gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
-                gallery_button.click()
+        gallery_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/gallery')
+        self.click(gallery_button)
 
-            img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{x + 1}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+        self.sleep(1)
 
-            if x == 0:
-                actions = ActionChains(self.driver).click_and_hold(img).pause(1).release(img)
-                actions.perform()
+        group_num = 0
+        self.swipe('up', 530)
+        self.sleep(.75)
+        for x in range(1, len(listing_images) + 1):
+            img_index = x - group_num
+            img = self.locate(AppiumBy.XPATH,
+                              f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{img_index}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+            if x == 1:
+                self.long_click(img)
             else:
-                img.click()
+                self.click(img)
 
-            if x % 2 == 1 and (x + 1) != len(listing_images):
-                img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{x + 1}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-                action = ActionChains(self.driver).click_and_hold(on_element=img).move_by_offset(xoffset=0, yoffset=-600)
-                action.perform()
+            if x % 6 == 0 and x != len(listing_images):
+                self.swipe('up', 580 * 3)
+                group_num += 4 if not group_num else 6
+                self.sleep(.75)
 
         select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
-        select_button.click()
+        self.click(select_button)
 
         self.sleep(2)
 
-        TouchAction(self.driver).tap(x=100, y=100).perform()
+        if self.is_present(AppiumBy.ID, 'com.poshmark.app:id/nextButton'):
+            next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+            self.click(next_button)
+        else:
+            self.click(element=None, x=500, y=500)
 
-        next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+            next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+            self.click(next_button)
 
         self.sleep(2)
 
@@ -330,22 +413,19 @@ class AppiumClient:
         title_input.send_keys(listing.title)
 
         description_body = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
-        description_body.click()
+        self.click(description_body)
 
         description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_editor')
-        for text in listing.description.split('\n'):
-            description_input.send_keys(text)
-            ActionChains(self.driver).key_down(Keys.SHIFT).key_down(Keys.ENTER).key_up(Keys.SHIFT).key_up(Keys.ENTER).perform()
+        self.send_keys(description_input, listing.description)
 
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        done_button.click()
+        self.click(done_button)
 
         self.sleep(1)
 
         media_items = self.locate(AppiumBy.ID, 'com.poshmark.app:id/media_items')
-        description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
-        action = ActionChains(self.driver).click_and_hold(on_element=description_input).move_by_offset(xoffset=0, yoffset=(-1083 - media_items.size['height'] - description_input.size['height']))
-        action.perform()
+        description_body = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_body')
+        self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
 
         listing_category = listing.category
         space_index = listing_category.find(' ')
@@ -353,48 +433,60 @@ class AppiumClient:
         secondary_category = listing_category[space_index + 1:]
 
         category = self.locate(AppiumBy.ID, 'com.poshmark.app:id/catalog_edit_text')
-        category.click()
+        self.click(category)
 
         primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
-        primary_category_button.click()
+        self.click(primary_category_button)
 
         self.sleep(1)
 
-        primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
-        action = ActionChains(self.driver).click_and_hold(on_element=primary_category_button).move_by_offset(xoffset=0, yoffset=-400)
-        action.perform()
+        secondary_category_clicked = False
+        secondary_category_click_attempts = 0
+        while not secondary_category_clicked and secondary_category_click_attempts < 3:
+            try:
+                secondary_category_click_attempts += 1
+                secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
+                self.click(secondary_category_button)
+                self.sleep(.5)
+                secondary_category_clicked = True
+            except TimeoutException:
+                self.swipe('up', 400)
+                self.sleep(.5)
 
-        secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
-        secondary_category_button.click()
-
-        self.sleep(1)
-
-        secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
-        action = ActionChains(self.driver).click_and_hold(on_element=secondary_category_button).move_by_offset(xoffset=0, yoffset=-400)
-        action.perform()
-
-        subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower())
-        subcategory_button.click()
-
-        self.sleep(1)
+        subcategory_clicked = False
+        subcategory_click_attempts = 0
+        while not subcategory_clicked and subcategory_click_attempts < 3:
+            try:
+                subcategory_click_attempts += 1
+                subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Wallets'.lower())
+                self.click(subcategory_button)
+                self.sleep(.5)
+                subcategory_clicked = True
+            except TimeoutException:
+                self.swipe('up', 400)
+                self.sleep(.5)
 
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        done_button.click()
+        self.click(done_button)
 
         size_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/size_edit_text')
-        size_button.click()
+        self.click(size_button)
 
-        custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
-        custom_size_button.click()
+        if 'belt' in (listing_category + ' ' + listing.subcategory).lower():
+            custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
+            self.click(custom_size_button)
 
-        add_option = self.locate(AppiumBy.ID, 'com.poshmark.app:id/container')
-        add_option.click()
+            add_option = self.locate(AppiumBy.ID, 'com.poshmark.app:id/container')
+            self.click(add_option)
 
-        custom_size_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/messageText')
-        custom_size_input.send_keys(listing.size)
+            custom_size_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/messageText')
+            custom_size_input.send_keys(listing.size)
 
-        next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+            next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
+            self.click(next_button)
+        else:
+            one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
+            self.click(one_size)
 
         self.sleep(1)
 
@@ -408,12 +500,12 @@ class AppiumClient:
         listing_price.send_keys(str(listing.listing_price))
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+        self.click(next_button)
 
         self.sleep(1)
 
         next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
-        next_button.click()
+        self.click(next_button)
 
         list_attempts = 0
         self.logger.info('Sell button clicked')
