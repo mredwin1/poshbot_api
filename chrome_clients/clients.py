@@ -239,14 +239,14 @@ class BaseClient:
         self.sleep(3)
 
         self.web_driver.save_screenshot('/log_images/bot_results1.png')
-        self.logger.info('First bot test complete', image='/log_images/bot_results1.png')
+        self.logger.info('First bot test complete')
 
         self.logger.info('Starting VPN test')
         self.web_driver.get('https://bot.incolumitas.com/proxy_detect.html')
         self.sleep(10)
 
         self.web_driver.save_screenshot('/log_images/bot_results_vpn.png')
-        self.logger.info('VPN test complete', image='/log_images/bot_results_vpn.png')
+        self.logger.info('VPN test complete')
 
         tests_failed = self.is_present(By.XPATH, "//span[@style='color: red;']")
         if tests_failed:
@@ -292,7 +292,7 @@ class BaseClient:
         self.sleep(60*3)
 
         self.web_driver.save_screenshot('/log_images/bot_results3.png')
-        self.logger.info('Third test complete', image='/log_images/bot_results3.png')
+        self.logger.info('Third test complete')
 
         self.logger.info('All tests complete')
 
@@ -322,7 +322,7 @@ class PoshMarkClient(BaseClient):
         image_path = f'/log_images/{self.campaign.title}/{filename}'
         self.logger.debug(f'{traceback.format_exc()}')
         self.web_driver.save_screenshot(image_path)
-        self.logger.error(error_message, image=image_path)
+        self.logger.error(error_message)
         is_logged_in = self.check_logged_in()
         if is_logged_in:
             is_inactive = self.check_inactive()
@@ -343,7 +343,7 @@ class PoshMarkClient(BaseClient):
         """This will check for errors on the current page and handle them as necessary"""
         image_name = f'/log_images/{self.campaign.title}/error_check.png'
         self.web_driver.save_screenshot(image_name)
-        self.logger.info('Checking for errors', image=image_name)
+        self.logger.info('Checking for errors')
         captcha_errors = [
             'Invalid captcha',
             'Please enter your login information and complete the captcha to continue.'
@@ -375,7 +375,7 @@ class PoshMarkClient(BaseClient):
 
                 elif error.text in captcha_errors:
                     self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/captcha.png')
-                    self.logger.warning('Captcha encountered', image=f'/log_images/{self.campaign.title}/captcha.png')
+                    self.logger.warning('Captcha encountered')
                     captcha_iframe = self.locate(By.TAG_NAME, 'iframe', location_type='visibility')
                     captcha_src = captcha_iframe.get_attribute('src')
                     google_key = re.findall(r'(?<=k=)(.*?)(?=&)', captcha_src)[0]
@@ -489,7 +489,7 @@ class PoshMarkClient(BaseClient):
             image_path = f'/log_images/{self.campaign.title}/check_inactive_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
-            self.logger.error('Error while checking if inactive', image=image_path)
+            self.logger.error('Error while checking if inactive')
 
             return None
 
@@ -545,24 +545,24 @@ class PoshMarkClient(BaseClient):
 
             if result:
                 self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/logged_in.png')
-                self.logger.info('User is logged in', image=f'/log_images/{self.campaign.title}/logged_in.png')
+                self.logger.info('User is logged in')
             else:
                 self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/not_logged_in.png')
-                self.logger.info('User is not logged in', image=f'/log_images/{self.campaign.title}/not_logged_in.png')
+                self.logger.info('User is not logged in')
 
             return result
         except Exception:
             image_path = f'/log_images/{self.campaign.title}/check_logged_in_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
-            self.logger.error('Error while checking if logged in', image=image_path)
+            self.logger.error('Error while checking if logged in')
 
             return None
 
     def finish_registration(self):
         try:
             self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/registration_finished.png')
-            self.logger.info(f'Successfully registered {self.posh_user.username}', image=f'/log_images/{self.campaign.title}/registration_finished.png')
+            self.logger.info(f'Successfully registered {self.posh_user.username}')
 
             # Next Section - Profile
             if self.posh_user.profile_picture:
@@ -661,7 +661,7 @@ class PoshMarkClient(BaseClient):
             # Submit the form
             image_name = f'/log_images/{self.campaign.title}/register_form_submitted.png'
             self.web_driver.save_screenshot(image_name)
-            self.logger.info('Form submitted', image=image_name)
+            self.logger.info('Form submitted')
             submit_button = self.locate(By.CLASS_NAME, 'signup__footer--submit')
             submit_button.click()
 
@@ -702,7 +702,7 @@ class PoshMarkClient(BaseClient):
             image_path = f'/log_images/{self.campaign.title}/register_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
-            self.logger.error('Error while registering', image=image_path)
+            self.logger.error('Error while registering')
 
             return False
 
@@ -757,7 +757,7 @@ class PoshMarkClient(BaseClient):
             image_path = f'/log_images/{self.campaign.title}/login_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
-            self.logger.error('Error while logging in', image=image_path)
+            self.logger.error('Error while logging in')
 
             return False
 
@@ -818,7 +818,7 @@ class PoshMarkClient(BaseClient):
                     self.logger.info(f'Reserved Listings: {reserved_listings_str}')
                     image_path = f'/log_images/{self.campaign.title}/no_listings.png'
                     self.web_driver.save_screenshot(image_path)
-                    self.logger.info('No shareable listings found', image=image_path)
+                    self.logger.info('No shareable listings found')
             else:
                 is_logged_in = self.check_logged_in()
                 if is_logged_in:
@@ -1095,7 +1095,7 @@ class PoshMarkClient(BaseClient):
 
                 while not sell_button and attempts < 10:
                     self.web_driver.save_screenshot(image_name)
-                    self.logger.warning('Not done listing item. Checking again...', image=image_name)
+                    self.logger.warning('Not done listing item. Checking again...')
                     sell_button = self.is_present(By.XPATH, '//*[@id="app"]/header/nav[2]/div[1]/ul[2]/li[2]/a')
                     attempts += 1
                     self.sleep(5)
@@ -1131,7 +1131,7 @@ class PoshMarkClient(BaseClient):
                     to_followers_button.click()
 
                     self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/item_shared.png')
-                    self.logger.info('Item Shared', image=f'/log_images/{self.campaign.title}/item_shared.png')
+                    self.logger.info('Item Shared')
 
                     return self.check_listing_timestamp(listing_title)
 
