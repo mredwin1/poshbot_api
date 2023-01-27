@@ -384,7 +384,7 @@ def bot_tests(campaign_id, logger_id, proxy_hostname=None, proxy_port=None):
 
 
 @shared_task
-def register(campaign_id, logger_id):
+def register(campaign_id):
     campaign = Campaign.objects.get(id=campaign_id)
     campaign_listings = Listing.objects.filter(campaign__id=campaign_id)
     logger = logging.getLogger(__name__)
