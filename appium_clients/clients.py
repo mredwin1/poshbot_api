@@ -421,7 +421,7 @@ class AppiumClient:
         self.click(description_body)
 
         description_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/description_editor')
-        self.send_keys(description_input, listing.description)
+        self.send_keys(description_input, str(listing.description))
 
         done_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
         self.click(done_button)
