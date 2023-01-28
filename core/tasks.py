@@ -142,9 +142,7 @@ def advanced_sharing_campaign(campaign_id, logger_id=None, proxy_hostname=None, 
 
                     if profile_updated:
                         campaign.posh_user.profile_updated = True
-                        campaign.save()
-
-                    campaign.refresh_from_db()
+                        campaign.posh_user.save()
 
                     if logged_in:
                         while all_listings is None and all_listings_retries < 3:
