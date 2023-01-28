@@ -168,7 +168,6 @@ class AppiumClient:
                 self.sleep(.5)
 
     def send_keys(self, element, text):
-        word = None
         char = None
         self.click(element)
         for index, line in enumerate(text.split('\n')):
@@ -178,8 +177,8 @@ class AppiumClient:
                 self.driver.press_keycode(66)
 
             words = line.split(' ')
-
             for inner_index, word in enumerate(words):
+                word = word.strip()
                 try:
                     for char in word:
                         action.send_keys(char).pause(random.uniform(.1, .2))
