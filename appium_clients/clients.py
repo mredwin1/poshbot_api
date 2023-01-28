@@ -210,6 +210,8 @@ class AppiumClient:
 
         self.sleep(1)
 
+        self.driver.back()
+
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
         self.click(img)
 
