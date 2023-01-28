@@ -177,6 +177,7 @@ class AppiumClient:
             for word in line.split(' '):
                 for char in word:
                     action.send_keys(char).pause(random.uniform(.1, .2))
+                action.send_keys(' ')
                 action.perform()
         self.driver.back()
 
