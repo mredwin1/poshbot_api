@@ -311,6 +311,7 @@ class AppiumClient:
                 self.campaign.posh_user.is_registered = True
                 self.campaign.posh_user.save()
 
+        self.sleep(1)
         next_button_clicks = 0
 
         while next_button_clicks < 3:
@@ -319,9 +320,10 @@ class AppiumClient:
                 self.click(next_button)
                 next_button_clicks += 1
                 self.logger.info('Next button clicked')
+                self.sleep(.75)
             except TimeoutException:
                 self.logger.warning('Next button could not be found')
-                self.sleep(2)
+                self.sleep(1)
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         campaign_folder = f'/{self.campaign.title}'
