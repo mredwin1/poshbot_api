@@ -530,8 +530,19 @@ class AppiumClient:
         while not sell_button_present and list_attempts < 10:
             sell_button_present = self.is_present(AppiumBy.ID, 'com.poshmark.app:id/sellTab')
             list_attempts += 1
-            self.logger.info('Item not listed yet')
-            self.sleep(10)
+
+            if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
+                error_title = self.locate(AppiumBy.ID, 'android:id/alertTitle')
+                if 'error' in error_title.text.lower():
+                    self.logger.info('Error occurred, clicking retry button')
+                    retry_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                    self.click(retry_button)
+                else:
+                    self.logger.info('Some alert popped up but it is not implemented')
+                    self.sleep(5)
+            else:
+                self.logger.info('Item not listed yet')
+                self.sleep(5)
         else:
             if list_attempts >= 10:
                 self.logger.error(f'Attempted to locate the sell button {list_attempts} times but could not find it.')
