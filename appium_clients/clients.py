@@ -172,15 +172,21 @@ class AppiumClient:
         self.click(element)
         for index, line in enumerate(text.split('\n')):
             action = ActionChains(self.driver)
+
             if index != 0:
-                action.send_keys(Keys.ENTER)
+                self.driver.press_keycode(66)
+
             words = line.split(' ')
+
             for inner_index, word in enumerate(words):
                 for char in word:
                     action.send_keys(char).pause(random.uniform(.1, .2))
-                if inner_index == len(words) - 1 and index != 0:
-                    action.send_keys(Keys.SPACE)
+
+                if len(words) > 1 and inner_index != len(words) - 1:
+                    action.send_keys(' ')
+
                 action.perform()
+
         self.driver.back()
 
     def download_and_send_file(self, key, download_folder):
