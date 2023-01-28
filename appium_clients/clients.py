@@ -179,8 +179,8 @@ class AppiumClient:
 
             words = line.split(' ')
 
-            try:
-                for inner_index, word in enumerate(words):
+            for inner_index, word in enumerate(words):
+                try:
                     for char in word:
                         action.send_keys(char).pause(random.uniform(.1, .2))
 
@@ -188,9 +188,9 @@ class AppiumClient:
                         action.send_keys(' ')
 
                     action.perform()
-            except InvalidArgumentException:
-                self.logger.info(word)
-                self.logger.info(char)
+                except InvalidArgumentException:
+                    self.logger.info(word)
+                    self.logger.info(char)
 
         self.driver.back()
 
