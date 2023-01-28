@@ -174,10 +174,12 @@ class AppiumClient:
             action = ActionChains(self.driver)
             if index != 0:
                 action.send_keys(Keys.ENTER)
-            for word in line.split(' '):
+            words = line.split(' ')
+            for inner_index, word in enumerate(words):
                 for char in word:
                     action.send_keys(char).pause(random.uniform(.1, .2))
-                action.send_keys(' ')
+                if inner_index == len(words) - 1:
+                    action.send_keys(' ')
                 action.perform()
         self.driver.back()
 
