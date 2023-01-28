@@ -6,7 +6,6 @@ import time
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
-from appium.webdriver.common.touch_action import TouchAction
 from django.conf import settings
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.keys import Keys
@@ -171,13 +170,14 @@ class AppiumClient:
 
     def send_keys(self, element, text):
         self.click(element)
-        action = ActionChains(self.driver)
         for index, line in enumerate(text.split('\n')):
+            action = ActionChains(self.driver)
             if index != 0:
                 action.send_keys(Keys.ENTER)
-            for char in line:
-                action.send_keys(char).pause(random.uniform(.1, .28))
-        action.perform()
+            for word in line.split(' '):
+                for char in word:
+                    action.send_keys(char).pause(random.uniform(.1, .2))
+                action.perform()
         self.driver.back()
 
     def download_and_send_file(self, key, download_folder):
