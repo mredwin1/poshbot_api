@@ -313,15 +313,15 @@ class AppiumClient:
                 self.campaign.posh_user.is_registered = True
                 self.campaign.posh_user.save()
 
-        self.sleep(1)
-        next_button_clicks = 0
+        while not self.is_present(AppiumBy.ID, 'com.poshmark.app:id/zip'):
+            self.sleep(2)
 
+        zip_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/zip')
+        self.send_keys(zip_input, str(random.choice(zipcodes)))
+
+        next_button_clicks = 0
         while next_button_clicks < 3:
             try:
-                if self.is_present(AppiumBy.ID, 'com.poshmark.app:id/zip'):
-                    zip_input = self.locate(AppiumBy.ID, 'com.poshmark.app:id/zip')
-                    self.send_keys(zip_input, str(random.choice(zipcodes)))
-
                 next_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/nextButton')
                 self.click(next_button)
                 next_button_clicks += 1
