@@ -179,7 +179,7 @@ class AppiumClient:
                 for char in word:
                     action.send_keys(char).pause(random.uniform(.1, .2))
                 if inner_index == len(words) - 1 and index != 0:
-                    action.send_keys(' ')
+                    action.send_keys(Keys.SPACE)
                 action.perform()
         self.driver.back()
 
