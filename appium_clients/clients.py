@@ -8,8 +8,7 @@ from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from django.conf import settings
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.webdriver.common.keys import Keys
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, InvalidArgumentException
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import List
@@ -169,6 +168,8 @@ class AppiumClient:
                 self.sleep(.5)
 
     def send_keys(self, element, text):
+        word = None
+        char = None
         self.click(element)
         for index, line in enumerate(text.split('\n')):
             action = ActionChains(self.driver)
@@ -178,14 +179,18 @@ class AppiumClient:
 
             words = line.split(' ')
 
-            for inner_index, word in enumerate(words):
-                for char in word:
-                    action.send_keys(char).pause(random.uniform(.1, .2))
+            try:
+                for inner_index, word in enumerate(words):
+                    for char in word:
+                        action.send_keys(char).pause(random.uniform(.1, .2))
 
-                if len(words) > 1 and inner_index != len(words) - 1:
-                    action.send_keys(' ')
+                    if len(words) > 1 and inner_index != len(words) - 1:
+                        action.send_keys(' ')
 
-                action.perform()
+                    action.perform()
+            except InvalidArgumentException:
+                self.logger.info(word)
+                self.logger.info(char)
 
         self.driver.back()
 
