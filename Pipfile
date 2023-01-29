@@ -28,6 +28,7 @@ pycurl = "*"
 mailslurp-client = "*"
 fake-useragent = "*"
 appium-python-client = "*"
+pure-python-adb = "*"
 
 [dev-packages]
 

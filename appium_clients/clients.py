@@ -15,7 +15,7 @@ from typing import List
 
 from core.models import Campaign, Listing, ListingImage
 
-appium_server_url = os.environ.get('APPIUM_SERVER_URL')
+appium_server_url = os.environ.get(f'https://{os.environ.get("LOCAL_SERVER_IP")}:5037')
 
 
 class AppiumClient:
@@ -38,7 +38,7 @@ class AppiumClient:
             appActivity='com.poshmark.ui.MainActivity',
             language='en',
             locale='US',
-
+            noReset=True
         )
 
     def __enter__(self):
@@ -559,6 +559,3 @@ class AppiumClient:
                 self.logger.info('Item listed successfully')
 
         return True
-
-    def reset_data(self):
-        self.driver.reset()

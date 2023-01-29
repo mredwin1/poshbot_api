@@ -8,6 +8,7 @@ import time
 import traceback
 
 from celery import shared_task
+from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException, SessionNotCreatedException
 
 from appium_clients.clients import AppiumClient
@@ -389,17 +390,24 @@ def register(campaign_id):
 
     campaign.status = Campaign.RUNNING
     campaign.save()
-    try:
-        with AppiumClient(campaign, logger) as client:
-            client.register()
-            for listing_not_listed in campaign_listings:
-                listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                client.list_item(listing_not_listed, listing_images)
-            client.reset_data()
-
-    except (TimeoutError, WebDriverException):
-        logger = logging.getLogger(__name__)
-        logger.error(f'{traceback.format_exc()}')
+    client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+    device = client.device('94TXS0P38')
+    device.shell('pm clear com.poshmark.app')
+    #
+    # try:
+    #     with AppiumClient(campaign, logger) as client:
+    #         client.register()
+    #         for listing_not_listed in campaign_listings:
+    #             listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+    #             client.list_item(listing_not_listed, listing_images)
+    #
+    #     client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+    #     device = client.device('94TXS0P38')
+    #     device.shell('pm clear com.poshmark.app')
+    #
+    # except (TimeoutError, WebDriverException):
+    #     logger = logging.getLogger(__name__)
+    #     logger.error(f'{traceback.format_exc()}')
 
     campaign.status = Campaign.STOPPED
     campaign.save()
