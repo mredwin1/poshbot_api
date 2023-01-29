@@ -81,7 +81,7 @@ services:
     image: ghcr.io/mredwin1/poshbot_api:latest
     container_name: celery_concurrency_poshbot_api
     restart: always
-    entrypoint: celery -A poshbot_api worker --autoscale=4,1 -Q campaign_concurrency -l INFO
+    entrypoint: celery -A poshbot_api worker --autoscale=3,1 -Q campaign_concurrency -l INFO
     env_file:
       - .env
     networks:
