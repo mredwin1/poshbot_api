@@ -15,31 +15,15 @@ from typing import List
 
 from core.models import Campaign, Listing, ListingImage
 
-appium_server_url = os.environ.get(f'https://{os.environ.get("LOCAL_SERVER_IP")}:5037')
+APPIUM_SERVER_URL = os.environ.get(f'https://{os.environ.get("LOCAL_SERVER_IP")}:5037')
 
 
 class AppiumClient:
-    def __init__(self, campaign: Campaign, logger, proxy_ip=None, proxy_port=None):
+    def __init__(self, logger, capabilities, proxy_ip=None, proxy_port=None):
         self.driver = None
-        self.campaign = campaign
         self.logger = logger
-        aws_session = boto3.Session()
-        s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-                                         aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-                                         region_name=settings.AWS_S3_REGION_NAME)
-        self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
-        self.capabilities = dict(
-            platformName='Android',
-            automationName='uiautomator2',
-            deviceName='Pixel 3',
-            udid='94TXS0P38',
-            appPackage='com.poshmark.app',
-            appActivity='com.poshmark.ui.MainActivity',
-            language='en',
-            locale='US',
-            noReset=True
-        )
+        self.capabilities = capabilities
 
     def __enter__(self):
         self.open()
@@ -51,7 +35,7 @@ class AppiumClient:
 
     def open(self):
         """Used to open the appium web driver session"""
-        self.driver = webdriver.Remote(appium_server_url, self.capabilities)
+        self.driver = webdriver.Remote(APPIUM_SERVER_URL, self.capabilities)
 
     def close(self):
         """Closes the appium driver session"""
@@ -198,6 +182,33 @@ class AppiumClient:
         download_location = f'/{download_folder}/{filename}'
         self.bucket.download_file(key, download_location)
         self.driver.push_file(destination_path=f'/sdcard/Pictures/{filename}', source_path=download_location)
+
+
+class PoshMarkClient(AppiumClient):
+    def __init__(self, campaign: Campaign, logger, proxy_ip=None, proxy_port=None):
+        self.driver = None
+        self.campaign = campaign
+        self.logger = logger
+        aws_session = boto3.Session()
+        s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+                                         aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+                                         region_name=settings.AWS_S3_REGION_NAME)
+        self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
+
+        capabilities = dict(
+            platformName='Android',
+            automationName='uiautomator2',
+            deviceName='Pixel 3',
+            udid='94TXS0P38',
+            appPackage='com.poshmark.app',
+            appActivity='com.poshmark.ui.MainActivity',
+            language='en',
+            locale='US',
+            noReset=True
+        )
+
+        super(AppiumClient, self).__init__(capabilities, logger, proxy_ip, proxy_port)
+
 
     def alert_check(self):
         self.logger.info('Checking for posh party alert')
