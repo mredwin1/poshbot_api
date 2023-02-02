@@ -647,9 +647,10 @@ class PoshMarkClient(AppiumClient):
         while not subcategory_clicked and subcategory_click_attempts < 3:
             try:
                 subcategory_click_attempts += 1
-                subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Wallets'.lower())
+                subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower())
                 self.click(subcategory_button)
-                self.sleep(.5)
+                self.logger.info('Clicked sub category')
+                self.sleep(1)
                 subcategory_clicked = True
             except TimeoutException:
                 self.swipe('up', 400)
@@ -657,6 +658,8 @@ class PoshMarkClient(AppiumClient):
 
         done_button = self.locate(AppiumBy.ID, 'nextButton')
         self.click(done_button)
+
+        self.logger.info('Clicked done button')
 
         size_button = self.locate(AppiumBy.ID, 'size_edit_text')
         self.click(size_button)
