@@ -622,6 +622,8 @@ class PoshMarkClient(AppiumClient):
         category = self.locate(AppiumBy.ID, 'catalog_edit_text')
         self.click(category)
 
+        self.sleep(1)
+
         primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
         self.click(primary_category_button)
 

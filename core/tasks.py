@@ -391,6 +391,9 @@ def register(campaign_id):
     campaign.status = Campaign.RUNNING
     campaign.save()
 
+    response = requests.get('https://portal.mobilehop.com/proxies/7334080c0e9b4dd086c2fd037b3a6df4/reset')
+    logger.info(response.text)
+
     try:
         with AppClonerClient(logger, campaign.posh_user.username) as client:
             client.add_clone()
