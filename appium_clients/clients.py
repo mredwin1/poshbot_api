@@ -16,7 +16,7 @@ from typing import List
 
 from core.models import Campaign, Listing, ListingImage
 
-APPIUM_SERVER_URL = f'https://{os.environ.get("LOCAL_SERVER_IP")}:4723'
+APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
 
 class AppiumClient:
