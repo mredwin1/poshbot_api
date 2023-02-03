@@ -656,10 +656,13 @@ class PoshMarkClient(AppiumClient):
                 self.swipe('up', 400)
                 self.sleep(.5)
 
-        done_button = self.locate(AppiumBy.ID, 'nextButton')
-        self.click(done_button)
-
-        self.logger.info('Clicked done button')
+        finished = False
+        while self.is_present(AppiumBy.ID, 'nextButton') and not finished:
+            done_button = self.locate(AppiumBy.ID, 'nextButton')
+            if done_button.text == 'Done':
+                self.logger.info('Clicked done button')
+                self.click(done_button)
+                self.sleep(.5)
 
         size_button = self.locate(AppiumBy.ID, 'size_edit_text')
         self.click(size_button)
