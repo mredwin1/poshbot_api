@@ -480,8 +480,21 @@ class PoshMarkClient(AppiumClient):
         zip_input = self.locate(AppiumBy.ID, 'zip_code')
         zip_input.send_keys(str(random.choice(self.zipcodes)))
 
-        continue_button = self.locate(AppiumBy.ID, 'continueButton')
-        self.click(continue_button)
+        continued = False
+        while not continued:
+            continue_button = self.locate(AppiumBy.ID, 'continueButton')
+            self.click(continue_button)
+
+            while self.is_present(AppiumBy.ID, 'progressBar'):
+                self.logger.info('Waiting to continue...')
+                self.sleep(5)
+
+            if self.is_present(AppiumBy.ID, 'android:id/message'):
+                ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                self.click(ok_button)
+
+            else:
+                continued = True
 
         brands = self.locate_all(AppiumBy.ID, 'brandLogo')[:12]
         for brand in random.choices(brands, k=random.randint(2, 6)):
