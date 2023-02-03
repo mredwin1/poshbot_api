@@ -399,7 +399,6 @@ def register(campaign_id):
             client.add_clone()
             client.launch_clone()
             clone_app_package = client.get_current_app_package()
-            client.driver.press_keycode(3)
 
         with MobilePoshMarkClient(campaign, logger, clone_app_package) as client:
             client.register()
@@ -407,6 +406,8 @@ def register(campaign_id):
             for listing_not_listed in campaign_listings:
                 listing_images = ListingImage.objects.filter(listing=listing_not_listed)
                 client.list_item(listing_not_listed, listing_images)
+
+            client.driver.press_keycode(3)
     except (TimeoutError, WebDriverException):
         logger = logging.getLogger(__name__)
         logger.error(f'{traceback.format_exc()}')
