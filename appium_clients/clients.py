@@ -365,23 +365,7 @@ class PoshMarkClient(AppiumClient):
                     self.campaign.posh_user.is_registered = True
                     self.campaign.posh_user.save()
 
-            while not self.is_present(AppiumBy.ID, 'zip'):
-                self.sleep(2)
-
-            zip_input = self.locate(AppiumBy.ID, 'zip')
-            self.send_keys(zip_input, str(random.choice(self.zipcodes)))
-
-            next_button_clicks = 0
-            while next_button_clicks < 3:
-                try:
-                    next_button = self.locate(AppiumBy.ID, 'nextButton')
-                    self.click(next_button)
-                    next_button_clicks += 1
-                    self.logger.info('Next button clicked')
-                    self.sleep(.75)
-                except TimeoutException:
-                    self.logger.warning('Next button could not be found')
-                    self.sleep(1)
+            self.finish_registration()
         else:
             self.register_alt()
     
@@ -462,25 +446,46 @@ class PoshMarkClient(AppiumClient):
 
                 self.alert_check()
 
-        while not self.is_present(AppiumBy.ID, 'clothingSize'):
+        self.finish_registration()
+
+    def finish_registration(self):
+        self.logger('Finishing registration')
+        while not self.is_present(AppiumBy.ID, 'nextButton') or not self.is_present(AppiumBy.ID, 'continueButton'):
+            self.logger.info('Waiting to continue')
             self.sleep(2)
 
-        dress_size = self.locate(AppiumBy.ID, 'clothingSize')
+        if self.is_present(AppiumBy.ID, 'continueButton'):
+            dress_size_id = 'clothingSize'
+            shoe_size_id = 'shoeSize'
+            zipcode_id = 'zip_code'
+            continue_button_id = 'continueButton'
+            done_button_id = 'nextButton'
+            brand_logos_id = 'brandLogo'
+        else:
+            dress_size_id = 'sizeSpinnerText_II_InputLayout'
+            shoe_size_id = 'sizeSpinnerText_I'
+            zipcode_id = 'zip'
+            continue_button_id = 'nextButton'
+            done_button_id = 'nextButton'
+            brand_logos_id = 'suggestedBrandLogo3'
+
+        dress_size = self.locate(AppiumBy.ID, dress_size_id)
         self.click(dress_size)
 
         size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['00', '0', '2', '4', '6', '8', '10']))
         self.click(size)
 
-        shoe_size = self.locate(AppiumBy.ID, 'shoeSize')
+        shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
         self.click(shoe_size)
 
-        size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5']))
+        size = self.locate(AppiumBy.ACCESSIBILITY_ID,
+                           random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5']))
         self.click(size)
 
-        zip_input = self.locate(AppiumBy.ID, 'zip_code')
+        zip_input = self.locate(AppiumBy.ID, zipcode_id)
         zip_input.send_keys(str(random.choice(self.zipcodes)))
 
-        continue_button = self.locate(AppiumBy.ID, 'continueButton')
+        continue_button = self.locate(AppiumBy.ID, continue_button_id)
         self.click(continue_button)
 
         # continued = False
@@ -498,18 +503,18 @@ class PoshMarkClient(AppiumClient):
         #     else:
         #         continued = True
 
-        brands = self.locate_all(AppiumBy.ID, 'brandLogo')[:12]
+        brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
         for brand in random.choices(brands, k=random.randint(2, 6)):
             self.click(brand)
 
-        continue_button = self.locate(AppiumBy.ID, 'continueButton')
+        continue_button = self.locate(AppiumBy.ID, continue_button_id)
         self.click(continue_button)
 
         self.sleep(.5)
 
-        done_button = self.locate(AppiumBy.ID, 'nextButton')
+        done_button = self.locate(AppiumBy.ID, done_button_id)
         done_button.click()
-    
+
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         campaign_folder = f'/{self.campaign.title}'
         listing_folder = f'/{self.campaign.title}/{listing.title}'

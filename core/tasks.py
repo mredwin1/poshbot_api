@@ -418,6 +418,5 @@ def register(campaign_id):
 
     device.shell('am force-stop com.applisto.appcloner')
 
-
     campaign.status = Campaign.STOPPED
     campaign.save()
