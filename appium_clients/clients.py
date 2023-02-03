@@ -662,7 +662,7 @@ class PoshMarkClient(AppiumClient):
         self.logger.info('Clicked done button')
 
         pressed_back = False
-        if self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
+        if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
             for _ in range(3):
                 self.driver.back()
                 self.sleep(.5)
@@ -697,7 +697,7 @@ class PoshMarkClient(AppiumClient):
         self.sleep(.5)
 
         pressed_back = False
-        if self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
+        if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
             for _ in range(3):
                 self.driver.back()
                 self.sleep(.5)
