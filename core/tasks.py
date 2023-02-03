@@ -412,9 +412,12 @@ def register(campaign_id):
 
     client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
     device = client.device(serial='94TXS0P38')
+    if clone_app_package:
+        device.shell(f'am force-stop {clone_app_package}')
+        time.sleep(2)
+
     device.shell('am force-stop com.applisto.appcloner')
-    time.sleep(2)
-    device.shell(f'am force-stop {clone_app_package}')
+
 
     campaign.status = Campaign.STOPPED
     campaign.save()
