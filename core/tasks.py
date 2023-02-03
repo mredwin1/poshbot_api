@@ -407,8 +407,10 @@ def register(campaign_id):
                 listing_images = ListingImage.objects.filter(listing=listing_not_listed)
                 client.list_item(listing_not_listed, listing_images)
 
-            client.sleep(2)
-            client.driver.close_app()
+        client = AdbClient(host='192.168.1.102', port=5037)
+        device = client.device(serial='94TXS0P38')
+        device.shell('am force-stop com.applisto.appcloner')
+        device.shell(f'am force-stop {clone_app_package}')
 
     except (TimeoutError, WebDriverException):
         logger = logging.getLogger(__name__)
