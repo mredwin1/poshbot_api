@@ -656,13 +656,21 @@ class PoshMarkClient(AppiumClient):
                 self.swipe('up', 400)
                 self.sleep(.5)
 
-        finished = False
-        while self.is_present(AppiumBy.ID, 'nextButton') and not finished:
-            done_button = self.locate(AppiumBy.ID, 'nextButton')
-            if done_button.text == 'Done':
-                self.logger.info('Clicked done button')
-                self.click(done_button)
-                self.sleep(.5)
+        done_button = self.locate(AppiumBy.ID, 'nextButton')
+        self.click(done_button)
+
+        self.logger.info('Clicked done button')
+
+        pressed_back = False
+        while self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
+            self.driver.back()
+            self.sleep(.5)
+            pressed_back = True
+
+        if pressed_back:
+            media_items = self.locate(AppiumBy.ID, 'media_items')
+            description_body = self.locate(AppiumBy.ID, 'description_body')
+            self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
 
         size_button = self.locate(AppiumBy.ID, 'size_edit_text')
         self.click(size_button)
@@ -683,7 +691,18 @@ class PoshMarkClient(AppiumClient):
             one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
             self.click(one_size)
 
-        self.sleep(1)
+        self.sleep(.5)
+
+        pressed_back = False
+        while self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
+            self.driver.back()
+            self.sleep(.5)
+            pressed_back = True
+
+        if pressed_back:
+            media_items = self.locate(AppiumBy.ID, 'media_items')
+            description_body = self.locate(AppiumBy.ID, 'description_body')
+            self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
 
         brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
         brand_input.send_keys(listing.brand)
