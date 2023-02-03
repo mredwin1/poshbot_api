@@ -469,6 +469,8 @@ class PoshMarkClient(AppiumClient):
             done_button_id = 'nextButton'
             brand_logos_id = 'suggestedBrandLogo3'
 
+        self.logger.info('Putting in sizes and zip')
+
         dress_size = self.locate(AppiumBy.ID, dress_size_id)
         self.click(dress_size)
 
@@ -503,6 +505,8 @@ class PoshMarkClient(AppiumClient):
         #     else:
         #         continued = True
 
+        self.logger.info('Selecting brands')
+
         brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
         for brand in random.choices(brands, k=random.randint(2, 6)):
             self.click(brand)
@@ -514,6 +518,8 @@ class PoshMarkClient(AppiumClient):
 
         done_button = self.locate(AppiumBy.ID, done_button_id)
         done_button.click()
+
+        self.logger.info('Registration complete')
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         campaign_folder = f'/{self.campaign.title}'
