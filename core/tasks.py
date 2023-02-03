@@ -407,7 +407,7 @@ def register(campaign_id):
                 listing_images = ListingImage.objects.filter(listing=listing_not_listed)
                 client.list_item(listing_not_listed, listing_images)
 
-        client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+        client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5038)
         device = client.device(serial='94TXS0P38')
         device.shell('am force-stop com.applisto.appcloner')
         device.shell(f'am force-stop {clone_app_package}')

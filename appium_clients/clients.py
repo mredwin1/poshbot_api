@@ -207,7 +207,7 @@ class AppiumClient:
             allow_location_button.click()
 
     def get_current_app_package(self):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5038)
         device = client.device(self.capabilities.get('udid'))
 
         windows = device.shell('dumpsys window windows')
