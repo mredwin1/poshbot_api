@@ -346,10 +346,10 @@ class PoshMarkClient(AppiumClient):
                     self.campaign.posh_user.save()
 
                 progress_bar_checks = 0
-                while self.is_present(AppiumBy.ID, 'progressBar') and progress_bar_checks < 40:
+                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView') and progress_bar_checks < 40:
                     self.logger.info('Registration still in progress')
                     progress_bar_checks += 1
-                    self.sleep(5)
+                    self.sleep(3)
 
                 response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
                 if response.status_code != requests.codes.ok:
@@ -425,10 +425,10 @@ class PoshMarkClient(AppiumClient):
                 self.campaign.posh_user.save()
 
             progress_bar_checks = 0
-            while self.is_present(AppiumBy.ID, 'progressBar') and progress_bar_checks < 40:
+            while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView') and progress_bar_checks < 5:
                 self.logger.info('Registration still in progress')
                 progress_bar_checks += 1
-                self.sleep(5)
+                self.sleep(3)
 
             response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
             if response.status_code != requests.codes.ok:
