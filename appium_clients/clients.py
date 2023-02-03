@@ -662,10 +662,13 @@ class PoshMarkClient(AppiumClient):
         self.logger.info('Clicked done button')
 
         pressed_back = False
-        while self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
-            self.driver.back()
-            self.sleep(.5)
+        if self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
+            for _ in range(3):
+                self.driver.back()
+                self.sleep(.5)
             pressed_back = True
+
+        self.sleep(.5)
 
         if pressed_back:
             media_items = self.locate(AppiumBy.ID, 'media_items')
@@ -694,10 +697,13 @@ class PoshMarkClient(AppiumClient):
         self.sleep(.5)
 
         pressed_back = False
-        while self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
-            self.driver.back()
-            self.sleep(.5)
+        if self.locate(AppiumBy.ID, 'actionbarTitleLayout').text == 'Select Category':
+            for _ in range(3):
+                self.driver.back()
+                self.sleep(.5)
             pressed_back = True
+
+        self.sleep(.5)
 
         if pressed_back:
             media_items = self.locate(AppiumBy.ID, 'media_items')
