@@ -187,8 +187,8 @@ class Campaign(models.Model):
         (IDLE, 'IDLE'),
         (STOPPED, 'STOPPED'),
         (STARTING, 'STARTING'),
-        (STOPPING, 'STARTING'),
-        (PAUSED, 'STARTING'),
+        (STOPPING, 'STOPPING'),
+        (PAUSED, 'PAUSED'),
     ]
 
     ADVANCED_SHARING = '0'
