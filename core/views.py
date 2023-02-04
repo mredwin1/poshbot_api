@@ -113,7 +113,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             campaign.status = Campaign.IDLE
             campaign.save()
 
-            campaign_task = CampaignTask()
+            campaign_task = CampaignTask
 
             campaign_task.delay(pk)
 
