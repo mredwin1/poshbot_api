@@ -145,7 +145,7 @@ class CampaignTask(Task):
                 self.update_status(Campaign.STOPPED)
                 return False
 
-    def run(self, campaign_id, logger_id=None):
+    def run(self, campaign_id, logger_id=None, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
         success = False
         campaign_delay = None
