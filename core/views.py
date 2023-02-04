@@ -122,8 +122,13 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
     @action(detail=True, methods=['POST'])
     def stop(self, request, pk):
         campaign = self.get_object()
-        campaign.status = Campaign.STOPPING
-        campaign.save()
+        if campaign.status == Campaign.IDLE:
+            campaign.status = Campaign.STOPPED
+            campaign.save()
+        elif campaign.status in (Campaign.STARTING, Campaign.RUNNING):
+            campaign.status = Campaign.STOPPING
+            campaign.save()
+
         serializer = self.get_serializer(campaign)
 
         return Response(serializer.data)
