@@ -110,7 +110,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         serializer = self.get_serializer(campaign)
 
         if campaign.posh_user:
-            campaign.status = Campaign.IDLE
+            campaign.status = Campaign.STARTING
             campaign.save()
 
             campaign_task = CampaignTask

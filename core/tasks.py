@@ -5,7 +5,7 @@ import random
 import requests
 import time
 
-from celery import Task
+from celery import shared_task, Task
 from selenium.common.exceptions import WebDriverException
 
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
@@ -54,10 +54,12 @@ class CampaignTask(Task):
 
                 client.driver.press_keycode(3)
 
+            self.update_status(Campaign.PAUSED)
             return True
 
         except (TimeoutError, WebDriverException) as e:
             self.logger.error(e, exc_info=True)
+            self.update_status(Campaign.STOPPED)
 
             return False
 
@@ -191,13 +193,31 @@ class CampaignTask(Task):
             hours, remainder = divmod(campaign_delay, 3600)
             minutes, seconds = divmod(remainder, 60)
 
-            self.update_status(Campaign.IDLE)
-            self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
-            self.campaign.save()
-            self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
+            if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+                self.update_status(Campaign.IDLE)
+                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
+                self.campaign.save()
+                self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
 
 
 CampaignTask = app.register_task(CampaignTask())
+
+
+@shared_task
+def restart_campaigns():
+    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.RUNNING])
+    now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+
+    for campaign in campaigns:
+        if campaign.status == Campaign.STOPPING:
+            campaign.status = Campaign.STOPPED
+            campaign.save()
+        else:
+            if campaign.next_runtime <= now and campaign.status == Campaign.IDLE:
+                CampaignTask.delay(campaign.id)
+            elif (campaign.next_runtime + datetime.timedelta(minutes=10)) <= now and campaign.status == Campaign.RUNNING:
+                campaign.status = Campaign.STOPPED
+                campaign.save()
 
 # @shared_task
 # def init_campaign(campaign_id):
