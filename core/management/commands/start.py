@@ -45,20 +45,6 @@ class Command(BaseCommand):
         logging.info('Running collectstatic...')
         call_command("collectstatic", interactive=False, clear=True)
 
-        logging.info('Setting all campaigns to IDLE status')
-        campaigns = Campaign.objects.exclude(status=Campaign.STOPPED)
-        if campaigns:
-            campaigns.update(status=Campaign.STOPPED)
-
-        logging.info('Removing all Proxy Connections')
-        proxy_connections = ProxyConnection.objects.all()
-        if proxy_connections:
-            proxy_connections.delete()
-
-        logging.info('Resetting all proxy IPs')
-        reset_responses = ProxyConnection.reset_all()
-        logging.info('\n'.join(reset_responses))
-
         logging.info('Starting server...')
         os.system("gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 8 -w 4")
         exit()
