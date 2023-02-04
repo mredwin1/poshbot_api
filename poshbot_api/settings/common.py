@@ -9,8 +9,9 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-from datetime import timedelta
 import os
+
+from datetime import timedelta
 from pathlib import Path
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -178,4 +179,11 @@ CELERY_TASK_ROUTES = {
     'core.tasks.init_campaign': {'queue': 'campaign_no_concurrency.fifo', 'routing_key': 'no_concurrency'},
     'core.tasks.CampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
     'core.tasks.restart_campaigns': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+}
+
+CELERY_BEAT_SCHEDULE = {
+    'restart_campaigns': {
+        'task': 'core.tasks.restart_campaigns',
+        'schedule': timedelta(seconds=30)
+    },
 }
