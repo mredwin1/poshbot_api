@@ -173,7 +173,7 @@ class CampaignAdmin(admin.ModelAdmin):
             'fields': (
                 ('auto_run', 'generate_users'),
                 ('user',),
-                ('status',),
+                ('status', 'next_runtime'),
                 ('posh_user',),
                 ('mode',),
                 ('title', 'delay', 'lowest_price'),
