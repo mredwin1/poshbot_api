@@ -11,7 +11,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup
-from .tasks import init_campaign, basic_sharing_campaign, advanced_sharing_campaign, register
+from .tasks import CampaignTask
 from . import serializers
 
 
@@ -109,30 +109,23 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         campaign = self.get_object()
         serializer = self.get_serializer(campaign)
 
-        if campaign.mode == Campaign.ADVANCED_SHARING and campaign.posh_user and not campaign.posh_user.is_registered:
-            advanced_sharing = init_campaign
-        else:
-            advanced_sharing = advanced_sharing_campaign
-
-        campaign_mapping = {
-            Campaign.BASIC_SHARING: basic_sharing_campaign,
-            Campaign.ADVANCED_SHARING: advanced_sharing,
-            Campaign.BOT_TESTS: init_campaign,
-            Campaign.REGISTER: register
-        }
-
         if campaign.posh_user:
+            campaign_task = CampaignTask()
+
+            if campaign.mode == Campaign.ADVANCED_SHARING and not campaign.posh_user.is_registered:
+                campaign_task = ''
+
             campaign.status = Campaign.IDLE
             campaign.save()
 
-            campaign_mapping[campaign.mode].delay(pk)
+            campaign_task.delay(pk)
 
         return Response(serializer.data)
 
     @action(detail=True, methods=['POST'])
     def stop(self, request, pk):
         campaign = self.get_object()
-        campaign.status = Campaign.STOPPED
+        campaign.status = Campaign.STOPPING
         campaign.save()
         serializer = self.get_serializer(campaign)
 

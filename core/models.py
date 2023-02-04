@@ -175,10 +175,12 @@ class PoshUser(models.Model):
 
 
 class Campaign(models.Model):
-    RUNNING = '1'
-    IDLE = '2'
-    STOPPED = '3'
-    STARTING = '4'
+    RUNNING = 'RUNNING'
+    IDLE = 'IDLE'
+    STOPPED = 'STOPPED'
+    STARTING = 'STARTING'
+    STOPPING = 'STOPPING'
+    PAUSED = 'PAUSED'
 
     STATUS_CHOICES = [
         (RUNNING, 'RUNNING'),
@@ -196,7 +198,6 @@ class Campaign(models.Model):
         (ADVANCED_SHARING, 'Advanced Sharing'),
         (BASIC_SHARING, 'Basic Sharing'),
         (BOT_TESTS, 'Bot Tests'),
-        (REGISTER, 'Register'),
     ]
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
@@ -212,6 +213,8 @@ class Campaign(models.Model):
 
     auto_run = models.BooleanField(default=True)
     generate_users = models.BooleanField(default=True)
+
+    next_runtime = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.title
