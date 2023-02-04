@@ -141,7 +141,6 @@ class ListingAdmin(admin.ModelAdmin):
 @admin.register(models.Campaign)
 class CampaignAdmin(admin.ModelAdmin):
     autocomplete_fields = ['posh_user']
-    readonly_fields = ['status']
     list_display = ['title', 'status', 'associated_user', 'associated_posh_user', 'listings_count']
     search_fields = ['title__istartswith', 'associated_posh_user__istartswith']
     list_filter = ['status', 'user']
