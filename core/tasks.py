@@ -29,7 +29,7 @@ class CampaignTask(Task):
         self.campaign.status = status
         self.campaign.save()
 
-    def disable_poshuser(self):
+    def disable_posh_ser(self):
         self.campaign.posh_user.is_active = False
         self.campaign.posh_user.save()
 
@@ -153,7 +153,7 @@ class CampaignTask(Task):
         self.init_logger(logger_id)
 
         if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED) and self.campaign.posh_user:
-            self.logger.info(f'Campaign, {self.campaign.title}, started for {self.campaign.poshuser.username}')
+            self.logger.info(f'Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}')
 
             self.update_status(Campaign.RUNNING)
 
@@ -161,7 +161,7 @@ class CampaignTask(Task):
             if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING:
                 success = self.register(list_items=True)
             elif not self.campaign.posh_user.is_registered and self.campaign.mode != Campaign.ADVANCED_SHARING:
-                self.disable_poshuser()
+                self.disable_posh_user()
                 self.update_status(Campaign.STOPPING)
 
                 success = False
