@@ -68,6 +68,9 @@ class CampaignTask(Task):
         listing_shared_retries = 0
         profile_updated = self.campaign.posh_user.profile_updated
         campaign_delay = None
+        all_listings = None
+        listing_shared = None
+        shared = None
         with PoshMarkClient(self.campaign, self.logger) as client:
             client.web_driver.get('https://poshmark.com')
             client.load_cookies()
