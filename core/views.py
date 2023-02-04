@@ -110,15 +110,10 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         serializer = self.get_serializer(campaign)
 
         if campaign.posh_user:
-            campaign_task = CampaignTask()
-
-            if campaign.mode == Campaign.ADVANCED_SHARING and not campaign.posh_user.is_registered:
-                campaign_task = ''
-
             campaign.status = Campaign.IDLE
             campaign.save()
 
-            campaign_task.delay(pk)
+            CampaignTask().delay(pk, ignore_result=True)
 
         return Response(serializer.data)
 
