@@ -186,4 +186,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'core.tasks.restart_campaigns',
         'schedule': timedelta(seconds=30)
     },
+    'check_posh_users': {
+        'task': 'core.tasks.check_posh_users',
+        'schedule': timedelta(minutes=10)
+    },
 }

@@ -9,9 +9,9 @@ from celery import shared_task, Task
 from selenium.common.exceptions import WebDriverException
 
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
-from chrome_clients.clients import PoshMarkClient
+from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage
+from .models import Campaign, Listing, ListingImage, PoshUser
 
 
 class CampaignTask(Task):
@@ -220,6 +220,31 @@ def restart_campaigns():
             elif (campaign.next_runtime + datetime.timedelta(minutes=10)) <= now and campaign.status == Campaign.RUNNING:
                 campaign.status = Campaign.STOPPED
                 campaign.save()
+
+
+@shared_task
+def check_posh_users():
+    logger = logging.getLogger(__name__)
+    posh_users = PoshUser.objects.filter(is_active=True, is_registered=True)
+    with PublicPoshMarkClient(logger) as client:
+        for posh_user in posh_users:
+            try:
+                campaign = Campaign.objects.get(posh_user=posh_user)
+            except Campaign.DoesNotExist:
+                campaign = None
+
+            if not campaign or campaign.status not in (Campaign.RUNNING, Campaign.IDLE):
+                all_listings = client.get_all_listings(posh_user.username)
+
+                if sum([len(y) for y in all_listings.values()]) == 0:
+                    is_active = client.check_inactive(posh_user.username)
+
+                    if not is_active:
+                        posh_user.is_active = False
+                        posh_user.save()
+
+                if all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
+                    CampaignTask.delay(campaign.id)
 
 # @shared_task
 # def init_campaign(campaign_id):

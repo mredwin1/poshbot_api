@@ -1590,3 +1590,74 @@ class PoshMarkClient(BaseClient):
         ip = self.locate(By.XPATH, '/html/body/table[2]/tbody/tr/td[3]/p[2]/font/b').text
 
         self.logger.info(f'IP: {ip}')
+
+
+class PublicPoshMarkClient(BaseClient):
+    def __init__(self, logger):
+        super(PublicPoshMarkClient, self).__init__(logger)
+
+    def get_all_listings(self, username):
+        """Goes to a user's closet and returns a list of all the listings"""
+        shareable_listings = []
+        sold_listings = []
+        reserved_listings = []
+
+        self.logger.info(f'Getting all listings for {username}')
+
+        self.web_driver.get(f'http://poshmark.com/closet/{username}')
+
+        self.sleep(1)
+
+        listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
+        for listed_item in listed_items:
+            title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
+            try:
+                icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
+            except NoSuchElementException:
+                icon = None
+
+            if not icon:
+                shareable_listings.append(title.text)
+            elif icon.text == 'SOLD':
+                sold_listings.append(title.text)
+            elif icon.text == 'RESERVED':
+                reserved_listings.append(title.text)
+
+        sold_listings_str = '\n'.join(sold_listings) if sold_listings else 'None'
+        reserved_listings_str = '\n'.join(reserved_listings) if reserved_listings else 'None'
+        shareable_listings = '\n'.join(shareable_listings) if shareable_listings else 'None'
+
+        self.logger.info(f'Sold Listings: {sold_listings_str}')
+        self.logger.info(f'Reserved Listings: {reserved_listings_str}')
+        self.logger.info(f'Shareable Listings: {shareable_listings}')
+
+        listings = {
+            'shareable_listings': shareable_listings,
+            'sold_listings': sold_listings,
+            'reserved_listings': reserved_listings
+        }
+
+        return listings
+
+    def check_inactive(self, username):
+        """Will check if the current user is inactive"""
+        self.logger.info(f'Checking is the following user is inactive: {username}')
+
+        self.web_driver.get(f'https://poshmark.com/closet/{username}')
+
+        self.sleep(1)
+
+        listing_count_element = self.locate(
+            By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div/nav/ul/li[1]/a'
+        )
+        listing_count = listing_count_element.text
+        index = listing_count.find('\n')
+        total_listings = int(listing_count[:index])
+
+        if total_listings > 0 and not self.is_present(By.CLASS_NAME, 'card--small'):
+            self.logger.warning('This user does not seem to be active, setting inactive')
+
+            return True
+        else:
+            self.logger.info('This user is still active')
+            return False
