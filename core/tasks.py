@@ -214,6 +214,8 @@ def restart_campaigns():
             campaign.save()
         else:
             if campaign.next_runtime <= now and campaign.status == Campaign.IDLE:
+                campaign.status = Campaign.STARTING
+                campaign.save()
                 CampaignTask.delay(campaign.id)
             elif (campaign.next_runtime + datetime.timedelta(minutes=10)) <= now and campaign.status == Campaign.RUNNING:
                 campaign.status = Campaign.STOPPED
