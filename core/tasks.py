@@ -225,6 +225,7 @@ def restart_campaigns():
 @shared_task
 def check_posh_users():
     logger = logging.getLogger(__name__)
+    logger.info('Checking posh users')
     posh_users = PoshUser.objects.filter(is_active=True, is_registered=True)
     with PublicPoshMarkClient(logger) as client:
         for posh_user in posh_users:
@@ -244,6 +245,7 @@ def check_posh_users():
                         posh_user.save()
 
                 if all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
+                    logger.info('User has shareable listings and it\'s campaign is paused. Resuming...')
                     CampaignTask.delay(campaign.id)
 
 # @shared_task
