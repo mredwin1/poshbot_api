@@ -1608,28 +1608,29 @@ class PublicPoshMarkClient(BaseClient):
 
         self.sleep(3)
 
-        listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-        for listed_item in listed_items:
-            title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
-            try:
-                icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
-            except NoSuchElementException:
-                icon = None
+        if self.is_present(By.CLASS_NAME, 'card--small'):
+            listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
+            for listed_item in listed_items:
+                title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
+                try:
+                    icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
+                except NoSuchElementException:
+                    icon = None
 
-            if not icon:
-                shareable_listings.append(title.text)
-            elif icon.text == 'SOLD':
-                sold_listings.append(title.text)
-            elif icon.text == 'RESERVED':
-                reserved_listings.append(title.text)
+                if not icon:
+                    shareable_listings.append(title.text)
+                elif icon.text == 'SOLD':
+                    sold_listings.append(title.text)
+                elif icon.text == 'RESERVED':
+                    reserved_listings.append(title.text)
 
-        sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
-        reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
-        shareable_listings = ', '.join(shareable_listings) if shareable_listings else 'None'
+            sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
+            reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
+            shareable_listings_str = ', '.join(shareable_listings) if shareable_listings else 'None'
 
-        self.logger.info(f'Sold Listings: {sold_listings_str}')
-        self.logger.info(f'Reserved Listings: {reserved_listings_str}')
-        self.logger.info(f'Shareable Listings: {shareable_listings}')
+            self.logger.info(f'Sold Listings: {sold_listings_str}')
+            self.logger.info(f'Reserved Listings: {reserved_listings_str}')
+            self.logger.info(f'Shareable Listings: {shareable_listings_str}')
 
         listings = {
             'shareable_listings': shareable_listings,
@@ -1637,6 +1638,7 @@ class PublicPoshMarkClient(BaseClient):
             'reserved_listings': reserved_listings
         }
 
+        self.logger.info('No listing cards found')
         return listings
 
     def check_inactive(self, username):
