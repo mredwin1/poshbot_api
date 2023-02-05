@@ -34,7 +34,7 @@ class CampaignTask(Task):
         self.campaign.posh_user.save()
 
     def register(self, list_items):
-        response = requests.get('https://portal.mobilehop.com/proxies/7334080c0e9b4dd086c2fd037b3a6df4/reset')
+        response = requests.get('https://portal.mobilehop.com/proxies/29d7174f8c824cf9a760a5c5c906e4e7/reset')
         self.logger.info(response.text)
 
         try:
