@@ -1631,6 +1631,8 @@ class PublicPoshMarkClient(BaseClient):
             self.logger.info(f'Sold Listings: {sold_listings_str}')
             self.logger.info(f'Reserved Listings: {reserved_listings_str}')
             self.logger.info(f'Shareable Listings: {shareable_listings_str}')
+        else:
+            self.logger.info('No listing cards found')
 
         listings = {
             'shareable_listings': shareable_listings,
@@ -1638,7 +1640,6 @@ class PublicPoshMarkClient(BaseClient):
             'reserved_listings': reserved_listings
         }
 
-        self.logger.info('No listing cards found')
         return listings
 
     def check_inactive(self, username):
@@ -1659,7 +1660,7 @@ class PublicPoshMarkClient(BaseClient):
         if total_listings > 0 and not self.is_present(By.CLASS_NAME, 'card--small'):
             self.logger.warning('This user does not seem to be active, setting inactive')
 
-            return True
+            return False
         else:
             self.logger.info('This user is still active')
-            return False
+            return True
