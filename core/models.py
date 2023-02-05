@@ -286,81 +286,6 @@ class Offer(models.Model):
         return f'Offer {self.id}'
 
 
-class ProxyConnection(models.Model):
-    campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE, null=True)
-    created_date = models.DateTimeField()
-    in_use = models.BooleanField(default=True)
-    proxy_license_uuid = models.CharField(max_length=255)
-    proxy_name = models.CharField(max_length=255)
-
-    @staticmethod
-    def authenticate():
-        login_response = requests.post(
-            'https://portal.mobilehop.com/login',
-            data={'username': os.environ.get('PROXY_USERNAME'), 'password': os.environ.get('PROXY_PASSWORD')}
-        )
-
-        if login_response.status_code == requests.codes.ok:
-            return login_response.cookies
-        else:
-            return None
-
-    @staticmethod
-    def reset_all():
-        responses = []
-        cookies = ProxyConnection.authenticate()
-        list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/list', cookies=cookies)
-
-        available_proxies = list_response.json()['result']
-
-        for available_proxy in available_proxies:
-            response = requests.get(f"https://portal.mobilehop.com/api/v2/proxies/reset/{available_proxy['uuid']}",
-                                    cookies=cookies)
-            responses.append(response.json()['result'])
-
-        return responses
-
-    def fast_reset(self):
-        cookies = self.authenticate()
-        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/reset/{self.proxy_license_uuid}',
-                                cookies=cookies)
-
-        return response.json()['result']
-
-    def hard_rest(self):
-        cookies = self.authenticate()
-        response = requests.get(f'https://portal.mobilehop.com/api/v2/proxies/hard_reset/{self.proxy_license_uuid}',
-                                cookies=cookies)
-
-        return response.json()['result']
-
-    def change_location(self):
-        cookies = self.authenticate()
-        list_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/availability',
-                                     cookies=cookies)
-
-        approved_locations = ['MKE', 'NYC', 'PHL', 'BNA', 'BUF', 'CLT', 'DTW', 'ATL', 'ORF', 'CMH', 'IND', 'BHM', 'JAX',
-                              'NYCA', 'ORDA', 'BDL', 'BOS', 'EWR', 'PWM', 'ORD', 'RIC']
-
-        available_location = [location for location in list_response.json()['result'] if
-                              location['id'] in approved_locations and location['available'] == 1]
-
-        location_id = random.choice(available_location)['id']
-
-        connect_response = requests.get(
-            f'https://portal.mobilehop.com/api/v2/proxies/connect/{self.proxy_license_uuid}/{location_id}',
-            cookies=cookies).json()
-
-        set_ip_response = requests.get(
-            f"https://portal.mobilehop.com/api/v2/proxies/ipwhitelist/{self.proxy_license_uuid}/{os.environ.get('SERVER_IP')}",
-            cookies=cookies).json()
-
-        return connect_response['result']
-
-    def __str__(self):
-        return f'{self.campaign.title} on {self.proxy_name}'
-
-
 class LogGroup(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
@@ -428,3 +353,18 @@ class LogEntry(models.Model):
         options={'quality': 60},
         upload_to=path_and_rename
     )
+
+
+class Device(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    serial = models.CharField(max_length=12, unique=True)
+    ip_reset_url = models.URLField()
+
+    in_use = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    checkout_time = models.DateTimeField(null=True)
+
+    def __str__(self):
+        return self.serial

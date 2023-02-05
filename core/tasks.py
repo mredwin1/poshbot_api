@@ -11,7 +11,7 @@ from selenium.common.exceptions import WebDriverException
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser
+from .models import Campaign, Listing, ListingImage, PoshUser, Device
 
 
 class CampaignTask(Task):
@@ -33,17 +33,17 @@ class CampaignTask(Task):
         self.campaign.posh_user.is_active = False
         self.campaign.posh_user.save()
 
-    def register(self, list_items):
-        response = requests.get('https://portal.mobilehop.com/proxies/29d7174f8c824cf9a760a5c5c906e4e7/reset')
+    def register(self, list_items, device):
+        response = requests.get(device.ip_reset_url)
         self.logger.info(response.text)
 
         try:
-            with AppClonerClient(self.logger, self.campaign.posh_user.username) as client:
+            with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
                 client.add_clone()
                 client.launch_clone()
                 clone_app_package = client.get_current_app_package()
 
-            with MobilePoshMarkClient(self.campaign, self.logger, clone_app_package) as client:
+            with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
                 client.register()
 
                 if list_items:
@@ -150,12 +150,17 @@ class CampaignTask(Task):
                 self.update_status(Campaign.STOPPED)
                 return False
 
-    def run(self, campaign_id, logger_id=None, *args, **kwargs):
+    def run(self, campaign_id, logger_id=None, device_id=None, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
         success = False
         campaign_delay = None
 
         self.init_logger(logger_id)
+
+        try:
+            device = Device.objects.get(device_id=device_id)
+        except Device.DoesNotExist:
+            device = None
 
         if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED) and self.campaign.posh_user:
             self.logger.info(f'Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}')
@@ -164,7 +169,7 @@ class CampaignTask(Task):
 
             start_time = time.time()
             if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING:
-                success = self.register(list_items=True)
+                success = self.register(list_items=True, device=device)
             elif not self.campaign.posh_user.is_registered and self.campaign.mode != Campaign.ADVANCED_SHARING:
                 self.disable_posh_user()
                 self.update_status(Campaign.STOPPING)
@@ -188,16 +193,19 @@ class CampaignTask(Task):
                 sign = 1 if random.random() < 0.5 else -1
                 deviation = random.randint(0, (delay / 2)) * sign
                 elapsed_time = round(end_time - start_time, 2)
-                campaign_delay = (delay - elapsed_time) + deviation if (delay - elapsed_time) > 1 else deviation
+                campaign_delay = (delay - elapsed_time) + deviation if (delay - elapsed_time) + deviation > 1 else random.randint(0, (delay / 2))
 
             hours, remainder = divmod(campaign_delay, 3600)
             minutes, seconds = divmod(remainder, 60)
 
-            if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+            if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED):
                 self.update_status(Campaign.IDLE)
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
                 self.campaign.save()
                 self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
+
+            device.in_use = False
+            device.save()
 
 
 CampaignTask = app.register_task(CampaignTask())
@@ -237,9 +245,6 @@ def check_posh_users():
             if not campaign or campaign.status not in (Campaign.RUNNING, Campaign.IDLE):
                 all_listings = client.get_all_listings(posh_user.username)
 
-                logger.info(all_listings)
-                logger.info(sum([len(y) for y in all_listings.values()]))
-
                 if sum([len(y) for y in all_listings.values()]) == 0:
                     is_active = client.check_inactive(posh_user.username)
 
@@ -252,37 +257,37 @@ def check_posh_users():
                     CampaignTask.delay(campaign.id)
 
 
-# @shared_task
-# def init_campaign(campaign_id):
-#     campaign = Campaign.objects.get(id=campaign_id)
-#     logger = logging.getLogger(__name__)
-#
-#     campaign_mapping = {
-#         Campaign.BASIC_SHARING: basic_sharing_campaign,
-#         Campaign.ADVANCED_SHARING: advanced_sharing_campaign,
-#         Campaign.BOT_TESTS: bot_tests
-#     }
-#
-#     if not campaign.posh_user.is_registered:
-#         campaign.status = Campaign.STARTING
-#         campaign.save()
-#         proxy = None
-#
-#         logger.info(f'Getting a proxy for the following campaign: {campaign}')
-#
-#         while not proxy and campaign.status != Campaign.STOPPED:
-#             proxy = get_proxy(logger)
-#             if not proxy:
-#                 logger.info('No proxy available, waiting 30sec')
-#                 time.sleep(30)
-#                 campaign.refresh_from_db()
-#
-#         proxy_connection = ProxyConnection(campaign=campaign,
-#                                            created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc),
-#                                            proxy_license_uuid=proxy['uuid'], proxy_name=proxy['name'])
-#         proxy_connection.save()
-#         logger.info(f'Proxy connection made: {proxy_connection}')
-#
-#         campaign_mapping[campaign.mode].delay(campaign_id, logger.id, proxy['ip'], proxy['port'])
-#     else:
-#         campaign_mapping[campaign.mode].delay(campaign_id, logger.id)
+@shared_task
+def init_campaign(campaign_id):
+    campaign = Campaign.objects.get(id=campaign_id)
+    logger = logging.getLogger(__name__)
+
+    campaign.status = Campaign.STARTING
+    campaign.save()
+    selected_device = None
+
+    logger.info(f'Getting a proxy for the following campaign: {campaign}')
+
+    while not selected_device and campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+        all_devices = Device.objects.filter(is_active=True)
+        available_devices = all_devices.filter(in_use=False)
+
+        if available_devices.count() > 0:
+            selected_device = available_devices.first()
+        else:
+            for device in all_devices:
+                if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).seconds >= 900:
+                    selected_device = device
+
+                    break
+
+        if not selected_device:
+            logger.info('No device available, waiting 30sec')
+            time.sleep(30)
+            campaign.refresh_from_db()
+
+    selected_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+    selected_device.in_use = True
+    selected_device.save()
+    logger.info(f'Device selected: {selected_device}')
+    CampaignTask.delay(campaign_id, device_id=selected_device.id)

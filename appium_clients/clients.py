@@ -20,10 +20,11 @@ APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
 
 class AppiumClient:
-    def __init__(self, logger, capabilities):
+    def __init__(self, device_serial, logger, capabilities):
         self.driver = None
         self.logger = logger
 
+        capabilities['udid'] = device_serial
         self.capabilities = capabilities
 
     def __enter__(self):
@@ -220,7 +221,7 @@ class AppiumClient:
 
 
 class PoshMarkClient(AppiumClient):
-    def __init__(self, campaign: Campaign, logger, app_package='com.poshmark.app'):
+    def __init__(self, device_serial, campaign: Campaign, logger, app_package='com.poshmark.app'):
         self.driver = None
         self.campaign = campaign
         self.logger = logger
@@ -234,8 +235,6 @@ class PoshMarkClient(AppiumClient):
         capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            deviceName='Pixel 3',
-            udid='94TXS0P38',
             appPackage=app_package,
             appActivity='com.poshmark.ui.MainActivity',
             language='en',
@@ -244,7 +243,7 @@ class PoshMarkClient(AppiumClient):
             skipDeviceInitialization=True
         )
 
-        super(PoshMarkClient, self).__init__(logger, capabilities)
+        super(PoshMarkClient, self).__init__(device_serial, logger, capabilities)
 
     def download_and_send_file(self, key, download_folder):
         filename = key.split('/')[-1]
@@ -785,7 +784,7 @@ class PoshMarkClient(AppiumClient):
 
 
 class AppClonerClient(AppiumClient):
-    def __init__(self, logger, app_name):
+    def __init__(self, device_serial, logger, app_name):
         self.driver = None
         self.logger = logger
         self.app_name = app_name
@@ -793,8 +792,6 @@ class AppClonerClient(AppiumClient):
         capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            deviceName='Pixel 3',
-            udid='94TXS0P38',
             appPackage='com.applisto.appcloner',
             appActivity='.activity.MainActivity',
             language='en',
@@ -802,7 +799,7 @@ class AppClonerClient(AppiumClient):
             noReset=True,
             skipDeviceInitialization=True
         )
-        super(AppClonerClient, self).__init__(logger, capabilities)
+        super(AppClonerClient, self).__init__(device_serial, logger, capabilities)
 
     def add_clone(self):
         poshmark_app = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/android.widget.LinearLayout/androidx.viewpager.widget.ViewPager/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ListView/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.widget.TextView')

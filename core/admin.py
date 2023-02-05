@@ -7,7 +7,7 @@ from . import models
 
 
 admin.site.register(models.Offer)
-admin.site.register(models.ProxyConnection)
+admin.site.register(models.Device)
 
 
 class ListingInline(admin.StackedInline):

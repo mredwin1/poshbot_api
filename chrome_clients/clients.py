@@ -1643,10 +1643,7 @@ class PublicPoshMarkClient(BaseClient):
             'reserved_listings': reserved_listings
         }
 
-
-
         return listings
-
 
     def check_inactive(self, username):
         """Will check if the current user is inactive"""

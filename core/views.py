@@ -11,7 +11,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup
-from .tasks import CampaignTask
+from .tasks import CampaignTask, init_campaign
 from . import serializers
 
 
@@ -148,7 +148,10 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             campaign.next_runtime = None
             campaign.save()
 
-            campaign_task = CampaignTask
+            if campaign.posh_user.is_registered:
+                campaign_task = CampaignTask
+            else:
+                campaign_task = init_campaign
 
             campaign_task.delay(pk)
 
