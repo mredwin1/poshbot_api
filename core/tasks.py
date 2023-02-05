@@ -158,7 +158,7 @@ class CampaignTask(Task):
         self.init_logger(logger_id)
 
         try:
-            device = Device.objects.get(device_id=device_id)
+            device = Device.objects.get(id=device_id)
         except Device.DoesNotExist:
             device = None
 
