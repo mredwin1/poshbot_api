@@ -179,6 +179,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.init_campaign': {'queue': 'campaign_no_concurrency.fifo', 'routing_key': 'no_concurrency'},
     'core.tasks.CampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
     'core.tasks.restart_campaigns': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+    'core.tasks.check_posh_users': {'queue': 'maintenance', 'routing_key': 'maintenance'},
 }
 
 CELERY_BEAT_SCHEDULE = {
