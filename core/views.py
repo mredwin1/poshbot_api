@@ -43,6 +43,23 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
 
         return context
 
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+
+        try:
+            campaign = Campaign.objects.get(posh_user=instance)
+        except Campaign.DoesNotExist:
+            campaign = None
+
+        if campaign and campaign.status != Campaign.STOPPED:
+            return Response(data, status.HTTP_400_BAD_REQUEST)
+
+        self.perform_destroy(instance)
+
+        return Response(data, status=status.HTTP_200_OK)
+
     @action(detail=False, methods=['POST'])
     def generate(self, request):
         serializer = self.get_serializer(data=request.data, many=True)
@@ -70,6 +87,23 @@ class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, Des
         context.update({'files': self.request.FILES})
 
         return context
+
+    def destroy(self, request, *args, **kwargs):
+        instance = self.get_object()
+        serializer = self.get_serializer(instance)
+        data = serializer.data
+
+        try:
+            campaign = Campaign.objects.get(listings__contains=instance)
+        except Campaign.DoesNotExist:
+            campaign = None
+
+        if campaign and campaign.status != Campaign.STOPPED:
+            return Response(data, status.HTTP_400_BAD_REQUEST)
+
+        self.perform_destroy(instance)
+
+        return Response(data, status=status.HTTP_200_OK)
 
 
 class ListingImageViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, GenericViewSet):
