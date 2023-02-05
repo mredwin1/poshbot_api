@@ -227,26 +227,32 @@ def check_posh_users():
     logger = logging.getLogger(__name__)
     logger.info('Checking posh users')
     posh_users = PoshUser.objects.filter(is_active=True, is_registered=True)
-    with PublicPoshMarkClient(logger) as client:
-        for posh_user in posh_users:
-            try:
-                campaign = Campaign.objects.get(posh_user=posh_user)
-            except Campaign.DoesNotExist:
-                campaign = None
+    try:
+        with PublicPoshMarkClient(logger) as client:
+            for posh_user in posh_users:
+                try:
+                    campaign = Campaign.objects.get(posh_user=posh_user)
+                except Campaign.DoesNotExist:
+                    campaign = None
 
-            if not campaign or campaign.status not in (Campaign.RUNNING, Campaign.IDLE):
-                all_listings = client.get_all_listings(posh_user.username)
+                if not campaign or campaign.status not in (Campaign.RUNNING, Campaign.IDLE):
+                    all_listings = client.get_all_listings(posh_user.username)
 
-                if sum([len(y) for y in all_listings.values()]) == 0:
-                    is_active = client.check_inactive(posh_user.username)
+                    logger.info(all_listings)
+                    logger.info(sum([len(y) for y in all_listings.values()]))
 
-                    if not is_active:
-                        posh_user.is_active = False
-                        posh_user.save()
+                    if sum([len(y) for y in all_listings.values()]) == 0:
+                        is_active = client.check_inactive(posh_user.username)
 
-                if all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
-                    logger.info('User has shareable listings and it\'s campaign is paused. Resuming...')
-                    CampaignTask.delay(campaign.id)
+                        if not is_active:
+                            posh_user.is_active = False
+                            posh_user.save()
+
+                    if all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
+                        logger.info('User has shareable listings and it\'s campaign is paused. Resuming...')
+                        CampaignTask.delay(campaign.id)
+    except TimeoutError as e:
+        logger.error(e, exc_info=True)
 
 # @shared_task
 # def init_campaign(campaign_id):

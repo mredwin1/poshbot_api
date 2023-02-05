@@ -1606,7 +1606,7 @@ class PublicPoshMarkClient(BaseClient):
 
         self.web_driver.get(f'http://poshmark.com/closet/{username}')
 
-        self.sleep(1)
+        self.sleep(3)
 
         listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
         for listed_item in listed_items:
@@ -1623,9 +1623,9 @@ class PublicPoshMarkClient(BaseClient):
             elif icon.text == 'RESERVED':
                 reserved_listings.append(title.text)
 
-        sold_listings_str = '\n'.join(sold_listings) if sold_listings else 'None'
-        reserved_listings_str = '\n'.join(reserved_listings) if reserved_listings else 'None'
-        shareable_listings = '\n'.join(shareable_listings) if shareable_listings else 'None'
+        sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
+        reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
+        shareable_listings = ', '.join(shareable_listings) if shareable_listings else 'None'
 
         self.logger.info(f'Sold Listings: {sold_listings_str}')
         self.logger.info(f'Reserved Listings: {reserved_listings_str}')
@@ -1645,7 +1645,7 @@ class PublicPoshMarkClient(BaseClient):
 
         self.web_driver.get(f'https://poshmark.com/closet/{username}')
 
-        self.sleep(1)
+        self.sleep(3)
 
         listing_count_element = self.locate(
             By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div/nav/ul/li[1]/a'
