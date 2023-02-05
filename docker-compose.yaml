@@ -77,11 +77,22 @@ services:
     volumes:
       - /dev/shm:/dev/shm
       - bot_data:/bot_data
-  celery_beat_maintenance:
+  celery_maintenance:
     image: ghcr.io/mredwin1/poshbot_api:latest
     container_name: celery_maintenance_poshbot_api
     restart: always
-    entrypoint: celery -A poshbot_api beat -Q maintenance -l INFO
+    entrypoint: celery -A poshbot_api worker -Q maintenance -l INFO
+    env_file:
+      - .env
+    networks:
+      - internal
+    volumes:
+      - /dev/shm:/dev/shm
+  celery_beat:
+    image: ghcr.io/mredwin1/poshbot_api:latest
+    container_name: celery_beat_poshbot_api
+    restart: always
+    entrypoint: celery -A poshbot_api beat -l INFO
     env_file:
       - .env
     networks:
