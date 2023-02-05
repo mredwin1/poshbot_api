@@ -1608,31 +1608,34 @@ class PublicPoshMarkClient(BaseClient):
 
         self.sleep(3)
 
-        if self.is_present(By.CLASS_NAME, 'card--small'):
-            listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-            for listed_item in listed_items:
-                title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
-                try:
-                    icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
-                except NoSuchElementException:
-                    icon = None
+        try:
+            if self.is_present(By.CLASS_NAME, 'card--small'):
+                listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
+                for listed_item in listed_items:
+                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
+                    try:
+                        icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
+                    except NoSuchElementException:
+                        icon = None
 
-                if not icon:
-                    shareable_listings.append(title.text)
-                elif icon.text == 'SOLD':
-                    sold_listings.append(title.text)
-                elif icon.text == 'RESERVED':
-                    reserved_listings.append(title.text)
+                    if not icon:
+                        shareable_listings.append(title.text)
+                    elif icon.text == 'SOLD':
+                        sold_listings.append(title.text)
+                    elif icon.text == 'RESERVED':
+                        reserved_listings.append(title.text)
 
-            sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
-            reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
-            shareable_listings_str = ', '.join(shareable_listings) if shareable_listings else 'None'
+                sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
+                reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
+                shareable_listings_str = ', '.join(shareable_listings) if shareable_listings else 'None'
 
-            self.logger.info(f'Sold Listings: {sold_listings_str}')
-            self.logger.info(f'Reserved Listings: {reserved_listings_str}')
-            self.logger.info(f'Shareable Listings: {shareable_listings_str}')
-        else:
-            self.logger.info('No listing cards found')
+                self.logger.info(f'Sold Listings: {sold_listings_str}')
+                self.logger.info(f'Reserved Listings: {reserved_listings_str}')
+                self.logger.info(f'Shareable Listings: {shareable_listings_str}')
+            else:
+                self.logger.info('No listing cards found')
+        except TimeoutError as e:
+            self.logger.error(e, exc_info=True)
 
         listings = {
             'shareable_listings': shareable_listings,
@@ -1640,7 +1643,10 @@ class PublicPoshMarkClient(BaseClient):
             'reserved_listings': reserved_listings
         }
 
+
+
         return listings
+
 
     def check_inactive(self, username):
         """Will check if the current user is inactive"""
@@ -1648,19 +1654,22 @@ class PublicPoshMarkClient(BaseClient):
 
         self.web_driver.get(f'https://poshmark.com/closet/{username}')
 
-        self.sleep(3)
+        try:
+            self.sleep(3)
 
-        listing_count_element = self.locate(
-            By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div/nav/ul/li[1]/a'
-        )
-        listing_count = listing_count_element.text
-        index = listing_count.find('\n')
-        total_listings = int(listing_count[:index])
+            listing_count_element = self.locate(
+                By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div/nav/ul/li[1]/a'
+            )
+            listing_count = listing_count_element.text
+            index = listing_count.find('\n')
+            total_listings = int(listing_count[:index])
 
-        if total_listings > 0 and not self.is_present(By.CLASS_NAME, 'card--small'):
-            self.logger.warning('This user does not seem to be active, setting inactive')
+            if total_listings > 0 and not self.is_present(By.CLASS_NAME, 'card--small'):
+                self.logger.warning('This user does not seem to be active, setting inactive')
 
-            return False
-        else:
-            self.logger.info('This user is still active')
-            return True
+                return False
+            else:
+                self.logger.info('This user is still active')
+                return True
+        except TimeoutError as e:
+            self.logger.error(e, exc_info=True)
