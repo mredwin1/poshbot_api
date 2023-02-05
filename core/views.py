@@ -111,6 +111,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
         if campaign.posh_user:
             campaign.status = Campaign.STARTING
+            campaign.next_runtime = None
             campaign.save()
 
             campaign_task = CampaignTask

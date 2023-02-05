@@ -212,7 +212,7 @@ def restart_campaigns():
         if campaign.status == Campaign.STOPPING:
             campaign.status = Campaign.STOPPED
             campaign.save()
-        else:
+        elif campaign.next_runtime and campaign.status != Campaign.STOPPING:
             if campaign.next_runtime <= now and campaign.status == Campaign.IDLE:
                 campaign.status = Campaign.STARTING
                 campaign.save()
