@@ -70,7 +70,7 @@ services:
     container_name: celery_noconcurrency_poshbot_api
     restart: always
     entrypoint: celery -A poshbot_api worker --concurrency=1 -Q campaign_no_concurrency.fifo -l INFO
-    stop_grace_period: 360
+    stop_grace_period: "5m"
     env_file:
       - .env
     networks:
@@ -83,6 +83,7 @@ services:
     container_name: celery_maintenance_poshbot_api
     restart: always
     entrypoint: celery -A poshbot_api worker -Q maintenance -l INFO
+    stop_grace_period: "1m"
     env_file:
       - .env
     networks:
@@ -106,7 +107,7 @@ services:
     container_name: celery_concurrency_poshbot_api
     restart: always
     entrypoint: celery -A poshbot_api worker --concurrency=4 -Q campaign_concurrency -l INFO
-    stop_grace_period: 360
+    stop_grace_period: "5m"
     env_file:
       - .env
     networks:
