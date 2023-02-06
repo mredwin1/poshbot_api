@@ -260,7 +260,7 @@ def check_posh_users():
                         posh_user.save()
 
                 if all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
-                    logger.info('User has shareable listings and it\'s campaign is paused. Resuming...')
+                    logger.info('User has shareable listings and its campaign is paused. Resuming...')
                     CampaignTask.delay(campaign.id)
 
 
@@ -273,7 +273,7 @@ def init_campaign(campaign_id):
     campaign.save()
     selected_device = None
 
-    logger.info(f'Getting a proxy for the following campaign: {campaign}')
+    logger.info(f'Getting a device for the following campaign: {campaign}')
 
     while not selected_device and campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
         all_devices = Device.objects.filter(is_active=True)
