@@ -25,10 +25,6 @@ class CampaignTask(Task):
         else:
             self.logger = logging.getLogger(__name__)
 
-    def update_status(self, status):
-        self.campaign.status = status
-        self.campaign.save()
-
     def disable_posh_ser(self):
         self.campaign.posh_user.is_active = False
         self.campaign.posh_user.save()
@@ -54,12 +50,14 @@ class CampaignTask(Task):
 
                 client.driver.press_keycode(3)
 
-            self.update_status(Campaign.PAUSED)
+            self.campaign.status = Campaign.PAUSED
+            self.campaign.save()
             return True
 
         except (TimeoutError, WebDriverException) as e:
             self.logger.error(e, exc_info=True)
-            self.update_status(Campaign.STOPPED)
+            self.campaign.status = Campaign.STOPPED
+            self.campaign.save()
 
             return False
 
@@ -143,11 +141,13 @@ class CampaignTask(Task):
                     elif all_listings['reserved_listings']:
                         return False
                     else:
-                        self.update_status(Campaign.STOPPED)
+                        self.campaign.status = Campaign.STOPPED
+                        self.campaign.save()
 
                         return False
             else:
-                self.update_status(Campaign.STOPPED)
+                self.campaign.status = Campaign.STOPPED
+                self.campaign.save()
                 return False
 
     def run(self, campaign_id, logger_id=None, device_id=None, *args, **kwargs):
@@ -165,14 +165,16 @@ class CampaignTask(Task):
         if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED) and self.campaign.posh_user:
             self.logger.info(f'Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}')
 
-            self.update_status(Campaign.RUNNING)
+            self.campaign.status = Campaign.RUNNING
+            self.campaign.save()
 
             start_time = time.time()
             if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING:
                 success = self.register(list_items=True, device=device)
             elif not self.campaign.posh_user.is_registered and self.campaign.mode != Campaign.ADVANCED_SHARING:
                 self.disable_posh_user()
-                self.update_status(Campaign.STOPPING)
+                self.campaign.status = Campaign.STOPPING
+                self.campaign.save()
 
                 success = False
 
@@ -184,9 +186,12 @@ class CampaignTask(Task):
                 campaign_delay = 3600
             elif not success and self.campaign.status in (Campaign.STOPPED, Campaign.STOPPING):
                 if self.campaign.status != Campaign.STOPPED:
-                    self.update_status(Campaign.STOPPED)
+                    self.campaign.status = Campaign.STOPPED
+                    self.campaign.save()
 
                 return None
+
+            self.campaign.refresh_from_db()
 
             if not campaign_delay:
                 delay = self.campaign.delay * 60
@@ -199,7 +204,8 @@ class CampaignTask(Task):
             minutes, seconds = divmod(remainder, 60)
 
             if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED):
-                self.update_status(Campaign.IDLE)
+                self.campaign.status = Campaign.IDLE
+                self.campaign.save()
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
                 self.campaign.save()
                 self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
@@ -225,7 +231,7 @@ def restart_campaigns():
                 campaign.status = Campaign.STARTING
                 campaign.save()
                 CampaignTask.delay(campaign.id)
-            elif (campaign.next_runtime + datetime.timedelta(minutes=10)) <= now and campaign.status == Campaign.RUNNING:
+            elif (now - campaign.next_runtime).seconds >= 600 and campaign.status == Campaign.RUNNING:
                 campaign.status = Campaign.STOPPED
                 campaign.save()
 
