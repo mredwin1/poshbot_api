@@ -364,7 +364,7 @@ class Device(models.Model):
     in_use = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
-    checkout_time = models.DateTimeField(null=True)
+    checkout_time = models.DateTimeField(null=True, blank=True)
 
     def __str__(self):
         return self.serial

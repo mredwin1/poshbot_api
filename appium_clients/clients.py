@@ -449,6 +449,9 @@ class PoshMarkClient(AppiumClient):
 
     def finish_registration(self):
         self.logger.info('Finishing registration')
+
+        self.sleep(2)
+
         while not (self.is_present(AppiumBy.ID, 'nextButton') or self.is_present(AppiumBy.ID, 'continueButton')):
             self.logger.info('Waiting to continue')
             self.sleep(2)
