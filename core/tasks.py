@@ -259,6 +259,10 @@ def check_posh_users():
                         posh_user.is_active = False
                         posh_user.save()
 
+                        if campaign:
+                            campaign.status = Campaign.STOPPED
+                            campaign.save()
+
                 if all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
                     CampaignTask.delay(campaign.id)
