@@ -473,21 +473,18 @@ class PoshMarkClient(AppiumClient):
 
         self.logger.info('Putting in sizes and zip')
 
-        dress_size = self.locate(AppiumBy.ID, dress_size_id)
-        self.click(dress_size)
-
-        try:
-            size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['00', '0', '2', '4', '6', '8', '10']))
-            self.click(size)
-        except TimeoutException:
+        while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '00'):
             dress_size = self.locate(AppiumBy.ID, dress_size_id)
             self.click(dress_size)
+            self.sleep(.5)
 
-            size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['00', '0', '2', '4', '6', '8', '10']))
-            self.click(size)
+        size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['00', '0', '2', '4', '6', '8', '10']))
+        self.click(size)
 
-        shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
-        self.click(shoe_size)
+        while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '5'):
+            shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
+            self.click(shoe_size)
+            self.sleep(.5)
         
         size = self.locate(AppiumBy.ACCESSIBILITY_ID,
                            random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5']))
