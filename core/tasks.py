@@ -11,7 +11,7 @@ from selenium.common.exceptions import WebDriverException
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser, Device
+from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup
 
 
 class CampaignTask(Task):
@@ -21,9 +21,9 @@ class CampaignTask(Task):
 
     def init_logger(self, logger_id=None):
         if logger_id:
-            self.logger = logging.getLogger(__name__)
+            self.logger = LogGroup.objects.get(id=logger_id)
         else:
-            self.logger = logging.getLogger(__name__)
+            self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user)
 
     def disable_posh_ser(self):
         self.campaign.posh_user.is_active = False
@@ -269,9 +269,9 @@ def check_posh_users():
 
 
 @shared_task
-def init_campaign(campaign_id):
+def init_campaign(campaign_id, logger_id):
     campaign = Campaign.objects.get(id=campaign_id)
-    logger = logging.getLogger(__name__)
+    logger = LogGroup.objects.get(id=logger_id)
 
     campaign.status = Campaign.STARTING
     campaign.save()
@@ -297,8 +297,20 @@ def init_campaign(campaign_id):
             time.sleep(30)
             campaign.refresh_from_db()
 
-    selected_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-    selected_device.in_use = True
-    selected_device.save()
-    logger.info(f'Device selected: {selected_device}')
-    CampaignTask.delay(campaign_id, device_id=selected_device.id)
+    if campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+        selected_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        selected_device.in_use = True
+        selected_device.save()
+        logger.info(f'Device selected: {selected_device}')
+        CampaignTask.delay(campaign_id, logger_id=logger.id,device_id=selected_device.id)
+
+
+@shared_task
+def log_cleanup():
+    campaigns = Campaign.objects.all()
+
+    for campaign in campaigns:
+        logs = LogGroup.objects.filter(campaign=campaign).order_by('-created_date')[5:]
+
+        if logs:
+            logs.delete()

@@ -148,12 +148,17 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             campaign.next_runtime = None
             campaign.save()
 
+            logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
+            logger.save()
+
+            logger.info('Campaign will be started shortly')
+
             if campaign.posh_user.is_registered:
                 campaign_task = CampaignTask
             else:
                 campaign_task = init_campaign
 
-            campaign_task.delay(pk)
+            campaign_task.delay(pk, logger.id)
 
         return Response(serializer.data)
 
