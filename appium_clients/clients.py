@@ -174,7 +174,8 @@ class AppiumClient:
                         action.send_keys(' ')
 
                     action.perform()
-                except InvalidArgumentException:
+                except Exception:
+                    self.logger.error(traceback.format_exc())
                     self.logger.info(word)
                     self.logger.info(char)
 
