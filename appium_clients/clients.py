@@ -3,6 +3,7 @@ import os
 import random
 import requests
 import time
+import traceback
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
@@ -364,9 +365,9 @@ class PoshMarkClient(AppiumClient):
                     self.campaign.posh_user.is_registered = True
                     self.campaign.posh_user.save()
 
-            self.finish_registration()
+            return self.finish_registration()
         else:
-            self.register_alt()
+            return self.register_alt()
     
     def register_alt(self):
         first_name = self.locate(AppiumBy.ID, 'firstname')
@@ -445,87 +446,95 @@ class PoshMarkClient(AppiumClient):
 
                 self.alert_check()
 
-        self.finish_registration()
+        return self.finish_registration()
 
     def finish_registration(self):
-        self.logger.info('Finishing registration')
+        try:
+            self.logger.info('Finishing registration')
 
-        self.sleep(2)
-
-        while not (self.is_present(AppiumBy.ID, 'nextButton') or self.is_present(AppiumBy.ID, 'continueButton')):
-            self.logger.info('Waiting to continue')
             self.sleep(2)
 
-        if self.is_present(AppiumBy.ID, 'continueButton'):
-            dress_size_id = 'clothingSize'
-            shoe_size_id = 'shoeSize'
-            zipcode_id = 'zip_code'
-            continue_button_id = 'continueButton'
-            done_button_id = 'nextButton'
-            brand_logos_id = 'brandLogo'
-        else:
-            dress_size_id = 'sizeSpinnerText_II_InputLayout'
-            shoe_size_id = 'sizeSpinnerText_I'
-            zipcode_id = 'zip'
-            continue_button_id = 'nextButton'
-            done_button_id = 'nextButton'
-            brand_logos_id = 'suggestedBrandLogo3'
+            while not (self.is_present(AppiumBy.ID, 'nextButton') or self.is_present(AppiumBy.ID, 'continueButton')):
+                self.logger.info('Waiting to continue')
+                self.sleep(2)
 
-        self.logger.info('Putting in sizes and zip')
+            if self.is_present(AppiumBy.ID, 'continueButton'):
+                dress_size_id = 'clothingSize'
+                shoe_size_id = 'shoeSize'
+                zipcode_id = 'zip_code'
+                continue_button_id = 'continueButton'
+                done_button_id = 'nextButton'
+                brand_logos_id = 'brandLogo'
+            else:
+                dress_size_id = 'sizeSpinnerText_II_InputLayout'
+                shoe_size_id = 'sizeSpinnerText_I'
+                zipcode_id = 'zip'
+                continue_button_id = 'nextButton'
+                done_button_id = 'nextButton'
+                brand_logos_id = 'suggestedBrandLogo3'
 
-        while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '00'):
-            dress_size = self.locate(AppiumBy.ID, dress_size_id)
-            self.click(dress_size)
+            self.logger.info('Putting in sizes and zip')
+
+            while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '00'):
+                dress_size = self.locate(AppiumBy.ID, dress_size_id)
+                self.click(dress_size)
+                self.sleep(.5)
+
+            size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['00', '0', '2', '4', '6', '8', '10']))
+            self.click(size)
+
+            while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '5'):
+                shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
+                self.click(shoe_size)
+                self.sleep(.5)
+
+            size = self.locate(AppiumBy.ACCESSIBILITY_ID,
+                               random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5']))
+            self.click(size)
+
+            zip_input = self.locate(AppiumBy.ID, zipcode_id)
+            zip_input.send_keys(str(random.choice(self.zipcodes)))
+
+            continue_button = self.locate(AppiumBy.ID, continue_button_id)
+            self.click(continue_button)
+
+            # continued = False
+            # while not continued:
+            #     continue_button = self.locate(AppiumBy.ID, 'continueButton')
+            #     self.click(continue_button)
+            #
+            #     while self.is_present(AppiumBy.ID, 'progressBar'):
+            #         self.logger.info('Waiting to continue...')
+            #         self.sleep(5)
+            #
+            #     if self.is_present(AppiumBy.ID, 'android:id/message'):
+            #         ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+            #         self.click(ok_button)
+            #     else:
+            #         continued = True
+
+            self.logger.info('Selecting brands')
+
+            brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
+            for brand in random.choices(brands, k=random.randint(2, 6)):
+                self.click(brand)
+
+            continue_button = self.locate(AppiumBy.ID, continue_button_id)
+            self.click(continue_button)
+
             self.sleep(.5)
 
-        size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['00', '0', '2', '4', '6', '8', '10']))
-        self.click(size)
+            done_button = self.locate(AppiumBy.ID, done_button_id)
+            done_button.click()
 
-        while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '5'):
-            shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
-            self.click(shoe_size)
-            self.sleep(.5)
-        
-        size = self.locate(AppiumBy.ACCESSIBILITY_ID,
-                           random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5']))
-        self.click(size)
+            self.logger.info('Registration complete')
 
-        zip_input = self.locate(AppiumBy.ID, zipcode_id)
-        zip_input.send_keys(str(random.choice(self.zipcodes)))
+            return True
+        except TimeoutException:
+            self.logger.error(traceback.format_exc())
+            self.logger.info(self.driver.page_source)
 
-        continue_button = self.locate(AppiumBy.ID, continue_button_id)
-        self.click(continue_button)
-
-        # continued = False
-        # while not continued:
-        #     continue_button = self.locate(AppiumBy.ID, 'continueButton')
-        #     self.click(continue_button)
-        #
-        #     while self.is_present(AppiumBy.ID, 'progressBar'):
-        #         self.logger.info('Waiting to continue...')
-        #         self.sleep(5)
-        #
-        #     if self.is_present(AppiumBy.ID, 'android:id/message'):
-        #         ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-        #         self.click(ok_button)
-        #     else:
-        #         continued = True
-
-        self.logger.info('Selecting brands')
-
-        brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
-        for brand in random.choices(brands, k=random.randint(2, 6)):
-            self.click(brand)
-
-        continue_button = self.locate(AppiumBy.ID, continue_button_id)
-        self.click(continue_button)
-
-        self.sleep(.5)
-
-        done_button = self.locate(AppiumBy.ID, done_button_id)
-        done_button.click()
-
-        self.logger.info('Registration complete')
+            return False
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         campaign_folder = f'/{self.campaign.title}'
@@ -744,6 +753,10 @@ class PoshMarkClient(AppiumClient):
 
         brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
         brand_input.send_keys(listing.brand)
+
+        while not self.is_present(AppiumBy.ID, 'listing_price_edit_text'):
+            self.swipe('up', 600)
+            self.sleep(1)
 
         original_price = self.locate(AppiumBy.ID, 'original_price_edit_text')
         listing_price = self.locate(AppiumBy.ID, 'listing_price_edit_text')

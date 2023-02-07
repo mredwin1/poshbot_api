@@ -42,15 +42,20 @@ class CampaignTask(Task):
                 clone_app_package = client.get_current_app_package()
 
             with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
-                client.register()
+                registered = client.register()
 
-                if list_items:
+                if registered and list_items:
                     campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
                     for listing_not_listed in campaign_listings:
                         listing_images = ListingImage.objects.filter(listing=listing_not_listed)
                         client.list_item(listing_not_listed, listing_images)
 
                 client.driver.press_keycode(3)
+
+            if not registered:
+                self.campaign.status = Campaign.STOPPED
+                self.campaign.save()
+                return False
 
             self.campaign.status = Campaign.PAUSED
             self.campaign.save()
