@@ -119,7 +119,10 @@ class BaseClient:
         self.cookies_filename = cookies_filename
 
         if not os.path.isdir('/log_images'):
-            os.mkdir('log_images')
+            try:
+                os.mkdir('/log_images')
+            except FileExistsError:
+                pass
 
     def __enter__(self):
         self.open()
