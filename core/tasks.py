@@ -24,6 +24,7 @@ class CampaignTask(Task):
             self.logger = LogGroup.objects.get(id=logger_id)
         else:
             self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user)
+            self.logger.save()
 
     def disable_posh_ser(self):
         self.campaign.posh_user.is_active = False
