@@ -180,6 +180,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.CampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
     'core.tasks.restart_campaigns': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.check_posh_users': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+    'core.tasks.log_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -190,5 +191,9 @@ CELERY_BEAT_SCHEDULE = {
     'check_posh_users': {
         'task': 'core.tasks.check_posh_users',
         'schedule': timedelta(minutes=10)
+    },
+    'log_cleanup': {
+        'task': 'core.tasks.check_posh_users',
+        'schedule': timedelta(hours=1)
     },
 }
