@@ -1604,6 +1604,7 @@ class PublicPoshMarkClient(BaseClient):
         shareable_listings = []
         sold_listings = []
         reserved_listings = []
+        not_for_sale_listings = []
 
         self.logger.info(f'Getting all listings for {username}')
 
@@ -1627,14 +1628,18 @@ class PublicPoshMarkClient(BaseClient):
                         sold_listings.append(title.text)
                     elif icon.text == 'RESERVED':
                         reserved_listings.append(title.text)
+                    elif icon.text == 'Not For Sale':
+                        not_for_sale_listings.append(title.text)
 
                 sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
                 reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
                 shareable_listings_str = ', '.join(shareable_listings) if shareable_listings else 'None'
+                not_for_sale_listings_str = ', '.join(not_for_sale_listings) if not_for_sale_listings else 'None'
 
                 self.logger.info(f'Sold Listings: {sold_listings_str}')
                 self.logger.info(f'Reserved Listings: {reserved_listings_str}')
                 self.logger.info(f'Shareable Listings: {shareable_listings_str}')
+                self.logger.info(f'Not For Sale Listings: {not_for_sale_listings_str}')
             else:
                 self.logger.info('No listing cards found')
         except TimeoutException:
@@ -1643,7 +1648,8 @@ class PublicPoshMarkClient(BaseClient):
         listings = {
             'shareable_listings': shareable_listings,
             'sold_listings': sold_listings,
-            'reserved_listings': reserved_listings
+            'reserved_listings': reserved_listings,
+            'not_for_sale_listings': not_for_sale_listings
         }
 
         return listings
