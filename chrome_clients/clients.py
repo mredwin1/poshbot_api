@@ -1634,8 +1634,8 @@ class PublicPoshMarkClient(BaseClient):
                 self.logger.info(f'Shareable Listings: {shareable_listings_str}')
             else:
                 self.logger.info('No listing cards found')
-        except TimeoutException as e:
-            self.logger.error(e, exc_info=True)
+        except TimeoutException:
+            self.logger.error(traceback.format_exc())
 
         listings = {
             'shareable_listings': shareable_listings,
@@ -1668,5 +1668,5 @@ class PublicPoshMarkClient(BaseClient):
             else:
                 self.logger.info('This user is still active')
                 return True
-        except TimeoutException as e:
-            self.logger.error(e, exc_info=True)
+        except TimeoutException:
+            self.logger.error(traceback.format_exc())

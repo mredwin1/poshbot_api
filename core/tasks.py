@@ -4,6 +4,7 @@ import pytz
 import random
 import requests
 import time
+import traceback
 
 from celery import shared_task, Task
 from selenium.common.exceptions import WebDriverException
@@ -55,8 +56,8 @@ class CampaignTask(Task):
             self.campaign.save()
             return True
 
-        except (TimeoutError, WebDriverException) as e:
-            self.logger.error(e, exc_info=True)
+        except (TimeoutError, WebDriverException):
+            self.logger.error(traceback.format_exc())
             self.campaign.status = Campaign.STOPPED
             self.campaign.save()
 
