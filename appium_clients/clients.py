@@ -759,17 +759,26 @@ class PoshMarkClient(AppiumClient):
             self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
 
         brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
-        self.click(brand_input)
+        while brand_input.text != listing.brand:
+            brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
+            self.click(brand_input)
 
-        brand_search = self.locate(AppiumBy.ID, 'searchTextView')
-        brand_search.send_keys(listing.brand)
+            brand_search = self.locate(AppiumBy.ID, 'searchTextView')
+            brand_search.send_keys(listing.brand)
 
-        if not self.is_present(AppiumBy.ACCESSIBILITY_ID, listing.brand):
-            self.driver.back()
-            self.sleep(.5)
+            if not self.is_present(AppiumBy.ACCESSIBILITY_ID, listing.brand):
+                while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text == 'Listing Details':
+                    self.driver.back()
+                    self.sleep(.5)
 
-        brand = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.brand)
-        self.click(brand)
+                media_items = self.locate(AppiumBy.ID, 'media_items')
+                description_body = self.locate(AppiumBy.ID, 'description_body')
+                self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
+
+                self.sleep(1)
+            else:
+                brand = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.brand)
+                self.click(brand)
 
         pressed_back = False
         if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
