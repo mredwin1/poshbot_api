@@ -67,6 +67,7 @@ services:
       - "/letsencrypt/acme.json:/acme.json"
   celery_noconcurrency:
     image: ghcr.io/mredwin1/poshbot_api:latest
+    init: /usr/libexec/docker-init
     container_name: celery_noconcurrency_poshbot_api
     restart: always
     entrypoint: celery -A poshbot_api worker --concurrency=1 -Q campaign_no_concurrency.fifo -l INFO
@@ -81,6 +82,7 @@ services:
       - bot_data:/bot_data
   celery_maintenance:
     image: ghcr.io/mredwin1/poshbot_api:latest
+    init: /usr/libexec/docker-init
     container_name: celery_maintenance_poshbot_api
     restart: always
     entrypoint: celery -A poshbot_api worker -Q maintenance -l INFO
@@ -94,6 +96,7 @@ services:
       - /dev/shm:/dev/shm
   celery_beat:
     image: ghcr.io/mredwin1/poshbot_api:latest
+    init: /usr/libexec/docker-init
     container_name: celery_beat_poshbot_api
     restart: always
     entrypoint: celery -A poshbot_api beat -l INFO
@@ -106,6 +109,7 @@ services:
       - /dev/shm:/dev/shm
   celery_concurrency:
     image: ghcr.io/mredwin1/poshbot_api:latest
+    init: /usr/libexec/docker-init
     container_name: celery_concurrency_poshbot_api
     restart: always
     entrypoint: celery -A poshbot_api worker --concurrency=4 -Q campaign_concurrency -l INFO
