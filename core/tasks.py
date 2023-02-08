@@ -256,7 +256,7 @@ def check_posh_users():
             except Campaign.DoesNotExist:
                 campaign = None
 
-            if not campaign or campaign.status not in (Campaign.RUNNING, Campaign.IDLE):
+            if not campaign or campaign.status not in (Campaign.RUNNING, Campaign.IDLE, Campaign.STARTING):
                 all_listings = client.get_all_listings(posh_user.username)
 
                 if sum([len(y) for y in all_listings.values()]) == 0:
