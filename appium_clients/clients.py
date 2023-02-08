@@ -515,7 +515,7 @@ class PoshMarkClient(AppiumClient):
             #         continued = True
 
             save_waits = 0
-            while self.is_present(AppiumBy.ID, 'progressBar') and save_waits < 30:
+            while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView') and save_waits < 30:
                 self.logger.info('Waiting for things to save')
                 save_waits += 1
                 self.sleep(3)
