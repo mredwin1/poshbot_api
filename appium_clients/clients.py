@@ -764,6 +764,10 @@ class PoshMarkClient(AppiumClient):
         brand_search = self.locate(AppiumBy.ID, 'searchTextView')
         brand_search.send_keys(listing.brand)
 
+        if not self.is_present(AppiumBy.ACCESSIBILITY_ID, listing.brand):
+            self.driver.back()
+            self.sleep(.5)
+
         brand = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.brand)
         self.click(brand)
 
