@@ -514,6 +514,12 @@ class PoshMarkClient(AppiumClient):
             #     else:
             #         continued = True
 
+            save_waits = 0
+            while self.is_present(AppiumBy.ID, 'progressBar') and save_waits < 30:
+                self.logger.info('Waiting for things to save')
+                save_waits += 1
+                self.sleep(3)
+
             self.logger.info('Selecting brands')
 
             brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
