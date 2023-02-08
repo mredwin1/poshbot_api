@@ -811,6 +811,15 @@ class PoshMarkClient(AppiumClient):
                 else:
                     self.logger.info('Some alert popped up but it is not implemented')
                     self.sleep(5)
+            elif self.is_present(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]"):
+                self.logger.warning('Certify listing page came up. Clicking certify.')
+                certify_button = self.locate(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]")
+                self.click(certify_button)
+
+                self.sleep(.5)
+                certify_ok = self.locate(AppiumBy.ID, 'android:id/button1')
+                self.click(certify_ok)
+
             else:
                 self.logger.info('Item not listed yet')
                 self.sleep(5)
