@@ -65,7 +65,7 @@ class CampaignTask(Task):
                     registered = client.register()
 
                     if registered and list_items:
-                        listed = self.list_items(device, False)
+                        listed = self.list_items(device, False, client)
 
                     client.driver.press_keycode(3)
 
@@ -87,7 +87,7 @@ class CampaignTask(Task):
 
         return False
 
-    def list_items(self, device, reset_ip=True):
+    def list_items(self, device, reset_ip=True, client=None):
         listed = False
         ip_reset = not reset_ip
 
@@ -95,13 +95,19 @@ class CampaignTask(Task):
             ip_reset = self.reset_ip(device.ip_reset_url)
 
         if ip_reset:
-            with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
+            campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
+
+            if client:
                 for listing_not_listed in campaign_listings:
                     listing_images = ListingImage.objects.filter(listing=listing_not_listed)
                     listed = client.list_item(listing_not_listed, listing_images)
+            else:
+                with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
+                    for listing_not_listed in campaign_listings:
+                        listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                        listed = client.list_item(listing_not_listed, listing_images)
 
-                client.driver.press_keycode(3)
+                    client.driver.press_keycode(3)
 
             return listed
 
@@ -221,7 +227,6 @@ class CampaignTask(Task):
                 self.campaign.save()
 
                 success = False
-
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                 success = self.share_and_more()
             end_time = time.time()

@@ -1628,7 +1628,7 @@ class PublicPoshMarkClient(BaseClient):
                         sold_listings.append(title.text)
                     elif icon.text == 'RESERVED':
                         reserved_listings.append(title.text)
-                    elif icon.text == 'Not For Sale':
+                    elif icon.text == 'NOT FOR SALE':
                         not_for_sale_listings.append(title.text)
                     else:
                         self.logger.info(f'Unhandled icon text, {icon.text}, on the listing')
