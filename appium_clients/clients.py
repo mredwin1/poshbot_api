@@ -780,6 +780,7 @@ class PoshMarkClient(AppiumClient):
             while brand_input.text != listing.brand:
                 pressed_back = False
                 self.click(brand_input)
+                self.logger.info('Clicked brand button')
 
                 brand_search = self.locate(AppiumBy.ID, 'searchTextView')
                 brand_search.send_keys(listing.brand)
