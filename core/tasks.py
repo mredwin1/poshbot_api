@@ -20,6 +20,23 @@ class CampaignTask(Task):
         self.campaign = None
         self.logger = None
 
+    def reset_ip(self, reset_url):
+        response = requests.get(reset_url)
+        retries = 0
+
+        while response.status_code != requests.codes.ok and retries < 3:
+            self.logger.warning('IP reset failed, trying again')
+            response = requests.get(reset_url)
+            retries += 1
+            time.sleep(1)
+
+        if response.status_code == requests.codes.ok:
+            self.logger.info(response.text)
+            return True
+
+        self.logger.info(f'Could not reset IP after {retries} retries')
+        return False
+
     def init_logger(self, logger_id=None):
         if logger_id:
             self.logger = LogGroup.objects.get(id=logger_id)
@@ -32,57 +49,61 @@ class CampaignTask(Task):
         self.campaign.posh_user.save()
 
     def register(self, list_items, device):
-        response = requests.get(device.ip_reset_url)
-        self.logger.info(response.text)
+        ip_reset = self.reset_ip(device.ip_reset_url)
 
-        try:
-            with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
-                client.add_clone()
-                client.launch_clone()
-                clone_app_package = client.get_current_app_package()
+        if ip_reset:
+            try:
+                with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
+                    client.add_clone()
+                    client.launch_clone()
+                    clone_app_package = client.get_current_app_package()
 
-            self.campaign.posh_user.app_package = clone_app_package
-            self.campaign.posh_user.save()
+                self.campaign.posh_user.app_package = clone_app_package
+                self.campaign.posh_user.save()
 
-            with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
-                registered = client.register()
+                with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
+                    registered = client.register()
 
-                if registered and list_items:
-                    listed = self.list_items(device, False)
+                    if registered and list_items:
+                        listed = self.list_items(device, False)
 
-                client.driver.press_keycode(3)
+                    client.driver.press_keycode(3)
 
-            if not (registered and listed):
+                if not (registered and listed):
+                    self.campaign.status = Campaign.STOPPED
+                    self.campaign.save()
+                    return False
+
+                self.campaign.status = Campaign.PAUSED
+                self.campaign.save()
+                return True
+
+            except (TimeoutError, WebDriverException):
+                self.logger.error(traceback.format_exc())
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
+
                 return False
 
-            self.campaign.status = Campaign.PAUSED
-            self.campaign.save()
-            return True
-
-        except (TimeoutError, WebDriverException):
-            self.logger.error(traceback.format_exc())
-            self.campaign.status = Campaign.STOPPED
-            self.campaign.save()
-
-            return False
+        return False
 
     def list_items(self, device, reset_ip=True):
         listed = False
+        ip_reset = not reset_ip
+
         if reset_ip:
-            response = requests.get(device.ip_reset_url)
-            self.logger.info(response.text)
+            ip_reset = self.reset_ip(device.ip_reset_url)
 
-        with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-            campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
-            for listing_not_listed in campaign_listings:
-                listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                listed = client.list_item(listing_not_listed, listing_images)
+        if ip_reset:
+            with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
+                campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
+                for listing_not_listed in campaign_listings:
+                    listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                    listed = client.list_item(listing_not_listed, listing_images)
 
-            client.driver.press_keycode(3)
+                client.driver.press_keycode(3)
 
-        return listed
+            return listed
 
     def share_and_more(self):
         login_retries = 0
