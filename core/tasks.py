@@ -207,16 +207,11 @@ class CampaignTask(Task):
 
             if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
                 campaign_delay = 3600
-            elif not success and self.campaign.status in (Campaign.STOPPED, Campaign.STOPPING):
-                if self.campaign.status != Campaign.STOPPED:
-                    self.campaign.status = Campaign.STOPPED
-                    self.campaign.save()
 
-                if device:
-                    device.in_use = False
-                    device.save()
-
-                return None
+            if device:
+                self.logger.info('Releasing device')
+                device.in_use = False
+                device.save()
 
             self.campaign.refresh_from_db()
 
@@ -235,10 +230,6 @@ class CampaignTask(Task):
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
                 self.campaign.save()
                 self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
-
-            if device:
-                device.in_use = False
-                device.save()
 
 
 CampaignTask = app.register_task(CampaignTask())
