@@ -193,7 +193,7 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(minutes=10)
     },
     'log_cleanup': {
-        'task': 'core.tasks.check_posh_users',
+        'task': 'core.tasks.log_cleanup',
         'schedule': timedelta(hours=1)
     },
 }
