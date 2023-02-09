@@ -41,14 +41,14 @@ class CampaignTask(Task):
                 client.launch_clone()
                 clone_app_package = client.get_current_app_package()
 
+            self.campaign.posh_user.app_package = clone_app_package
+            self.campaign.posh_user.save()
+
             with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
                 registered = client.register()
 
                 if registered and list_items:
-                    campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
-                    for listing_not_listed in campaign_listings:
-                        listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                        listed = client.list_item(listing_not_listed, listing_images)
+                    listed = self.list_items(device, False)
 
                 client.driver.press_keycode(3)
 
@@ -67,6 +67,22 @@ class CampaignTask(Task):
             self.campaign.save()
 
             return False
+
+    def list_items(self, device, reset_ip=True):
+        listed = False
+        if reset_ip:
+            response = requests.get(device.ip_reset_url)
+            self.logger.info(response.text)
+
+        with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
+            campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
+            for listing_not_listed in campaign_listings:
+                listing_images = ListingImage.objects.filter(listing=listing_not_listed)
+                listed = client.list_item(listing_not_listed, listing_images)
+
+            client.driver.press_keycode(3)
+
+        return listed
 
     def share_and_more(self):
         login_retries = 0
