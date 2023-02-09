@@ -1630,6 +1630,8 @@ class PublicPoshMarkClient(BaseClient):
                         reserved_listings.append(title.text)
                     elif icon.text == 'Not For Sale':
                         not_for_sale_listings.append(title.text)
+                    else:
+                        self.logger.info(icon.text)
 
                 sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
                 reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
