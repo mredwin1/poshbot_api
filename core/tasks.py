@@ -48,11 +48,11 @@ class CampaignTask(Task):
                     campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
                     for listing_not_listed in campaign_listings:
                         listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                        client.list_item(listing_not_listed, listing_images)
+                        listed = client.list_item(listing_not_listed, listing_images)
 
                 client.driver.press_keycode(3)
 
-            if not registered:
+            if not (registered and listed):
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
                 return False
