@@ -502,29 +502,23 @@ class PoshMarkClient(AppiumClient):
             zip_input = self.locate(AppiumBy.ID, zipcode_id)
             zip_input.send_keys(str(random.choice(self.zipcodes)))
 
-            continue_button = self.locate(AppiumBy.ID, continue_button_id)
-            self.click(continue_button)
+            while not self.is_present(AppiumBy.ID, brand_logos_id):
+                continue_button = self.locate(AppiumBy.ID, continue_button_id)
+                self.click(continue_button)
 
-            # continued = False
-            # while not continued:
-            #     continue_button = self.locate(AppiumBy.ID, 'continueButton')
-            #     self.click(continue_button)
-            #
-            #     while self.is_present(AppiumBy.ID, 'progressBar'):
-            #         self.logger.info('Waiting to continue...')
-            #         self.sleep(5)
-            #
-            #     if self.is_present(AppiumBy.ID, 'android:id/message'):
-            #         ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-            #         self.click(ok_button)
-            #     else:
-            #         continued = True
+                save_waits = 0
+                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID,
+                                                                                          'titleTextView') and save_waits < 30:
+                    self.logger.info('Waiting for things to save')
+                    save_waits += 1
+                    self.sleep(3)
 
-            save_waits = 0
-            while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView') and save_waits < 30:
-                self.logger.info('Waiting for things to save')
-                save_waits += 1
-                self.sleep(3)
+                if self.is_present(AppiumBy.ID, 'android:id/button1'):
+                    self.logger.warning('Alert popped up. Clicking ok...')
+                    ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                    self.click(ok_button)
+
+                    self.sleep(.5)
 
             self.logger.info('Selecting brands')
 
