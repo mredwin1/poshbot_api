@@ -551,6 +551,8 @@ class PoshMarkClient(AppiumClient):
 
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         try:
+            self.logger.info(f'Listing {listing.title} for {self.campaign.posh_user.username}')
+
             campaign_folder = f'/{self.campaign.title}'
             listing_folder = f'/{self.campaign.title}/{listing.title}'
             campaign_folder_exists = os.path.exists(campaign_folder)
@@ -575,9 +577,12 @@ class PoshMarkClient(AppiumClient):
             sell_button = self.locate(AppiumBy.ID, 'sellTab')
             self.click(sell_button)
 
+            self.logger.info('Sell button clicked')
+
             if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
                 deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
                 self.click(deny_button)
+                self.logger.info('Denying access to camera')
 
             gallery_button = self.locate(AppiumBy.ID, 'gallery')
             self.click(gallery_button)
@@ -730,6 +735,8 @@ class PoshMarkClient(AppiumClient):
                 description_body = self.locate(AppiumBy.ID, 'description_body')
                 self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
 
+            self.logger.info('Putting in size')
+
             size_button = self.locate(AppiumBy.ID, 'size_edit_text')
             self.click(size_button)
 
@@ -753,6 +760,7 @@ class PoshMarkClient(AppiumClient):
 
             pressed_back = False
             if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
+                self.logger.info('Category issue popped up... Pressing back button.')
                 for _ in range(3):
                     self.driver.back()
                     self.sleep(.5)
@@ -765,29 +773,36 @@ class PoshMarkClient(AppiumClient):
                 description_body = self.locate(AppiumBy.ID, 'description_body')
                 self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
 
+            self.sleep(1)
+            self.logger.info('Putting in brand')
+
             brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
             while brand_input.text != listing.brand:
+                pressed_back = False
                 self.click(brand_input)
 
                 brand_search = self.locate(AppiumBy.ID, 'searchTextView')
                 brand_search.send_keys(listing.brand)
 
                 if not self.is_present(AppiumBy.ACCESSIBILITY_ID, listing.brand):
+                    self.logger.info('Brand did not pop up on search... Taping back.')
                     while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID,
                                                                                            'titleTextView').text != 'Listing Details':
                         self.driver.back()
                         self.sleep(.5)
+                    pressed_back = True
 
                 else:
                     brand = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.brand)
                     self.click(brand)
 
-                pressed_back = False
-                if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
-                    for _ in range(3):
-                        self.driver.back()
-                        self.sleep(.5)
-                    pressed_back = True
+                    self.logger.info('Clicked brand')
+
+                    if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
+                        for _ in range(3):
+                            self.driver.back()
+                            self.sleep(.5)
+                        pressed_back = True
 
                 if pressed_back:
                     self.logger.info('Scrolling...')
