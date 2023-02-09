@@ -180,13 +180,13 @@ class CampaignTask(Task):
 
         self.init_logger(logger_id)
 
-        try:
-            device = Device.objects.get(id=device_id)
-        except Device.DoesNotExist:
-            device = None
-
         if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED) and self.campaign.posh_user:
             self.logger.info(f'Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}')
+
+            try:
+                device = Device.objects.get(id=device_id)
+            except Device.DoesNotExist:
+                device = None
 
             self.campaign.status = Campaign.RUNNING
             self.campaign.save()
@@ -212,6 +212,10 @@ class CampaignTask(Task):
                     self.campaign.status = Campaign.STOPPED
                     self.campaign.save()
 
+                if device:
+                    device.in_use = False
+                    device.save()
+
                 return None
 
             self.campaign.refresh_from_db()
@@ -228,7 +232,6 @@ class CampaignTask(Task):
 
             if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED):
                 self.campaign.status = Campaign.IDLE
-                self.campaign.save()
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
                 self.campaign.save()
                 self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
@@ -332,5 +335,5 @@ def log_cleanup():
     for campaign in campaigns:
         logs = LogGroup.objects.filter(campaign=campaign).order_by('-created_date')[5:]
 
-        if logs:
-            logs.delete()
+        for log in logs:
+            log.delete()
