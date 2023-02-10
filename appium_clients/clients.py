@@ -825,7 +825,7 @@ class PoshMarkClient(AppiumClient):
             self.sleep(5)
             sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
 
-            while not sell_button_present and list_attempts < 10:
+            while not sell_button_present and list_attempts < 20:
                 sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
                 list_attempts += 1
 
@@ -849,7 +849,7 @@ class PoshMarkClient(AppiumClient):
 
                 else:
                     self.logger.info('Item not listed yet')
-                    self.sleep(5)
+                    self.sleep(10)
             else:
                 if list_attempts >= 10:
                     self.logger.error(f'Attempted to locate the sell button {list_attempts} times but could not find it.')
