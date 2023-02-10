@@ -502,11 +502,8 @@ class PoshMarkClient(AppiumClient):
                 continue_button = self.locate(AppiumBy.ID, continue_button_id)
                 self.click(continue_button)
 
-                save_waits = 0
-                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID,
-                                                                                          'titleTextView') and save_waits < 30:
+                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting for things to save')
-                    save_waits += 1
                     self.sleep(3)
 
                 if self.is_present(AppiumBy.ID, 'android:id/button1'):
