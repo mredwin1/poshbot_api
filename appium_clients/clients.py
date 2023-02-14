@@ -529,6 +529,10 @@ class PoshMarkClient(AppiumClient):
                     done_button = self.locate(AppiumBy.ID, done_button_id)
                     done_button.click()
 
+                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
+                    self.logger.info('Waiting for things to save')
+                    self.sleep(3)
+
                 self.sleep(.5)
 
                 self.alert_check()
