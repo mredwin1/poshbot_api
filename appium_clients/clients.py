@@ -101,8 +101,8 @@ class AppiumClient:
             center_x = width / 2
             center_y = height / 2
 
-            xoffset = int(center_x) - random.randint(int(center_x * .2), int(center_x * .8))
-            yoffset = int(center_y) - random.randint(int(center_y * .2), int(center_y * .8))
+            xoffset = int(center_x) - random.randint(int(center_x * .25), int(center_x * .75))
+            yoffset = int(center_y) - random.randint(int(center_y * .25), int(center_y * .75))
             action = ActionChains(self.driver).move_to_element_with_offset(element, xoffset, yoffset).click()
             action.perform()
         else:
@@ -280,7 +280,7 @@ class PoshMarkClient(AppiumClient):
         self.driver.back()
 
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
-        img.click()
+        self.click(img)
 
     def register(self):
         campaign_folder = f'/{self.campaign.title}'
@@ -635,7 +635,7 @@ class PoshMarkClient(AppiumClient):
                 if x == 1:
                     self.long_click(img)
                 else:
-                    img.click()
+                    self.click(img)
 
                 if x % 6 == 0 and x != len(listing_images):
                     self.swipe('up', 580 * 3)
