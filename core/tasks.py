@@ -291,6 +291,7 @@ def check_posh_users():
                 all_listings = client.get_all_listings(posh_user.username)
 
                 if sum([len(y) for y in all_listings.values()]) == 0:
+                    logger.info('User has no listings available...')
                     is_active = client.check_inactive(posh_user.username)
 
                     if not is_active:
@@ -298,10 +299,11 @@ def check_posh_users():
                         posh_user.save()
 
                         if campaign:
+                            logger.info('Stopping campaign...')
                             campaign.status = Campaign.STOPPED
                             campaign.save()
 
-                if all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
+                elif all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
                     CampaignTask.delay(campaign.id)
 
