@@ -44,10 +44,6 @@ class CampaignTask(Task):
             self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user)
             self.logger.save()
 
-    def disable_posh_ser(self):
-        self.campaign.posh_user.is_active = False
-        self.campaign.posh_user.save()
-
     def register(self, list_items, device):
         ip_reset = self.reset_ip(device.ip_reset_url)
 
@@ -117,7 +113,6 @@ class CampaignTask(Task):
         all_listings_retries = 0
         listing_shared_retries = 0
         profile_updated = self.campaign.posh_user.profile_updated
-        campaign_delay = None
         all_listings = None
         listing_shared = None
         shared = None
@@ -183,7 +178,7 @@ class CampaignTask(Task):
                         if random.random() < .20 and shared:
                             client.check_offers(listing_title)
 
-                        if not shared and not campaign_delay:
+                        if not shared:
                             return False
 
                         return True
@@ -222,7 +217,6 @@ class CampaignTask(Task):
             if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING:
                 success = self.register(list_items=True, device=device)
             elif not self.campaign.posh_user.is_registered and self.campaign.mode != Campaign.ADVANCED_SHARING:
-                self.disable_posh_user()
                 self.campaign.status = Campaign.STOPPING
                 self.campaign.save()
 
@@ -230,6 +224,10 @@ class CampaignTask(Task):
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                 success = self.share_and_more()
             end_time = time.time()
+
+            if not self.campaign.posh_user.is_active:
+                self.campaign.status = Campaign.STOPPED
+                self.campaign.save()
 
             if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
                 campaign_delay = 3600
