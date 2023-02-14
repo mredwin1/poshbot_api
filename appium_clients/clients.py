@@ -280,7 +280,7 @@ class PoshMarkClient(AppiumClient):
         self.driver.back()
 
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
-        self.click(img)
+        img.click()
 
     def register(self):
         campaign_folder = f'/{self.campaign.title}'
@@ -635,7 +635,7 @@ class PoshMarkClient(AppiumClient):
                 if x == 1:
                     self.long_click(img)
                 else:
-                    self.click(img)
+                    img.click()
 
                 if x % 6 == 0 and x != len(listing_images):
                     self.swipe('up', 580 * 3)
