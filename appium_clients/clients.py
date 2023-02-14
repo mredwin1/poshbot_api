@@ -26,6 +26,7 @@ class AppiumClient:
         self.logger = logger
 
         capabilities['udid'] = device_serial
+        capabilities['adbExecTimeout'] = 50000
         self.capabilities = capabilities
 
     def __enter__(self):
