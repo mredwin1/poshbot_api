@@ -506,6 +506,8 @@ class PoshMarkClient(AppiumClient):
                     self.logger.info('Waiting for things to save')
                     self.sleep(3)
 
+                self.alert_check()
+
                 if self.is_present(AppiumBy.ID, 'android:id/button1'):
                     self.logger.warning('Alert popped up. Clicking ok...')
                     ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
@@ -519,13 +521,22 @@ class PoshMarkClient(AppiumClient):
             for brand in random.choices(brands, k=random.randint(2, 6)):
                 self.click(brand)
 
-            continue_button = self.locate(AppiumBy.ID, continue_button_id)
-            self.click(continue_button)
+            while not self.is_present(AppiumBy.ID, 'sellTab'):
+                if self.is_present(AppiumBy.ID, continue_button_id):
+                    continue_button = self.locate(AppiumBy.ID, continue_button_id)
+                    self.click(continue_button)
+                elif self.is_present(AppiumBy.ID, done_button_id):
+                    done_button = self.locate(AppiumBy.ID, done_button_id)
+                    done_button.click()
 
-            self.sleep(.5)
+                self.sleep(.5)
 
-            done_button = self.locate(AppiumBy.ID, done_button_id)
-            done_button.click()
+                self.alert_check()
+
+                if self.is_present(AppiumBy.ID, 'android:id/button1'):
+                    self.logger.warning('Alert popped up. Clicking ok...')
+                    ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                    self.click(ok_button)
 
             self.logger.info('Registration complete')
 
