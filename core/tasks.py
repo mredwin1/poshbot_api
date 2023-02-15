@@ -333,7 +333,7 @@ def init_campaign(campaign_id, logger_id):
                     break
 
         if not selected_device:
-            logger.info('No device available, waiting 30sec')
+            logger.info('No device available, waiting 10sec')
             time.sleep(10)
             campaign.refresh_from_db()
 
