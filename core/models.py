@@ -4,7 +4,6 @@ import mailslurp_client
 import os
 import pytz
 import random
-import requests
 import string
 
 from django.conf import settings
@@ -369,3 +368,11 @@ class Device(models.Model):
 
     def __str__(self):
         return self.serial
+
+
+class DeletedClone(models.Model):
+    app_name = models.CharField(max_length=50)
+    device = models.ForeignKey(Device, on_delete=models.CASCADE)
+
+    def __str__(self):
+        return self.app_name

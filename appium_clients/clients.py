@@ -102,8 +102,8 @@ class AppiumClient:
             center_x = width / 2
             center_y = height / 2
 
-            xoffset = int(center_x) - random.randint(int(center_x * .25), int(center_x * .75))
-            yoffset = int(center_y) - random.randint(int(center_y * .25), int(center_y * .75))
+            xoffset = int(center_x) - random.randint(int(center_x * .3), int(center_x * .7))
+            yoffset = int(center_y) - random.randint(int(center_y * .3), int(center_y * .7))
             action = ActionChains(self.driver).move_to_element_with_offset(element, xoffset, yoffset).click()
             action.perform()
         else:
@@ -882,7 +882,7 @@ class PoshMarkClient(AppiumClient):
 
 
 class AppClonerClient(AppiumClient):
-    def __init__(self, device_serial, logger, app_name):
+    def __init__(self, device_serial, logger, app_name=None):
         self.driver = None
         self.logger = logger
         self.app_name = app_name
@@ -984,3 +984,33 @@ class AppClonerClient(AppiumClient):
             self.logger.info(self.driver.page_source)
 
             return False
+
+    def delete_clone(self, app_names):
+        try:
+            self.logger.info('Launching app')
+            clones_button = self.locate(AppiumBy.XPATH,
+                                        '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.FrameLayout/android.view.View[2]')
+            clones_button.click()
+
+            for app_name in sorted(app_names):
+                try:
+                    clone = self.locate(AppiumBy.XPATH, f"//*[contains(@text, '{app_name}')]")
+                    clone.click()
+
+                    self.sleep(.5)
+
+                    uninstall_button = self.locate(AppiumBy.XPATH,
+                                                   '/hierarchy/android.widget.FrameLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[3]')
+                    uninstall_button.click()
+
+                    ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                    ok_button.click()
+                except TimeoutException:
+                    scroll_attempts = 0
+                    while not self.is_present(AppiumBy.XPATH, f"//*[contains(@text, '{app_name}')]") and scroll_attempts < 40:
+                        self.swipe('up', 1300)
+                        scroll_attempts += 1
+
+        except TimeoutException:
+            self.logger.error(traceback.format_exc())
+            self.logger.info(self.driver.page_source)
