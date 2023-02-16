@@ -57,6 +57,8 @@ class CampaignTask(Task):
                 self.campaign.posh_user.app_package = clone_app_package
                 self.campaign.posh_user.save()
 
+                time.sleep(2)
+
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
                     registered = client.register()
 

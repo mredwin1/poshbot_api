@@ -102,8 +102,8 @@ class AppiumClient:
             center_x = width / 2
             center_y = height / 2
 
-            xoffset = int(center_x) - random.randint(int(center_x * .3), int(center_x * .7))
-            yoffset = int(center_y) - random.randint(int(center_y * .3), int(center_y * .7))
+            xoffset = int(center_x) - random.randint(int(center_x * .2), int(center_x * .8))
+            yoffset = int(center_y) - random.randint(int(center_y * .2), int(center_y * .8))
             action = ActionChains(self.driver).move_to_element_with_offset(element, xoffset, yoffset).click()
             action.perform()
         else:
@@ -216,11 +216,8 @@ class AppiumClient:
 
         windows = device.shell('dumpsys window windows')
         app_package_index = windows.find('com.poshmark.')
-        remaining_text = windows[app_package_index:]
-        activity_end_index = remaining_text.find('}')
-        app_package_activity = remaining_text[:activity_end_index]
 
-        return app_package_activity.split('/')[0]
+        return windows[app_package_index:app_package_index + 16]
 
 
 class PoshMarkClient(AppiumClient):
@@ -281,7 +278,7 @@ class PoshMarkClient(AppiumClient):
         self.driver.back()
 
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
-        self.click(img)
+        img.click()
 
     def register(self):
         campaign_folder = f'/{self.campaign.title}'
@@ -299,8 +296,11 @@ class PoshMarkClient(AppiumClient):
             self.sleep(7)
             retries += 1
 
-        sign_up = self.locate(AppiumBy.ID, 'sign_up_option')
-        self.click(sign_up)
+        while self.is_present(AppiumBy.ID, 'sign_up_option'):
+            self.logger.info('Clicked sign up button')
+            sign_up = self.locate(AppiumBy.ID, 'sign_up_option')
+            self.click(sign_up)
+            self.sleep(1)
 
         if self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
             none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
@@ -484,17 +484,26 @@ class PoshMarkClient(AppiumClient):
                 self.click(dress_size)
                 self.sleep(.5)
 
-            size = self.locate(AppiumBy.ACCESSIBILITY_ID, random.choice(['00', '0', '2', '4', '6', '8', '10']))
-            self.click(size)
+            size_choice = random.choice(['00', '0', '2', '4', '6', '8', '10'])
+
+            while self.is_present(AppiumBy.ACCESSIBILITY_ID, size_choice):
+                size = self.locate(AppiumBy.ACCESSIBILITY_ID, size_choice)
+                self.click(size)
+                self.logger.info('Dress size clicked')
+                self.sleep(.5)
 
             while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '5'):
                 shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
                 self.click(shoe_size)
                 self.sleep(.5)
 
-            size = self.locate(AppiumBy.ACCESSIBILITY_ID,
-                               random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5']))
-            self.click(size)
+            size_choice = random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5'])
+
+            while self.is_present(AppiumBy.ACCESSIBILITY_ID, size_choice):
+                size = self.locate(AppiumBy.ACCESSIBILITY_ID, size_choice)
+                self.click(size)
+                self.logger.info('Shoe size clicked')
+                self.sleep(.5)
 
             zip_input = self.locate(AppiumBy.ID, zipcode_id)
             zip_input.send_keys(str(random.choice(self.zipcodes)))
@@ -636,7 +645,7 @@ class PoshMarkClient(AppiumClient):
                 if x == 1:
                     self.long_click(img)
                 else:
-                    self.click(img)
+                    img.click()
 
                 if x % 6 == 0 and x != len(listing_images):
                     self.swipe('up', 580 * 3)
