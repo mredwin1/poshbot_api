@@ -86,7 +86,7 @@ class PoshUserAdmin(admin.ModelAdmin):
         ('Important Information', {
             'fields': (
                 ('is_active', 'is_registered', 'profile_updated'),
-                ('user',),
+                ('user', 'app_package'),
                 ('date_added', 'sales'),
                 ('username', 'password', 'email'),
                 ('phone_number'),
