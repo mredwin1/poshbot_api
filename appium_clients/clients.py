@@ -245,6 +245,34 @@ class PoshMarkClient(AppiumClient):
 
         super(PoshMarkClient, self).__init__(device_serial, logger, capabilities)
 
+    def locate(self, by, locator, location_type=None):
+        """Locates the first elements with the given By"""
+        wait = WebDriverWait(self.driver, 10)
+        try:
+            if location_type:
+                if location_type == 'visibility':
+                    return wait.until(expected_conditions.visibility_of_element_located((by, locator)))
+                elif location_type == 'clickable':
+                    return wait.until(expected_conditions.element_to_be_clickable((by, locator)))
+                else:
+                    return None
+            else:
+                return wait.until(expected_conditions.presence_of_element_located((by, locator)))
+        except TimeoutException:
+            self.logger.warning(f'Element could not be found with {locator}.')
+
+            self.alert_check()
+
+            if location_type:
+                if location_type == 'visibility':
+                    return wait.until(expected_conditions.visibility_of_element_located((by, locator)))
+                elif location_type == 'clickable':
+                    return wait.until(expected_conditions.element_to_be_clickable((by, locator)))
+                else:
+                    return None
+            else:
+                return wait.until(expected_conditions.presence_of_element_located((by, locator)))
+
     def download_and_send_file(self, key, download_folder):
         filename = key.split('/')[-1]
         download_location = f'/{download_folder}/{filename}'
@@ -443,8 +471,6 @@ class PoshMarkClient(AppiumClient):
                         not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
                         self.click(not_now)
 
-                    self.alert_check()
-
             return self.finish_registration()
         except TimeoutException:
             self.logger.error(traceback.format_exc())
@@ -583,8 +609,6 @@ class PoshMarkClient(AppiumClient):
             for listing_image in listing_images:
                 image_key = listing_image.image.name
                 self.download_and_send_file(image_key, listing_folder)
-
-            self.alert_check()
 
             sell_button = self.locate(AppiumBy.ID, 'sellTab')
             self.click(sell_button)
