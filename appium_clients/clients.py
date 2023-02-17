@@ -245,7 +245,7 @@ class PoshMarkClient(AppiumClient):
 
         super(PoshMarkClient, self).__init__(device_serial, logger, capabilities)
 
-    def locate(self, by, locator, location_type=None):
+    def locate(self, by, locator, location_type=None, retry=0):
         """Locates the first elements with the given By"""
         wait = WebDriverWait(self.driver, 10)
         try:
@@ -263,15 +263,21 @@ class PoshMarkClient(AppiumClient):
 
             self.alert_check()
 
-            if location_type:
-                if location_type == 'visibility':
-                    return wait.until(expected_conditions.visibility_of_element_located((by, locator)))
-                elif location_type == 'clickable':
-                    return wait.until(expected_conditions.element_to_be_clickable((by, locator)))
-                else:
-                    return None
+            self.logger.info(f'Trying again to locate element by {locator}')
+
+            if retry < 2:
+                retry += 1
+                return self.locate(by, locator, location_type, retry)
             else:
-                return wait.until(expected_conditions.presence_of_element_located((by, locator)))
+                if location_type:
+                    if location_type == 'visibility':
+                        return wait.until(expected_conditions.visibility_of_element_located((by, locator)))
+                    elif location_type == 'clickable':
+                        return wait.until(expected_conditions.element_to_be_clickable((by, locator)))
+                    else:
+                        return None
+                else:
+                    return wait.until(expected_conditions.presence_of_element_located((by, locator)))
 
     def download_and_send_file(self, key, download_folder):
         filename = key.split('/')[-1]
@@ -280,18 +286,23 @@ class PoshMarkClient(AppiumClient):
         self.driver.push_file(destination_path=f'/sdcard/Pictures/{filename}', source_path=download_location)
 
     def alert_check(self):
-        self.logger.info('Checking for posh party alert')
+        self.logger.info('Checking for an alert')
         if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
             title = self.locate(AppiumBy.ID, 'android:id/alertTitle').text
 
             if 'party' in title.lower():
-                self.logger.info('Alert found, clicking cancel button')
+                self.logger.info('Posh Party Alert found, clicking cancel button')
                 cancel = self.locate(AppiumBy.ID, 'android:id/button2')
                 self.click(cancel)
 
                 return True
-        else:
-            self.logger.info('No posh party alert')
+        elif self.is_present(AppiumBy.ID, 'android:id/message'):
+            message = self.locate(AppiumBy.ID, 'android:id/message')
+
+            self.logger.info(f'Alert with the following message popped up: {message.text}')
+
+            ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+            self.click(ok_button)
         return False
 
     def tap_img(self, name):
@@ -542,15 +553,6 @@ class PoshMarkClient(AppiumClient):
                     self.logger.info('Waiting for things to save')
                     self.sleep(3)
 
-                self.alert_check()
-
-                if self.is_present(AppiumBy.ID, 'android:id/button1'):
-                    self.logger.warning('Alert popped up. Clicking ok...')
-                    ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                    self.click(ok_button)
-
-                    self.sleep(.5)
-
             self.logger.info('Selecting brands')
 
             brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
@@ -572,11 +574,6 @@ class PoshMarkClient(AppiumClient):
                 self.sleep(.5)
 
                 self.alert_check()
-
-                if self.is_present(AppiumBy.ID, 'android:id/button1'):
-                    self.logger.warning('Alert popped up. Clicking ok...')
-                    ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                    self.click(ok_button)
 
             self.logger.info('Registration complete')
 
