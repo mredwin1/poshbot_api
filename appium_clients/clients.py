@@ -571,8 +571,6 @@ class PoshMarkClient(AppiumClient):
                     self.logger.info('Waiting for things to save')
                     self.sleep(3)
 
-                self.sleep(.5)
-
                 self.alert_check()
 
             self.logger.info('Registration complete')
