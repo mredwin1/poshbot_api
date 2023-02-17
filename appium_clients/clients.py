@@ -320,7 +320,7 @@ class PoshMarkClient(AppiumClient):
         time.sleep(1)
 
         retries = 0
-        while not self.is_present(AppiumBy.ID, 'sign_up_option') and retries < 10:
+        while not self.is_present(AppiumBy.ID, 'sign_up_option') and retries < 30:
             self.sleep(7)
             retries += 1
 
