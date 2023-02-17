@@ -73,7 +73,7 @@ class AppiumClient:
     def is_present(self, by, locator):
         """Checks if a web element is present"""
         try:
-            wait = WebDriverWait(self.driver, 5)
+            wait = WebDriverWait(self.driver, 1)
             wait.until(expected_conditions.presence_of_element_located((by, locator)))
         except (NoSuchElementException, TimeoutException):
             return False
@@ -247,7 +247,7 @@ class PoshMarkClient(AppiumClient):
 
     def locate(self, by, locator, location_type=None, retry=0):
         """Locates the first elements with the given By"""
-        wait = WebDriverWait(self.driver, 10)
+        wait = WebDriverWait(self.driver, 2)
         try:
             if location_type:
                 if location_type == 'visibility':
