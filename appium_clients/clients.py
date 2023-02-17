@@ -493,12 +493,6 @@ class PoshMarkClient(AppiumClient):
         try:
             self.logger.info('Finishing registration')
 
-            self.sleep(2)
-
-            while not (self.is_present(AppiumBy.ID, 'nextButton') or self.is_present(AppiumBy.ID, 'continueButton')):
-                self.logger.info('Waiting to continue')
-                self.sleep(2)
-
             if self.is_present(AppiumBy.ID, 'continueButton'):
                 dress_size_id = 'clothingSize'
                 shoe_size_id = 'shoeSize'
@@ -513,6 +507,12 @@ class PoshMarkClient(AppiumClient):
                 continue_button_id = 'nextButton'
                 done_button_id = 'nextButton'
                 brand_logos_id = 'suggestedBrandLogo3'
+
+            while not self.is_present(AppiumBy.ID, continue_button_id):
+                self.logger.info('Waiting to continue')
+                self.sleep(2)
+
+                self.alert_check()
 
             self.logger.info('Putting in sizes and zip')
 
