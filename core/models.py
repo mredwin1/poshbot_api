@@ -57,6 +57,21 @@ def path_and_rename(instance, filename):
     return path
 
 
+class Device(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+
+    serial = models.CharField(max_length=12, unique=True)
+    ip_reset_url = models.URLField()
+
+    in_use = models.BooleanField(default=False)
+    is_active = models.BooleanField(default=True)
+
+    checkout_time = models.DateTimeField(null=True, blank=True)
+
+    def __str__(self):
+        return self.serial
+
+
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     email = models.EmailField(unique=True)
@@ -76,6 +91,7 @@ class PoshUser(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
+    device = models.ForeignKey(Device, on_delete=models.SET_NULL, null=True, default=None)
 
     username = models.CharField(max_length=15, unique=True, blank=True)
     password = models.CharField(max_length=20,
@@ -353,21 +369,6 @@ class LogEntry(models.Model):
         options={'quality': 60},
         upload_to=path_and_rename
     )
-
-
-class Device(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-
-    serial = models.CharField(max_length=12, unique=True)
-    ip_reset_url = models.URLField()
-
-    in_use = models.BooleanField(default=False)
-    is_active = models.BooleanField(default=True)
-
-    checkout_time = models.DateTimeField(null=True, blank=True)
-
-    def __str__(self):
-        return self.serial
 
 
 class DeletedClone(models.Model):
