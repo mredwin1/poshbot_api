@@ -8,6 +8,7 @@ from . import models
 
 admin.site.register(models.Offer)
 admin.site.register(models.Device)
+admin.site.register(models.DeletedClone)
 
 
 class ListingInline(admin.StackedInline):
