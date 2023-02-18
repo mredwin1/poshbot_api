@@ -185,30 +185,15 @@ class AppiumClient:
     def launch_app(self, app_name):
         self.driver.press_keycode(3)
 
-        while not self.is_present(AppiumBy.ACCESSIBILITY_ID, app_name):
-            self.swipe('up', 500)
+        self.sleep(1)
+
+        self.swipe('up', 1000)
+
+        search = self.locate(AppiumBy.ID, 'com.google.android.apps.nexuslauncher:id/input')
+        search.send_keys(app_name[:5])
 
         app = self.locate(AppiumBy.ACCESSIBILITY_ID, app_name)
         app.click()
-
-        self.sleep(.5)
-
-        if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button'):
-            allow_calls_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button')
-            allow_calls_button.click()
-
-            self.sleep(.5)
-
-        if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button'):
-            allow_media_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button')
-            allow_media_button.click()
-
-            self.sleep(.5)
-
-        if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
-            allow_location_button = self.locate(AppiumBy.ID,
-                                                'com.android.permissioncontroller:id/permission_allow_foreground_only_button')
-            allow_location_button.click()
 
     def get_current_app_package(self):
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)

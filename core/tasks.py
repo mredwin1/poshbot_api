@@ -51,13 +51,14 @@ class CampaignTask(Task):
             try:
                 with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
                     client.add_clone()
-                    client.launch_clone()
+                    client.launch_app(self.campaign.posh_user.username)
+
+                    time.sleep(4)
+
                     clone_app_package = client.get_current_app_package()
 
                 self.campaign.posh_user.app_package = clone_app_package
                 self.campaign.posh_user.save()
-
-                time.sleep(2)
 
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
                     registered = client.register()
