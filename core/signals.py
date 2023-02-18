@@ -13,8 +13,9 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
     except OSError:
         pass
 
-    deleted_clone = DeletedClone(app_name=instance.username, device=instance.device)
-    deleted_clone.save()
+    if instance.app_package and instance.device:
+        deleted_clone = DeletedClone(app_name=instance.username, device=instance.device)
+        deleted_clone.save()
 
     instance.profile_picture.delete(save=False)
     instance.header_picture.delete(save=False)
