@@ -12,7 +12,7 @@ from selenium.common.exceptions import WebDriverException
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup
+from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem
 
 
 class CampaignTask(Task):
@@ -88,28 +88,53 @@ class CampaignTask(Task):
         return False
 
     def list_items(self, device, reset_ip=True, client=None):
-        listed = False
         ip_reset = not reset_ip
 
         if reset_ip:
             ip_reset = self.reset_ip(device.ip_reset_url)
 
         if ip_reset:
+            item_listed = False
             campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
+            items_to_list = []
+
+            for campaign_listing in campaign_listings:
+                try:
+                    listed_item = ListedItem.objects.get(posh_user=self.campaign.posh_user, listing=campaign_listing)
+                    if listed_item.status == ListedItem.NOT_LISTED:
+                        items_to_list.append(campaign_listing)
+
+                except ListedItem.DoesNotExist:
+                    item_to_list = ListedItem(posh_user=self.campaign.posh_user, listing=campaign_listing)
+                    item_to_list.save()
+                    items_to_list.append(item_to_list)
 
             if client:
-                for listing_not_listed in campaign_listings:
-                    listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                    listed = client.list_item(listing_not_listed, listing_images)
+                for item_to_list in items_to_list:
+                    listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
+                    item_listed = client.list_item(item_to_list.listing, listing_images)
+
+                    if item_listed:
+                        item_to_list.status = ListedItem.UNDER_REVIEW
+                        item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                        item_to_list.save()
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                    for listing_not_listed in campaign_listings:
-                        listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                        listed = client.list_item(listing_not_listed, listing_images)
+                    for item_to_list in items_to_list:
+                        listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
+                        listed = client.list_item(item_to_list.listing, listing_images)
+
+                        if listed:
+                            item_to_list.status = ListedItem.UNDER_REVIEW
+                            item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                            item_to_list.save()
+
+                            if not item_listed:
+                                item_listed = listed
 
                     client.driver.press_keycode(3)
 
-            return listed
+            return item_listed
 
     def share_and_more(self):
         login_retries = 0
@@ -142,21 +167,29 @@ class CampaignTask(Task):
                     all_listings = client.get_all_listings()
                     all_listings_retries += 1
 
-                # all_available_listings = []
-                # if all_listings:
-                #     for listings in all_listings.values():
-                #         all_available_listings += listings
-                #
-                # listings_not_listed = [listing for listing in campaign_listings if
-                #                        listing.title not in all_available_listings]
-                #
-                # for listing_not_listed in listings_not_listed:
-                #     listing_images = ListingImage.objects.filter(listing=listing_not_listed)
-                #     while item_listed is None and list_item_retries < 3:
-                #         item_listed = client.list_item(listing_not_listed, listing_images, list_item_retries)
-                #         list_item_retries += 1
-
                 if all_listings:
+                    listings = all_listings['shareable_listings'] + all_listings['sold_listings'] + all_listings['reserved_listings']
+                    listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user)
+                    now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+
+                    for listed_item in listed_items:
+                        if not listed_item.datetime_passed_review and listed_item.listing.title in listings:
+                            listed_item.datetime_passed_review = now
+                            listed_item.status = ListedItem.UP
+
+                        if not listed_item.datetime_sold and listed_item.listing.title in all_listings['sold_listings']:
+                            listed_item.datetime_passed_review = now
+                            listed_item.status = ListedItem.SOLD
+
+                        if listed_item.listing.title in all_listings['reserved_listings']:
+                            listed_item.status = ListedItem.RESERVED
+
+                        if listed_item.listing.title not in listings:
+                            listed_item.datetime_removed = now
+                            listed_item.status = ListedItem.REMOVED
+
+                        listed_item.save()
+
                     if all_listings['shareable_listings']:
                         for listing_title in all_listings['shareable_listings']:
                             while listing_shared is None and listing_shared_retries < 3:
@@ -194,6 +227,8 @@ class CampaignTask(Task):
                         self.campaign.save()
 
                         return False
+
+
             else:
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
@@ -307,7 +342,26 @@ def check_posh_users():
                             campaign.status = Campaign.STOPPED
                             campaign.save()
 
-                elif all_listings['shareable_listings'] and campaign and campaign.status == Campaign.PAUSED:
+                elif (all_listings['shareable_listings'] or all_listings['sold_listings'] or all_listings['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
+                    listings = all_listings['shareable_listings'] + all_listings['sold_listings'] + all_listings['reserved_listings']
+
+                    for listing in listings:
+                        try:
+                            listed_item = ListedItem.objects.get(posh_user=campaign.posh_user, listing__title=listing)
+
+                            if not listed_item.datetime_passed_review:
+                                listed_item.datetime_passed_review = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.status = ListedItem.UP
+
+                            if not listed_item.datetime_sold and listing in all_listings['sold_listings']:
+                                listed_item.datetime_passed_review = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.status = ListedItem.SOLD
+
+                            listed_item.save()
+
+                        except ListedItem.DoesNotExist:
+                            logger.warning(f'Could not find a listed item for {campaign.posh_user} with title {listing}')
+
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
                     CampaignTask.delay(campaign.id)
 

@@ -132,6 +132,12 @@ class PoshUser(models.Model):
         elif self.campaign:
             return 'Assigned'
 
+    @property
+    def sold_listings(self):
+        sold_listings = ListedItem.objects.filter(posh_user=self, status=ListedItem.SOLD)
+
+        return sold_listings.count()
+
     @staticmethod
     def get_mail_slurp_config():
         configuration = mailslurp_client.Configuration()
@@ -289,6 +295,34 @@ class ListingImage(models.Model):
 
     def __str__(self):
         return f'Image {self.id}'
+
+
+class ListedItem(models.Model):
+    NOT_LISTED = 'NOT LISTED'
+    UP = 'UP'
+    UNDER_REVIEW = 'UNDER REVIEW'
+    RESERVED = 'RESERVED'
+    SOLD = 'SOLD'
+    REMOVED = 'REMOVED'
+
+    STATUS_CHOICES = [
+        (NOT_LISTED, NOT_LISTED),
+        (UP, UP),
+        (UNDER_REVIEW, UNDER_REVIEW),
+        (RESERVED, RESERVED),
+        (SOLD, SOLD),
+        (REMOVED, REMOVED)
+    ]
+
+    posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+
+    datetime_listed = models.DateTimeField(null=True, blank=True)
+    datetime_passed_review = models.DateTimeField(null=True, blank=True)
+    datetime_removed = models.DateTimeField(null=True, blank=True)
+    datetime_sold = models.DateTimeField(null=True, blank=True)
+
+    status = models.CharField(max_length=255, choices=STATUS_CHOICES, default=NOT_LISTED)
 
 
 class Offer(models.Model):
