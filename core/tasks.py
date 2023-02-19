@@ -108,7 +108,7 @@ class CampaignTask(Task):
                         item_to_list.save()
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                    client.launch_app(self.campaign.posh_user.app_package)
+                    client.launch_app(self.campaign.posh_user.username)
 
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
