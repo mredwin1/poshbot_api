@@ -205,9 +205,13 @@ class AppiumClient:
         device = client.device(self.capabilities.get('udid'))
 
         windows = device.shell('dumpsys window windows')
-        app_package_index = windows.find('com.poshmark.')
+        current_focus_index = windows.find('mCurrentFocus')
+        end_of_current_focus = windows[current_focus_index:].find('\n')
+        current_focus = windows[current_focus_index:end_of_current_focus + current_focus_index]
+        divider_index = current_focus.find('/')
+        space_index = current_focus.rfind(' ')
 
-        return windows[app_package_index:app_package_index + 16]
+        return current_focus[space_index + 1:divider_index]
 
 
 class PoshMarkClient(AppiumClient):
