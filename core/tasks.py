@@ -342,7 +342,7 @@ def check_posh_users():
 
                 for listing_title in listing_titles:
                     try:
-                        listed_item = ListedItem.objects.get(posh_user=posh_user, listing__title=listing_title)
+                        listed_item = ListedItem.objects.get(posh_user=posh_user, listing_title=listing_title)
 
                         if listing_title in all_listings['shareable_listings'] and listed_item.status != ListedItem.UP:
                             if listed_item.status == ListedItem.UNDER_REVIEW:
