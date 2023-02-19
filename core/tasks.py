@@ -240,16 +240,20 @@ class CampaignTask(Task):
             self.campaign.status = Campaign.RUNNING
             self.campaign.save()
 
+            items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
+
             start_time = time.time()
-            if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING:
+            if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
                 success = self.register(list_items=True, device=device)
-            elif not self.campaign.posh_user.is_registered and self.campaign.mode != Campaign.ADVANCED_SHARING:
+            elif self.campaign.posh_user.is_registered and items_to_list and device:
+                success = self.list_items(device)
+            elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
+                success = self.share_and_more()
+            else:
                 self.campaign.status = Campaign.STOPPING
                 self.campaign.save()
 
                 success = False
-            elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
-                success = self.share_and_more()
             end_time = time.time()
 
             if not self.campaign.posh_user.is_active:
