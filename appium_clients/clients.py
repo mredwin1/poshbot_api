@@ -190,7 +190,12 @@ class AppiumClient:
         self.swipe('up', 1000)
 
         search = self.locate(AppiumBy.ID, 'com.google.android.apps.nexuslauncher:id/input')
-        search.send_keys(app_name[:5])
+        _index = app_name.find('_')
+
+        if _index != -1:
+            search.send_keys(app_name[:_index])
+        else:
+            search.send_keys(app_name)
 
         app = self.locate(AppiumBy.ACCESSIBILITY_ID, app_name)
         app.click()
