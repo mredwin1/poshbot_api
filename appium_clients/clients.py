@@ -212,7 +212,7 @@ class AppiumClient:
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
         device = client.device(self.capabilities.get('udid'))
 
-        windows = device.shell('dumpsys window windows')
+        windows = device.shell('dumpsys window')
         current_focus_index = windows.find('mCurrentFocus')
         end_of_current_focus = windows[current_focus_index:].find('\n')
         current_focus = windows[current_focus_index:end_of_current_focus + current_focus_index]
