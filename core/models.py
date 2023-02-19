@@ -315,8 +315,9 @@ class ListedItem(models.Model):
     ]
 
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
-    listing = models.ForeignKey(Listing, on_delete=models.CASCADE)
+    listing = models.ForeignKey(Listing, on_delete=models.SET_NULL, null=True, blank=True)
 
+    listing_title = models.CharField(max_length=50)
     datetime_listed = models.DateTimeField(null=True, blank=True)
     datetime_passed_review = models.DateTimeField(null=True, blank=True)
     datetime_removed = models.DateTimeField(null=True, blank=True)

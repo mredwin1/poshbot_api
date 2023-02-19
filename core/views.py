@@ -163,7 +163,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
                         items_to_list.append(campaign_listing)
 
                 except ListedItem.DoesNotExist:
-                    item_to_list = ListedItem(posh_user=campaign.posh_user, listing=campaign_listing)
+                    item_to_list = ListedItem(posh_user=campaign.posh_user, listing=campaign_listing, listing_title=campaign_listing.title)
                     item_to_list.save()
                     items_to_list.append(item_to_list)
 
