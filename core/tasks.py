@@ -362,9 +362,9 @@ def check_posh_users():
                             listed_item.save()
 
                     except ListedItem.DoesNotExist:
-                        logger.warning(f'Could not find a listed item for {campaign.posh_user} with title {listing_title}.')
+                        logger.warning(f'Could not find a listed item for {posh_user} with title {listing_title}.')
 
-                        if campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING):
+                        if not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING):
                             logger.warning(f'Creating the listed item now...')
 
                             try:
@@ -379,7 +379,7 @@ def check_posh_users():
                             else:
                                 status = ListedItem.UP
 
-                            listed_item = ListedItem(posh_user=campaign.posh_user, listing=listing, listing_title=listing_title, status=status)
+                            listed_item = ListedItem(posh_user=posh_user, listing=listing, listing_title=listing_title, status=status)
                             listed_item.save()
 
                 # Checks if the user is inactive when there are no listings and
