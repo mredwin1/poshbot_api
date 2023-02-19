@@ -325,6 +325,9 @@ class ListedItem(models.Model):
 
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default=NOT_LISTED)
 
+    def __str__(self):
+        return f'{self.listing_title} on {self.posh_user.username}'
+
 
 class Offer(models.Model):
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE, related_name='offers')
