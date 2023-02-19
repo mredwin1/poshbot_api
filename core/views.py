@@ -10,7 +10,7 @@ from rest_framework.response import Response
 from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
-from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup
+from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup, ListedItem
 from .tasks import CampaignTask, init_campaign
 from . import serializers
 
@@ -153,7 +153,21 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
             logger.info('Campaign will be started shortly')
 
-            if campaign.posh_user.is_registered:
+            campaign_listings = Listing.objects.filter(campaign__id=campaign.id)
+            items_to_list = []
+
+            for campaign_listing in campaign_listings:
+                try:
+                    listed_item = ListedItem.objects.get(posh_user=campaign.posh_user, listing=campaign_listing)
+                    if listed_item.status == ListedItem.NOT_LISTED:
+                        items_to_list.append(campaign_listing)
+
+                except ListedItem.DoesNotExist:
+                    item_to_list = ListedItem(posh_user=campaign.posh_user, listing=campaign_listing)
+                    item_to_list.save()
+                    items_to_list.append(item_to_list)
+
+            if campaign.posh_user.is_registered and not items_to_list:
                 campaign_task = CampaignTask
             else:
                 campaign_task = init_campaign

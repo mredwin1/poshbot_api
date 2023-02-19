@@ -95,19 +95,7 @@ class CampaignTask(Task):
 
         if ip_reset:
             item_listed = False
-            campaign_listings = Listing.objects.filter(campaign__id=self.campaign.id)
-            items_to_list = []
-
-            for campaign_listing in campaign_listings:
-                try:
-                    listed_item = ListedItem.objects.get(posh_user=self.campaign.posh_user, listing=campaign_listing)
-                    if listed_item.status == ListedItem.NOT_LISTED:
-                        items_to_list.append(campaign_listing)
-
-                except ListedItem.DoesNotExist:
-                    item_to_list = ListedItem(posh_user=self.campaign.posh_user, listing=campaign_listing)
-                    item_to_list.save()
-                    items_to_list.append(item_to_list)
+            items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
 
             if client:
                 for item_to_list in items_to_list:
