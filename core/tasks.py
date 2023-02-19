@@ -180,7 +180,17 @@ class CampaignTask(Task):
 
                     if all_listings['shareable_listings']:
                         for listing_title in all_listings['shareable_listings']:
-                            while listing_shared is None and listing_shared_retries < 3:
+                            try:
+                                listed_item = listed_items.get(listing__title=listing_title)
+
+                                if listed_item.status == ListedItem.UP:
+                                    share = True
+                                else:
+                                    share = False
+                            except ListedItem.DoesNotExist:
+                                share = True
+
+                            while share and listing_shared is None and listing_shared_retries < 3:
                                 listing_shared = client.share_item(listing_title)
                                 listing_shared_retries += 1
 
@@ -204,6 +214,10 @@ class CampaignTask(Task):
                             client.check_offers(listing_title)
 
                         if not shared:
+                            if not share:
+                                self.campaign.status = Campaign.PAUSED
+                                self.campaign.save()
+
                             return False
 
                         return True
@@ -216,7 +230,6 @@ class CampaignTask(Task):
 
                         return False
 
-
             else:
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
@@ -224,7 +237,6 @@ class CampaignTask(Task):
 
     def run(self, campaign_id, logger_id=None, device_id=None, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
-        success = False
         campaign_delay = None
 
         self.init_logger(logger_id)
