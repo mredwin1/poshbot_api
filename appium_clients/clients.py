@@ -183,11 +183,15 @@ class AppiumClient:
         self.driver.back()
 
     def launch_app(self, app_name):
+        self.logger.info('Going to home screen')
+
         self.driver.press_keycode(3)
 
         self.sleep(1)
 
         self.swipe('up', 1000)
+
+        self.logger.info('Searching for app')
 
         search = self.locate(AppiumBy.ID, 'com.google.android.apps.nexuslauncher:id/input')
         _index = app_name.find('_')
@@ -199,6 +203,10 @@ class AppiumClient:
 
         app = self.locate(AppiumBy.ACCESSIBILITY_ID, app_name)
         app.click()
+
+        self.logger.info('App launched')
+
+        self.sleep(2)
 
     def get_current_app_package(self):
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)

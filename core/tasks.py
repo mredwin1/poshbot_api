@@ -108,6 +108,8 @@ class CampaignTask(Task):
                         item_to_list.save()
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
+                    client.launch_app(self.campaign.posh_user.app_package)
+
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
                         listed = client.list_item(item_to_list.listing, listing_images)
@@ -338,7 +340,7 @@ def check_posh_users():
 
                 for listing_title in listing_titles:
                     try:
-                        listed_item = ListedItem.objects.get(posh_user=campaign.posh_user, listing__title=listing_title)
+                        listed_item = ListedItem.objects.get(posh_user=posh_user, listing__title=listing_title)
 
                         if listing_title in all_listings['shareable_listings'] and listed_item.status != ListedItem.UP:
                             if listed_item.status == ListedItem.UNDER_REVIEW:
