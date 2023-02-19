@@ -183,15 +183,17 @@ class CampaignTask(Task):
                             except Listing.DoesNotExist:
                                 listing = None
 
+                            listed_item = ListedItem(posh_user=self.campaign.posh_user, listing=listing, listing_title=listing_title)
+
                             if listing_title in all_listings['reserved_listings']:
-                                status = ListedItem.RESERVED
+                                listed_item.status = ListedItem.RESERVED
                             elif listing_title in all_listings['sold_listings']:
-                                status = ListedItem.SOLD
+                                listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.status = ListedItem.SOLD
                             else:
-                                status = ListedItem.UP
+                                listed_item.status = ListedItem.UP
                                 listings_can_share.append(listing_title)
 
-                            listed_item = ListedItem(posh_user=self.campaign.posh_user, listing=listing, listing_title=listing_title, status=status)
                             listed_item.save()
 
                     if listings_can_share:
@@ -353,7 +355,7 @@ def check_posh_users():
                                 listed_item.save()
 
                         elif listing_title in all_listings['sold_listings'] and listed_item.status != ListedItem.SOLD:
-                            listed_item.datetime_passed_review = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                            listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                             listed_item.status = ListedItem.SOLD
 
                             listed_item.save()
@@ -372,14 +374,16 @@ def check_posh_users():
                             except Listing.DoesNotExist:
                                 listing = None
 
-                            if listing_title in all_listings['reserved_listings']:
-                                status = ListedItem.RESERVED
-                            elif listing_title in all_listings['sold_listings']:
-                                status = ListedItem.SOLD
-                            else:
-                                status = ListedItem.UP
+                            listed_item = ListedItem(posh_user=posh_user, listing=listing, listing_title=listing_title)
 
-                            listed_item = ListedItem(posh_user=posh_user, listing=listing, listing_title=listing_title, status=status)
+                            if listing_title in all_listings['reserved_listings']:
+                                listed_item.status = ListedItem.RESERVED
+                            elif listing_title in all_listings['sold_listings']:
+                                listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.status = ListedItem.SOLD
+                            else:
+                                listed_item.status = ListedItem.UP
+
                             listed_item.save()
 
                 # Checks if the user is inactive when there are no listings and
