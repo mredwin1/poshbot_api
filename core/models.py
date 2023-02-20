@@ -143,7 +143,7 @@ class PoshUser(models.Model):
         last_sale = ListedItem.objects.filter(posh_user=self, status=ListedItem.SOLD).order_by('-datetime_sold').first()
 
         if last_sale:
-            return last_sale.datetime_sold.strftime('%Y-%m-%dT%H-%M-%S %p %Z')
+            return last_sale.datetime_sold.strftime('%Y-%m-%dT%H-%M-%S.%f%z')
 
         return None
 
