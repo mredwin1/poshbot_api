@@ -195,6 +195,8 @@ class CampaignTask(Task):
                                 listings_can_share.append(listing_title)
 
                             listed_item.save()
+                        except ListedItem.MultipleObjectsReturned:
+                            pass
 
                     if listings_can_share:
                         for listing_title in listings_can_share:
@@ -385,6 +387,8 @@ def check_posh_users():
                                 listed_item.status = ListedItem.UP
 
                             listed_item.save()
+                    except ListedItem.MultipleObjectsReturned:
+                        pass
 
                 if (all_listings['shareable_listings'] or all_listings['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
