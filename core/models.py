@@ -138,6 +138,15 @@ class PoshUser(models.Model):
 
         return sold_listings.count()
 
+    @property
+    def last_sale_time(self):
+        last_sale = ListedItem.objects.filter(posh_user=self, status=ListedItem.SOLD).order_by('-datetime_sold').first()
+
+        if last_sale:
+            return last_sale.datetime_sold.strftime('%Y-%m-%dT%H-%M-%S')
+
+        return None
+
     @staticmethod
     def get_mail_slurp_config():
         configuration = mailslurp_client.Configuration()
