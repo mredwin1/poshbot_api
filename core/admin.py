@@ -8,7 +8,6 @@ from . import models
 
 admin.site.register(models.Offer)
 admin.site.register(models.Device)
-admin.site.register(models.DeletedClone)
 admin.site.register(models.ListedItem)
 
 

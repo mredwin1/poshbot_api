@@ -407,11 +407,3 @@ class LogEntry(models.Model):
         options={'quality': 60},
         upload_to=path_and_rename
     )
-
-
-class DeletedClone(models.Model):
-    app_name = models.CharField(max_length=50)
-    device = models.ForeignKey(Device, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.app_name
