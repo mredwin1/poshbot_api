@@ -386,23 +386,23 @@ def check_posh_users():
 
                             listed_item.save()
 
-                # Checks if the user is inactive when there are no listings and
-                if sum([len(y) for y in all_listings.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
-                    logger.info('User has no listings available...')
-                    is_active = client.check_inactive(posh_user.username)
-
-                    if not is_active:
-                        posh_user.is_active = False
-                        posh_user.save()
-
-                        if campaign:
-                            logger.info('Stopping campaign...')
-                            campaign.status = Campaign.STOPPED
-                            campaign.save()
-
-                elif (all_listings['shareable_listings'] or all_listings['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
+                if (all_listings['shareable_listings'] or all_listings['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
                     CampaignTask.delay(campaign.id)
+
+            # Checks if the user is inactive when there are no listings and
+            if sum([len(y) for y in all_listings.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
+                logger.info('User has no listings available...')
+                is_active = client.check_inactive(posh_user.username)
+
+                if not is_active:
+                    posh_user.is_active = False
+                    posh_user.save()
+
+                    if campaign:
+                        logger.info('Stopping campaign...')
+                        campaign.status = Campaign.STOPPED
+                        campaign.save()
 
 
 @shared_task
