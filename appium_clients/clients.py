@@ -438,7 +438,7 @@ class PoshMarkClient(AppiumClient):
             profile_picture_key = self.campaign.posh_user.profile_picture.name
             profile_picture = self.locate(AppiumBy.XPATH,
                                           f'//android.widget.LinearLayout[contains(@content-desc, "{profile_picture_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-            self.click(profile_picture)
+            profile_picture.click()
 
             self.sleep(1)
 
