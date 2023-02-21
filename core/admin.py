@@ -215,7 +215,7 @@ class ListedItemAdmin(admin.ModelAdmin):
         url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(listed_item.posh_user.id)})}"
         return format_html('<a href="{}">{}</a>', url, listed_item.posh_user)
 
-    @admin.display(ordering='user')
+    @admin.display(ordering='posh_user__user')
     def associated_user(self, listed_item):
         url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(listed_item.posh_user.user.id)})}"
         return format_html('<a href="{}">{}</a>', url, listed_item.posh_user.user)
