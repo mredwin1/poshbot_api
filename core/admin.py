@@ -8,7 +8,6 @@ from . import models
 
 admin.site.register(models.Offer)
 admin.site.register(models.Device)
-admin.site.register(models.ListedItem)
 
 
 class ListingInline(admin.StackedInline):
@@ -143,7 +142,7 @@ class ListingAdmin(admin.ModelAdmin):
 class CampaignAdmin(admin.ModelAdmin):
     autocomplete_fields = ['posh_user']
     list_display = ['title', 'status', 'associated_user', 'associated_posh_user', 'listings_count']
-    search_fields = ['title__istartswith', 'associated_posh_user__istartswith']
+    search_fields = ['title__istartswith', 'posh_user__username__istartswith']
     list_filter = ['status', 'user']
     inlines = [ListingInline]
 
@@ -159,10 +158,8 @@ class CampaignAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='user')
     def associated_user(self, campaign):
-        if campaign.user:
-            url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(campaign.user.id)})}"
-            return format_html('<a href="{}">{}</a>', url, campaign.user)
-        return campaign.user
+        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(campaign.user.id)})}"
+        return format_html('<a href="{}">{}</a>', url, campaign.user)
 
     @admin.display(ordering='listings_count')
     def listings_count(self, campaign):
@@ -198,6 +195,38 @@ class LogGroupAdmin(admin.ModelAdmin):
             'fields': (
                 ('created_date',),
                 ('campaign', 'posh_user'),
+            )
+        }),
+    )
+
+
+@admin.register(models.ListedItem)
+class ListedItemAdmin(admin.ModelAdmin):
+    autocomplete_fields = ['posh_user']
+    list_display = ['title', 'status', 'associated_user', 'associated_posh_user']
+    search_fields = ['title__istartswith', 'posh_user__username__istartswith']
+    list_filter = ['status', 'posh_user', 'posh_user__user']
+
+    def get_queryset(self, request):
+        return super(ListedItemAdmin, self).get_queryset(request).select_related('posh_user')
+
+    @admin.display(ordering='posh_user')
+    def associated_posh_user(self, listed_item):
+        url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(listed_item.posh_user.id)})}"
+        return format_html('<a href="{}">{}</a>', url, listed_item.posh_user)
+
+    @admin.display(ordering='user')
+    def associated_user(self, listed_item):
+        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(listed_item.user.id)})}"
+        return format_html('<a href="{}">{}</a>', url, listed_item.user)
+
+    fieldsets = (
+        ('Campaign Information', {
+            'fields': (
+                ('posh_user', 'listing'),
+                ('listing_title', 'status'),
+                ('datetime_listed', 'datetime_passed_review'),
+                ('datetime_removed', 'datetime_sold'),
             )
         }),
     )

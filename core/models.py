@@ -335,7 +335,7 @@ class ListedItem(models.Model):
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default=NOT_LISTED)
 
     def __str__(self):
-        return f'{self.listing_title} on {self.posh_user.username}'
+        return f'{self.listing_title}'
 
 
 class Offer(models.Model):
