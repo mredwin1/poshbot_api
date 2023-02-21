@@ -443,6 +443,7 @@ def init_campaign(campaign_id, logger_id):
             if selected_device.serial not in serials:
                 logger.info(f'A connection to the following device could not be made: {selected_device.serial}')
                 logger.info('Waiting 10sec')
+                selected_device = None
                 time.sleep(10)
         else:
             logger.info('No device available, waiting 10sec')
