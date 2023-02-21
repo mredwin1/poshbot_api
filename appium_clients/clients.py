@@ -547,7 +547,7 @@ class PoshMarkClient(AppiumClient):
             zip_input = self.locate(AppiumBy.ID, zipcode_id)
             zip_input.send_keys(str(random.choice(self.zipcodes)))
 
-            while not self.is_present(AppiumBy.ID, brand_logos_id) and (self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'titleTextView').text != 'Brands'):
+            while not self.is_present(AppiumBy.ID, brand_logos_id) or (self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'titleTextView').text != 'Brands'):
                 continue_button = self.locate(AppiumBy.ID, continue_button_id)
                 self.click(continue_button)
 
