@@ -1,5 +1,6 @@
 import datetime
 import logging
+import os
 import pytz
 import random
 import requests
@@ -7,6 +8,7 @@ import time
 import traceback
 
 from celery import shared_task, Task
+from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
 
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
@@ -433,7 +435,16 @@ def init_campaign(campaign_id, logger_id):
 
                     break
 
-        if not selected_device:
+        if selected_device:
+            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+            devices = client.devices()
+            serials = [device.serial for device in devices]
+
+            if selected_device.serial not in serials:
+                logger.info(f'A connection to the following device could not be made: {selected_device.serial}')
+                logger.info('Waiting 10sec')
+                time.sleep(10)
+        else:
             logger.info('No device available, waiting 10sec')
             time.sleep(10)
             campaign.refresh_from_db()
