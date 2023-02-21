@@ -205,7 +205,7 @@ class ListedItemAdmin(admin.ModelAdmin):
     autocomplete_fields = ['posh_user']
     list_display = ['listing_title', 'status', 'associated_user', 'associated_posh_user']
     search_fields = ['listing_title__istartswith', 'posh_user__username__istartswith']
-    list_filter = ['status', 'posh_user', 'posh_user__user']
+    list_filter = ['status', 'posh_user__user', 'posh_user']
 
     def get_queryset(self, request):
         return super(ListedItemAdmin, self).get_queryset(request).select_related('posh_user')
