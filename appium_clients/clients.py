@@ -10,7 +10,7 @@ from appium.webdriver.common.appiumby import AppiumBy
 from django.conf import settings
 from ppadb.client import Client as AdbClient
 from selenium.webdriver.common.action_chains import ActionChains
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, InvalidArgumentException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import List
@@ -485,7 +485,7 @@ class PoshMarkClient(AppiumClient):
                         self.click(not_now)
 
             return self.finish_registration()
-        except TimeoutException:
+        except (TimeoutException, StaleElementReferenceException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
@@ -578,7 +578,7 @@ class PoshMarkClient(AppiumClient):
             self.logger.info('Registration complete')
 
             return True
-        except TimeoutException:
+        except (TimeoutException, StaleElementReferenceException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
@@ -904,7 +904,7 @@ class PoshMarkClient(AppiumClient):
                     self.logger.info('Item listed successfully')
 
             return True
-        except TimeoutException:
+        except (TimeoutException, StaleElementReferenceException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
