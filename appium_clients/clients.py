@@ -561,6 +561,8 @@ class PoshMarkClient(AppiumClient):
                     self.logger.info('Waiting for things to save')
                     self.sleep(3)
 
+                self.alert_check()
+
             self.logger.info('Selecting brands')
 
             brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
