@@ -217,8 +217,8 @@ class ListedItemAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='user')
     def associated_user(self, listed_item):
-        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(listed_item.user.id)})}"
-        return format_html('<a href="{}">{}</a>', url, listed_item.user)
+        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(listed_item.posh_user.user.id)})}"
+        return format_html('<a href="{}">{}</a>', url, listed_item.posh_user.user)
 
     fieldsets = (
         ('Campaign Information', {
