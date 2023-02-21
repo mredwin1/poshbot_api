@@ -203,8 +203,8 @@ class LogGroupAdmin(admin.ModelAdmin):
 @admin.register(models.ListedItem)
 class ListedItemAdmin(admin.ModelAdmin):
     autocomplete_fields = ['posh_user']
-    list_display = ['title', 'status', 'associated_user', 'associated_posh_user']
-    search_fields = ['title__istartswith', 'posh_user__username__istartswith']
+    list_display = ['listing_title', 'status', 'associated_user', 'associated_posh_user']
+    search_fields = ['listing_title__istartswith', 'posh_user__username__istartswith']
     list_filter = ['status', 'posh_user', 'posh_user__user']
 
     def get_queryset(self, request):
