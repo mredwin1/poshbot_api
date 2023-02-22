@@ -565,8 +565,8 @@ class PoshMarkClient(AppiumClient):
 
             self.logger.info('Selecting brands')
 
-            brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:12]
-            for brand in random.choices(brands, k=random.randint(2, 6)):
+            brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:9]
+            for brand in random.choices(brands, k=random.randint(1, 6)):
                 self.click(brand)
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
