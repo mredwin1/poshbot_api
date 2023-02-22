@@ -732,28 +732,29 @@ class PoshMarkClient(AppiumClient):
 
             secondary_category_clicked = False
             secondary_category_click_attempts = 0
-            while not secondary_category_clicked and secondary_category_click_attempts < 3:
-                try:
+            while not secondary_category_clicked and secondary_category_click_attempts < 7:
+                if self.is_present(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower()):
                     secondary_category_click_attempts += 1
                     secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
                     self.click(secondary_category_button)
+                    self.logger.info('Category clicked')
                     self.sleep(.5)
                     secondary_category_clicked = True
-                except TimeoutException:
+                else:
                     self.swipe('up', 400)
                     self.sleep(.5)
 
             subcategory_clicked = False
             subcategory_click_attempts = 0
-            while not subcategory_clicked and subcategory_click_attempts < 3:
-                try:
-                    subcategory_click_attempts += 1
+            while not subcategory_clicked and subcategory_click_attempts < 7:
+                subcategory_click_attempts += 1
+                if self.is_present(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower()):
                     subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower())
                     self.click(subcategory_button)
                     self.logger.info('Clicked sub category')
                     self.sleep(1)
                     subcategory_clicked = True
-                except TimeoutException:
+                else:
                     self.swipe('up', 400)
                     self.sleep(.5)
 
