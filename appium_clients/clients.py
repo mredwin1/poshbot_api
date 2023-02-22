@@ -548,13 +548,14 @@ class PoshMarkClient(AppiumClient):
 
             self.logger.info('Zipcode inserted')
 
-            while not self.is_present(AppiumBy.ID, brand_logos_id) or (self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'titleTextView').text != 'Brands'):
-                continue_button = self.locate(AppiumBy.ID, continue_button_id)
-                self.click(continue_button)
+            while not self.is_present(AppiumBy.ID, brand_logos_id):
+                if self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'titleTextView').text == 'Sizes':
+                    continue_button = self.locate(AppiumBy.ID, continue_button_id)
+                    self.click(continue_button)
 
-                self.logger.info('Continue button clicked')
-
-                self.sleep(2)
+                    self.logger.info('Continue button clicked')
+                else:
+                    self.logger.info(f'Not in the sizes screen')
 
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting for things to save')
