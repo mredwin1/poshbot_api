@@ -242,7 +242,6 @@ class PoshMarkClient(AppiumClient):
             language='en',
             locale='US',
             noReset=True,
-            skipDeviceInitialization=True
         )
 
         super(PoshMarkClient, self).__init__(device_serial, logger, capabilities)
@@ -933,7 +932,6 @@ class AppClonerClient(AppiumClient):
             language='en',
             locale='US',
             noReset=True,
-            skipDeviceInitialization=True
         )
         super(AppClonerClient, self).__init__(device_serial, logger, capabilities)
 
