@@ -322,6 +322,31 @@ class PoshMarkClient(AppiumClient):
         img.click()
 
     def register(self):
+        campaign_folder = f'/{self.campaign.title}'
+        campaign_folder_exists = os.path.exists(campaign_folder)
+        if not campaign_folder_exists:
+            os.mkdir(campaign_folder)
+
+        profile_picture_key = self.campaign.posh_user.profile_picture.name
+        self.download_and_send_file(profile_picture_key, campaign_folder)
+
+        time.sleep(1)
+
+        retries = 0
+        while not self.is_present(AppiumBy.ID, 'sign_up_option') and retries < 30:
+            self.sleep(7)
+            retries += 1
+
+        while self.is_present(AppiumBy.ID, 'sign_up_option'):
+            self.logger.info('Clicked sign up button')
+            sign_up = self.locate(AppiumBy.ID, 'sign_up_option')
+            self.click(sign_up)
+            self.sleep(1)
+
+        if self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
+            none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
+            self.click(none_of_the_above)
+
         try:
             first_name = self.locate(AppiumBy.ID, 'firstname')
             last_name = self.locate(AppiumBy.ID, 'lastname')
