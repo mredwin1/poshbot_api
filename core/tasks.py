@@ -308,7 +308,7 @@ class CampaignTask(Task):
             self.campaign.save()
 
             items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
-            need_to_list = items_to_list > 1
+            need_to_list = items_to_list.count() > 1
 
             start_time = time.time()
             try:
