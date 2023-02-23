@@ -298,6 +298,9 @@ class CampaignTask(Task):
                     CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id)
 
                     return None
+            except Exception:
+                self.logger.error(traceback.format_exc())
+                success = False
 
             end_time = time.time()
 
