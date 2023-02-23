@@ -130,8 +130,6 @@ class CampaignTask(Task):
                 self.campaign.save()
                 return False
 
-            self.campaign.status = Campaign.PAUSED
-            self.campaign.save()
             return True
 
         return False
