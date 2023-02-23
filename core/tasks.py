@@ -283,6 +283,10 @@ class CampaignTask(Task):
 
                 if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list):
                     self.logger.warning('Restarting device and campaign due to error')
+
+                    self.campaign.status = Campaign.STARTING
+                    self.campaign.save()
+
                     client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
                     device = client.device(serial=device.serial)
 
