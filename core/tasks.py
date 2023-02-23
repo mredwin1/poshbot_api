@@ -321,7 +321,7 @@ class CampaignTask(Task):
                     success = self.register(device=device, list_items=need_to_list)
                 elif installed and not self.campaign.posh_user.finished_registration and self.campaign.mode == Campaign.ADVANCED_SHARING:
                     success = self.finish_registration(device=device, list_items=need_to_list, reset_ip=True)
-                elif items_to_list and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
+                elif installed and items_to_list and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
                     success = self.list_items(device)
                 elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                     success = self.share_and_more()
