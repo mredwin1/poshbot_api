@@ -265,17 +265,36 @@ class CampaignTask(Task):
             items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
 
             start_time = time.time()
-            if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
-                success = self.register(list_items=True, device=device)
-            elif self.campaign.posh_user.is_registered and items_to_list and device:
-                success = self.list_items(device)
-            elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
-                success = self.share_and_more()
-            else:
-                self.campaign.status = Campaign.STOPPING
-                self.campaign.save()
+            try:
+                if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
+                    success = self.register(list_items=True, device=device)
+                elif self.campaign.posh_user.is_registered and items_to_list and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
+                    success = self.list_items(device)
+                elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
+                    success = self.share_and_more()
+                else:
+                    self.campaign.status = Campaign.STOPPING
+                    self.campaign.save()
 
+                    success = False
+            except WebDriverException:
+                self.logger.error(traceback.format_exc())
                 success = False
+
+                if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list):
+                    self.logger.warning('Restarting device and campaign due to error')
+                    client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+                    device = client.device(serial=device.serial)
+
+                    device.reboot()
+
+                    device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                    device.in_use = True
+                    device.save()
+                    CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id)
+
+                    return None
+
             end_time = time.time()
 
             if not self.campaign.posh_user.is_active:
