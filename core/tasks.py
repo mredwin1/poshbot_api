@@ -312,14 +312,14 @@ class CampaignTask(Task):
 
             start_time = time.time()
             try:
-                if not (self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package) and device:
+                if not (self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package) and device and self.campaign.mode == Campaign.ADVANCED_SHARING:
                     installed = self.install_clone(device)
                 else:
                     installed = True
 
-                if installed and not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING:
+                if installed and not self.campaign.posh_user.is_registered:
                     success = self.register(device=device, list_items=need_to_list)
-                elif installed and not self.campaign.posh_user.finished_registration and self.campaign.mode == Campaign.ADVANCED_SHARING:
+                elif installed and not self.campaign.posh_user.finished_registration:
                     success = self.finish_registration(device=device, list_items=need_to_list, reset_ip=True)
                 elif installed and items_to_list and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
                     success = self.list_items(device)
