@@ -341,9 +341,9 @@ class CampaignTask(Task):
                     self.campaign.save()
 
                     client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
-                    device = client.device(serial=device.serial)
+                    adb_device = client.device(serial=device.serial)
 
-                    device.reboot()
+                    adb_device.reboot()
 
                     device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     device.in_use = True
