@@ -406,6 +406,7 @@ class PoshMarkClient(AppiumClient):
             self.logger.info('Finishing registration')
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
+                self.alert_check()
                 window_title = self.locate(AppiumBy.ID, 'titleTextView')
 
                 if window_title:
@@ -459,6 +460,7 @@ class PoshMarkClient(AppiumClient):
                     continue_button = self.locate(AppiumBy.ID, continue_button_id)
                     self.click(continue_button)
                 elif window_title and window_title.text == 'Follow Brands':
+                    self.logger.info('Selecting brands')
                     if self.is_present(AppiumBy.ID, 'brandLogo'):
                         brands = self.locate_all(AppiumBy.ID, 'brandLogo')[:9]
                     else:
@@ -474,9 +476,11 @@ class PoshMarkClient(AppiumClient):
 
                     if continue_button:
                         self.click(continue_button)
+                    self.logger.info('Brands selected')
                 elif window_title and window_title.text == 'Find Your Friends':
                     done_button = self.locate(AppiumBy.ID, 'nextButton')
                     self.click(done_button)
+                    self.logger.info('Clicked on next button')
                 else:
                     if window_title:
                         self.logger.info('Window title could not be found')
@@ -486,6 +490,8 @@ class PoshMarkClient(AppiumClient):
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting to continue...')
                     self.sleep(3)
+
+
 
             return True
         except (TimeoutException, StaleElementReferenceException):
