@@ -227,6 +227,7 @@ class PoshMarkClient(AppiumClient):
         self.driver = None
         self.campaign = campaign
         self.logger = logger
+        self.is_registered = False
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
                                          aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
@@ -321,95 +322,6 @@ class PoshMarkClient(AppiumClient):
         img.click()
 
     def register(self):
-        campaign_folder = f'/{self.campaign.title}'
-        campaign_folder_exists = os.path.exists(campaign_folder)
-        if not campaign_folder_exists:
-            os.mkdir(campaign_folder)
-
-        profile_picture_key = self.campaign.posh_user.profile_picture.name
-        self.download_and_send_file(profile_picture_key, campaign_folder)
-
-        time.sleep(1)
-
-        retries = 0
-        while not self.is_present(AppiumBy.ID, 'sign_up_option') and retries < 30:
-            self.sleep(7)
-            retries += 1
-
-        while self.is_present(AppiumBy.ID, 'sign_up_option'):
-            self.logger.info('Clicked sign up button')
-            sign_up = self.locate(AppiumBy.ID, 'sign_up_option')
-            self.click(sign_up)
-            self.sleep(1)
-
-        if self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
-            none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
-            self.click(none_of_the_above)
-
-        if self.is_present(AppiumBy.ID, 'avataarImageView'):
-            picture_elem = self.locate(AppiumBy.ID, 'avataarImageView')
-            self.click(picture_elem)
-
-            photo_albums = self.locate(AppiumBy.ID, 'galleryTv')
-            self.click(photo_albums)
-
-            profile_picture = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{profile_picture_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-            self.click(profile_picture)
-
-            self.sleep(1)
-
-            next_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(next_button)
-
-            first_name = self.locate(AppiumBy.ID, 'firstname')
-            last_name = self.locate(AppiumBy.ID, 'lastname')
-            email = self.locate(AppiumBy.ID, 'email')
-            username = self.locate(AppiumBy.ID, 'username')
-            password = self.locate(AppiumBy.ID, 'password')
-
-            self.send_keys(first_name, self.campaign.posh_user.first_name)
-            self.send_keys(last_name, self.campaign.posh_user.last_name)
-            self.send_keys(email, self.campaign.posh_user.email)
-            self.send_keys(username, self.campaign.posh_user.username)
-            self.send_keys(password, self.campaign.posh_user.password)
-
-            while not self.campaign.posh_user.is_registered:
-                create_button = self.locate(AppiumBy.ID, 'nextButton')
-                self.click(create_button)
-
-                if self.is_present(AppiumBy.ID, 'popupContainer'):
-                    new_username = self.locate(AppiumBy.ID, 'item')
-                    self.click(new_username)
-
-                    self.sleep(1)
-
-                    username = self.locate(AppiumBy.ID, 'username')
-                    self.campaign.posh_user.username = username.text
-                    self.campaign.posh_user.save()
-
-                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
-                    self.logger.info('Registration still in progress')
-                    self.sleep(3)
-
-                response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
-                if response.status_code != requests.codes.ok:
-                    if self.is_present(AppiumBy.ID, 'android:id/message'):
-                        ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                        self.click(ok_button)
-
-                    elif self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
-                        not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
-                        self.click(not_now)
-
-                else:
-                    self.campaign.posh_user.is_registered = True
-                    self.campaign.posh_user.save()
-
-            return self.finish_registration()
-        else:
-            return self.register_alt()
-    
-    def register_alt(self):
         try:
             first_name = self.locate(AppiumBy.ID, 'firstname')
             last_name = self.locate(AppiumBy.ID, 'lastname')
@@ -435,8 +347,7 @@ class PoshMarkClient(AppiumClient):
             self.click(photo_albums)
 
             profile_picture_key = self.campaign.posh_user.profile_picture.name
-            profile_picture = self.locate(AppiumBy.XPATH,
-                                          f'//android.widget.LinearLayout[contains(@content-desc, "{profile_picture_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+            profile_picture = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{profile_picture_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
             profile_picture.click()
 
             self.sleep(1)
@@ -451,7 +362,7 @@ class PoshMarkClient(AppiumClient):
             username.send_keys(self.campaign.posh_user.username)
             password.send_keys(self.campaign.posh_user.password)
 
-            while not self.campaign.posh_user.is_registered:
+            while not self.is_registered:
                 create_button = self.locate(AppiumBy.ID, 'continueButton')
                 self.click(create_button)
 
@@ -479,111 +390,102 @@ class PoshMarkClient(AppiumClient):
                     self.campaign.posh_user.is_registered = True
                     self.campaign.posh_user.save()
 
-                    if self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
-                        not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
-                        self.click(not_now)
+                    # if self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
+                    #     not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
+                    #     self.click(not_now)
 
-            return self.finish_registration()
+            return self.is_registered
         except (TimeoutException, StaleElementReferenceException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
-            return False
+            return self.is_registered
 
     def finish_registration(self):
         try:
             self.logger.info('Finishing registration')
 
-            while not (self.is_present(AppiumBy.ID, 'continueButton') or self.is_present(AppiumBy.ID, 'nextButton')):
-                self.logger.info('Waiting to continue')
-                self.sleep(2)
-
-                self.alert_check()
-
-            if self.is_present(AppiumBy.ID, 'continueButton'):
-                dress_size_id = 'clothingSize'
-                shoe_size_id = 'shoeSize'
-                zipcode_id = 'zip_code'
-                continue_button_id = 'continueButton'
-                done_button_id = 'nextButton'
-                brand_logos_id = 'brandLogo'
-            else:
-                dress_size_id = 'sizeSpinnerText_II_InputLayout'
-                shoe_size_id = 'sizeSpinnerText_I'
-                zipcode_id = 'zip'
-                continue_button_id = 'nextButton'
-                done_button_id = 'nextButton'
-                brand_logos_id = 'suggestedBrandLogo3'
-
-            self.logger.info('Putting in sizes and zip')
-
-            while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '00'):
-                dress_size = self.locate(AppiumBy.ID, dress_size_id)
-                self.click(dress_size)
-                self.sleep(.5)
-
-            size_choice = random.choice(['00', '0', '2', '4', '6', '8', '10'])
-
-            while self.is_present(AppiumBy.ACCESSIBILITY_ID, size_choice):
-                size = self.locate(AppiumBy.ACCESSIBILITY_ID, size_choice)
-                self.click(size)
-                self.logger.info('Dress size clicked')
-                self.sleep(.5)
-
-            while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '5'):
-                shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
-                self.click(shoe_size)
-                self.sleep(.5)
-
-            size_choice = random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5'])
-
-            while self.is_present(AppiumBy.ACCESSIBILITY_ID, size_choice):
-                size = self.locate(AppiumBy.ACCESSIBILITY_ID, size_choice)
-                self.click(size)
-                self.logger.info('Shoe size clicked')
-                self.sleep(.5)
-
-            zip_input = self.locate(AppiumBy.ID, zipcode_id)
-            zip_input.send_keys(str(random.choice(self.zipcodes)))
-
-            self.logger.info('Zipcode inserted')
-
-            while not self.is_present(AppiumBy.ID, brand_logos_id):
-                if self.is_present(AppiumBy.ID, 'titleTextView') and self.locate(AppiumBy.ID, 'titleTextView').text == 'Sizes':
-                    continue_button = self.locate(AppiumBy.ID, continue_button_id)
-                    self.click(continue_button)
-
-                    self.logger.info('Continue button clicked')
-                else:
-                    self.logger.info(f'Not in the sizes screen')
-
-                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
-                    self.logger.info('Waiting for things to save')
-                    self.sleep(3)
-
-                self.alert_check()
-
-            self.logger.info('Selecting brands')
-
-            brands = self.locate_all(AppiumBy.ID, brand_logos_id)[:9]
-            for brand in random.choices(brands, k=random.randint(1, 6)):
-                self.click(brand)
-
             while not self.is_present(AppiumBy.ID, 'sellTab'):
-                if self.is_present(AppiumBy.ID, continue_button_id):
+                window_title = self.locate(AppiumBy.ID, 'com.poshmark.aqr:id/titleTextView')
+
+                if window_title:
+                    self.logger.info(f'Currently at the {window_title.text} screen')
+
+                if window_title and window_title.text == 'Complete your Profile':
+                    if self.is_present(AppiumBy.ID, 'continueButton'):
+                        dress_size_id = 'clothingSize'
+                        shoe_size_id = 'shoeSize'
+                        zipcode_id = 'zip_code'
+                        continue_button_id = 'continueButton'
+                    else:
+                        dress_size_id = 'sizeSpinnerText_II_InputLayout'
+                        shoe_size_id = 'sizeSpinnerText_I'
+                        zipcode_id = 'zip'
+                        continue_button_id = 'nextButton'
+
+                    self.logger.info('Putting in sizes and zip')
+
+                    while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '00'):
+                        dress_size = self.locate(AppiumBy.ID, dress_size_id)
+                        self.click(dress_size)
+                        self.sleep(.5)
+
+                    size_choice = random.choice(['00', '0', '2', '4', '6', '8', '10'])
+
+                    while self.is_present(AppiumBy.ACCESSIBILITY_ID, size_choice):
+                        size = self.locate(AppiumBy.ACCESSIBILITY_ID, size_choice)
+                        self.click(size)
+                        self.logger.info('Dress size clicked')
+                        self.sleep(.5)
+
+                    while not self.is_present(AppiumBy.ACCESSIBILITY_ID, '5'):
+                        shoe_size = self.locate(AppiumBy.ID, shoe_size_id)
+                        self.click(shoe_size)
+                        self.sleep(.5)
+
+                    size_choice = random.choice(['5', '5.5', '6', '6.5', '7', '7.5', '8', '8.5'])
+
+                    while self.is_present(AppiumBy.ACCESSIBILITY_ID, size_choice):
+                        size = self.locate(AppiumBy.ACCESSIBILITY_ID, size_choice)
+                        self.click(size)
+                        self.logger.info('Shoe size clicked')
+                        self.sleep(.5)
+
+                    zip_input = self.locate(AppiumBy.ID, zipcode_id)
+                    zip_input.send_keys(str(random.choice(self.zipcodes)))
+
+                    self.logger.info('Zipcode inserted')
+
                     continue_button = self.locate(AppiumBy.ID, continue_button_id)
                     self.click(continue_button)
-                elif self.is_present(AppiumBy.ID, done_button_id):
-                    done_button = self.locate(AppiumBy.ID, done_button_id)
-                    done_button.click()
+                elif window_title and window_title.text == 'Follow Brands':
+                    if self.is_present(AppiumBy.ID, 'brandLogo'):
+                        brands = self.locate_all(AppiumBy.ID, 'brandLogo')[:9]
+                    else:
+                        brands = self.locate_all(AppiumBy.ID, 'suggestedBrandLogo3')[:9]
+
+                    for brand in random.choices(brands, k=random.randint(1, 6)):
+                        self.click(brand)
+
+                    if self.is_present(AppiumBy.ID, 'continueButton'):
+                        continue_button = self.locate(AppiumBy.ID, 'continueButton')
+                    else:
+                        continue_button = self.locate(AppiumBy.ID, 'suggestedBrandLogo3')
+
+                    if continue_button:
+                        self.click(continue_button)
+                elif window_title and window_title.text == 'Find Your Friends':
+                    done_button = self.locate(AppiumBy.ID, 'nextButton')
+                    self.click(done_button)
+                else:
+                    if window_title:
+                        self.logger.info('Window title could not be found')
+                    else:
+                        self.logger.info(f'No handler for screen with title {window_title.text}')
 
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
-                    self.logger.info('Waiting for things to save')
+                    self.logger.info('Waiting to continue...')
                     self.sleep(3)
-
-                self.alert_check()
-
-            self.logger.info('Registration complete')
 
             return True
         except (TimeoutException, StaleElementReferenceException):
@@ -925,6 +827,7 @@ class AppClonerClient(AppiumClient):
         self.driver = None
         self.logger = logger
         self.app_name = app_name
+        self.installed = False
 
         capabilities = dict(
             platformName='Android',
@@ -986,6 +889,8 @@ class AppClonerClient(AppiumClient):
             install_button = self.locate(AppiumBy.ID, 'android:id/button1')
             install_button.click()
 
+            self.installed = True
+
             while self.is_present(AppiumBy.ID, 'com.android.packageinstaller:id/progress'):
                 self.logger.info('Waiting for app to finish installing...')
                 self.sleep(3)
@@ -995,11 +900,13 @@ class AppClonerClient(AppiumClient):
             if self.is_present(AppiumBy.ID, 'android:id/button2'):
                 done_button = self.locate(AppiumBy.ID, 'android:id/button2')
                 done_button.click()
+
+            return self.installed
         except TimeoutException:
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
-            return False
+            return self.installed
 
     def launch_clone(self):
         try:

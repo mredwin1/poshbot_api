@@ -117,6 +117,8 @@ class PoshUser(models.Model):
     is_active = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
     profile_updated = models.BooleanField(default=False)
+    clone_installed = models.BooleanField(default=False)
+    finished_registration = models.BooleanField(default=False)
 
     @property
     def status(self):

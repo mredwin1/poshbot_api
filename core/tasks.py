@@ -46,31 +46,84 @@ class CampaignTask(Task):
             self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user)
             self.logger.save()
 
-    def register(self, list_items, device):
-        ip_reset = self.reset_ip(device.ip_reset_url)
+    def install_clone(self, device):
+        with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
+            if not self.campaign.posh_user.clone_installed:
+                installed = client.add_clone()
 
-        if ip_reset:
-            with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
-                client.add_clone()
+                self.campaign.posh_user.clone_installed = installed
+                self.campaign.posh_user.device = device
+                self.campaign.posh_user.save()
+
+            if not self.campaign.posh_user.app_package:
                 client.launch_app(self.campaign.posh_user.username)
 
                 time.sleep(4)
 
                 clone_app_package = client.get_current_app_package()
 
-            self.campaign.posh_user.app_package = clone_app_package
-            self.campaign.posh_user.device = device
-            self.campaign.posh_user.save()
+                self.campaign.posh_user.app_package = clone_app_package
+                self.campaign.posh_user.save()
 
-            with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
+        return self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package
+
+    def register(self, list_items, device):
+        ip_reset = self.reset_ip(device.ip_reset_url)
+
+        if ip_reset:
+            with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                 registered = client.register()
 
-                if registered and list_items:
-                    listed = self.list_items(device, False, client)
+                self.campaign.posh_user.is_registered = registered
+                self.campaign.posh_user.save()
+
+                if registered:
+                    finish_registration_and_list = self.finish_registration(device, list_items, False, client)
 
                 client.driver.press_keycode(3)
 
-            if not (registered and listed):
+            if not (registered and finish_registration_and_list):
+                self.campaign.status = Campaign.STOPPED
+                self.campaign.save()
+                return False
+
+            self.campaign.status = Campaign.PAUSED
+            self.campaign.save()
+            return True
+
+        return False
+
+    def finish_registration(self, device, list_items=True, reset_ip=True, client=None):
+        ip_reset = not reset_ip
+        listed = not list_items
+
+        if reset_ip:
+            ip_reset = self.reset_ip(device.ip_reset_url)
+
+        if ip_reset:
+            if client:
+                registration_finished = client.finish_registration()
+
+                self.campaign.posh_user.finished_registration = registration_finished
+                self.campaign.posh_user.save()
+
+                if registration_finished and list_items:
+                    listed = self.list_items(device, False, client)
+
+                client.driver.press_keycode(3)
+            else:
+                with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
+                    registration_finished = client.finish_registration()
+
+                    self.campaign.posh_user.finished_registration = registration_finished
+                    self.campaign.posh_user.save()
+
+                    if registration_finished and list_items:
+                        listed = self.list_items(device, False, client)
+
+                    client.driver.press_keycode(3)
+
+            if not (registration_finished and listed):
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
                 return False
@@ -255,12 +308,20 @@ class CampaignTask(Task):
             self.campaign.save()
 
             items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
+            need_to_list = items_to_list > 1
 
             start_time = time.time()
             try:
-                if not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
-                    success = self.register(list_items=True, device=device)
-                elif self.campaign.posh_user.is_registered and items_to_list and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
+                if not (self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package) and device:
+                    installed = self.install_clone(device)
+                else:
+                    installed = True
+
+                if installed and not self.campaign.posh_user.is_registered and self.campaign.mode == Campaign.ADVANCED_SHARING:
+                    success = self.register(device=device, list_items=need_to_list)
+                elif installed and not self.campaign.posh_user.finished_registration and self.campaign.mode == Campaign.ADVANCED_SHARING:
+                    success = self.finish_registration(device=device, list_items=need_to_list, reset_ip=True)
+                elif items_to_list and self.campaign.mode == Campaign.ADVANCED_SHARING and device:
                     success = self.list_items(device)
                 elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                     success = self.share_and_more()
