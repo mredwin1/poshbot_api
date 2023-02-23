@@ -50,42 +50,34 @@ class CampaignTask(Task):
         ip_reset = self.reset_ip(device.ip_reset_url)
 
         if ip_reset:
-            try:
-                with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
-                    client.add_clone()
-                    client.launch_app(self.campaign.posh_user.username)
+            with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
+                client.add_clone()
+                client.launch_app(self.campaign.posh_user.username)
 
-                    time.sleep(4)
+                time.sleep(4)
 
-                    clone_app_package = client.get_current_app_package()
+                clone_app_package = client.get_current_app_package()
 
-                self.campaign.posh_user.app_package = clone_app_package
-                self.campaign.posh_user.device = device
-                self.campaign.posh_user.save()
+            self.campaign.posh_user.app_package = clone_app_package
+            self.campaign.posh_user.device = device
+            self.campaign.posh_user.save()
 
-                with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
-                    registered = client.register()
+            with MobilePoshMarkClient(device.serial, self.campaign, self.logger, clone_app_package) as client:
+                registered = client.register()
 
-                    if registered and list_items:
-                        listed = self.list_items(device, False, client)
+                if registered and list_items:
+                    listed = self.list_items(device, False, client)
 
-                    client.driver.press_keycode(3)
+                client.driver.press_keycode(3)
 
-                if not (registered and listed):
-                    self.campaign.status = Campaign.STOPPED
-                    self.campaign.save()
-                    return False
-
-                self.campaign.status = Campaign.PAUSED
-                self.campaign.save()
-                return True
-
-            except (TimeoutError, WebDriverException):
-                self.logger.error(traceback.format_exc())
+            if not (registered and listed):
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
-
                 return False
+
+            self.campaign.status = Campaign.PAUSED
+            self.campaign.save()
+            return True
 
         return False
 
