@@ -406,7 +406,7 @@ class PoshMarkClient(AppiumClient):
             self.logger.info('Finishing registration')
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
-                window_title = self.locate(AppiumBy.ID, 'com.poshmark.aqr:id/titleTextView')
+                window_title = self.locate(AppiumBy.ID, 'titleTextView')
 
                 if window_title:
                     self.logger.info(f'Currently at the {window_title.text} screen')
