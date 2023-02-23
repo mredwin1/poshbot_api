@@ -113,6 +113,8 @@ class CampaignTask(Task):
                 client.driver.press_keycode(3)
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
+                    client.launch_app(self.campaign.posh_user.username)
+
                     registration_finished = client.finish_registration()
 
                     self.campaign.posh_user.finished_registration = registration_finished
