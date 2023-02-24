@@ -373,7 +373,10 @@ class CampaignTask(Task):
                     return None
             except Exception:
                 self.logger.error(traceback.format_exc())
-                success = False
+                self.logger.warning('Stopping campaign due to error')
+
+                self.campaign.status = Campaign.STOPPED
+                self.campaign.save()
 
             end_time = time.time()
 

@@ -335,8 +335,6 @@ class PoshMarkClient(AppiumClient):
         if not campaign_folder_exists:
             os.mkdir(campaign_folder)
 
-        raise FileNotFoundError
-
         profile_picture_key = self.campaign.posh_user.profile_picture.name
         self.download_and_send_file(profile_picture_key, campaign_folder)
 
