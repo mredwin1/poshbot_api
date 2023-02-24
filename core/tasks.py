@@ -173,6 +173,10 @@ class CampaignTask(Task):
 
                     client.driver.press_keycode(3)
 
+            if not item_listed:
+                self.campaign.status = Campaign.STOPPED
+                self.campaign.save()
+
             return item_listed
 
     def share_and_more(self):
