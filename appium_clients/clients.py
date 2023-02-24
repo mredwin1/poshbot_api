@@ -523,7 +523,7 @@ class PoshMarkClient(AppiumClient):
                     if continue_button:
                         self.click(continue_button)
                     self.logger.info('Brands selected')
-                elif window_title and window_title.text == ('Find Your Friends', 'Community'):
+                elif window_title and window_title.text in ('Find Your Friends', 'Community'):
                     done_button = self.locate(AppiumBy.ID, 'nextButton')
                     self.click(done_button)
                     self.logger.info('Clicked on next button')
