@@ -779,7 +779,7 @@ class PoshMarkClient(AppiumClient):
                 brand_search = self.locate(AppiumBy.ID, 'searchTextView')
                 brand_search.send_keys(listing.brand.lower())
 
-                if not self.is_present(AppiumBy.XPATH, f"//*[translate(@text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.title.lower()}']"):
+                if not self.is_present(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.title.lower()}']"):
                     self.logger.info('Brand did not pop up on search... Taping back.')
                     while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID,
                                                                                            'titleTextView').text != 'Listing Details':
@@ -788,7 +788,7 @@ class PoshMarkClient(AppiumClient):
                     pressed_back = True
 
                 else:
-                    brand = self.locate(AppiumBy.XPATH, f"//*[translate(@text, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.title.lower()}']")
+                    brand = self.locate(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.title.lower()}']")
                     self.click(brand)
 
                     self.logger.info('Clicked brand')
