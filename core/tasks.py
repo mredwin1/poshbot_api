@@ -356,8 +356,15 @@ class CampaignTask(Task):
                     adb_device.reboot()
 
                     device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                    device.in_use = True
                     device.save()
+
+                    serials = []
+                    while device.serial not in serials:
+                        devices = client.devices()
+                        serials = [device.serial for device in devices]
+                        self.logger.warning('Device not finished rebooting yet. Sleeping for 10 seconds')
+                        time.sleep(10)
+
                     CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id)
 
                     return None
