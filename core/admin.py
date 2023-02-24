@@ -67,9 +67,9 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
     readonly_fields = ['sales', 'date_added']
-    list_display = ['username', 'status', 'associated_campaign', 'email', 'password', 'phone_number']
+    list_display = ['username', 'status', 'associated_user','associated_campaign', 'email']
     search_fields = ['username__istartswith', 'email__istartswith']
-    list_filter = ['campaign', PoshUserStatusFilter]
+    list_filter = ['user', PoshUserStatusFilter]
     list_per_page = 20
 
     def get_queryset(self, request):
@@ -81,6 +81,11 @@ class PoshUserAdmin(admin.ModelAdmin):
             url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(posh_user.campaign.id)})}"
             return format_html('<a href="{}">{}</a>', url, posh_user.campaign)
         return posh_user.campaign
+
+    @admin.display(ordering='user')
+    def associated_user(self, posh_user):
+        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(posh_user.user.id)})}"
+        return format_html('<a href="{}">{}</a>', url, posh_user.user)
 
     fieldsets = (
         ('Important Information', {
