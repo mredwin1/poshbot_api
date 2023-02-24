@@ -324,8 +324,10 @@ class CampaignTask(Task):
             try:
                 if not (self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package) and device and self.campaign.mode == Campaign.ADVANCED_SHARING:
                     installed = self.install_clone(device)
-                else:
+                elif self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package and device and self.campaign.mode == Campaign.ADVANCED_SHARING:
                     installed = True
+                else:
+                    installed = False
 
                 if installed and not self.campaign.posh_user.is_registered:
                     success = self.register(device=device, list_items=need_to_list)
