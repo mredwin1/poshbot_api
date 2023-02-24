@@ -173,6 +173,8 @@ class CampaignTask(Task):
                     client.driver.press_keycode(3)
 
             if not item_listed:
+                self.logger.info('Did not list successfully. Stopping campaign.')
+
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
             else:
@@ -284,19 +286,27 @@ class CampaignTask(Task):
                         return shared
 
                     elif all_listings['reserved_listings']:
+                        self.logger.info('There are only reserved listing on this user\'s account.')
+
                         return False
 
                     elif not listings_can_share and all_listings['shareable_listings']:
+                        self.logger.info('The remaining listings are under review. Pausing campaign.')
+
                         self.campaign.status = Campaign.PAUSED
                         self.campaign.save()
 
                         return False
                     else:
+                        self.logger.info('There are no listings on this user\'s account. Stopping campaign.')
+
                         self.campaign.status = Campaign.STOPPED
                         self.campaign.save()
 
                         return False
             else:
+                self.logger.info('Stopping campaign because user could not log in')
+
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
                 return False
@@ -375,12 +385,12 @@ class CampaignTask(Task):
                 self.logger.error(traceback.format_exc())
                 self.logger.warning('Stopping campaign due to error')
 
+                success = False
+
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
 
             end_time = time.time()
-
-            self.logger.info(self.campaign.status)
 
             if not self.campaign.posh_user.is_active:
                 self.campaign.status = Campaign.STOPPED
@@ -393,8 +403,6 @@ class CampaignTask(Task):
                 self.logger.info('Releasing device')
                 device.in_use = False
                 device.save()
-
-            self.campaign.refresh_from_db()
 
             if not campaign_delay:
                 delay = self.campaign.delay * 60
