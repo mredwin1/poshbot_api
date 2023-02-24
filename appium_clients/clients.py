@@ -183,6 +183,8 @@ class AppiumClient:
         self.driver.back()
 
     def launch_app(self, app_name):
+        self.logger.info(f'Launching app {app_name}')
+
         self.logger.info('Going to home screen')
 
         self.driver.press_keycode(3)
