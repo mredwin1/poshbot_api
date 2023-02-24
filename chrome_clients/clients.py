@@ -10,6 +10,7 @@ import time
 import traceback
 
 from django.conf import settings
+from django.utils.text import slugify
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
@@ -116,7 +117,7 @@ class BaseClient:
         self.web_driver_options.add_argument("--disable-plugins-discovery")
         # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
-        self.cookies_filename = cookies_filename
+        self.cookies_filename = slugify(cookies_filename)
 
         if not os.path.isdir('/log_images'):
             try:
@@ -318,8 +319,9 @@ class PoshMarkClient(BaseClient):
         if proxy_hostname and proxy_port:
             self.requests_proxy['https'] = f'http://{proxy_hostname}:{proxy_port}'
 
-        if not os.path.isdir(f'/log_images/{self.campaign.title}'):
-            os.mkdir(f'/log_images/{self.campaign.title}')
+        logs_dir = f'/log_images/{slugify(self.campaign.title)}'
+        if not os.path.isdir(logs_dir):
+            os.mkdir(logs_dir)
 
     def handle_error(self, error_message, filename):
         image_path = f'/log_images/{self.campaign.title}/{filename}'
@@ -924,14 +926,14 @@ class PoshMarkClient(BaseClient):
 
                 self.logger.info('Downloading all of the listing images')
 
-                campaign_folder_exists = os.path.exists(f'/{self.campaign.title}')
-                listing_folder_exists = os.path.exists(f'/{self.campaign.title}/{listing.title}')
+                campaign_folder = f'/{slugify(self.campaign.title)}'
+                listing_folder = f'{campaign_folder}/{slugify(listing.title)}'
 
-                if not campaign_folder_exists:
-                    os.mkdir(f'/{self.campaign.title}')
+                if not os.path.exists(campaign_folder):
+                    os.mkdir(campaign_folder)
 
-                if not listing_folder_exists:
-                    os.mkdir(f'/{self.campaign.title}/{listing.title}')
+                if not listing_folder:
+                    os.mkdir(listing_folder)
 
                 listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
                 self.bucket.download_file(listing.cover_photo.name, f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')

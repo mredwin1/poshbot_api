@@ -8,6 +8,7 @@ import traceback
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from django.conf import settings
+from django.utils.text import slugify
 from ppadb.client import Client as AdbClient
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
@@ -329,7 +330,7 @@ class PoshMarkClient(AppiumClient):
 
     def register(self):
         self.logger.info('Starting Registration Process')
-        campaign_folder = f'/{self.campaign.title}'
+        campaign_folder = f'/{slugify(self.campaign.title)}'
         campaign_folder_exists = os.path.exists(campaign_folder)
         if not campaign_folder_exists:
             os.mkdir(campaign_folder)
@@ -547,16 +548,16 @@ class PoshMarkClient(AppiumClient):
         try:
             self.logger.info(f'Listing {listing.title} for {self.campaign.posh_user.username}')
 
-            campaign_folder = f'/{self.campaign.title}'
-            listing_folder = f'/{self.campaign.title}/{listing.title}'
+            campaign_folder = f'/{slugify(self.campaign.title)}'
+            listing_folder = f'{campaign_folder}/{slugify(listing.title)}'
             campaign_folder_exists = os.path.exists(campaign_folder)
             listing_folder_exists = os.path.exists(listing_folder)
 
             if not campaign_folder_exists:
-                os.mkdir(f'/{self.campaign.title}')
+                os.mkdir(campaign_folder)
 
             if not listing_folder_exists:
-                os.mkdir(f'/{self.campaign.title}/{listing.title}')
+                os.mkdir(listing_folder)
 
             cover_photo_key = listing.cover_photo.name
             self.download_and_send_file(cover_photo_key, listing_folder)
