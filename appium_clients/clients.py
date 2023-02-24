@@ -457,7 +457,7 @@ class PoshMarkClient(AppiumClient):
                 if window_title:
                     self.logger.info(f'Currently at the {window_title.text} screen')
 
-                if window_title and window_title.text == 'Complete your Profile':
+                if window_title and window_title.text in ('Sizes', 'Complete your Profile'):
                     if self.is_present(AppiumBy.ID, 'continueButton'):
                         dress_size_id = 'clothingSize'
                         shoe_size_id = 'shoeSize'
@@ -504,7 +504,7 @@ class PoshMarkClient(AppiumClient):
 
                     continue_button = self.locate(AppiumBy.ID, continue_button_id)
                     self.click(continue_button)
-                elif window_title and window_title.text == 'Follow Brands':
+                elif window_title and window_title.text in ('Follow Brands', 'Brands'):
                     self.logger.info('Selecting brands')
                     if self.is_present(AppiumBy.ID, 'brandLogo'):
                         brands = self.locate_all(AppiumBy.ID, 'brandLogo')[:9]
@@ -528,9 +528,9 @@ class PoshMarkClient(AppiumClient):
                     self.logger.info('Clicked on next button')
                 else:
                     if window_title:
-                        self.logger.info('Window title could not be found')
-                    else:
                         self.logger.info(f'No handler for screen with title {window_title.text}')
+                    else:
+                        self.logger.info('Window title could not be found')
 
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting to continue...')
