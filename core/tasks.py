@@ -89,8 +89,6 @@ class CampaignTask(Task):
                 self.campaign.save()
                 return False
 
-            self.campaign.status = Campaign.PAUSED
-            self.campaign.save()
             return True
 
         return False
@@ -176,6 +174,12 @@ class CampaignTask(Task):
             if not item_listed:
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
+            else:
+                all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
+
+                if all_items.count() == 0:
+                    self.campaign.status = Campaign.PAUSED
+                    self.campaign.save()
 
             return item_listed
 
