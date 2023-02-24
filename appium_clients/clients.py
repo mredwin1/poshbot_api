@@ -322,6 +322,7 @@ class PoshMarkClient(AppiumClient):
         img.click()
 
     def register(self):
+        self.logger.info('Starting Registration Process')
         campaign_folder = f'/{self.campaign.title}'
         campaign_folder_exists = os.path.exists(campaign_folder)
         if not campaign_folder_exists:
@@ -346,8 +347,10 @@ class PoshMarkClient(AppiumClient):
         if self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
             none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
             self.click(none_of_the_above)
+            self.logger.info('Google accounts pop up. Clicked None of the above.')
 
         try:
+            self.logger.info('Putting in First Name, Last Name, and Email')
             first_name = self.locate(AppiumBy.ID, 'firstname')
             last_name = self.locate(AppiumBy.ID, 'lastname')
             email = self.locate(AppiumBy.ID, 'email')
@@ -359,11 +362,15 @@ class PoshMarkClient(AppiumClient):
             continue_button = self.locate(AppiumBy.ID, 'continueButton')
             continue_button.click()
 
+            self.logger.info('Clicked continue button')
+
             self.sleep(.5)
 
             while self.is_present(AppiumBy.ID, 'progressBar'):
                 self.logger.info('Waiting to continue...')
                 self.sleep(5)
+
+            self.logger.info('Adding profile picture')
 
             picture_elem = self.locate(AppiumBy.ID, 'addPictureButton')
             self.click(picture_elem)
@@ -380,6 +387,9 @@ class PoshMarkClient(AppiumClient):
             next_button = self.locate(AppiumBy.ID, 'nextButton')
             self.click(next_button)
 
+            self.logger.info('Profile picture added')
+            self.logger.info('Putting in username and password')
+
             username = self.locate(AppiumBy.ID, 'username')
             password = self.locate(AppiumBy.ID, 'password')
 
@@ -387,13 +397,20 @@ class PoshMarkClient(AppiumClient):
             username.send_keys(self.campaign.posh_user.username)
             password.send_keys(self.campaign.posh_user.password)
 
+            self.logger.info('Username and password entered')
+
             while not self.is_registered:
+                self.logger.info('Clicking continue button')
                 create_button = self.locate(AppiumBy.ID, 'continueButton')
                 self.click(create_button)
+
+                self.logger.info('Continue button clicked')
 
                 if self.is_present(AppiumBy.ID, 'popupContainer'):
                     new_username = self.locate(AppiumBy.ID, 'item')
                     self.click(new_username)
+
+                    self.logger.info(f'Looks like username was taken. Choosing new username: {new_username.text}')
 
                     self.sleep(1)
 
@@ -407,9 +424,7 @@ class PoshMarkClient(AppiumClient):
 
                 response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
                 if response.status_code != requests.codes.ok:
-                    if self.is_present(AppiumBy.ID, 'android:id/message'):
-                        ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                        self.click(ok_button)
+                    self.alert_check()
 
                 else:
                     self.campaign.posh_user.is_registered = True
