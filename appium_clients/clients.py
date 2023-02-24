@@ -291,6 +291,7 @@ class PoshMarkClient(AppiumClient):
 
     def alert_check(self):
         self.logger.info('Checking for an alert')
+
         if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
             title = self.locate(AppiumBy.ID, 'android:id/alertTitle').text
 
@@ -307,6 +308,9 @@ class PoshMarkClient(AppiumClient):
 
             ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
             self.click(ok_button)
+
+        self.logger.info('No alerts found')
+
         return False
 
     def tap_img(self, name):
