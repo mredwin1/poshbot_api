@@ -390,6 +390,9 @@ class LogGroup(models.Model):
     def __str__(self):
         return f'LogGroup {self.campaign.title} for {self.posh_user.username}'
 
+    class Meta:
+        ordering = ['created_date']
+
 
 class LogEntry(models.Model):
     CRITICAL = 50
