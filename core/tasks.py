@@ -72,6 +72,8 @@ class CampaignTask(Task):
 
         if ip_reset:
             with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
+                client.launch_app(self.campaign.posh_user.username)
+
                 registered = client.register()
 
                 self.campaign.posh_user.is_registered = registered
