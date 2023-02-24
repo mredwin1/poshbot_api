@@ -391,7 +391,7 @@ class LogGroup(models.Model):
         return f'LogGroup {self.campaign.title} for {self.posh_user.username}'
 
     class Meta:
-        ordering = ['created_date']
+        ordering = ['-created_date']
 
 
 class LogEntry(models.Model):
