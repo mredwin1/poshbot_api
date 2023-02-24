@@ -87,6 +87,7 @@ class CampaignTask(Task):
             if not (registered and finish_registration_and_list):
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
+
                 return False
 
             return True
@@ -375,6 +376,8 @@ class CampaignTask(Task):
                 success = False
 
             end_time = time.time()
+
+            self.logger.info(self.campaign.status)
 
             if not self.campaign.posh_user.is_active:
                 self.campaign.status = Campaign.STOPPED
