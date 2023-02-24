@@ -429,8 +429,7 @@ class PoshMarkClient(AppiumClient):
                     self.alert_check()
 
                 else:
-                    self.campaign.posh_user.is_registered = True
-                    self.campaign.posh_user.save()
+                    self.is_registered = True
 
                     # if self.is_present(AppiumBy.ID, 'android:id/autofill_save_no'):
                     #     not_now = self.locate(AppiumBy.ID, 'android:id/autofill_save_no')
