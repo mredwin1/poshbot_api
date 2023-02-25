@@ -448,9 +448,9 @@ class PoshMarkClient(AppiumClient):
                     # Inline form error handling
                     if self.is_present(AppiumBy.ID, 'textinput_error'):
                         error = self.locate(AppiumBy.ID, 'textinput_error')
-                        self.logger.error(f'The following form error was found: {error.text}')
+                        self.logger.error(f'The following form error was found (Campaign will be stopped): {error.text}')
 
-                        if 'email address is already ties to another user' in error.text or 'Please enter a valid email address' in error.text:
+                        if 'email address is already tied to another user' in error.text or 'Please enter a valid email address' in error.text:
                             self.logger.info('Setting the user inactive since the email is taken or it is invalid.')
                             self.campaign.posh_user.is_active = False
                             self.campaign.posh_user.save()
