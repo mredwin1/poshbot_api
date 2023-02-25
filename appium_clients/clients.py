@@ -422,7 +422,7 @@ class PoshMarkClient(AppiumClient):
                         self.input_text(username, self.campaign.posh_user.username)
 
                         password.clear()
-                        self.send_keys(password, self.campaign.posh_user.password)
+                        password.send_keys(self.campaign.posh_user.password)
 
                         self.logger.info('Username and password entered')
 
