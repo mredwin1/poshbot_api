@@ -358,7 +358,7 @@ class CampaignTask(Task):
                 success = False
 
                 if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list):
-                    self.logger.warning('Restarting device and campaign due to error')
+                    self.logger.warning('Restarting device and campaign due to a device error')
 
                     self.campaign.status = Campaign.STARTING
                     self.campaign.save()
@@ -383,7 +383,7 @@ class CampaignTask(Task):
                     return None
             except Exception:
                 self.logger.error(traceback.format_exc())
-                self.logger.warning('Stopping campaign due to error')
+                self.logger.error('Stopping campaign due to unhandled error')
 
                 success = False
 
