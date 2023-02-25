@@ -23,7 +23,7 @@ class CampaignTask(Task):
         self.logger = None
 
     def get_random_delay(self, elapsed_time):
-        delay = self.campaign.delay
+        delay = self.campaign.delay * 60
 
         if delay <= 0:
             return 0
