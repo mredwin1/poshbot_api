@@ -93,7 +93,7 @@ class AppiumClient:
                 duration = seconds
                 word = 'second' if seconds == 1 else 'seconds'
 
-            self.logger.info(f'Sleeping for about {round(duration, 2)} {word}')
+            self.logger.debug(f'Sleeping for {round(duration, 2)} {word}')
             time.sleep(seconds)
 
     def click(self, element=None, x=None, y=None):
