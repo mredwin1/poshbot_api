@@ -333,7 +333,7 @@ class PoshMarkClient(AppiumClient):
 
     def input_text(self, element, text):
         if element.text != text:
-            if text.text != '':
+            if element.text != '':
                 element.clear()
             self.send_keys(element, text)
 
