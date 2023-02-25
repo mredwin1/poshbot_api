@@ -73,9 +73,9 @@ class CampaignTask(Task):
             if not self.campaign.posh_user.app_package:
                 client.launch_app(self.campaign.posh_user.username)
 
-                time.sleep(4)
+                clone_app_package = client.driver.current_package
 
-                clone_app_package = client.get_current_app_package()
+                print(clone_app_package)
 
                 self.campaign.posh_user.app_package = clone_app_package
                 self.campaign.posh_user.save()
