@@ -75,8 +75,6 @@ class CampaignTask(Task):
 
                 clone_app_package = client.driver.current_package
 
-                print(clone_app_package)
-
                 self.campaign.posh_user.app_package = clone_app_package
                 self.campaign.posh_user.save()
 

@@ -547,7 +547,7 @@ class PoshMarkClient(AppiumClient):
                     if self.is_present(AppiumBy.ID, 'continueButton'):
                         continue_button = self.locate(AppiumBy.ID, 'continueButton')
                     else:
-                        continue_button = self.locate(AppiumBy.ID, 'suggestedBrandLogo3')
+                        continue_button = self.locate(AppiumBy.ID, 'nextButton')
 
                     if continue_button:
                         self.click(continue_button)
