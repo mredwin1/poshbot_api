@@ -373,6 +373,17 @@ class PoshMarkClient(AppiumClient):
 
             self.sleep(.5)
 
+            if self.is_present(AppiumBy.ID, 'textinput_error'):
+                error = self.locate(AppiumBy.ID, 'textinput_error')
+                self.logger.error(f'The following form error was found: {error.text}')
+
+                if 'email address is already ties to another user' in error.text:
+                    self.logger.info('Setting the user inactive since the email is taken')
+                    self.campaign.posh_user.is_active = False
+                    self.campaign.posh_user.save()
+
+                    return False
+
             while self.is_present(AppiumBy.ID, 'progressBar'):
                 self.logger.info('Waiting to continue...')
                 self.sleep(5)
@@ -405,9 +416,8 @@ class PoshMarkClient(AppiumClient):
             password.send_keys(self.campaign.posh_user.password)
 
             self.logger.info('Username and password entered')
-            error_present = False
 
-            while not (self.is_registered and error_present):
+            while not self.is_registered:
                 self.logger.info('Clicking continue button')
                 create_button = self.locate(AppiumBy.ID, 'continueButton')
                 self.click(create_button)
@@ -425,16 +435,6 @@ class PoshMarkClient(AppiumClient):
                     username = self.locate(AppiumBy.ID, 'username')
                     self.campaign.posh_user.username = username.text
                     self.campaign.posh_user.save()
-                elif self.is_present(AppiumBy.ID, 'textinput_error'):
-                    error = self.locate(AppiumBy.ID, 'textinput_error')
-                    self.logger.error(f'The following form error was found: {error.text}')
-
-                    error_present = True
-
-                    if 'email address is already ties to another user' in error.text:
-                        self.logger.info('Setting the user inactive since the email is taken')
-                        self.campaign.posh_user.is_active = False
-                        self.campaign.posh_user.save()
 
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Registration still in progress')
