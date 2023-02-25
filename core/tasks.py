@@ -22,6 +22,21 @@ class CampaignTask(Task):
         self.campaign = None
         self.logger = None
 
+    def get_random_delay(self, elapsed_time):
+        delay = self.campaign.delay
+
+        if delay <= 0:
+            return 0
+        else:
+            range_start = max(0, delay - (delay * 0.3))
+            range_end = delay + (delay * 0.3)
+            random_delay_in_seconds = round(random.uniform(range_start, range_end))
+            delay_after_elapsed_time_in_seconds = random_delay_in_seconds - elapsed_time
+            if delay_after_elapsed_time_in_seconds >= 0:
+                return delay_after_elapsed_time_in_seconds
+            else:
+                return random_delay_in_seconds
+
     def reset_ip(self, reset_url):
         response = requests.get(reset_url)
         retries = 0
@@ -405,11 +420,7 @@ class CampaignTask(Task):
                 device.save()
 
             if not campaign_delay:
-                delay = self.campaign.delay * 60
-                sign = 1 if random.random() < 0.5 else -1
-                deviation = random.randint(0, (delay / 2)) * sign
-                elapsed_time = round(end_time - start_time, 2)
-                campaign_delay = (delay - elapsed_time) + deviation if (delay - elapsed_time) + deviation > 1 else random.randint(0, (delay / 2))
+                campaign_delay = self.get_random_delay(end_time - start_time)
 
             hours, remainder = divmod(campaign_delay, 3600)
             minutes, seconds = divmod(remainder, 60)
