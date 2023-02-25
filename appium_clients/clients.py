@@ -231,6 +231,9 @@ class PoshMarkClient(AppiumClient):
         self.campaign = campaign
         self.logger = logger
         self.is_registered = False
+        self.account_pop_up_clicked = False
+        self.posh_party_alert_dismissed = False
+        self.profile_picture_added = False
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
                                          aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
@@ -293,7 +296,7 @@ class PoshMarkClient(AppiumClient):
     def alert_check(self):
         self.logger.info('Checking for an alert')
 
-        if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
+        if not self.posh_party_alert_dismissed and self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
             title = self.locate(AppiumBy.ID, 'android:id/alertTitle').text
 
             if 'party' in title.lower():
@@ -328,6 +331,12 @@ class PoshMarkClient(AppiumClient):
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
         img.click()
 
+    def input_text(self, element, text):
+        if element.text != text:
+            if text.text != '':
+                element.clear()
+            self.send_keys(element, text)
+
     def register(self):
         self.logger.info('Starting Registration Process')
         campaign_folder = f'/{slugify(self.campaign.title)}'
@@ -340,112 +349,113 @@ class PoshMarkClient(AppiumClient):
 
         time.sleep(1)
 
-        retries = 0
-        while not self.is_present(AppiumBy.ID, 'sign_up_option') and retries < 30:
-            self.sleep(7)
-            retries += 1
-
-        while self.is_present(AppiumBy.ID, 'sign_up_option'):
-            self.logger.info('Clicked sign up button')
-            sign_up = self.locate(AppiumBy.ID, 'sign_up_option')
-            self.click(sign_up)
-            self.sleep(1)
-
-        if self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
-            none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
-            self.click(none_of_the_above)
-            self.logger.info('Google accounts pop up. Clicked None of the above.')
+        clicked_sign_up_button = False
 
         try:
-            self.logger.info('Putting in First Name, Last Name, and Email')
-            first_name = self.locate(AppiumBy.ID, 'firstname')
-            last_name = self.locate(AppiumBy.ID, 'lastname')
-            email = self.locate(AppiumBy.ID, 'email')
-
-            self.send_keys(first_name, self.campaign.posh_user.first_name)
-            self.send_keys(last_name, self.campaign.posh_user.last_name)
-            email.send_keys(self.campaign.posh_user.email)
-
-            continue_button = self.locate(AppiumBy.ID, 'continueButton')
-            continue_button.click()
-
-            self.logger.info('Clicked continue button')
-
-            self.sleep(.5)
-
-            if self.is_present(AppiumBy.ID, 'textinput_error'):
-                error = self.locate(AppiumBy.ID, 'textinput_error')
-                self.logger.error(f'The following form error was found: {error.text}')
-
-                if 'email address is already ties to another user' in error.text:
-                    self.logger.info('Setting the user inactive since the email is taken')
-                    self.campaign.posh_user.is_active = False
-                    self.campaign.posh_user.save()
-
-                    return False
-
-            while self.is_present(AppiumBy.ID, 'progressBar'):
-                self.logger.info('Waiting to continue...')
-                self.sleep(5)
-
-            self.logger.info('Adding profile picture')
-
-            picture_elem = self.locate(AppiumBy.ID, 'addPictureButton')
-            self.click(picture_elem)
-
-            photo_albums = self.locate(AppiumBy.ID, 'galleryTv')
-            self.click(photo_albums)
-
-            profile_picture_key = self.campaign.posh_user.profile_picture.name
-            profile_picture = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{profile_picture_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-            profile_picture.click()
-
-            self.sleep(1)
-
-            next_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(next_button)
-
-            self.logger.info('Profile picture added')
-            self.logger.info('Putting in username and password')
-
-            username = self.locate(AppiumBy.ID, 'username')
-            password = self.locate(AppiumBy.ID, 'password')
-
-            username.clear()
-            username.send_keys(self.campaign.posh_user.username)
-            password.send_keys(self.campaign.posh_user.password)
-
-            self.logger.info('Username and password entered')
-
             while not self.is_registered:
-                self.logger.info('Clicking continue button')
-                create_button = self.locate(AppiumBy.ID, 'continueButton')
-                self.click(create_button)
-
-                self.logger.info('Continue button clicked')
-
-                if self.is_present(AppiumBy.ID, 'popupContainer'):
-                    new_username = self.locate(AppiumBy.ID, 'item')
-                    self.click(new_username)
-
-                    self.logger.info(f'Looks like username was taken. Choosing new username: {new_username.text}')
-
-                    self.sleep(1)
-
-                    username = self.locate(AppiumBy.ID, 'username')
-                    self.campaign.posh_user.username = username.text
-                    self.campaign.posh_user.save()
-
-                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
-                    self.logger.info('Registration still in progress')
-                    self.sleep(3)
-
-                response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
-                if response.status_code != requests.codes.ok:
+                if clicked_sign_up_button:
                     self.alert_check()
 
+                if not self.is_present(AppiumBy.ID, 'titleTextView'):
+                    self.logger.info('No screen title elements, probably at init screen.')
+
+                    if self.is_present(AppiumBy.ID, 'sign_up_option'):
+                        sign_up = self.locate(AppiumBy.ID, 'sign_up_option')
+                        self.click(sign_up)
+
+                        self.logger.info('Clicked sign up button')
+
                 else:
-                    self.is_registered = True
+                    if not self.account_pop_up_clicked and self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
+                        none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
+                        self.click(none_of_the_above)
+                        self.logger.info('Google accounts pop up. Clicked None of the above.')
+
+                    window_title = self.locate(AppiumBy.ID, 'titleTextView')
+
+                    if window_title:
+                        self.logger.info(f'Currently at the {window_title.text} screen')
+
+                    if window_title and window_title.text == 'Get Started':
+                        first_name = self.locate(AppiumBy.ID, 'firstname')
+                        last_name = self.locate(AppiumBy.ID, 'lastname')
+                        email = self.locate(AppiumBy.ID, 'email')
+
+                        self.input_text(first_name, self.campaign.posh_user.first_name)
+                        self.input_text(last_name, self.campaign.posh_user.last_name)
+                        self.input_text(email, self.campaign.posh_user.email)
+
+                        self.logger.info('First Name, Last Name, and Email entered')
+
+                        continue_button = self.locate(AppiumBy.ID, 'continueButton')
+                        continue_button.click()
+
+                        self.logger.info('Clicked continue button')
+                    elif window_title and 'Welcome, ' in window_title.text:
+                        if not self.profile_picture_added:
+                            picture_elem = self.locate(AppiumBy.ID, 'addPictureButton')
+                            self.click(picture_elem)
+
+                            photo_albums = self.locate(AppiumBy.ID, 'galleryTv')
+                            self.click(photo_albums)
+
+                            profile_picture_key = self.campaign.posh_user.profile_picture.name
+                            profile_picture = self.locate(AppiumBy.XPATH, f'//android.widget.LinearLayout[contains(@content-desc, "{profile_picture_key.split("/")[-1]}")]/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+                            profile_picture.click()
+
+                            self.sleep(1)
+
+                            next_button = self.locate(AppiumBy.ID, 'nextButton')
+                            self.click(next_button)
+
+                            self.profile_picture_added = True
+                            self.logger.info('Profile picture added')
+
+                        username = self.locate(AppiumBy.ID, 'username')
+                        password = self.locate(AppiumBy.ID, 'password')
+
+                        self.input_text(username, self.campaign.posh_user.username)
+
+                        password.clear()
+                        self.send_keys(password, self.campaign.posh_user.password)
+
+                        self.logger.info('Username and password entered')
+
+                        create_button = self.locate(AppiumBy.ID, 'continueButton')
+                        self.click(create_button)
+
+                        self.logger.info('Continue button clicked')
+
+                        if self.is_present(AppiumBy.ID, 'popupContainer'):
+                            new_username = self.locate(AppiumBy.ID, 'item')
+                            self.click(new_username)
+
+                            self.logger.info(f'Looks like username was taken. Choosing new username: {new_username.text}')
+
+                            self.sleep(1)
+
+                            username = self.locate(AppiumBy.ID, 'username')
+                            self.campaign.posh_user.username = username.text
+                            self.campaign.posh_user.save()
+
+                    # Inline form error handling
+                    if self.is_present(AppiumBy.ID, 'textinput_error'):
+                        error = self.locate(AppiumBy.ID, 'textinput_error')
+                        self.logger.error(f'The following form error was found: {error.text}')
+
+                        if 'email address is already ties to another user' in error.text:
+                            self.logger.info('Setting the user inactive since the email is taken')
+                            self.campaign.posh_user.is_active = False
+                            self.campaign.posh_user.save()
+
+                            return False
+
+                    while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
+                        self.logger.info('Waiting to continue...')
+                        self.sleep(5)
+
+                response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
+                self.is_registered = response.status_code == requests.codes.ok
 
             return self.is_registered
         except (TimeoutException, StaleElementReferenceException):
