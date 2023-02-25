@@ -240,13 +240,16 @@ class CampaignTask(Task):
                         try:
                             listed_item = ListedItem.objects.get(posh_user=self.campaign.posh_user, listing_title=listing_title)
 
-                            if listed_item.status == ListedItem.UP and listing_title in all_listings['shareable_listings']:
+                            if listing_title in all_listings['shareable_listings']:
+                                if listed_item.status != ListedItem.UP:
+                                    listed_item.status = ListedItem.UP
+                                    listed_item.save()
                                 listings_can_share.append(listing_title)
                             elif listing_title in all_listings['sold_listings'] and not listed_item.datetime_sold:
                                 listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 listed_item.status = ListedItem.SOLD
                                 listed_item.save()
-                            elif listing_title in all_listings['reserved_listings']:
+                            elif listing_title in all_listings['reserved_listings'] and listed_item.status != ListedItem.RESERVED:
                                 listed_item.status = ListedItem.RESERVED
                                 listed_item.save()
 
