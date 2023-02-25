@@ -234,6 +234,7 @@ class PoshMarkClient(AppiumClient):
         self.account_pop_up_clicked = False
         self.posh_party_alert_dismissed = False
         self.profile_picture_added = False
+        self.finished_registering = False
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
                                          aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
@@ -442,24 +443,30 @@ class PoshMarkClient(AppiumClient):
                             self.campaign.posh_user.username = username.text
                             self.campaign.posh_user.save()
 
+                        self.finished_registering = True
+
                     # Inline form error handling
                     if self.is_present(AppiumBy.ID, 'textinput_error'):
                         error = self.locate(AppiumBy.ID, 'textinput_error')
                         self.logger.error(f'The following form error was found: {error.text}')
 
-                        if 'email address is already ties to another user' in error.text:
-                            self.logger.info('Setting the user inactive since the email is taken')
+                        if 'email address is already ties to another user' in error.text or 'Please enter a valid email address' in error.text:
+                            self.logger.info('Setting the user inactive since the email is taken or it is invalid.')
                             self.campaign.posh_user.is_active = False
                             self.campaign.posh_user.save()
 
-                            return False
+                        else:
+                            self.logger.warning('No handler for this error')
+
+                        return False
 
                     while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                         self.logger.info('Waiting to continue...')
                         self.sleep(5)
 
-                response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
-                self.is_registered = response.status_code == requests.codes.ok
+                if self.finished_registering:
+                    response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
+                    self.is_registered = response.status_code == requests.codes.ok
 
             return self.is_registered
         except (TimeoutException, StaleElementReferenceException):
