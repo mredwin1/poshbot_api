@@ -331,11 +331,15 @@ class PoshMarkClient(AppiumClient):
         img = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/icon_thumb')
         img.click()
 
-    def input_text(self, element, text):
+    def input_text(self, element, text, custom_send_keys=True):
         if element.text != text:
             if element.text != '':
                 element.clear()
-            self.send_keys(element, text)
+
+            if custom_send_keys:
+                self.send_keys(element, text)
+            else:
+                element.send_keys(text)
 
     def register(self):
         self.logger.info('Starting Registration Process')
@@ -383,7 +387,7 @@ class PoshMarkClient(AppiumClient):
 
                         self.input_text(first_name, self.campaign.posh_user.first_name)
                         self.input_text(last_name, self.campaign.posh_user.last_name)
-                        self.input_text(email, self.campaign.posh_user.email)
+                        self.input_text(email, self.campaign.posh_user.email, False)
 
                         self.logger.info('First Name, Last Name, and Email entered')
 
@@ -516,7 +520,8 @@ class PoshMarkClient(AppiumClient):
                         self.sleep(.5)
 
                     zip_input = self.locate(AppiumBy.ID, zipcode_id)
-                    zip_input.send_keys(str(random.choice(self.zipcodes)))
+
+                    self.input_text(zip_input, str(random.choice(self.zipcodes)), False)
 
                     self.logger.info('Zipcode inserted')
 
