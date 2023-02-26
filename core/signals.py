@@ -28,10 +28,11 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
 def posh_user_saved(sender, instance, *args, **kwargs):
     listed_items = ListedItem.objects.filter(posh_user=instance)
 
-    for listed_item in listed_items:
-        if listed_item.status not in (ListedItem.NOT_LISTED, ListedItem.SOLD, ListedItem.REMOVED):
-            listed_item.status = ListedItem.REMOVED
-            listed_item.save()
+    if not instance.is_active:
+        for listed_item in listed_items:
+            if listed_item.status not in (ListedItem.NOT_LISTED, ListedItem.SOLD, ListedItem.REMOVED):
+                listed_item.status = ListedItem.REMOVED
+                listed_item.save()
 
 
 @receiver(post_delete, sender=Listing)
