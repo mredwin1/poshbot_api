@@ -355,13 +355,8 @@ class PoshMarkClient(AppiumClient):
 
         time.sleep(1)
 
-        clicked_sign_up_button = False
-
         try:
             while not self.is_registered:
-                if clicked_sign_up_button:
-                    self.alert_check()
-
                 if not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('No screen title elements, probably at init screen.')
 
@@ -429,6 +424,7 @@ class PoshMarkClient(AppiumClient):
 
                         create_button = self.locate(AppiumBy.ID, 'continueButton')
                         self.click(create_button)
+                        self.need_alert_check = True
 
                         self.logger.info('Continue button clicked')
 
@@ -469,6 +465,7 @@ class PoshMarkClient(AppiumClient):
 
                     if self.need_alert_check:
                         self.alert_check()
+                        self.need_alert_check = False
 
                 if self.finished_registering:
                     response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
