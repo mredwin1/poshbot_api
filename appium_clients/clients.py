@@ -235,6 +235,7 @@ class PoshMarkClient(AppiumClient):
         self.posh_party_alert_dismissed = False
         self.profile_picture_added = False
         self.finished_registering = False
+        self.need_alert_check = False
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
                                          aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
@@ -463,6 +464,11 @@ class PoshMarkClient(AppiumClient):
                     while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                         self.logger.info('Waiting to continue...')
                         self.sleep(5)
+
+                        self.need_alert_check = True
+
+                    if self.need_alert_check:
+                        self.alert_check()
 
                 if self.finished_registering:
                     response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
