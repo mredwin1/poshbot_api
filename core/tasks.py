@@ -381,19 +381,26 @@ class CampaignTask(Task):
 
                     client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
                     adb_device = client.device(serial=device.serial)
+                    boot_complete = False
 
                     adb_device.reboot()
 
                     device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     device.save()
 
-                    serials = []
-                    while device.serial not in serials:
+                    while not boot_complete:
                         devices = client.devices()
                         serials = [device.serial for device in devices]
-                        self.logger.warning('Device not finished rebooting yet. Sleeping for 10 seconds')
-                        time.sleep(10)
 
+                        if '94TXS0P38' in serials:
+                            adb_device = client.device(serial='94TXS0P38')
+                            boot_complete = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+
+                        if not boot_complete:
+                            self.logger.info('Device not finished rebooting yet. Sleeping for 10 seconds')
+                            time.sleep(10)
+
+                    self.logger.info('Reboot complete, starting campaign up again')
                     CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id)
 
                     return None
