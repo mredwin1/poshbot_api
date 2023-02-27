@@ -312,6 +312,8 @@ class PoshMarkClient(AppiumClient):
 
             self.logger.info(f'Alert with the following message popped up: {message.text}')
 
+            self.logger.info(self.driver.page_source)
+
             ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
             self.click(ok_button)
 
