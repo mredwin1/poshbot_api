@@ -374,7 +374,7 @@ class CampaignTask(Task):
                 success = False
 
                 if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list) and attempt < 2:
-                    self.logger.warning('Restarting device and campaign due to a device error')
+                    self.logger.warning(f'Restarting device and campaign due to a device error. Attempt # {attempt}')
 
                     self.campaign.status = Campaign.STARTING
                     self.campaign.save()
