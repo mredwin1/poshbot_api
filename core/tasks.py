@@ -417,6 +417,8 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
 
+                return None
+
             end_time = time.time()
 
             if not self.campaign.posh_user.is_active:
