@@ -485,7 +485,7 @@ class PoshMarkClient(AppiumClient):
                     self.is_registered = response.status_code == requests.codes.ok
 
             return self.is_registered
-        except (TimeoutException, StaleElementReferenceException):
+        except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
@@ -588,7 +588,7 @@ class PoshMarkClient(AppiumClient):
                     self.sleep(3)
 
             return True
-        except (TimeoutException, StaleElementReferenceException):
+        except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
