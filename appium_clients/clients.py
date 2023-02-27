@@ -915,7 +915,7 @@ class PoshMarkClient(AppiumClient):
                     self.logger.info('Item listed successfully')
 
             return True
-        except (TimeoutException, StaleElementReferenceException):
+        except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 

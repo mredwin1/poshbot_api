@@ -327,7 +327,7 @@ class CampaignTask(Task):
                 self.campaign.save()
                 return False
 
-    def run(self, campaign_id, logger_id=None, device_id=None, *args, **kwargs):
+    def run(self, campaign_id, logger_id=None, device_id=None, attempt=1, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
         campaign_delay = None
 
@@ -373,7 +373,7 @@ class CampaignTask(Task):
                 self.logger.error(traceback.format_exc())
                 success = False
 
-                if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list):
+                if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list) and attempt < 2:
                     self.logger.warning('Restarting device and campaign due to a device error')
 
                     self.campaign.status = Campaign.STARTING
@@ -401,9 +401,11 @@ class CampaignTask(Task):
                             time.sleep(10)
 
                     self.logger.info('Reboot complete, starting campaign up again')
-                    CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id)
+                    CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id, attempt=attempt + 1)
 
                     return None
+                else:
+                    self.logger.warning(f'Stopping campaign due to an error. Attempt {attempt}')
             except Exception:
                 self.logger.error(traceback.format_exc())
                 self.logger.error('Stopping campaign due to unhandled error')
