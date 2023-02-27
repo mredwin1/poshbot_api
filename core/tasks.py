@@ -404,9 +404,10 @@ class CampaignTask(Task):
                     time.sleep(5)
                     CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id, attempt=attempt + 1)
 
-                    return None
                 else:
                     self.logger.warning(f'Stopping campaign due to an error. Attempt {attempt}')
+
+                return None
             except Exception:
                 self.logger.error(traceback.format_exc())
                 self.logger.error('Stopping campaign due to unhandled error')
