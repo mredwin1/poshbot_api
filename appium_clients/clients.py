@@ -306,6 +306,8 @@ class PoshMarkClient(AppiumClient):
                 cancel = self.locate(AppiumBy.ID, 'android:id/button2')
                 self.click(cancel)
 
+                self.posh_party_alert_dismissed = True
+
                 return True
         elif self.is_present(AppiumBy.ID, 'android:id/message'):
             message = self.locate(AppiumBy.ID, 'android:id/message')
@@ -316,6 +318,8 @@ class PoshMarkClient(AppiumClient):
 
             ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
             self.click(ok_button)
+
+            return True
 
         self.logger.info('No alerts found')
 
