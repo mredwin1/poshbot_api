@@ -268,7 +268,7 @@ class PoshMarkClient(AppiumClient):
                     return None
             else:
                 return wait.until(expected_conditions.presence_of_element_located((by, locator)))
-        except TimeoutException:
+        except (TimeoutException, NoSuchElementException):
             self.logger.warning(f'Element could not be found with {locator}.')
 
             self.alert_check()
@@ -486,10 +486,13 @@ class PoshMarkClient(AppiumClient):
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
                 self.alert_check()
-                window_title = self.locate(AppiumBy.ID, 'titleTextView')
 
-                if window_title:
+                if self.is_present(AppiumBy.ID, 'titleTextView'):
+                    window_title = self.locate(AppiumBy.ID, 'titleTextView')
                     self.logger.info(f'Currently at the {window_title.text} screen')
+                else:
+                    window_title = None
+                    self.logger.warning('Screen title could not be found')
 
                 if window_title and window_title.text in ('Sizes', 'Complete your Profile'):
                     if self.is_present(AppiumBy.ID, 'continueButton'):
