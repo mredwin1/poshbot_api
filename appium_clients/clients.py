@@ -443,6 +443,13 @@ class PoshMarkClient(AppiumClient):
                             self.campaign.posh_user.save()
 
                         self.finished_registering = True
+                    else:
+                        if window_title:
+                            self.logger.info(f'No handler for screen with title {window_title.text}')
+                            self.logger.debug(self.driver.page_source)
+                        else:
+                            self.logger.info('No handler for this title less screen')
+                            self.logger.debug(self.driver.page_source)
 
                     # Inline form error handling
                     if self.is_present(AppiumBy.ID, 'textinput_error'):
@@ -567,8 +574,10 @@ class PoshMarkClient(AppiumClient):
                 else:
                     if window_title:
                         self.logger.info(f'No handler for screen with title {window_title.text}')
+                        self.logger.debug(self.driver.page_source)
                     else:
-                        self.logger.info('Window title could not be found')
+                        self.logger.info('No handler for this title less screen')
+                        self.logger.debug(self.driver.page_source)
 
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting to continue...')
