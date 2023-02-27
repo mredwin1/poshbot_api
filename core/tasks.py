@@ -400,7 +400,8 @@ class CampaignTask(Task):
                             self.logger.info('Device not finished rebooting yet. Sleeping for 10 seconds')
                             time.sleep(10)
 
-                    self.logger.info('Reboot complete, starting campaign up again')
+                    self.logger.info('Reboot complete, starting campaign up again in 5 seconds')
+                    time.sleep(5)
                     CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id, attempt=attempt + 1)
 
                     return None
