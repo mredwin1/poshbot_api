@@ -374,6 +374,7 @@ class CampaignTask(Task):
             except WebDriverException:
                 self.logger.error(traceback.format_exc())
                 error = True
+                success = False
 
                 if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list) and attempt < 2:
                     self.logger.warning(f'Restarting device and campaign due to a device error. Attempt # {attempt}')
@@ -409,17 +410,15 @@ class CampaignTask(Task):
                 else:
                     self.logger.warning(f'Stopping campaign due to an error. Attempt {attempt}')
 
-                return None
             except Exception:
                 self.logger.error(traceback.format_exc())
                 self.logger.error('Stopping campaign due to unhandled error')
 
+                success = False
                 error = True
 
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
-
-                return None
 
             end_time = time.time()
 
