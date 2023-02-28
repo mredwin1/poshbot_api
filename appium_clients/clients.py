@@ -989,24 +989,24 @@ class AppClonerClient(AppiumClient):
             install_button = self.locate(AppiumBy.ID, 'android:id/button1')
             install_button.click()
 
-            self.installed = True
-
             while self.is_present(AppiumBy.ID, 'com.android.packageinstaller:id/progress'):
                 self.logger.info('Waiting for app to finish installing...')
                 self.sleep(3)
 
             self.logger.info('Installation completed')
 
+            self.installed = True
+
             if self.is_present(AppiumBy.ID, 'android:id/button2'):
                 done_button = self.locate(AppiumBy.ID, 'android:id/button2')
                 done_button.click()
 
             return self.installed
-        except TimeoutException:
+        except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
-            return self.installed
+            return False
 
     def launch_clone(self):
         try:
