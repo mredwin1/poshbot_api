@@ -110,7 +110,7 @@ class AppiumClient:
         else:
             self.driver.execute_script('mobile: clickGesture', {'x': x, 'y': y})
 
-    def long_click(self, element, duration=500):
+    def long_click(self, element, duration=1000):
         width = element.size['width']
         height = element.size['height']
 
