@@ -64,7 +64,11 @@ class CampaignTask(Task):
     def install_clone(self, device):
         with AppClonerClient(device.serial, self.logger, self.campaign.posh_user.username) as client:
             if not self.campaign.posh_user.clone_installed:
+                start_time = time.time()
                 installed = client.add_clone()
+                end_time = time.time()
+
+                self.logger.info(f'Time to install clone: {end_time - start_time}')
 
                 self.campaign.posh_user.clone_installed = installed
                 self.campaign.posh_user.device = device
@@ -87,7 +91,11 @@ class CampaignTask(Task):
             with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                 client.launch_app(self.campaign.posh_user.username)
 
+                start_time = time.time()
                 registered = client.register()
+                end_time = time.time()
+
+                self.logger.info(f'Time to register user: {end_time - start_time}')
 
                 self.campaign.posh_user.is_registered = registered
                 self.campaign.posh_user.save()
@@ -161,7 +169,12 @@ class CampaignTask(Task):
             if client:
                 for item_to_list in items_to_list:
                     listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
+
+                    start_time = time.time()
                     item_listed = client.list_item(item_to_list.listing, listing_images)
+                    end_time = time.time()
+
+                    self.logger.info(f'Time to list item: {end_time - start_time}')
 
                     if item_listed:
                         item_to_list.status = ListedItem.UNDER_REVIEW
@@ -173,7 +186,12 @@ class CampaignTask(Task):
 
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
+
+                        start_time = time.time()
                         listed = client.list_item(item_to_list.listing, listing_images)
+                        end_time = time.time()
+
+                        self.logger.info(f'Time to list item: {end_time - start_time}')
 
                         if listed:
                             item_to_list.status = ListedItem.UNDER_REVIEW
