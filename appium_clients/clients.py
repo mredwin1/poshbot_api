@@ -231,6 +231,7 @@ class PoshMarkClient(AppiumClient):
         self.campaign = campaign
         self.logger = logger
         self.is_registered = False
+        self.listed = False
         self.account_pop_up_clicked = False
         self.posh_party_alert_dismissed = False
         self.profile_picture_added = False
@@ -597,6 +598,16 @@ class PoshMarkClient(AppiumClient):
     def list_item(self, listing: Listing, listing_images: List[ListingImage]):
         try:
             self.logger.info(f'Listing {listing.title} for {self.campaign.posh_user.username}')
+            self.listed = False
+            new_listing = False
+            added_media_items = False
+            added_title = False
+            added_description = False
+            added_category = False
+            added_size = False
+            added_brand = False
+            added_original_price = False
+            added_listing_price = False
 
             campaign_folder = f'/{slugify(self.campaign.title)}'
             listing_folder = f'{campaign_folder}/{slugify(listing.title)}'
@@ -613,313 +624,368 @@ class PoshMarkClient(AppiumClient):
             self.download_and_send_file(cover_photo_key, listing_folder)
 
             listing_images.reverse()
-            for listing_image in listing_images:
-                image_key = listing_image.image.name
-                self.download_and_send_file(image_key, listing_folder)
 
-            sell_button = self.locate(AppiumBy.ID, 'sellTab')
-            self.click(sell_button)
+            while not self.listed:
+                if self.is_present(AppiumBy.ID, 'sellTab'):
+                    self.logger.info('At main screen')
 
-            self.logger.info('Sell button clicked')
+                    sell_button = self.locate(AppiumBy.ID, 'sellTab')
+                    self.click(sell_button)
 
-            if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
-                deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
-                self.click(deny_button)
-                self.logger.info('Denying access to camera')
+                    self.logger.info('Sell button clicked. Uploading cover photo')
 
-            gallery_button = self.locate(AppiumBy.ID, 'gallery')
-            self.click(gallery_button)
+                    if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
+                        deny_button = self.locate(AppiumBy.ID,
+                                                  'com.android.permissioncontroller:id/permission_deny_button')
+                        self.click(deny_button)
+                        self.logger.info('Denying access to camera')
 
-            if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button'):
-                allow_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button')
-                self.click(allow_button)
+                    gallery_button = self.locate(AppiumBy.ID, 'gallery')
+                    self.click(gallery_button)
 
-            self.sleep(4)
-            self.tap_img(cover_photo_key.split("/")[-1])
+                    self.logger.info('Gallery button clicked')
 
-            next_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(next_button)
+                    if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_allow_button'):
+                        allow_button = self.locate(AppiumBy.ID,
+                                                   'com.android.permissioncontroller:id/permission_allow_button')
+                        self.click(allow_button)
+                        self.logger.info('Allowing access to gallery')
 
-            self.sleep(1)
+                    self.sleep(2)
+                    self.tap_img(cover_photo_key.split("/")[-1])
 
-            next_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(next_button)
+                    self.logger.info('Cover photo tapped')
 
-            self.sleep(1)
+                    next_button = self.locate(AppiumBy.ID, 'nextButton')
+                    self.click(next_button)
 
-            add_more_button = self.locate(AppiumBy.ID, 'add_more')
-            self.click(add_more_button)
-
-            if self.is_present(AppiumBy.ID,
-                               'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
-                deny_button = self.locate(AppiumBy.ID,
-                                          'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
-                self.click(deny_button)
-
-                self.sleep(1)
-            if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
-                deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
-                self.click(deny_button)
-
-            gallery_button = self.locate(AppiumBy.ID, 'gallery')
-            self.click(gallery_button)
-
-            self.sleep(1)
-
-            group_num = 0
-            self.swipe('up', 530)
-            self.sleep(.75)
-            for x in range(1, len(listing_images) + 1):
-                img_index = x - group_num
-                img = self.locate(AppiumBy.XPATH,
-                                  f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{img_index}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-                if x == 1:
-                    self.long_click(img)
-                else:
-                    img.click()
-
-                if x % 6 == 0 and x != len(listing_images):
-                    self.swipe('up', 580 * 3)
-                    group_num += 4 if not group_num else 6
-                    self.sleep(.75)
-
-            select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
-            self.click(select_button)
-
-            self.sleep(2)
-
-            if self.is_present(AppiumBy.ID, 'nextButton'):
-                next_button = self.locate(AppiumBy.ID, 'nextButton')
-                self.click(next_button)
-            else:
-                self.click(element=None, x=500, y=500)
-
-                next_button = self.locate(AppiumBy.ID, 'nextButton')
-                self.click(next_button)
-
-            self.sleep(2)
-
-            title_input = self.locate(AppiumBy.ID, 'title_edit_text')
-            title_input.send_keys(listing.title)
-
-            description_body = self.locate(AppiumBy.ID, 'description_body')
-            self.click(description_body)
-
-            description_input = self.locate(AppiumBy.ID, 'description_editor')
-            self.send_keys(description_input, str(listing.description))
-
-            done_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(done_button)
-
-            self.sleep(1)
-
-            media_items = self.locate(AppiumBy.ID, 'media_items')
-            description_body = self.locate(AppiumBy.ID, 'description_body')
-            self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
-
-            listing_category = listing.category
-            space_index = listing_category.find(' ')
-            primary_category = listing_category[:space_index]
-            secondary_category = listing_category[space_index + 1:]
-
-            category = self.locate(AppiumBy.ID, 'catalog_edit_text')
-            self.click(category)
-
-            self.sleep(1)
-
-            primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
-            self.click(primary_category_button)
-
-            self.sleep(1)
-
-            secondary_category_clicked = False
-            secondary_category_click_attempts = 0
-            while not secondary_category_clicked and secondary_category_click_attempts < 7:
-                if self.is_present(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower()):
-                    secondary_category_click_attempts += 1
-                    secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower())
-                    self.click(secondary_category_button)
-                    self.logger.info('Category clicked')
-                    self.sleep(.5)
-                    secondary_category_clicked = True
-                else:
-                    self.swipe('up', 400)
-                    self.sleep(.5)
-
-            subcategory_clicked = False
-            subcategory_click_attempts = 0
-            while not subcategory_clicked and subcategory_click_attempts < 7:
-                subcategory_click_attempts += 1
-                if self.is_present(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower()):
-                    subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower())
-                    self.click(subcategory_button)
-                    self.logger.info('Clicked sub category')
+                    self.logger.info('Next button clicked')
                     self.sleep(1)
-                    subcategory_clicked = True
+
+                    next_button = self.locate(AppiumBy.ID, 'nextButton')
+                    self.click(next_button)
+
+                    self.logger.info('Next button clicked')
+
+                    new_listing = True
                 else:
-                    self.swipe('up', 400)
-                    self.sleep(.5)
+                    window_title = self.locate(AppiumBy.ID, 'titleTextView')
 
-            done_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(done_button)
+                    if window_title and window_title.text == 'Listing Details':
+                        if not added_media_items and len(listing_images) > 0:
+                            self.logger.info('Downloading and sending listing images')
+                            if not new_listing:
+                                added_images = self.locate_all(AppiumBy.ID, 'container')
+                                listing_images = listing_images[len(added_images) - 2:]
 
-            self.logger.info('Clicked done button')
+                            if listing_images:
+                                for listing_image in listing_images:
+                                    image_key = listing_image.image.name
+                                    self.download_and_send_file(image_key, listing_folder)
 
-            pressed_back = False
-            if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
-                for _ in range(3):
-                    self.driver.back()
-                    self.sleep(.5)
-                pressed_back = True
+                                add_more_button = self.locate(AppiumBy.ID, 'add_more')
+                                self.click(add_more_button)
 
-            self.sleep(.5)
+                                self.logger.info('Clicked add more button')
 
-            if pressed_back:
-                media_items = self.locate(AppiumBy.ID, 'media_items')
-                description_body = self.locate(AppiumBy.ID, 'description_body')
-                self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
+                                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
+                                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
+                                    self.click(deny_button)
 
-            self.logger.info('Putting in size')
+                                    self.logger.info('Denied access to camera permanently')
 
-            size_button = self.locate(AppiumBy.ID, 'size_edit_text')
-            self.click(size_button)
+                                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
+                                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
+                                    self.click(deny_button)
 
-            if 'belt' in (listing_category + ' ' + listing.subcategory).lower():
-                custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
-                self.click(custom_size_button)
+                                    self.logger.info('Denied access to microphone')
 
-                add_option = self.locate(AppiumBy.ID, 'container')
-                self.click(add_option)
+                                gallery_button = self.locate(AppiumBy.ID, 'gallery')
+                                self.click(gallery_button)
 
-                custom_size_input = self.locate(AppiumBy.ID, 'messageText')
-                custom_size_input.send_keys(listing.size)
+                                self.logger.info('Clicked gallery button')
 
-                next_button = self.locate(AppiumBy.ID, 'nextButton')
-                self.click(next_button)
-            else:
-                one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
-                self.click(one_size)
+                                self.sleep(1)
 
-            self.sleep(.5)
+                                group_num = 0
+                                self.swipe('up', 530)
+                                self.sleep(.75)
+                                for x in range(1, len(listing_images) + 1):
+                                    img_index = x - group_num
+                                    img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{img_index}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+                                    if x == 1:
+                                        self.long_click(img)
+                                    else:
+                                        img.click()
 
-            pressed_back = False
-            if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
-                self.logger.info('Category issue popped up... Pressing back button.')
-                for _ in range(3):
-                    self.driver.back()
-                    self.sleep(.5)
-                pressed_back = True
+                                    if x % 6 == 0 and x != len(listing_images):
+                                        self.swipe('up', 580 * 3)
+                                        group_num += 4 if not group_num else 6
+                                        self.sleep(.75)
 
-            self.sleep(.5)
+                                select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
+                                self.click(select_button)
 
-            if pressed_back:
-                media_items = self.locate(AppiumBy.ID, 'media_items')
-                description_body = self.locate(AppiumBy.ID, 'description_body')
-                self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
+                                self.logger.info('All images selected')
 
-            self.sleep(1)
-            self.logger.info('Putting in brand')
+                                self.sleep(1)
 
-            brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
-            while brand_input.text.lower() != listing.brand.lower():
-                pressed_back = False
-                self.click(brand_input)
-                self.logger.info('Clicked brand button')
+                                if self.is_present(AppiumBy.ID, 'nextButton'):
+                                    next_button = self.locate(AppiumBy.ID, 'nextButton')
+                                    self.click(next_button)
+                                else:
+                                    self.click(element=None, x=500, y=500)
 
-                brand_search = self.locate(AppiumBy.ID, 'searchTextView')
-                brand_search.send_keys(listing.brand.lower())
+                                    next_button = self.locate(AppiumBy.ID, 'nextButton')
+                                    self.click(next_button)
 
-                if not self.is_present(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.brand.lower()}']"):
-                    self.logger.info('Brand did not pop up on search... Taping back.')
-                    while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID,
-                                                                                           'titleTextView').text != 'Listing Details':
-                        self.driver.back()
-                        self.sleep(.5)
-                    pressed_back = True
+                                self.logger.info('Listing images uploaded')
+                            else:
+                                self.logger.info('All listing images seem to be in there already. Skipping...')
 
-                else:
-                    brand = self.locate(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.brand.lower()}']")
-                    self.click(brand)
+                            added_media_items = True
 
-                    self.logger.info('Clicked brand')
+                        if not added_title:
+                            title_input = self.locate(AppiumBy.ID, 'title_edit_text')
+                            self.input_text(title_input, listing.title)
 
-                    if self.locate(AppiumBy.ID, 'titleTextView').text == 'Select Category':
+                            added_title = True
+
+                        if not added_description:
+                            description_body = self.locate(AppiumBy.ID, 'description_body')
+
+                            if 'required' in description_body.text.lower():
+                                self.click(description_body)
+
+                                description_input = self.locate(AppiumBy.ID, 'description_editor')
+                                description_input.clear()
+                                self.send_keys(description_input, str(listing.description))
+
+                                done_button = self.locate(AppiumBy.ID, 'nextButton')
+                                self.click(done_button)
+
+                            added_description = True
+
+                        if not added_category:
+                            self.logger.info('Selecting category for the listing')
+                            while not self.is_present(AppiumBy.ID, 'catalog_edit_text'):
+                                self.logger.info('Could not find category input, scrolling...')
+                                self.swipe('up', 1000)
+
+                            category = self.locate(AppiumBy.ID, 'catalog_edit_text')
+
+                            if 'required' in category.text.lower():
+                                listing_category = listing.category
+                                space_index = listing_category.find(' ')
+                                primary_category = listing_category[:space_index]
+                                secondary_category = listing_category[space_index + 1:]
+
+                                self.click(category)
+
+                                self.sleep(1)
+
+                                primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
+                                self.click(primary_category_button)
+
+                                self.sleep(1)
+
+                                secondary_category_clicked = False
+                                secondary_category_click_attempts = 0
+                                while not secondary_category_clicked and secondary_category_click_attempts < 7:
+                                    if self.is_present(AppiumBy.ACCESSIBILITY_ID, secondary_category.lower()):
+                                        secondary_category_click_attempts += 1
+                                        secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID,
+                                                                                secondary_category.lower())
+                                        self.click(secondary_category_button)
+                                        self.logger.info('Category clicked')
+                                        self.sleep(.5)
+                                        secondary_category_clicked = True
+                                    else:
+                                        self.swipe('up', 400)
+                                        self.sleep(.5)
+
+                                subcategory_clicked = False
+                                subcategory_click_attempts = 0
+                                while not subcategory_clicked and subcategory_click_attempts < 7:
+                                    subcategory_click_attempts += 1
+                                    if self.is_present(AppiumBy.ACCESSIBILITY_ID, listing.subcategory.lower()):
+                                        subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID,
+                                                                         listing.subcategory.lower())
+                                        self.click(subcategory_button)
+                                        self.logger.info('Clicked sub category')
+                                        self.sleep(.5)
+                                        subcategory_clicked = True
+                                    else:
+                                        self.swipe('up', 400)
+                                        self.sleep(.5)
+
+                                done_button = self.locate(AppiumBy.ID, 'nextButton')
+                                self.click(done_button)
+
+                                self.logger.info('Clicked done button')
+                            else:
+                                self.logger.info('Category has already been selected')
+
+                            added_category = True
+
+                        if not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
+                            for _ in range(3):
+                                self.driver.back()
+                                self.sleep(.2)
+
+                        if not added_size:
+                            self.logger.info('Putting in size')
+
+                            while not self.is_present(AppiumBy.ID, 'size_edit_text'):
+                                self.logger.info('Could not find size input, scrolling...')
+                                self.swipe('up', 1000)
+
+                            size_button = self.locate(AppiumBy.ID, 'size_edit_text')
+                            if 'required' in size_button.text.lower():
+                                self.click(size_button)
+
+                                if 'belt' in (listing.category + ' ' + listing.subcategory).lower():
+                                    custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
+                                    self.click(custom_size_button)
+
+                                    add_option = self.locate(AppiumBy.ID, 'container')
+                                    self.click(add_option)
+
+                                    custom_size_input = self.locate(AppiumBy.ID, 'messageText')
+                                    custom_size_input.send_keys(listing.size)
+
+                                    next_button = self.locate(AppiumBy.ID, 'nextButton')
+                                    self.click(next_button)
+
+                                    self.logger.info(f'Put in {listing.size} for the size')
+                                else:
+                                    one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
+                                    self.click(one_size)
+
+                                    self.logger.info('Clicked one size')
+
+                            added_size = True
+
+                        if not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
+                            for _ in range(3):
+                                self.driver.back()
+                                self.sleep(.2)
+
+                        if not added_brand:
+                            self.logger.info('Putting in brand')
+
+                            while not self.is_present(AppiumBy.ID, 'brand_edit_text'):
+                                self.logger.info('Could not find brand input, scrolling...')
+                                self.swipe('up', 1000)
+
+                            brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
+                            while brand_input.text.lower() != listing.brand.lower():
+                                self.click(brand_input)
+                                self.logger.info('Clicked brand button')
+
+                                brand_search = self.locate(AppiumBy.ID, 'searchTextView')
+                                brand_search.send_keys(listing.brand.lower())
+
+                                self.sleep(.5)
+
+                                if not self.is_present(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.brand.lower()}']"):
+                                    self.logger.info('Brand did not pop up on search... Taping back.')
+                                    while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
+                                        self.driver.back()
+                                        self.sleep(.2)
+                                else:
+                                    brand = self.locate(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.brand.lower()}']")
+                                    self.click(brand)
+
+                                    self.logger.info('Clicked brand')
+
+                                while not self.is_present(AppiumBy.ID, 'brand_edit_text'):
+                                    self.logger.info('Could not find brand input after pressing back, scrolling...')
+                                    self.swipe('up', 1000)
+
+                                brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
+                            added_brand = True
+                            self.logger.info('Brand inputted')
+
+                        if not added_original_price:
+                            while not self.is_present(AppiumBy.ID, 'original_price_edit_text'):
+                                self.logger.info('Could not find original price input, scrolling...')
+                                self.swipe('up', 1000)
+
+                            original_price = self.locate(AppiumBy.ID, 'original_price_edit_text')
+                            self.input_text(original_price, str(listing.original_price))
+
+                            added_original_price = True
+
+                        if not added_listing_price:
+                            while not self.is_present(AppiumBy.ID, 'listing_price_edit_text'):
+                                self.logger.info('Could not find listing price input, scrolling...')
+                                self.swipe('up', 1000)
+
+                            listing_price = self.locate(AppiumBy.ID, 'listing_price_edit_text')
+                            self.input_text(listing_price, str(listing.listing_price))
+
+                            added_listing_price = True
+
+                        next_button = self.locate(AppiumBy.ID, 'nextButton')
+                        self.click(next_button)
+                    elif window_title and window_title.text == 'Share Listing':
+                        list_button = self.locate(AppiumBy.ID, 'nextButton')
+                        self.click(list_button)
+
+                        list_attempts = 0
+                        self.logger.info('Sell button clicked')
+                        self.sleep(5)
+                        sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
+
+                        while not sell_button_present and list_attempts < 20:
+                            sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
+                            list_attempts += 1
+
+                            if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
+                                error_title = self.locate(AppiumBy.ID, 'android:id/alertTitle')
+                                if 'error' in error_title.text.lower():
+                                    self.logger.info('Error occurred, clicking retry button')
+                                    retry_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                                    self.click(retry_button)
+                                else:
+                                    self.logger.info('Some alert popped up but it is not implemented')
+                                    self.sleep(5)
+
+                                list_attempts = 0
+                            elif self.is_present(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]"):
+                                self.logger.warning('Certify listing page came up. Clicking certify.')
+                                certify_button = self.locate(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]")
+                                self.click(certify_button)
+
+                                self.sleep(.5)
+                                certify_ok = self.locate(AppiumBy.ID, 'android:id/button1')
+                                self.click(certify_ok)
+
+                                list_attempts = 0
+                            else:
+                                self.logger.info('Item not listed yet')
+                                self.sleep(10)
+                        else:
+                            if list_attempts >= 10:
+                                self.logger.error(
+                                    f'Attempted to locate the sell button {list_attempts} times but could not find it.')
+                                return False
+                            else:
+                                self.logger.info('Item listed successfully')
+
+                        self.listed = True
+                    else:
                         for _ in range(3):
                             self.driver.back()
-                            self.sleep(.5)
-                        pressed_back = True
+                            self.sleep(.2)
+            return self.listed
 
-                if pressed_back:
-                    self.logger.info('Scrolling...')
-                    media_items = self.locate(AppiumBy.ID, 'media_items')
-                    description_body = self.locate(AppiumBy.ID, 'description_body')
-                    self.swipe('up', 600 + media_items.size['height'] + description_body.size['height'])
-
-                    self.sleep(1)
-
-                brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
-
-            while not self.is_present(AppiumBy.ID, 'listing_price_edit_text'):
-                self.swipe('up', 600)
-                self.sleep(1)
-
-            original_price = self.locate(AppiumBy.ID, 'original_price_edit_text')
-            listing_price = self.locate(AppiumBy.ID, 'listing_price_edit_text')
-
-            original_price.send_keys(str(listing.original_price))
-            listing_price.send_keys(str(listing.listing_price))
-
-            next_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(next_button)
-
-            self.sleep(1)
-
-            next_button = self.locate(AppiumBy.ID, 'nextButton')
-            self.click(next_button)
-
-            list_attempts = 0
-            self.logger.info('Sell button clicked')
-            self.sleep(5)
-            sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
-
-            while not sell_button_present and list_attempts < 20:
-                sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
-                list_attempts += 1
-
-                if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
-                    error_title = self.locate(AppiumBy.ID, 'android:id/alertTitle')
-                    if 'error' in error_title.text.lower():
-                        self.logger.info('Error occurred, clicking retry button')
-                        retry_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                        self.click(retry_button)
-                    else:
-                        self.logger.info('Some alert popped up but it is not implemented')
-                        self.sleep(5)
-                elif self.is_present(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]"):
-                    self.logger.warning('Certify listing page came up. Clicking certify.')
-                    certify_button = self.locate(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]")
-                    self.click(certify_button)
-
-                    self.sleep(.5)
-                    certify_ok = self.locate(AppiumBy.ID, 'android:id/button1')
-                    self.click(certify_ok)
-
-                else:
-                    self.logger.info('Item not listed yet')
-                    self.sleep(10)
-            else:
-                if list_attempts >= 10:
-                    self.logger.error(f'Attempted to locate the sell button {list_attempts} times but could not find it.')
-                    return False
-                else:
-                    self.logger.info('Item listed successfully')
-
-            return True
         except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
 
-            return False
+            return self.listed
 
 
 class AppClonerClient(AppiumClient):
