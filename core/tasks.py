@@ -93,7 +93,8 @@ class CampaignTask(Task):
 
         if ip_reset:
             with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                client.launch_app(self.campaign.posh_user.username)
+                if client.driver.current_package != self.campaign.posh_user.app_package:
+                    client.launch_app(self.campaign.posh_user.username)
 
                 start_time = time.time()
                 registered = client.register()
@@ -139,7 +140,8 @@ class CampaignTask(Task):
                 client.driver.press_keycode(3)
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                    client.launch_app(self.campaign.posh_user.username)
+                    if client.driver.current_package != self.campaign.posh_user.app_package:
+                        client.launch_app(self.campaign.posh_user.username)
 
                     registration_finished = client.finish_registration()
 
@@ -186,7 +188,8 @@ class CampaignTask(Task):
                         item_to_list.save()
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                    client.launch_app(self.campaign.posh_user.username)
+                    if client.driver.current_package != self.campaign.posh_user.app_package:
+                        client.launch_app(self.campaign.posh_user.username)
 
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
