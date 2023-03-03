@@ -79,6 +79,10 @@ class CampaignTask(Task):
 
                 clone_app_package = client.driver.current_package
 
+                while 'poshmark' not in clone_app_package:
+                    time.sleep(.5)
+                    clone_app_package = client.driver.current_package
+
                 self.campaign.posh_user.app_package = clone_app_package
                 self.campaign.posh_user.save()
 
