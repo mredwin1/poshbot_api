@@ -752,6 +752,7 @@ class PoshMarkClient(AppiumClient):
                             added_title = True
 
                         if not added_description:
+                            self.logger.info('Adding description')
                             description_body = self.locate(AppiumBy.ID, 'description_body')
 
                             if 'required' in description_body.text.lower():
@@ -763,6 +764,9 @@ class PoshMarkClient(AppiumClient):
 
                                 done_button = self.locate(AppiumBy.ID, 'nextButton')
                                 self.click(done_button)
+                                self.logger.info('Description added')
+                            else:
+                                self.logger.info('Description has already been added. Skipping...')
 
                             added_description = True
 
@@ -890,14 +894,15 @@ class PoshMarkClient(AppiumClient):
 
                                 if not self.is_present(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.brand.lower()}']"):
                                     self.logger.info('Brand did not pop up on search... Taping back.')
-                                    while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
-                                        self.driver.back()
-                                        self.sleep(.2)
                                 else:
                                     brand = self.locate(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.brand.lower()}']")
                                     self.click(brand)
 
                                     self.logger.info('Clicked brand')
+
+                                while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
+                                    self.driver.back()
+                                    self.sleep(.2)
 
                                 while not self.is_present(AppiumBy.ID, 'brand_edit_text'):
                                     self.logger.info('Could not find brand input after pressing back, scrolling...')
