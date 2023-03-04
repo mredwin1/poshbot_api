@@ -80,6 +80,8 @@ class CampaignTask(Task):
                 clone_app_package = client.driver.current_package
 
                 while 'poshmark' not in clone_app_package:
+                    self.logger.info(f'App did not launch properly. Current app package {clone_app_package}')
+                    client.launch_app(self.campaign.posh_user.username)
                     time.sleep(.5)
                     clone_app_package = client.driver.current_package
 
