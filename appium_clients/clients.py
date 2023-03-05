@@ -441,9 +441,10 @@ class PoshMarkClient(AppiumClient):
 
                         if self.is_present(AppiumBy.ID, 'popupContainer'):
                             new_username = self.locate(AppiumBy.ID, 'item')
-                            self.click(new_username)
 
                             self.logger.info(f'Looks like username was taken. Choosing new username: {new_username.text}')
+
+                            self.click(new_username)
 
                             self.sleep(1)
 
