@@ -875,7 +875,7 @@ class PoshMarkClient(AppiumClient):
                                 self.driver.back()
                                 self.sleep(.2)
 
-                        if not added_brand:
+                        if not added_brand and listing.brand:
                             self.logger.info('Putting in brand')
 
                             while not self.is_present(AppiumBy.ID, 'brand_edit_text'):
