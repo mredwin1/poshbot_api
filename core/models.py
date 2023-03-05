@@ -264,7 +264,7 @@ class Listing(models.Model):
 
     title = models.CharField(max_length=50)
     size = models.CharField(max_length=20)
-    brand = models.CharField(max_length=30)
+    brand = models.CharField(max_length=30, blank=True)
     category = models.CharField(max_length=30)
     subcategory = models.CharField(max_length=30)
 
