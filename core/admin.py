@@ -112,9 +112,9 @@ class PoshUserAdmin(admin.ModelAdmin):
 @admin.register(models.Listing)
 class ListingAdmin(admin.ModelAdmin):
     autocomplete_fields = ['campaign']
-    list_display = ['title', 'associated_campaign']
+    list_display = ['title', 'associated_user', 'associated_campaign']
     search_fields = ['title__istartswith']
-    list_filter = ['campaign']
+    list_filter = ['associated_user', 'campaign']
     list_per_page = 20
     inlines = [ListingImageInline]
 
@@ -127,6 +127,13 @@ class ListingAdmin(admin.ModelAdmin):
             url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(listing.campaign.id)})}"
             return format_html('<a href="{}">{}</a>', url, listing.campaign)
         return listing.campaign
+
+    @admin.display(ordering='user')
+    def associated_user(self, listing):
+        if listing.user:
+            url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(listing.user.id)})}"
+            return format_html('<a href="{}">{}</a>', url, listing.user)
+        return listing.user
 
     fieldsets = (
         ('Listing Information', {
