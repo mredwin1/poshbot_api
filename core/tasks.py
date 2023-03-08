@@ -131,7 +131,11 @@ class CampaignTask(Task):
 
         if ip_reset:
             if client:
+                start_time = time.time()
                 registration_finished = client.finish_registration()
+                end_time = time.time()
+
+                self.logger.info(f'Time to finish registration: {end_time - start_time}')
 
                 self.campaign.posh_user.finished_registration = registration_finished
                 self.campaign.posh_user.save()
@@ -145,7 +149,11 @@ class CampaignTask(Task):
                     if client.driver.current_package != self.campaign.posh_user.app_package:
                         client.launch_app(self.campaign.posh_user.username)
 
+                    start_time = time.time()
                     registration_finished = client.finish_registration()
+                    end_time = time.time()
+
+                    self.logger.info(f'Time to finish registration: {end_time - start_time}')
 
                     self.campaign.posh_user.finished_registration = registration_finished
                     self.campaign.posh_user.save()
