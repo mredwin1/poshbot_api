@@ -114,7 +114,7 @@ class ListingAdmin(admin.ModelAdmin):
     autocomplete_fields = ['campaign']
     list_display = ['title', 'associated_user', 'associated_campaign']
     search_fields = ['title__istartswith']
-    list_filter = ['associated_user', 'campaign']
+    list_filter = ['user', 'campaign']
     list_per_page = 20
     inlines = [ListingImageInline]
 
