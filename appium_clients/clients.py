@@ -891,7 +891,7 @@ class PoshMarkClient(AppiumClient):
                                 brand_search = self.locate(AppiumBy.ID, 'searchTextView')
                                 brand_search.send_keys(listing.brand.lower())
 
-                                self.sleep(.5)
+                                self.sleep(1)
 
                                 if not self.is_present(AppiumBy.XPATH, f"//*[translate(@content-desc, 'ABCDEFGHIJKLMNOPQRSTUVWXYZ', 'abcdefghijklmnopqrstuvwxyz') = '{listing.brand.lower()}']"):
                                     self.logger.info('Brand did not pop up on search... Taping back.')
