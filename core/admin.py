@@ -91,11 +91,11 @@ class PoshUserAdmin(admin.ModelAdmin):
         ('Important Information', {
             'fields': (
                 ('is_active', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated'),
+                ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration'),
                 ('user', 'app_package'),
                 ('date_added', 'sales'),
                 ('username', 'password', 'email'),
-                ('phone_number'),
-                ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration')
+                ('phone_number',)
             )
         }),
         ('Other Information', {
