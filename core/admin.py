@@ -67,7 +67,7 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
     readonly_fields = ['sales', 'date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration']
-    list_display = ['username', 'status', 'associated_user','associated_campaign', 'email']
+    list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email']
     search_fields = ['username__istartswith', 'email__istartswith']
     list_filter = ['user', PoshUserStatusFilter]
     list_per_page = 20
@@ -215,7 +215,7 @@ class LogGroupAdmin(admin.ModelAdmin):
 
 @admin.register(models.ListedItem)
 class ListedItemAdmin(admin.ModelAdmin):
-    readonly_fields = ['time_to_list']
+    # readonly_fields = ['time_to_list']
     autocomplete_fields = ['posh_user']
     list_display = ['listing_title', 'status', 'associated_user', 'associated_posh_user']
     search_fields = ['listing_title__istartswith', 'posh_user__username__istartswith']
@@ -238,7 +238,7 @@ class ListedItemAdmin(admin.ModelAdmin):
         ('Campaign Information', {
             'fields': (
                 ('posh_user', 'listing'),
-                ('listing_title', 'status', 'time_to_list'),
+                # ('listing_title', 'status', 'time_to_list'),
                 ('datetime_listed', 'datetime_passed_review'),
                 ('datetime_removed', 'datetime_sold'),
             )
