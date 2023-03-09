@@ -262,7 +262,7 @@ class Listing(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
-    title = models.CharField(max_length=50)
+    title = models.CharField(max_length=80)
     size = models.CharField(max_length=20)
     brand = models.CharField(max_length=30, blank=True)
     category = models.CharField(max_length=30)
