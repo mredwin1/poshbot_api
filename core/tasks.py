@@ -67,7 +67,7 @@ class CampaignTask(Task):
                 start_time = time.time()
                 installed = client.add_clone()
                 end_time = time.time()
-                time_to_install = round(end_time - start_time)
+                time_to_install = datetime.timedelta(seconds=round(end_time - start_time))
 
                 self.logger.info(f'Time to install clone: {time_to_install}')
 
@@ -103,7 +103,7 @@ class CampaignTask(Task):
                 start_time = time.time()
                 registered = client.register()
                 end_time = time.time()
-                time_to_register = round(end_time - start_time)
+                time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
 
                 self.logger.info(f'Time to register user: {time_to_register}')
 
@@ -138,7 +138,7 @@ class CampaignTask(Task):
                 start_time = time.time()
                 registration_finished = client.finish_registration()
                 end_time = time.time()
-                time_to_finish_registration = round(end_time - start_time)
+                time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
 
                 self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
 
@@ -158,7 +158,7 @@ class CampaignTask(Task):
                     start_time = time.time()
                     registration_finished = client.finish_registration()
                     end_time = time.time()
-                    time_to_finish_registration = round(end_time - start_time)
+                    time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
 
                     self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
 
@@ -197,7 +197,7 @@ class CampaignTask(Task):
                     start_time = time.time()
                     item_listed = client.list_item(item_to_list.listing, listing_images)
                     end_time = time.time()
-                    time_to_list = round(end_time - start_time)
+                    time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
 
                     if item_listed:
                         self.logger.info(f'Time to list item: {time_to_list}')
@@ -217,7 +217,7 @@ class CampaignTask(Task):
                         start_time = time.time()
                         listed = client.list_item(item_to_list.listing, listing_images)
                         end_time = time.time()
-                        time_to_list = round(end_time - start_time)
+                        time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
 
                         if listed:
                             self.logger.info(f'Time to list item: {time_to_list}')
