@@ -67,11 +67,13 @@ class CampaignTask(Task):
                 start_time = time.time()
                 installed = client.add_clone()
                 end_time = time.time()
+                time_to_install = round(end_time - start_time)
 
-                self.logger.info(f'Time to install clone: {end_time - start_time}')
+                self.logger.info(f'Time to install clone: {time_to_install}')
 
                 self.campaign.posh_user.clone_installed = installed
                 self.campaign.posh_user.device = device
+                self.campaign.posh_user.time_to_install_clone = time_to_install
                 self.campaign.posh_user.save()
 
             if not self.campaign.posh_user.app_package:
@@ -101,9 +103,11 @@ class CampaignTask(Task):
                 start_time = time.time()
                 registered = client.register()
                 end_time = time.time()
+                time_to_register = round(end_time - start_time)
 
-                self.logger.info(f'Time to register user: {end_time - start_time}')
+                self.logger.info(f'Time to register user: {time_to_register}')
 
+                self.campaign.posh_user.time_to_register = time_to_register
                 self.campaign.posh_user.is_registered = registered
                 self.campaign.posh_user.save()
 
@@ -134,9 +138,11 @@ class CampaignTask(Task):
                 start_time = time.time()
                 registration_finished = client.finish_registration()
                 end_time = time.time()
+                time_to_finish_registration = round(end_time - start_time)
 
-                self.logger.info(f'Time to finish registration: {end_time - start_time}')
+                self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
 
+                self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                 self.campaign.posh_user.finished_registration = registration_finished
                 self.campaign.posh_user.save()
 
@@ -152,9 +158,11 @@ class CampaignTask(Task):
                     start_time = time.time()
                     registration_finished = client.finish_registration()
                     end_time = time.time()
+                    time_to_finish_registration = round(end_time - start_time)
 
-                    self.logger.info(f'Time to finish registration: {end_time - start_time}')
+                    self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
 
+                    self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                     self.campaign.posh_user.finished_registration = registration_finished
                     self.campaign.posh_user.save()
 
@@ -189,10 +197,12 @@ class CampaignTask(Task):
                     start_time = time.time()
                     item_listed = client.list_item(item_to_list.listing, listing_images)
                     end_time = time.time()
-
-                    self.logger.info(f'Time to list item: {end_time - start_time}')
+                    time_to_list = round(end_time - start_time)
 
                     if item_listed:
+                        self.logger.info(f'Time to list item: {time_to_list}')
+
+                        item_to_list.time_to_list = time_to_list
                         item_to_list.status = ListedItem.UNDER_REVIEW
                         item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                         item_to_list.save()
@@ -207,10 +217,12 @@ class CampaignTask(Task):
                         start_time = time.time()
                         listed = client.list_item(item_to_list.listing, listing_images)
                         end_time = time.time()
-
-                        self.logger.info(f'Time to list item: {end_time - start_time}')
+                        time_to_list = round(end_time - start_time)
 
                         if listed:
+                            self.logger.info(f'Time to list item: {time_to_list}')
+
+                            item_to_list.time_to_list = time_to_list
                             item_to_list.status = ListedItem.UNDER_REVIEW
                             item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                             item_to_list.save()

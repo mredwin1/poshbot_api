@@ -120,6 +120,10 @@ class PoshUser(models.Model):
     clone_installed = models.BooleanField(default=False)
     finished_registration = models.BooleanField(default=False)
 
+    time_to_install_clone = models.SmallIntegerField(default=0)
+    time_to_register = models.SmallIntegerField(default=0)
+    time_to_finish_registration = models.SmallIntegerField(default=0)
+
     @property
     def status(self):
         if not self.is_active:
@@ -335,6 +339,8 @@ class ListedItem(models.Model):
     datetime_sold = models.DateTimeField(null=True, blank=True)
 
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default=NOT_LISTED)
+
+    time_to_list = models.SmallIntegerField(default=0)
 
     def __str__(self):
         return f'{self.listing_title}'
