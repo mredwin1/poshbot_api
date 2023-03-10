@@ -66,7 +66,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
-    readonly_fields = ['sales', 'date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration']
+    # readonly_fields = ['sales', 'date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration']
     list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email']
     search_fields = ['username__istartswith', 'email__istartswith']
     list_filter = ['user', PoshUserStatusFilter]
