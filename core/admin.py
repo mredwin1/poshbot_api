@@ -25,8 +25,7 @@ class LogEntryInline(admin.StackedInline):
     extra = 0
     readonly_fields = ['level', 'timestamp', 'message', 'image']
     ordering = ['timestamp']
-
-    @admin.display(ordering='timestamp')
+    
     def timestamp_seconds(self, log_entry):
         return log_entry.timestamp.strftime('%b %d, %Y, %I:%M:%S %p')
 
