@@ -340,7 +340,7 @@ class ListedItem(models.Model):
 
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default=NOT_LISTED)
 
-    # time_to_list = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
+    time_to_list = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
 
     def __str__(self):
         return f'{self.listing_title}'
