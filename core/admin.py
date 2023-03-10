@@ -23,6 +23,7 @@ class ListingImageInline(admin.TabularInline):
 class LogEntryInline(admin.StackedInline):
     model = models.LogEntry
     extra = 0
+    fields = ['level', 'timestamp_seconds', 'message', 'image']
     readonly_fields = ['level', 'timestamp_seconds', 'message', 'image']
     ordering = ['timestamp']
 
