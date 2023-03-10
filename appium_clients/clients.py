@@ -74,7 +74,7 @@ class AppiumClient:
     def is_present(self, by, locator):
         """Checks if a web element is present"""
         try:
-            wait = WebDriverWait(self.driver, 5)
+            wait = WebDriverWait(self.driver, 1)
             wait.until(expected_conditions.presence_of_element_located((by, locator)))
         except (NoSuchElementException, TimeoutException):
             return False
@@ -359,8 +359,6 @@ class PoshMarkClient(AppiumClient):
 
         profile_picture_key = self.campaign.posh_user.profile_picture.name
         self.download_and_send_file(profile_picture_key, campaign_folder)
-
-        time.sleep(1)
 
         try:
             while not self.is_registered:
