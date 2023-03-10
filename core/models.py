@@ -120,9 +120,9 @@ class PoshUser(models.Model):
     clone_installed = models.BooleanField(default=False)
     finished_registration = models.BooleanField(default=False)
 
-    # time_to_install_clone = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
-    # time_to_register = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
-    # time_to_finish_registration = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
+    time_to_install_clone = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
+    time_to_register = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
+    time_to_finish_registration = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
 
     @property
     def status(self):
@@ -340,7 +340,7 @@ class ListedItem(models.Model):
 
     status = models.CharField(max_length=255, choices=STATUS_CHOICES, default=NOT_LISTED)
 
-    # time_to_list = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
+    time_to_list = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
 
     def __str__(self):
         return f'{self.listing_title}'
