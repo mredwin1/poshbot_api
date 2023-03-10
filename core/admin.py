@@ -23,10 +23,11 @@ class ListingImageInline(admin.TabularInline):
 class LogEntryInline(admin.StackedInline):
     model = models.LogEntry
     extra = 0
-    readonly_fields = ['level', 'timestamp', 'message', 'image']
+    readonly_fields = ['level', 'timestamp_seconds', 'message', 'image']
     ordering = ['timestamp']
-    
-    def timestamp_seconds(self, log_entry):
+
+    @staticmethod
+    def timestamp_seconds(log_entry):
         return log_entry.timestamp.strftime('%b %d, %Y, %I:%M:%S %p')
 
 
