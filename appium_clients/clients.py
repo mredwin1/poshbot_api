@@ -668,7 +668,10 @@ class PoshMarkClient(AppiumClient):
 
                     new_listing = True
                 else:
-                    window_title = self.locate(AppiumBy.ID, 'titleTextView')
+                    if self.is_present(AppiumBy.ID, 'titleTextView'):
+                        window_title = self.locate(AppiumBy.ID, 'titleTextView')
+                    else:
+                        window_title = None
 
                     if window_title and window_title.text == 'Listing Details':
                         if not added_media_items and len(listing_images) > 0:
@@ -979,10 +982,13 @@ class PoshMarkClient(AppiumClient):
                                 self.logger.info('Item listed successfully')
 
                         self.listed = True
-                    else:
+                    elif window_title:
                         for _ in range(3):
                             self.driver.back()
                             self.sleep(.2)
+                    else:
+                        self.logger.info('Window title element not found.')
+
             return self.listed
 
         except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
