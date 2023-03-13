@@ -953,7 +953,7 @@ class PoshMarkClient(AppiumClient):
                                 error_message = self.locate(AppiumBy.ID, 'android:id/message')
                                 self.logger.warning(f'A pop up came up with the following message: {error_message.text}')
 
-                                if 'you cannot currently perform this request' in error_message.text:
+                                if 'you cannot currently perform this request' in error_message.text.lower():
                                     self.logger.info('User is inactive and cannot list items. Setting inactive...')
                                     self.campaign.posh_user.is_active = False
                                     self.campaign.posh_user.save()
