@@ -949,16 +949,24 @@ class PoshMarkClient(AppiumClient):
                             sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
                             list_attempts += 1
 
-                            if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
-                                error_title = self.locate(AppiumBy.ID, 'android:id/alertTitle')
-                                if 'error' in error_title.text.lower():
-                                    self.logger.info(f'The folowing error came up: {error_title.text}')
+                            if self.is_present(AppiumBy.ID, 'android:id/message'):
+                                error_message = self.locate(AppiumBy.ID, 'android:id/message')
+                                self.logger.warning(f'A pop up came up with the following message: {error_message.text}')
+
+                                if 'you cannot currently perform this request' in error_message.text:
+                                    self.logger.info('User is inactive and cannot list items. Setting inactive...')
+                                    self.campaign.posh_user.is_active = False
+                                    self.campaign.posh_user.save()
+
+                                    return False
+                                else:
                                     retry_button = self.locate(AppiumBy.ID, 'android:id/button1')
                                     self.click(retry_button)
-                                else:
-                                    self.logger.info('Some alert popped up but it is not implemented')
+                                    self.logger.info(self.driver.page_source)
+                                    self.logger.info('Clicked button 1')
 
                                 self.sleep(5)
+
                                 list_attempts = 0
                             elif self.is_present(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]"):
                                 self.logger.warning('Certify listing page came up. Clicking certify.')
