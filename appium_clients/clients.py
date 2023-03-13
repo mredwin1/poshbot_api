@@ -949,7 +949,7 @@ class PoshMarkClient(AppiumClient):
                             if self.is_present(AppiumBy.ID, 'android:id/alertTitle'):
                                 error_title = self.locate(AppiumBy.ID, 'android:id/alertTitle')
                                 if 'error' in error_title.text.lower():
-                                    self.logger.info('Error occurred, clicking retry button')
+                                    self.logger.info(f'The folowing error came up: {error_title.text}')
                                     retry_button = self.locate(AppiumBy.ID, 'android:id/button1')
                                     self.click(retry_button)
                                 else:
