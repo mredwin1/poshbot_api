@@ -495,6 +495,8 @@ class CampaignTask(Task):
                 self.campaign.save()
                 self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
 
+        self.logger.info('Campaign ended')
+
 
 CampaignTask = app.register_task(CampaignTask())
 
