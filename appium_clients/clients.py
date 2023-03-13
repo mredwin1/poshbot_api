@@ -952,6 +952,7 @@ class PoshMarkClient(AppiumClient):
                                     self.logger.info('Error occurred, clicking retry button')
                                     retry_button = self.locate(AppiumBy.ID, 'android:id/button1')
                                     self.click(retry_button)
+                                    self.sleep(5)
                                 else:
                                     self.logger.info('Some alert popped up but it is not implemented')
                                     self.sleep(5)
