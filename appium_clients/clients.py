@@ -952,11 +952,10 @@ class PoshMarkClient(AppiumClient):
                                     self.logger.info('Error occurred, clicking retry button')
                                     retry_button = self.locate(AppiumBy.ID, 'android:id/button1')
                                     self.click(retry_button)
-                                    self.sleep(5)
                                 else:
                                     self.logger.info('Some alert popped up but it is not implemented')
-                                    self.sleep(5)
 
+                                self.sleep(5)
                                 list_attempts = 0
                             elif self.is_present(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]"):
                                 self.logger.warning('Certify listing page came up. Clicking certify.')
