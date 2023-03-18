@@ -634,7 +634,7 @@ def init_campaign(campaign_id, logger_id):
             selected_device = available_devices.first()
         else:
             for device in all_devices:
-                if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).seconds >= 900:
+                if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).seconds >= 1200:
                     selected_device = device
 
                     break
