@@ -65,21 +65,6 @@ services:
     volumes:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/letsencrypt/acme.json:/acme.json"
-  celery_noconcurrency:
-    image: ghcr.io/mredwin1/poshbot_api:latest
-    init: true
-    container_name: celery_noconcurrency_poshbot_api
-    restart: always
-    entrypoint: celery -A poshbot_api worker --concurrency=1 -Q campaign_no_concurrency.fifo -l INFO
-    stop_grace_period: "9m"
-    stop_signal: SIGTERM
-    env_file:
-      - .env
-    networks:
-      - internal
-    volumes:
-      - /dev/shm:/dev/shm
-      - bot_data:/bot_data
   celery_maintenance:
     image: ghcr.io/mredwin1/poshbot_api:latest
     init: true
