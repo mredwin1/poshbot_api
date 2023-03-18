@@ -183,7 +183,7 @@ CELERY_TASK_ROUTES = {
 }
 
 CELERY_BEAT_SCHEDULE = {
-    'restart_campaigns': {
+    'start_campaigns': {
         'task': 'core.tasks.start_campaigns',
         'schedule': timedelta(seconds=15)
     },

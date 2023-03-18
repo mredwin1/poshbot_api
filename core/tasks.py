@@ -483,7 +483,7 @@ def start_campaigns():
     queue_num = 1
 
     all_devices = Device.objects.filter(is_active=True)
-    available_devices = all_devices.filter(in_use=False)
+    available_devices = all_devices.filter(in_use='')
 
     if available_devices.count() > 0:
         available_device = available_devices.first()
