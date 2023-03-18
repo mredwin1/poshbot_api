@@ -161,6 +161,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
             campaign.status = Campaign.STARTING
             campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+            campaign.queue_status = 'CALCULATING'
             campaign.save()
 
         return Response(serializer.data)

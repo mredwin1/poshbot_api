@@ -246,7 +246,7 @@ class Campaign(models.Model):
     mode = models.CharField(max_length=10, choices=MODE_CHOICES, default='0')
     title = models.CharField(max_length=30)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STOPPED)
-    queue_status = models.CharField(max_length=15, default='UNKNOWN')
+    queue_status = models.CharField(max_length=15, default='N/A')
 
     delay = models.SmallIntegerField()
     lowest_price = models.SmallIntegerField(default=250)

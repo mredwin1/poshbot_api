@@ -535,7 +535,7 @@ def start_campaigns():
                     available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     available_device.in_use = campaign.posh_user.username
                     available_device.save()
-                    CampaignTask.delay(available_device, device_id=available_device.id)
+                    CampaignTask.delay(campaign.id, device_id=available_device.id)
                     available_device = None
             else:
                 campaign.queue_status = str(queue_num)
