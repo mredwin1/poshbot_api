@@ -172,7 +172,7 @@ class ListingAdmin(admin.ModelAdmin):
 @admin.register(models.Campaign)
 class CampaignAdmin(admin.ModelAdmin):
     autocomplete_fields = ['posh_user']
-    list_display = ['title', 'status', 'associated_user', 'associated_posh_user', 'listings_count']
+    list_display = ['title', 'status', 'queue_status','associated_user', 'associated_posh_user', 'listings_count']
     search_fields = ['title__istartswith', 'posh_user__username__istartswith']
     list_filter = ['status', 'user']
     inlines = [ListingInline]
@@ -202,7 +202,7 @@ class CampaignAdmin(admin.ModelAdmin):
             'fields': (
                 ('auto_run', 'generate_users'),
                 ('user',),
-                ('status', 'next_runtime'),
+                ('status', 'queue_status', 'next_runtime'),
                 ('posh_user',),
                 ('mode',),
                 ('title', 'delay', 'lowest_price'),
