@@ -417,45 +417,27 @@ class CampaignTask(Task):
                     self.campaign.save()
 
                     success = False
-
             except WebDriverException:
-                self.logger.error(traceback.format_exc())
+                self.logger.debug(traceback.format_exc())
                 success = False
-
-                self.logger.warning(f'Restarting device and sending campaign to the end of the line due to a device error')
-
-                self.campaign.status = Campaign.STARTING
-                self.campaign.save()
 
                 client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
                 adb_device = client.device(serial=device.serial)
 
                 adb_device.reboot()
 
-                logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user,
-                                  created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
-                logger.save()
+                self.logger.warning(f'Sending campaign to the end of the line due to an error')
 
-                logger.info('Campaign restarted after error')
-                logger.info('Campaign will be started shortly')
-
-                time.sleep(5)
-                init_campaign.delay(campaign_id, logger.id)
-
+                self.campaign.status = Campaign.STARTING
+                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.save()
             except Exception:
-                self.logger.error(traceback.format_exc())
+                self.logger.debug(traceback.format_exc())
                 self.logger.error('Sending campaign to the end of the line due to an unhandled error')
 
                 self.campaign.status = Campaign.STARTING
+                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 self.campaign.save()
-
-                logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
-                logger.save()
-
-                logger.info('Campaign restarted after an unhandled error')
-                logger.info('Campaign will be started shortly')
-
-                init_campaign.delay(self.campaign.id, logger.id)
 
             end_time = time.time()
 
@@ -490,19 +472,72 @@ CampaignTask = app.register_task(CampaignTask())
 
 
 @shared_task
-def restart_campaigns():
-    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.RUNNING])
+def start_campaigns():
+    logger = logging.getLogger(__name__)
+    available_device = None
+    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+    queue_num = 1
+
+    all_devices = Device.objects.filter(is_active=True)
+    available_devices = all_devices.filter(in_use=False)
+
+    if available_devices.count() > 0:
+        available_device = available_devices.first()
+    else:
+        for device in all_devices:
+            if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).seconds >= 1200:
+                available_device = device
+
+                break
+
+    if not available_device:
+        logger.info('No device available')
 
     for campaign in campaigns:
+        items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
+
         if campaign.status == Campaign.STOPPING:
             campaign.status = Campaign.STOPPED
+            campaign.next_runtime = None
             campaign.save()
-        elif campaign.next_runtime and campaign.status != Campaign.STOPPING:
-            if campaign.next_runtime <= now and campaign.status == Campaign.IDLE:
-                campaign.status = Campaign.STARTING
+        elif campaign.status == Campaign.IDLE and campaign.next_runtime and campaign.next_runtime <= now:
+            campaign.status = Campaign.STARTING
+            campaign.save()
+            CampaignTask.delay(campaign.id)
+        elif campaign.status == Campaign.STARTING and campaign.posh_user.is_registered and items_to_list.count() == 0:
+            CampaignTask.delay(campaign.id)
+        elif campaign.status == Campaign.STARTING and not (campaign.posh_user.is_registered or items_to_list.count() == 0):
+            if available_device:
+                logger.info(f'Device is needed an available, checking connection to the following device: {available_device.serial}')
+
+                client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+                devices = client.devices()
+                serials = [device.serial for device in devices]
+
+                if available_device.serial not in serials:
+                    logger.info('A connection to the device could not be made')
+                    available_device = None
+                else:
+                    if available_device.serial in serials:
+                        adb_device = client.device(serial=available_device.serial)
+                        device_ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+
+                        if not device_ready:
+                            available_device = None
+                            logger.info('Device is available but has not finished booting')
+
+                if available_device:
+                    campaign_logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+                    available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                    available_device.in_use = True
+                    available_device.save()
+                    campaign_logger.info(f'Device selected: {available_device}')
+                    CampaignTask.delay(available_device, logger_id=available_device.id, device_id=available_device.id)
+            else:
+                campaign.queue_status = str(queue_num)
                 campaign.save()
-                CampaignTask.delay(campaign.id)
+                queue_num += 1
 
 
 @shared_task
@@ -586,62 +621,6 @@ def check_posh_users():
                         logger.info('Stopping campaign...')
                         campaign.status = Campaign.STOPPED
                         campaign.save()
-
-
-@shared_task
-def init_campaign(campaign_id, logger_id):
-    campaign = Campaign.objects.get(id=campaign_id)
-    logger = LogGroup.objects.get(id=logger_id)
-
-    campaign.status = Campaign.STARTING
-    campaign.save()
-    selected_device = None
-
-    logger.info(f'Getting a device for the following campaign: {campaign}')
-
-    while not selected_device and campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
-        all_devices = Device.objects.filter(is_active=True)
-        available_devices = all_devices.filter(in_use=False)
-
-        if available_devices.count() > 0:
-            selected_device = available_devices.first()
-        else:
-            for device in all_devices:
-                if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).seconds >= 1200:
-                    selected_device = device
-
-                    break
-
-        if selected_device:
-            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
-            devices = client.devices()
-            serials = [device.serial for device in devices]
-
-            if selected_device.serial not in serials:
-                logger.info(f'A connection to the following device could not be made: {selected_device.serial}')
-                logger.info('Waiting 10sec')
-                selected_device = None
-                time.sleep(10)
-            else:
-                if selected_device.serial in serials:
-                    adb_device = client.device(serial=selected_device.serial)
-                    device_ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-
-                    if not device_ready:
-                        selected_device = None
-                        logger.info('Found an available device but it has not finished booting yet. Sleeping for 10 seconds')
-                        time.sleep(10)
-        else:
-            logger.info('No device available, waiting 10sec')
-            time.sleep(10)
-            campaign.refresh_from_db()
-
-    if campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
-        selected_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-        selected_device.in_use = True
-        selected_device.save()
-        logger.info(f'Device selected: {selected_device}')
-        CampaignTask.delay(campaign_id, logger_id=logger.id, device_id=selected_device.id)
 
 
 @shared_task

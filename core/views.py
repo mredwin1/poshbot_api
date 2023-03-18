@@ -1,4 +1,5 @@
-import logging
+import datetime
+import pytz
 
 from django_filters.rest_framework import DjangoFilterBackend
 from rest_framework import filters
@@ -11,7 +12,7 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup, ListedItem
-from .tasks import CampaignTask, init_campaign
+from .tasks import CampaignTask
 from . import serializers
 
 
@@ -144,15 +145,6 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         serializer = self.get_serializer(campaign)
 
         if campaign.posh_user:
-            campaign.status = Campaign.STARTING
-            campaign.next_runtime = None
-            campaign.save()
-
-            logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user)
-            logger.save()
-
-            logger.info('Campaign will be started shortly')
-
             campaign_listings = Listing.objects.filter(campaign__id=campaign.id)
             items_to_list = []
 
@@ -167,12 +159,9 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
                     item_to_list.save()
                     items_to_list.append(item_to_list)
 
-            if campaign.posh_user.is_registered and not items_to_list:
-                campaign_task = CampaignTask
-            else:
-                campaign_task = init_campaign
-
-            campaign_task.delay(pk, logger.id)
+            campaign.status = Campaign.STARTING
+            campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+            campaign.save()
 
         return Response(serializer.data)
 
