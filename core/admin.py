@@ -15,7 +15,27 @@ admin.site.register(models.Device)
 
 @admin.action(description='Start selected campaigns')
 def start_campaigns(modeladmin, request, queryset):
-    queryset.update(status=models.Campaign.STARTING, next_runtime=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+    for campaign in queryset:
+        if campaign.posh_user and campaign.posh_user.is_active:
+            campaign_listings = models.Listing.objects.filter(campaign__id=campaign.id)
+            items_to_list = []
+
+            for campaign_listing in campaign_listings:
+                try:
+                    listed_item = models.ListedItem.objects.get(posh_user=campaign.posh_user, listing=campaign_listing)
+                    if listed_item.status == models.ListedItem.NOT_LISTED:
+                        items_to_list.append(campaign_listing)
+
+                except models.ListedItem.DoesNotExist:
+                    item_to_list = models.ListedItem(posh_user=campaign.posh_user, listing=campaign_listing,
+                                              listing_title=campaign_listing.title)
+                    item_to_list.save()
+                    items_to_list.append(item_to_list)
+
+            campaign.status = models.Campaign.STARTING
+            campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+            campaign.queue_status = 'CALCULATING'
+            campaign.save()
 
 
 @admin.action(description='Stop selected campaigns')
