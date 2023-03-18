@@ -262,7 +262,9 @@ class CampaignSerializer(serializers.ModelSerializer):
     class Meta:
         model = Campaign
         fields = [
-            'id', 'auto_run', 'generate_users', 'title', 'mode', 'delay', 'status',  'posh_user', 'listings']
+            'id', 'auto_run', 'generate_users', 'title', 'mode', 'delay', 'status',  'posh_user', 'listings',
+            'queue_status'
+        ]
         extra_kwargs = {
             'id': {'read_only': True},
             'status': {'read_only': True}
