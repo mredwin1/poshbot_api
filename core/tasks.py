@@ -58,7 +58,7 @@ class CampaignTask(Task):
         if logger_id:
             self.logger = LogGroup.objects.get(id=logger_id)
         else:
-            self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user)
+            self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
             self.logger.save()
 
     def install_clone(self, device):
