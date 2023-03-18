@@ -377,6 +377,7 @@ class CampaignTask(Task):
     def run(self, campaign_id, logger_id=None, device_id=None, attempt=1, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
         campaign_delay = None
+        success = False
 
         self.init_logger(logger_id)
 
@@ -470,12 +471,18 @@ class CampaignTask(Task):
 
             except Exception:
                 self.logger.error(traceback.format_exc())
-                self.logger.error('Stopping campaign due to unhandled error')
+                self.logger.error('Sending campaign to the end of the line due to an unhandled error')
 
-                success = False
-
-                self.campaign.status = Campaign.STOPPED
+                self.campaign.status = Campaign.STARTING
                 self.campaign.save()
+
+                logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+                logger.save()
+
+                logger.info('Campaign restarted after an unhandled error')
+                logger.info('Campaign will be started shortly')
+
+                init_campaign.delay(self.campaign.id, logger.id)
 
             end_time = time.time()
 
@@ -488,16 +495,16 @@ class CampaignTask(Task):
                 device.in_use = False
                 device.save()
 
-            if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
-                campaign_delay = 3600
+            if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED, Campaign.STARTING):
+                if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
+                    campaign_delay = 3600
 
-            if not campaign_delay:
-                campaign_delay = self.get_random_delay(end_time - start_time)
+                if not campaign_delay:
+                    campaign_delay = self.get_random_delay(end_time - start_time)
 
-            hours, remainder = divmod(campaign_delay, 3600)
-            minutes, seconds = divmod(remainder, 60)
+                hours, remainder = divmod(campaign_delay, 3600)
+                minutes, seconds = divmod(remainder, 60)
 
-            if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED):
                 self.campaign.status = Campaign.IDLE
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
                 self.campaign.save()
