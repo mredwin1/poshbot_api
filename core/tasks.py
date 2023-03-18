@@ -530,12 +530,10 @@ def start_campaigns():
                             logger.info('Device is available but has not finished booting')
 
                 if available_device:
-                    campaign_logger = LogGroup(campaign=campaign, posh_user=campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
                     available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     available_device.in_use = True
                     available_device.save()
-                    campaign_logger.info(f'Device selected: {available_device}')
-                    CampaignTask.delay(available_device, logger_id=available_device.id, device_id=available_device.id)
+                    CampaignTask.delay(available_device, device_id=available_device.id)
             else:
                 campaign.queue_status = str(queue_num)
                 campaign.save()
