@@ -610,7 +610,10 @@ def check_posh_users():
 
                 if (all_listings['shareable_listings'] or all_listings['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
-                    CampaignTask.delay(campaign.id)
+                    campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                    campaign.queue_status = 'CALCULATING'
+                    campaign.status = Campaign.STARTING
+                    campaign.save()
 
             # Checks if the user is inactive when there are no listings and
             if sum([len(y) for y in all_listings.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
