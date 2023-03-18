@@ -60,10 +60,10 @@ def path_and_rename(instance, filename):
 class Device(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
+    in_use = models.CharField(max_length=15, blank=True)
     serial = models.CharField(max_length=12, unique=True)
     ip_reset_url = models.URLField()
 
-    in_use = models.BooleanField(default=False)
     is_active = models.BooleanField(default=True)
 
     checkout_time = models.DateTimeField(null=True, blank=True)

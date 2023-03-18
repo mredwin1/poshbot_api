@@ -431,6 +431,7 @@ class CampaignTask(Task):
 
                 self.campaign.status = Campaign.STARTING
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.queue_status = 'Unknown'
                 self.campaign.save()
             except Exception:
                 self.logger.debug(traceback.format_exc())
@@ -438,6 +439,7 @@ class CampaignTask(Task):
 
                 self.campaign.status = Campaign.STARTING
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.queue_status = 'Unknown'
                 self.campaign.save()
 
             end_time = time.time()
@@ -448,7 +450,7 @@ class CampaignTask(Task):
 
             if device:
                 self.logger.info('Releasing device')
-                device.in_use = False
+                device.in_use = ''
                 device.save()
 
             if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED, Campaign.STARTING):
@@ -531,9 +533,10 @@ def start_campaigns():
 
                 if available_device:
                     available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                    available_device.in_use = True
+                    available_device.in_use = campaign.posh_user.username
                     available_device.save()
                     CampaignTask.delay(available_device, device_id=available_device.id)
+                    available_device = None
             else:
                 campaign.queue_status = str(queue_num)
                 campaign.save()
