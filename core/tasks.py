@@ -628,6 +628,7 @@ def init_campaign(campaign_id, logger_id):
                     device_ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
 
                     if not device_ready:
+                        selected_device = None
                         logger.info('Found an available device but it has not finished booting yet. Sleeping for 10 seconds')
                         time.sleep(10)
         else:
