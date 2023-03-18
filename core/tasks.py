@@ -390,6 +390,7 @@ class CampaignTask(Task):
                 device = None
 
             self.campaign.status = Campaign.RUNNING
+            self.campaign.queue_status = 'N/A'
             self.campaign.save()
 
             items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
@@ -499,6 +500,7 @@ def start_campaigns():
 
         if campaign.status == Campaign.STOPPING:
             campaign.status = Campaign.STOPPED
+            campaign.queue_status = 'N/A'
             campaign.next_runtime = None
             campaign.save()
         elif campaign.status == Campaign.IDLE and campaign.next_runtime and campaign.next_runtime <= now:
