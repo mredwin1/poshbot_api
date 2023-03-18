@@ -455,10 +455,18 @@ class CampaignTask(Task):
                     return None
 
                 else:
-                    self.logger.warning(f'Stopping campaign due to a device error. Attempt {attempt}')
+                    self.logger.warning(f'Sending campaign back to the queue due to a device error. Attempt {attempt}')
 
-                    self.campaign.status = Campaign.STOPPED
+                    self.campaign.status = Campaign.STARTING
                     self.campaign.save()
+
+                    logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+                    logger.save()
+
+                    logger.info('Campaign restarted after having multiple errors')
+                    logger.info('Campaign will be started shortly')
+
+                    init_campaign.delay(self.campaign.id, logger.id)
 
             except Exception:
                 self.logger.error(traceback.format_exc())
