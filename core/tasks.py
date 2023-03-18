@@ -501,21 +501,17 @@ def start_campaigns():
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
 
         if campaign.status == Campaign.STOPPING:
-            logger.info('1')
             campaign.status = Campaign.STOPPED
             campaign.queue_status = 'N/A'
             campaign.next_runtime = None
             campaign.save()
         elif campaign.status == Campaign.IDLE and campaign.next_runtime and campaign.next_runtime <= now:
-            logger.info('2')
             campaign.status = Campaign.STARTING
             campaign.save()
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and campaign.posh_user.is_registered and items_to_list.count() == 0:
-            logger.info('3')
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and not (campaign.posh_user.is_registered or items_to_list.count() == 0):
-            logger.info('4')
             if available_device:
                 logger.info(f'Device is needed and available, checking connection to the following device: {available_device.serial}')
 
