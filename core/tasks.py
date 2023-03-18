@@ -517,7 +517,7 @@ def start_campaigns():
         elif campaign.status == Campaign.STARTING and not (campaign.posh_user.is_registered or items_to_list.count() == 0):
             logger.info('4')
             if available_device:
-                logger.info(f'Device is needed an available, checking connection to the following device: {available_device.serial}')
+                logger.info(f'Device is needed and available, checking connection to the following device: {available_device.serial}')
 
                 client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
                 devices = client.devices()
@@ -536,6 +536,7 @@ def start_campaigns():
                             logger.info('Device is available but has not finished booting')
 
                 if available_device:
+                    logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
                     available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     available_device.in_use = campaign.posh_user.username
                     available_device.save()
