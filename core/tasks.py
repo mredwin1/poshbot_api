@@ -440,8 +440,8 @@ class CampaignTask(Task):
                         devices = client.devices()
                         serials = [device.serial for device in devices]
 
-                        if '94TXS0P38' in serials:
-                            adb_device = client.device(serial='94TXS0P38')
+                        if device.serial in serials:
+                            adb_device = client.device(serial=device.serial)
                             boot_complete = adb_device.shell('getprop sys.boot_completed').strip() == '1'
 
                         if not boot_complete:
@@ -636,12 +636,22 @@ def init_campaign(campaign_id, logger_id):
             client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
             devices = client.devices()
             serials = [device.serial for device in devices]
+            device_ready = False
 
             if selected_device.serial not in serials:
                 logger.info(f'A connection to the following device could not be made: {selected_device.serial}')
                 logger.info('Waiting 10sec')
                 selected_device = None
                 time.sleep(10)
+            else:
+                while not device_ready:
+                    if selected_device.serial in serials:
+                        adb_device = client.device(serial=selected_device.serial)
+                        device_ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+
+                    if not device_ready:
+                        logger.info('Device not finished rebooting yet. Sleeping for 10 seconds')
+                        time.sleep(10)
         else:
             logger.info('No device available, waiting 10sec')
             time.sleep(10)
