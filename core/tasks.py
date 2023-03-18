@@ -422,52 +422,25 @@ class CampaignTask(Task):
                 self.logger.error(traceback.format_exc())
                 success = False
 
-                if device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or items_to_list) and attempt < 2:
-                    self.logger.warning(f'Restarting device and campaign due to a device error. Attempt # {attempt}')
+                self.logger.warning(f'Restarting device and sending campaign to the end of the line due to a device error')
 
-                    self.campaign.status = Campaign.STARTING
-                    self.campaign.save()
+                self.campaign.status = Campaign.STARTING
+                self.campaign.save()
 
-                    client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
-                    adb_device = client.device(serial=device.serial)
-                    boot_complete = False
+                client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+                adb_device = client.device(serial=device.serial)
 
-                    adb_device.reboot()
+                adb_device.reboot()
 
-                    device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                    device.save()
+                logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user,
+                                  created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+                logger.save()
 
-                    while not boot_complete:
-                        devices = client.devices()
-                        serials = [device.serial for device in devices]
+                logger.info('Campaign restarted after error')
+                logger.info('Campaign will be started shortly')
 
-                        if device.serial in serials:
-                            adb_device = client.device(serial=device.serial)
-                            boot_complete = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-
-                        if not boot_complete:
-                            self.logger.info('Device not finished rebooting yet. Sleeping for 10 seconds')
-                            time.sleep(10)
-
-                    self.logger.info('Reboot complete, starting campaign up again in 5 seconds')
-                    time.sleep(5)
-                    CampaignTask.delay(campaign_id, logger_id=self.logger.id, device_id=device.id, attempt=attempt + 1)
-
-                    return None
-
-                else:
-                    self.logger.warning(f'Sending campaign back to the queue due to a device error. Attempt {attempt}')
-
-                    self.campaign.status = Campaign.STARTING
-                    self.campaign.save()
-
-                    logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
-                    logger.save()
-
-                    logger.info('Campaign restarted after having multiple errors')
-                    logger.info('Campaign will be started shortly')
-
-                    init_campaign.delay(self.campaign.id, logger.id)
+                time.sleep(5)
+                init_campaign.delay(campaign_id, logger.id)
 
             except Exception:
                 self.logger.error(traceback.format_exc())
