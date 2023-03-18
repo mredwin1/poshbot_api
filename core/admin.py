@@ -1,3 +1,6 @@
+import datetime
+import pytz
+
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models.aggregates import Count
@@ -8,6 +11,16 @@ from . import models
 
 admin.site.register(models.Offer)
 admin.site.register(models.Device)
+
+
+@admin.action(description='Start selected campaigns')
+def start_campaigns(modeladmin, request, queryset):
+    queryset.update(status=models.Campaign.STARTING, next_runtime=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+
+
+@admin.action(description='Stop selected campaigns')
+def start_campaigns(modeladmin, request, queryset):
+    queryset.update(status=models.Campaign.STOPPING)
 
 
 class ListingInline(admin.StackedInline):
