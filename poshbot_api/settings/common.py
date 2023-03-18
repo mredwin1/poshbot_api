@@ -186,7 +186,7 @@ CELERY_TASK_ROUTES = {
 CELERY_BEAT_SCHEDULE = {
     'restart_campaigns': {
         'task': 'core.tasks.start_campaigns',
-        'schedule': timedelta(seconds=30)
+        'schedule': timedelta(seconds=15)
     },
     'check_posh_users': {
         'task': 'core.tasks.check_posh_users',
