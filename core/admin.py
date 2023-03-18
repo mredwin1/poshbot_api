@@ -19,7 +19,7 @@ def start_campaigns(modeladmin, request, queryset):
 
 
 @admin.action(description='Stop selected campaigns')
-def start_campaigns(modeladmin, request, queryset):
+def stop_campaigns(modeladmin, request, queryset):
     queryset.update(status=models.Campaign.STOPPING)
 
 
@@ -176,6 +176,7 @@ class CampaignAdmin(admin.ModelAdmin):
     search_fields = ['title__istartswith', 'posh_user__username__istartswith']
     list_filter = ['status', 'user']
     inlines = [ListingInline]
+    actions = [start_campaigns, stop_campaigns]
 
     def get_queryset(self, request):
         return super(CampaignAdmin, self).get_queryset(request).select_related('posh_user').annotate(listings_count=Count('listings'))
