@@ -511,7 +511,7 @@ def start_campaigns():
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and campaign.posh_user.is_registered and items_to_list.count() == 0:
             CampaignTask.delay(campaign.id)
-        elif campaign.status == Campaign.STARTING and not (campaign.posh_user.is_registered or items_to_list.count() == 0):
+        elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
             if available_device:
                 logger.info(f'Device is needed and available, checking connection to the following device: {available_device.serial}')
 
