@@ -10,7 +10,6 @@ from . import models
 
 
 admin.site.register(models.Offer)
-admin.site.register(models.Device)
 
 
 @admin.action(description='Start selected campaigns')
@@ -87,6 +86,11 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
             return queryset.filter(campaign__status=models.Campaign.RUNNING)
 
         return queryset
+
+
+@admin.register(models.Device)
+class DeviceAdmin(admin.ModelAdmin):
+    readonly_fields = ['in_use']
 
 
 @admin.register(models.User)
