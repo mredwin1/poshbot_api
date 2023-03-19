@@ -168,6 +168,7 @@ LOGGING = {
 
 CELERY_RESULT_BACKEND = None
 CELERY_IGNORE_RESULT = True
+CELERY_DEFAULT_QUEUE = 'maintenance'
 CELERY_BROKER_URL = f"sqs://{os.environ.get('AWS_SQS_ACCESS_KEY_ID')}:{os.environ.get('AWS_SQS_SECRET_ACCESS_KEY')}@"
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     'region': '',
