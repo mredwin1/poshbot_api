@@ -218,6 +218,7 @@ class Campaign(models.Model):
     STARTING = 'STARTING'
     STOPPING = 'STOPPING'
     PAUSED = 'PAUSED'
+    IN_QUEUE = 'IN QUEUE'
 
     STATUS_CHOICES = [
         (RUNNING, 'RUNNING'),
@@ -226,6 +227,7 @@ class Campaign(models.Model):
         (STARTING, 'STARTING'),
         (STOPPING, 'STOPPING'),
         (PAUSED, 'PAUSED'),
+        (IN_QUEUE, 'IN QUEUE'),
     ]
 
     ADVANCED_SHARING = '0'

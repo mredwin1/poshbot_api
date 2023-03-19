@@ -506,10 +506,14 @@ def start_campaigns():
             campaign.next_runtime = None
             campaign.save()
         elif campaign.status == Campaign.IDLE and campaign.next_runtime and campaign.next_runtime <= now:
-            campaign.status = Campaign.STARTING
+            campaign.status = Campaign.IN_QUEUE
+            campaign.queue_status = 'N/A'
             campaign.save()
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and campaign.posh_user.is_registered and items_to_list.count() == 0:
+            campaign.status = Campaign.IN_QUEUE
+            campaign.queue_status = 'N/A'
+            campaign.save()
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
             if available_device:
@@ -536,6 +540,9 @@ def start_campaigns():
                     available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     available_device.in_use = campaign.posh_user.username
                     available_device.save()
+                    campaign.status = Campaign.IN_QUEUE
+                    campaign.queue_status = 'N/A'
+                    campaign.save()
                     CampaignTask.delay(campaign.id, device_id=available_device.id)
                     available_device = None
             else:
