@@ -117,7 +117,10 @@ class CampaignTask(Task):
                 client.driver.press_keycode(3)
 
             if not (registered and finish_registration_and_list):
-                self.campaign.status = Campaign.STOPPED
+                self.logger.info('Restarting campaign due to error')
+                self.campaign.status = Campaign.STARTING
+                self.campaign.queue_status = 'Unknown'
+                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 self.campaign.save()
 
                 return False
@@ -172,7 +175,10 @@ class CampaignTask(Task):
                     client.driver.press_keycode(3)
 
             if not (registration_finished and listed):
-                self.campaign.status = Campaign.STOPPED
+                self.logger.info('Did not list properly or finish registration. Restarting campaign')
+                self.campaign.status = Campaign.STARTING
+                self.campaign.queue_status = 'Unknown'
+                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 self.campaign.save()
                 return False
 
@@ -233,9 +239,11 @@ class CampaignTask(Task):
                     client.driver.press_keycode(3)
 
             if not item_listed:
-                self.logger.info('Did not list successfully. Stopping campaign.')
+                self.logger.info('Did not list successfully. Restarting campaign.')
 
-                self.campaign.status = Campaign.STOPPED
+                self.campaign.status = Campaign.STARTING
+                self.campaign.queue_status = 'Unknown'
+                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 self.campaign.save()
             else:
                 all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
