@@ -996,6 +996,7 @@ class PoshMarkClient(AppiumClient):
                             self.sleep(.2)
                     else:
                         self.logger.info('Window title element not found.')
+                        self.alert_check()
 
             return self.listed
 
