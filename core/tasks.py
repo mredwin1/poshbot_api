@@ -84,11 +84,11 @@ class CampaignTask(Task):
                     app_launched = client.launch_app(self.campaign.posh_user.username)
                     retries += 1
 
-                    if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
-                        self.campaign.posh_user.clone_installed = False
-                        self.campaign.posh_user.save()
+                if not app_launched and not self.campaign.posh_user.is_registered:
+                    self.campaign.posh_user.clone_installed = False
+                    self.campaign.posh_user.save()
 
-                        return False
+                    return False
 
                 clone_app_package = client.driver.current_package
 
@@ -101,11 +101,11 @@ class CampaignTask(Task):
                         app_launched = client.launch_app(self.campaign.posh_user.username)
                         retries += 1
 
-                        if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
-                            self.campaign.posh_user.clone_installed = False
-                            self.campaign.posh_user.save()
+                    if not app_launched and not self.campaign.posh_user.is_registered:
+                        self.campaign.posh_user.clone_installed = False
+                        self.campaign.posh_user.save()
 
-                            return False
+                        return False
 
                     time.sleep(.5)
                     clone_app_package = client.driver.current_package
@@ -128,11 +128,11 @@ class CampaignTask(Task):
                         app_launched = client.launch_app(self.campaign.posh_user.username)
                         retries += 1
 
-                        if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
-                            self.campaign.posh_user.clone_installed = False
-                            self.campaign.posh_user.save()
+                    if not app_launched and not self.campaign.posh_user.is_registered:
+                        self.campaign.posh_user.clone_installed = False
+                        self.campaign.posh_user.save()
 
-                            return False
+                        return False
 
                 start_time = time.time()
                 registered = client.register()
@@ -197,11 +197,11 @@ class CampaignTask(Task):
                             app_launched = client.launch_app(self.campaign.posh_user.username)
                             retries += 1
 
-                            if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
-                                self.campaign.posh_user.clone_installed = False
-                                self.campaign.posh_user.save()
+                        if not app_launched and not self.campaign.posh_user.is_registered:
+                            self.campaign.posh_user.clone_installed = False
+                            self.campaign.posh_user.save()
 
-                                return False
+                            return False
 
                     start_time = time.time()
                     registration_finished = client.finish_registration()
@@ -267,11 +267,11 @@ class CampaignTask(Task):
                             app_launched = client.launch_app(self.campaign.posh_user.username)
                             retries += 1
 
-                            if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
-                                self.campaign.posh_user.clone_installed = False
-                                self.campaign.posh_user.save()
+                        if not app_launched and not self.campaign.posh_user.is_registered:
+                            self.campaign.posh_user.clone_installed = False
+                            self.campaign.posh_user.save()
 
-                                return False
+                            return False
 
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
