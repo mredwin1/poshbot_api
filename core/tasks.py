@@ -84,7 +84,7 @@ class CampaignTask(Task):
                     app_launched = client.launch_app(self.campaign.posh_user.username)
                     retries += 1
 
-                    if retries > 1:
+                    if retries >= 1 and not self.campaign.posh_user.is_registered:
                         self.campaign.posh_user.clone_installed = False
                         self.campaign.posh_user.save()
 
@@ -101,7 +101,7 @@ class CampaignTask(Task):
                         app_launched = client.launch_app(self.campaign.posh_user.username)
                         retries += 1
 
-                        if retries > 1:
+                        if retries >= 1 and not self.campaign.posh_user.is_registered:
                             self.campaign.posh_user.clone_installed = False
                             self.campaign.posh_user.save()
 
@@ -128,7 +128,7 @@ class CampaignTask(Task):
                         app_launched = client.launch_app(self.campaign.posh_user.username)
                         retries += 1
 
-                        if retries > 1:
+                        if retries >= 1 and not self.campaign.posh_user.is_registered:
                             self.campaign.posh_user.clone_installed = False
                             self.campaign.posh_user.save()
 
@@ -197,7 +197,7 @@ class CampaignTask(Task):
                             app_launched = client.launch_app(self.campaign.posh_user.username)
                             retries += 1
 
-                            if retries > 1:
+                            if retries >= 1 and not self.campaign.posh_user.is_registered:
                                 self.campaign.posh_user.clone_installed = False
                                 self.campaign.posh_user.save()
 
@@ -267,7 +267,7 @@ class CampaignTask(Task):
                             app_launched = client.launch_app(self.campaign.posh_user.username)
                             retries += 1
 
-                            if retries > 1:
+                            if retries >= 1 and not self.campaign.posh_user.is_registered:
                                 self.campaign.posh_user.clone_installed = False
                                 self.campaign.posh_user.save()
 
