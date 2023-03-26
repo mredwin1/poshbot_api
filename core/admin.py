@@ -235,7 +235,7 @@ class CampaignAdmin(admin.ModelAdmin):
     def latest_log(self, campaign):
         log = campaign.loggroup_set.first()
         if log:
-            url = f"{reverse('admin:core_loggroup_change')}?{urlencode({'loggroup__id': str(log.id)})}"
+            url = f"{reverse('admin:core_loggroup_change', args=[log.id])}"
             return format_html('<a href="{}">{}</a>', url, log.created_date.strftime('%m-%d-%Y %I:%M:%S'))
         return log
 
