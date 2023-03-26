@@ -183,8 +183,8 @@ class AppiumClient:
 
         self.driver.back()
 
-    def launch_app(self, app_name):
-        self.logger.info(f'Launching app {app_name}')
+    def launch_app(self, app_name, retries=0):
+        self.logger.info(f'Launching app {app_name}. Attempt # {retries + 1}')
 
         self.logger.info('Going to home screen')
 
@@ -204,12 +204,17 @@ class AppiumClient:
         else:
             search.send_keys(app_name)
 
+        if not self.is_present(AppiumBy.ACCESSIBILITY_ID, app_name):
+            return False
+
         app = self.locate(AppiumBy.ACCESSIBILITY_ID, app_name)
         app.click()
 
         self.logger.info('App launched')
 
         self.sleep(2)
+
+        return True
 
     def get_current_app_package(self):
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)

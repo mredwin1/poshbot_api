@@ -77,13 +77,36 @@ class CampaignTask(Task):
                 self.campaign.posh_user.save()
 
             if not self.campaign.posh_user.app_package:
-                client.launch_app(self.campaign.posh_user.username)
+                app_launched = False
+                retries = 0
+
+                while not app_launched and retries < 1:
+                    app_launched = client.launch_app(self.campaign.posh_user.username)
+                    retries += 1
+
+                    if retries > 1:
+                        self.campaign.posh_user.clone_installed = False
+                        self.campaign.posh_user.save()
+
+                        return False
 
                 clone_app_package = client.driver.current_package
 
                 while 'poshmark' not in clone_app_package:
                     self.logger.info(f'App did not launch properly. Current app package {clone_app_package}')
-                    client.launch_app(self.campaign.posh_user.username)
+                    app_launched = False
+                    retries = 0
+
+                    while not app_launched and retries < 1:
+                        app_launched = client.launch_app(self.campaign.posh_user.username)
+                        retries += 1
+
+                        if retries > 1:
+                            self.campaign.posh_user.clone_installed = False
+                            self.campaign.posh_user.save()
+
+                            return False
+
                     time.sleep(.5)
                     clone_app_package = client.driver.current_package
 
@@ -98,7 +121,18 @@ class CampaignTask(Task):
         if ip_reset:
             with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                 if client.driver.current_package != self.campaign.posh_user.app_package:
-                    client.launch_app(self.campaign.posh_user.username)
+                    app_launched = False
+                    retries = 0
+
+                    while not app_launched and retries < 1:
+                        app_launched = client.launch_app(self.campaign.posh_user.username)
+                        retries += 1
+
+                        if retries > 1:
+                            self.campaign.posh_user.clone_installed = False
+                            self.campaign.posh_user.save()
+
+                            return False
 
                 start_time = time.time()
                 registered = client.register()
@@ -156,7 +190,18 @@ class CampaignTask(Task):
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                     if client.driver.current_package != self.campaign.posh_user.app_package:
-                        client.launch_app(self.campaign.posh_user.username)
+                        app_launched = False
+                        retries = 0
+
+                        while not app_launched and retries < 1:
+                            app_launched = client.launch_app(self.campaign.posh_user.username)
+                            retries += 1
+
+                            if retries > 1:
+                                self.campaign.posh_user.clone_installed = False
+                                self.campaign.posh_user.save()
+
+                                return False
 
                     start_time = time.time()
                     registration_finished = client.finish_registration()
@@ -215,7 +260,18 @@ class CampaignTask(Task):
             else:
                 with MobilePoshMarkClient(device.serial, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                     if client.driver.current_package != self.campaign.posh_user.app_package:
-                        client.launch_app(self.campaign.posh_user.username)
+                        app_launched = False
+                        retries = 0
+
+                        while not app_launched and retries < 1:
+                            app_launched = client.launch_app(self.campaign.posh_user.username)
+                            retries += 1
+
+                            if retries > 1:
+                                self.campaign.posh_user.clone_installed = False
+                                self.campaign.posh_user.save()
+
+                                return False
 
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
