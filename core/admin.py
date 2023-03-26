@@ -122,13 +122,13 @@ class PoshUserAdmin(admin.ModelAdmin):
     @admin.display(ordering='campaign')
     def associated_campaign(self, posh_user):
         if posh_user.campaign:
-            url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(posh_user.campaign.id)})}"
+            url = f"{reverse('admin:core_campaign_change', args=[posh_user.campaign.id])}"
             return format_html('<a href="{}">{}</a>', url, posh_user.campaign)
         return posh_user.campaign
 
     @admin.display(ordering='user')
     def associated_user(self, posh_user):
-        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(posh_user.user.id)})}"
+        url = f"{reverse('admin:core_user_change', args=[posh_user.user.id])}"
         return format_html('<a href="{}">{}</a>', url, posh_user.user)
 
     fieldsets = (
@@ -169,14 +169,14 @@ class ListingAdmin(admin.ModelAdmin):
     @admin.display(ordering='campaign')
     def associated_campaign(self, listing):
         if listing.campaign:
-            url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(listing.campaign.id)})}"
+            url = f"{reverse('admin:core_campaign_change', args=[listing.campaign.id])}"
             return format_html('<a href="{}">{}</a>', url, listing.campaign)
         return listing.campaign
 
     @admin.display(ordering='user')
     def associated_user(self, listing):
         if listing.user:
-            url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(listing.user.id)})}"
+            url = f"{reverse('admin:core_user_change', args=[listing.user.id])}"
             return format_html('<a href="{}">{}</a>', url, listing.user)
         return listing.user
 
@@ -292,12 +292,12 @@ class ListedItemAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='posh_user')
     def associated_posh_user(self, listed_item):
-        url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(listed_item.posh_user.id)})}"
+        url = f"{reverse('admin:core_poshuser_change', args=[listed_item.posh_user.id])}"
         return format_html('<a href="{}">{}</a>', url, listed_item.posh_user)
 
     @admin.display(ordering='posh_user__user')
     def associated_user(self, listed_item):
-        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(listed_item.posh_user.user.id)})}"
+        url = f"{reverse('admin:core_user_change', args=[listed_item.posh_user.id])}"
         return format_html('<a href="{}">{}</a>', url, listed_item.posh_user.user)
 
     fieldsets = (
