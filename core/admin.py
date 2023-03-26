@@ -239,7 +239,7 @@ class CampaignAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='queue_status_num')
     def queue_status_num(self, campaign):
-        if campaign.queue_status.is_numeric():
+        if campaign.queue_status.isnumeric():
             return campaign.queue_status_num
         return campaign.queue_status
 
