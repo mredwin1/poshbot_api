@@ -205,7 +205,7 @@ class CampaignAdmin(admin.ModelAdmin):
     actions = [start_campaigns, stop_campaigns]
 
     def get_queryset(self, request):
-        return super(CampaignAdmin, self).get_queryset(request).select_related('posh_user').prefect_related('loggroup_set').annotate(listings_count=Count('listings'), queue_status_num=Cast('queue_status', IntegerField())).order_by('queue_status_num')
+        return super(CampaignAdmin, self).get_queryset(request).select_related('posh_user').prefetch_related('loggroup_set').annotate(listings_count=Count('listings'), queue_status_num=Cast('queue_status', IntegerField())).order_by('queue_status_num')
 
     @admin.display(ordering='posh_user')
     def associated_posh_user(self, campaign):
