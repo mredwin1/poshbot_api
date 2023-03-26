@@ -217,13 +217,13 @@ class CampaignAdmin(admin.ModelAdmin):
     @admin.display(ordering='posh_user')
     def associated_posh_user(self, campaign):
         if campaign.posh_user:
-            url = f"{reverse('admin:core_poshuser_changelist')}?{urlencode({'id': str(campaign.posh_user.id)})}"
+            url = f"{reverse('admin:core_poshuser_change', args=[campaign.posh_user.id])}"
             return format_html('<a href="{}">{}</a>', url, campaign.posh_user)
         return campaign.posh_user
 
     @admin.display(ordering='user')
     def associated_user(self, campaign):
-        url = f"{reverse('admin:core_user_changelist')}?{urlencode({'id': str(campaign.user.id)})}"
+        url = f"{reverse('admin:core_user_change', args=[campaign.user.id])}"
         return format_html('<a href="{}">{}</a>', url, campaign.user)
 
     @admin.display(ordering='listings_count')
