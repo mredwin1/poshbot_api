@@ -234,8 +234,10 @@ class CampaignAdmin(admin.ModelAdmin):
     @admin.display()
     def latest_log(self, campaign):
         log = campaign.loggroup_set.first()
-        url = f"{reverse('admin:core_loggroup_changelist')}?{urlencode({'loggroup__id': str(log.id)})}"
-        return format_html('<a href="{}">{}</a>', url, log.created_date.strftime('%d-%m-%Y %I:%M:%S'))
+        if log:
+            url = f"{reverse('admin:core_loggroup_changelist')}?{urlencode({'loggroup__id': str(log.id)})}"
+            return format_html('<a href="{}">{}</a>', url, log.created_date.strftime('%d-%m-%Y %I:%M:%S'))
+        return log
 
     @admin.display(ordering='queue_status_num')
     def queue_status_num(self, campaign):
