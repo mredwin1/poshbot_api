@@ -3,7 +3,7 @@ import pytz
 
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.db.models import IntegerField
+from django.db.models import IntegerField, Case, When, Value, Count
 from django.db.models.aggregates import Count
 from django.db.models.functions import Cast
 from django.utils.html import format_html, urlencode
@@ -205,7 +205,14 @@ class CampaignAdmin(admin.ModelAdmin):
     actions = [start_campaigns, stop_campaigns]
 
     def get_queryset(self, request):
-        return super(CampaignAdmin, self).get_queryset(request).select_related('posh_user').prefetch_related('loggroup_set').annotate(listings_count=Count('listings'), queue_status_num=Cast('queue_status', IntegerField())).order_by('queue_status_num')
+        return super(CampaignAdmin, self).get_queryset(request).select_related('posh_user')\
+            .prefetch_related('loggroup_set').\
+            annotate(
+            listings_count=Count('listings'),
+            queue_status_num=Case(
+                When(queue_status__regex=r'^\d+$', then=Cast('queue_status', IntegerField())), default=Value(9999), output_field=IntegerField()
+            )
+        ).order_by('queue_status_num')
 
     @admin.display(ordering='posh_user')
     def associated_posh_user(self, campaign):
@@ -232,7 +239,9 @@ class CampaignAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='queue_status_num')
     def queue_status_num(self, campaign):
-        return campaign.queue_status_num
+        if campaign.queue_status.is_numeric():
+            return campaign.queue_status_num
+        return campaign.queue_status
 
     fieldsets = (
         ('Campaign Information', {
