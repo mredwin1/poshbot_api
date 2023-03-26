@@ -80,11 +80,11 @@ class CampaignTask(Task):
                 app_launched = False
                 retries = 0
 
-                while not app_launched and retries < 1:
+                while not app_launched and retries < 2:
                     app_launched = client.launch_app(self.campaign.posh_user.username)
                     retries += 1
 
-                    if retries >= 1 and not self.campaign.posh_user.is_registered:
+                    if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
                         self.campaign.posh_user.clone_installed = False
                         self.campaign.posh_user.save()
 
@@ -97,11 +97,11 @@ class CampaignTask(Task):
                     app_launched = False
                     retries = 0
 
-                    while not app_launched and retries < 1:
+                    while not app_launched and retries < 2:
                         app_launched = client.launch_app(self.campaign.posh_user.username)
                         retries += 1
 
-                        if retries >= 1 and not self.campaign.posh_user.is_registered:
+                        if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
                             self.campaign.posh_user.clone_installed = False
                             self.campaign.posh_user.save()
 
@@ -124,11 +124,11 @@ class CampaignTask(Task):
                     app_launched = False
                     retries = 0
 
-                    while not app_launched and retries < 1:
+                    while not app_launched and retries < 2:
                         app_launched = client.launch_app(self.campaign.posh_user.username)
                         retries += 1
 
-                        if retries >= 1 and not self.campaign.posh_user.is_registered:
+                        if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
                             self.campaign.posh_user.clone_installed = False
                             self.campaign.posh_user.save()
 
@@ -193,11 +193,11 @@ class CampaignTask(Task):
                         app_launched = False
                         retries = 0
 
-                        while not app_launched and retries < 1:
+                        while not app_launched and retries < 2:
                             app_launched = client.launch_app(self.campaign.posh_user.username)
                             retries += 1
 
-                            if retries >= 1 and not self.campaign.posh_user.is_registered:
+                            if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
                                 self.campaign.posh_user.clone_installed = False
                                 self.campaign.posh_user.save()
 
@@ -263,11 +263,11 @@ class CampaignTask(Task):
                         app_launched = False
                         retries = 0
 
-                        while not app_launched and retries < 1:
+                        while not app_launched and retries < 2:
                             app_launched = client.launch_app(self.campaign.posh_user.username)
                             retries += 1
 
-                            if retries >= 1 and not self.campaign.posh_user.is_registered:
+                            if retries > 1 and not self.campaign.posh_user.is_registered and not app_launched:
                                 self.campaign.posh_user.clone_installed = False
                                 self.campaign.posh_user.save()
 
