@@ -112,8 +112,10 @@ class PoshUser(models.Model):
     sales = models.PositiveSmallIntegerField(default=0, blank=True)
 
     date_added = models.DateField(auto_now_add=True)
+    date_disabled = models.DateField(null=True, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
 
+    is_active = models.BooleanField(default=True)
     is_active_in_posh = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
     profile_updated = models.BooleanField(default=False)
@@ -126,6 +128,9 @@ class PoshUser(models.Model):
 
     @property
     def status(self):
+        if not self.is_active:
+            return 'Disabled'
+
         if not self.is_active_in_posh:
             return 'Inactive'
 

@@ -619,7 +619,7 @@ def start_campaigns():
 def check_posh_users():
     logger = logging.getLogger(__name__)
     logger.info('Checking posh users')
-    posh_users = PoshUser.objects.filter(is_active=True, is_registered=True)
+    posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True)
     with PublicPoshMarkClient(logger) as client:
         for posh_user in posh_users:
             try:
@@ -689,9 +689,9 @@ def check_posh_users():
             # Checks if the user is inactive when there are no listings and
             if sum([len(y) for y in all_listings.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
                 logger.info('User has no listings available...')
-                is_active = client.check_inactive(posh_user.username)
+                is_active_in_posh = client.check_inactive(posh_user.username)
 
-                if not is_active:
+                if not is_active_in_posh:
                     posh_user.is_active_in_posh = False
                     posh_user.save()
 
@@ -710,3 +710,10 @@ def log_cleanup():
 
         for log in logs:
             log.delete()
+
+
+@shared_task
+def posh_user_cleanup():
+    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(days=30))
+
+    posh_users.delete()

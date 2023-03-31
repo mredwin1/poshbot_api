@@ -182,6 +182,7 @@ CELERY_TASK_ROUTES = {
     'core.tasks.check_posh_users': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.log_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'imagekit.cachefiles.backends._generate_file': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+    'core.tasks.posh_user_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -196,5 +197,9 @@ CELERY_BEAT_SCHEDULE = {
     'log_cleanup': {
         'task': 'core.tasks.log_cleanup',
         'schedule': timedelta(hours=1)
+    },
+    'posh_user_cleanup': {
+        'task': 'core.tasks.log_cleanup',
+        'schedule': timedelta(days=1)
     },
 }

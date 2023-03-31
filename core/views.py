@@ -69,6 +69,16 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
 
+    @action(detail=True, methods=['POST'])
+    def disable(self, request, pk):
+        posh_user = self.get_object()
+        serializer = self.get_serializer(posh_user)
+
+        posh_user.is_active = False
+        posh_user.save()
+
+        return Response(serializer.data)
+
 
 class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, GenericViewSet):
     serializer_class = serializers.ListingSerializer

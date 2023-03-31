@@ -44,6 +44,16 @@ def stop_campaigns(modeladmin, request, queryset):
     queryset.update(status=models.Campaign.STOPPING)
 
 
+@admin.action(description='Disable posh user')
+def disable_posh_users(modeladmin, request, queryset):
+    queryset.update(is_active=False, date_disabled=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+
+
+@admin.action(description='Enable posh user')
+def enable_posh_users(modeladmin, request, queryset):
+    queryset.update(is_active=True, date_disabled=None)
+
+
 class ListingInline(admin.StackedInline):
     model = models.Listing
     extra = 0
@@ -110,7 +120,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
-    readonly_fields = ['sales', 'date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration']
+    readonly_fields = ['sales', 'date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration', 'is_active', 'date_disabled']
     list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email']
     search_fields = ['username__istartswith', 'email__istartswith']
     list_filter = ['user', PoshUserStatusFilter]
@@ -134,10 +144,10 @@ class PoshUserAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Important Information', {
             'fields': (
-                ('is_active_in_posh', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated'),
+                ('is_active', 'is_active_in_posh', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated'),
                 ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration'),
                 ('user', 'app_package'),
-                ('date_added', 'sales'),
+                ('date_added', 'date_disabled', 'sales'),
                 ('username', 'password', 'email'),
                 ('phone_number',)
             )
