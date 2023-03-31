@@ -341,7 +341,7 @@ class PoshMarkClient(BaseClient):
         return None
 
     def posh_user_inactive(self):
-        self.posh_user.is_active = False
+        self.posh_user.is_active_in_posh = False
         self.posh_user.save()
 
     def check_for_errors(self):

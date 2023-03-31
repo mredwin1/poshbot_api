@@ -17,7 +17,7 @@ admin.site.register(models.Offer)
 @admin.action(description='Start selected campaigns')
 def start_campaigns(modeladmin, request, queryset):
     for campaign in queryset:
-        if campaign.posh_user and campaign.posh_user.is_active:
+        if campaign.posh_user and campaign.posh_user.is_active_in_posh:
             campaign_listings = models.Listing.objects.filter(campaign__id=campaign.id)
             items_to_list = []
 
@@ -134,7 +134,7 @@ class PoshUserAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Important Information', {
             'fields': (
-                ('is_active', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated'),
+                ('is_active_in_posh', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated'),
                 ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration'),
                 ('user', 'app_package'),
                 ('date_added', 'sales'),

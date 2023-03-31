@@ -144,7 +144,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         campaign = self.get_object()
         serializer = self.get_serializer(campaign)
 
-        if campaign.posh_user and campaign.posh_user.is_active:
+        if campaign.posh_user and campaign.posh_user.is_active_in_posh:
             campaign_listings = Listing.objects.filter(campaign__id=campaign.id)
             items_to_list = []
 

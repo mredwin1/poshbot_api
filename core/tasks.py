@@ -508,7 +508,7 @@ class CampaignTask(Task):
 
             end_time = time.time()
 
-            if not self.campaign.posh_user.is_active:
+            if not self.campaign.posh_user.is_active_in_posh:
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save()
 
@@ -692,7 +692,7 @@ def check_posh_users():
                 is_active = client.check_inactive(posh_user.username)
 
                 if not is_active:
-                    posh_user.is_active = False
+                    posh_user.is_active_in_posh = False
                     posh_user.save()
 
                     if campaign:

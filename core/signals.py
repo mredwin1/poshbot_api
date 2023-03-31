@@ -30,7 +30,7 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
 def posh_user_saved(sender, instance, *args, **kwargs):
     listed_items = ListedItem.objects.filter(posh_user=instance)
 
-    if not instance.is_active:
+    if not instance.is_active_in_posh:
         for listed_item in listed_items:
             if listed_item.status not in (ListedItem.NOT_LISTED, ListedItem.SOLD, ListedItem.REMOVED):
                 listed_item.datetime_removed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)

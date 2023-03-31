@@ -114,7 +114,7 @@ class PoshUser(models.Model):
     date_added = models.DateField(auto_now_add=True)
     date_of_birth = models.DateField(null=True, blank=True)
 
-    is_active = models.BooleanField(default=True)
+    is_active_in_posh = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
     profile_updated = models.BooleanField(default=False)
     clone_installed = models.BooleanField(default=False)
@@ -126,7 +126,7 @@ class PoshUser(models.Model):
 
     @property
     def status(self):
-        if not self.is_active:
+        if not self.is_active_in_posh:
             return 'Inactive'
 
         assigned_campaign = Campaign.objects.filter(posh_user=self)
