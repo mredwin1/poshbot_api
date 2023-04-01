@@ -72,10 +72,11 @@ class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListMode
     @action(detail=True, methods=['POST'])
     def disable(self, request, pk):
         posh_user = self.get_object()
-        serializer = self.get_serializer(posh_user)
 
         posh_user.is_active = False
         posh_user.save()
+
+        serializer = self.get_serializer(posh_user)
 
         return Response(serializer.data)
 
