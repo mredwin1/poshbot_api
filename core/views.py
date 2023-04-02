@@ -31,7 +31,7 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         user = self.request.user
         unassinged = self.request.query_params.get('unassigned')
 
-        queryset = PoshUser.objects.filter(user=user).prefetch_related('campaign')
+        queryset = PoshUser.objects.filter(user=user, is_active=True).prefetch_related('campaign')
 
         if unassinged == 'true':
             queryset = queryset.filter(campaign__isnull=True)
