@@ -20,7 +20,7 @@ class TokenObtainPairView(BaseTokenObtainPairView):
     serializer_class = serializers.TokenObtainPairSerializer
 
 
-class PoshUserViewSet(RetrieveModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, CreateModelMixin, GenericViewSet):
+class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, DestroyWithPayloadModelMixin, ListModelMixin, GenericViewSet):
     serializer_class = serializers.PoshUserSerializer
     filter_backends = [filters.SearchFilter, DjangoFilterBackend]
     permission_classes = [IsAuthenticated]
