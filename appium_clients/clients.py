@@ -1062,7 +1062,9 @@ class AppClonerClient(AppiumClient):
                     sorry_message = False
 
                 while not ok_clicked:
+                    self.logger.info(f'Starting: {starting_number} Current: {current_number}')
                     if current_number == starting_number:
+                        self.logger.info('Return')
                         return False
 
                     clone_number_input = self.locate(AppiumBy.XPATH,
