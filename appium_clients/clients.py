@@ -1113,13 +1113,15 @@ class AppClonerClient(AppiumClient):
                         install_button = self.locate(AppiumBy.ID, 'android:id/button1')
                         install_button.click()
 
-                if self.is_present(AppiumBy.ID, 'android:id/message'):
-                    message = self.locate(AppiumBy.ID, 'android:id/message')
+                    elif self.is_present(AppiumBy.ID, 'android:id/message'):
+                        message = self.locate(AppiumBy.ID, 'android:id/message')
 
-                    if 'sorry' in message.text.lower():
-                        ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                        ok_button.click()
-                        sorry_message = True
+                        if 'sorry' in message.text.lower():
+                            ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                            ok_button.click()
+                            sorry_message = True
+                    else:
+                        self.logger.debug('There is some message on the screen but no handler')
 
             self.sleep(.5)
 
