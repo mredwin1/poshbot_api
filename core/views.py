@@ -73,6 +73,13 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
     def disable(self, request, pk):
         posh_user = self.get_object()
 
+        try:
+            campaign = Campaign.objects.get(user=self.request.user, posh_user=posh_user)
+            campaign.posh_user = None
+            campaign.save()
+        except Campaign.DoesNotExist:
+            pass
+        
         posh_user.is_active = False
         posh_user.save()
 
