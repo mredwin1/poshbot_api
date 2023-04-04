@@ -519,7 +519,7 @@ class CampaignTask(Task):
             if self.device:
                 self.logger.info('Releasing self.device')
                 self.device.in_use = ''
-                device.save()
+                self.device.save()
 
             if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED, Campaign.STARTING):
                 if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
