@@ -25,6 +25,9 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
 
         device.uninstall(instance.app_package)
 
+        instance.device.installed_clones -= 1
+        instance.device.save()
+
 
 @receiver(post_save, sender=PoshUser)
 def posh_user_saved(sender, instance, *args, **kwargs):

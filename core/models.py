@@ -68,6 +68,10 @@ class Device(models.Model):
 
     checkout_time = models.DateTimeField(null=True, blank=True)
 
+    system_port = models.SmallIntegerField(unique=True)
+    mjpeg_server_port = models.SmallIntegerField(unique=True)
+    installed_clones = models.SmallIntegerField(default=0)
+
     def __str__(self):
         return self.serial
 

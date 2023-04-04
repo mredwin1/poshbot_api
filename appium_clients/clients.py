@@ -22,12 +22,14 @@ APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
 
 class AppiumClient:
-    def __init__(self, device_serial, logger, capabilities):
+    def __init__(self, device_serial, system_port, mjpeg_server_port, logger, capabilities):
         self.driver = None
         self.logger = logger
 
         capabilities['udid'] = device_serial
         capabilities['adbExecTimeout'] = 50000
+        capabilities['systemPort'] = system_port
+        capabilities['mjpegServerPort'] = mjpeg_server_port
         self.capabilities = capabilities
 
     def __enter__(self):
@@ -231,7 +233,7 @@ class AppiumClient:
 
 
 class PoshMarkClient(AppiumClient):
-    def __init__(self, device_serial, campaign: Campaign, logger, app_package='com.poshmark.app'):
+    def __init__(self, device_serial, campaign: Campaign, logger, system_port, mjpeg_server_port, app_package='com.poshmark.app'):
         self.driver = None
         self.campaign = campaign
         self.logger = logger
@@ -259,7 +261,7 @@ class PoshMarkClient(AppiumClient):
             noReset=True,
         )
 
-        super(PoshMarkClient, self).__init__(device_serial, logger, capabilities)
+        super(PoshMarkClient, self).__init__(device_serial, system_port, mjpeg_server_port, logger, capabilities)
 
     def locate(self, by, locator, location_type=None, retry=0):
         """Locates the first elements with the given By"""
@@ -1013,7 +1015,7 @@ class PoshMarkClient(AppiumClient):
 
 
 class AppClonerClient(AppiumClient):
-    def __init__(self, device_serial, logger, app_name=None):
+    def __init__(self, device_serial, logger, system_port, mjpeg_server_port, app_name=None):
         self.driver = None
         self.logger = logger
         self.app_name = app_name
@@ -1028,10 +1030,10 @@ class AppClonerClient(AppiumClient):
             locale='US',
             noReset=True,
         )
-        super(AppClonerClient, self).__init__(device_serial, logger, capabilities)
+        super(AppClonerClient, self).__init__(device_serial, system_port, mjpeg_server_port, logger, capabilities)
 
     def add_clone(self):
-        excluded_clone_numbers = [134]
+        excluded_clone_numbers = [134, 163, 164, 165, 166, 167, 168, 169, 170, 171]
         app_cloned = False
         sorry_message = False
         try:
@@ -1053,7 +1055,9 @@ class AppClonerClient(AppiumClient):
                 clone_number.click()
 
                 clone_number_input = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.EditText')
-                starting_number = int(clone_number_input.text)
+                clone_number_input.clear()
+                clone_number_input.send_keys('1')
+                starting_number = 1
                 current_number = None
                 ok_clicked = False
 
@@ -1077,8 +1081,7 @@ class AppClonerClient(AppiumClient):
                             next_button.click()
                     else:
                         if current_number in excluded_clone_numbers:
-                            next_button = self.locate(AppiumBy.XPATH,
-                                                      '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout[1]/android.widget.ImageView[2]')
+                            next_button = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout[1]/android.widget.ImageView[2]')
                             next_button.click()
                         else:
                             ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
@@ -1117,6 +1120,7 @@ class AppClonerClient(AppiumClient):
                         message = self.locate(AppiumBy.ID, 'android:id/message')
 
                         if 'sorry' in message.text.lower():
+                            excluded_clone_numbers.append(current_number)
                             ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
                             ok_button.click()
                             sorry_message = True
