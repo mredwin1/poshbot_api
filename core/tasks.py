@@ -555,6 +555,8 @@ def start_campaigns():
 
     if available_devices.count() > 0:
         available_device = available_devices.first()
+        if all_devices.filter(ip_reset_url=available_device.ip_reset_url).exclude(in_use='').count > 0:
+            available_device = None
     else:
         for device in all_devices:
             if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).seconds >= 1200:
