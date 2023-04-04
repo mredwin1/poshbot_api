@@ -22,7 +22,7 @@ APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
 
 class AppiumClient:
-    def __init__(self, device_serial, system_port, mjpeg_server_port, logger, capabilities):
+    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger, capabilities):
         self.driver = None
         self.logger = logger
 
@@ -233,7 +233,7 @@ class AppiumClient:
 
 
 class PoshMarkClient(AppiumClient):
-    def __init__(self, device_serial, campaign: Campaign, logger, system_port, mjpeg_server_port, app_package='com.poshmark.app'):
+    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, campaign: Campaign, logger, app_package='com.poshmark.app'):
         self.driver = None
         self.campaign = campaign
         self.logger = logger
@@ -1015,7 +1015,7 @@ class PoshMarkClient(AppiumClient):
 
 
 class AppClonerClient(AppiumClient):
-    def __init__(self, device_serial, logger, system_port, mjpeg_server_port, app_name=None):
+    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger, app_name=None):
         self.driver = None
         self.logger = logger
         self.app_name = app_name
