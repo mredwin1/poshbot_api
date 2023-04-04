@@ -77,6 +77,7 @@ class CampaignTask(Task):
                 self.campaign.posh_user.time_to_install_clone = time_to_install
                 self.campaign.posh_user.save()
 
+                device.refresh_from_db(fields=['installed_clones'])
                 device.installed_clones += 1
                 device.save(update_fields=['installed_clones'])
 
