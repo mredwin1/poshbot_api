@@ -97,6 +97,8 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
             return queryset.filter(campaign__status=models.Campaign.IDLE)
         elif value == 'running':
             return queryset.filter(campaign__status=models.Campaign.RUNNING)
+        elif value == 'disabled':
+            return queryset.filter(is_active=False)
 
         return queryset
 
