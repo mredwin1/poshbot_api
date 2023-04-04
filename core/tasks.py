@@ -78,7 +78,7 @@ class CampaignTask(Task):
                 self.campaign.posh_user.save()
 
                 device.installed_clones += 1
-                device.save()
+                device.save(update_fields=['installed_clones'])
 
             if not self.campaign.posh_user.app_package:
                 app_launched = False
@@ -519,7 +519,7 @@ class CampaignTask(Task):
             if self.device:
                 self.logger.info('Releasing self.device')
                 self.device.in_use = ''
-                self.device.save()
+                self.device.save(update_fields=['in_use'])
 
             if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED, Campaign.STARTING):
                 if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
@@ -609,7 +609,7 @@ def start_campaigns():
                     logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
                     available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     available_device.in_use = campaign.posh_user.username
-                    available_device.save()
+                    available_device.save(update_fields=['checkout_time', 'in_use'])
                     campaign.status = Campaign.IN_QUEUE
                     campaign.queue_status = 'N/A'
                     campaign.save()
