@@ -84,7 +84,8 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
         return (
             ('unassigned', 'Unassigned'),
             ('assigned', 'Assigned'),
-            ('running', 'Running')
+            ('running', 'Running'),
+            ('disabled', 'Disabled'),
         )
 
     def queryset(self, request, queryset):
