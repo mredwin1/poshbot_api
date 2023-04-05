@@ -568,32 +568,11 @@ def is_device_ready(device_uuid, logger):
         return False
 
 
-def get_available_device(logger):
-    # Get all active devices that have less than or equal to 155 installed clones and are not currently in use
-    available_devices = Device.objects.filter(is_active=True, installed_clones__lte=155, in_use='')
-
-    # Get the IP reset URLs of all devices that are currently in use
-    in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
-
-    # Check if there is an available device that has the same IP reset URL as a device that is currently in use
-    for device in available_devices:
-        if device.ip_reset_url in in_use_ip_reset_urls:
-            continue
-
-        # Check if the device is still in use but its checkout_time was more than 20 minutes ago
-        if device.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200:
-            logger.info('####################### REPLACED ########################')
-            return device
-        logger.info(f'Availble device {device.serial} In Use: {device.in_use}')
-        return device
-
-    return None  # No available device found
-
 
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
-    available_device = get_available_device(logger)
+    available_device = Device.objects.filter(avaialble=True)
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     queue_num = 1
