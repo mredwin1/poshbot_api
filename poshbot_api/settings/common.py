@@ -190,16 +190,16 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'core.tasks.start_campaigns',
         'schedule': timedelta(seconds=15)
     },
-    'check_posh_users': {
-        'task': 'core.tasks.check_posh_users',
-        'schedule': timedelta(minutes=10)
-    },
+    # 'check_posh_users': {
+    #     'task': 'core.tasks.check_posh_users',
+    #     'schedule': timedelta(minutes=10)
+    # },
     'log_cleanup': {
         'task': 'core.tasks.log_cleanup',
         'schedule': timedelta(hours=1)
     },
     'posh_user_cleanup': {
-        'task': 'core.tasks.log_cleanup',
+        'task': 'core.tasks.posh_user_cleanup',
         'schedule': timedelta(days=1)
     },
 }
