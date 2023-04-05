@@ -551,6 +551,7 @@ def is_device_ready(device_uuid, logger):
         adb_device = client.device(serial=device_uuid)
 
         if adb_device:
+            logger.debug(f'Device, {device_uuid}, is ready')
             return adb_device.shell('getprop sys.boot_completed').strip() == '1'
 
         logger.warning(f'Device, {device_uuid}, is not finished booting')
