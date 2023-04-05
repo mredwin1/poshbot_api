@@ -48,6 +48,8 @@ class AppiumClient:
         """Closes the appium driver session"""
         if self.driver:
             self.driver.quit()
+            self.logger.debug('Driver was quit')
+            self.sleep(8)
 
     def locate(self, by, locator, location_type=None):
         """Locates the first elements with the given By"""
