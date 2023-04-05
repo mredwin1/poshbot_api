@@ -543,6 +543,21 @@ class CampaignTask(Task):
 CampaignTask = app.register_task(CampaignTask())
 
 
+def is_device_ready(device_uuid, logger):
+    try:
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        adb_device = client.device(serial=device_uuid)
+
+        if adb_device:
+            return adb_device.shell('getprop sys.boot_completed').strip() == '1'
+
+        logger.warning(f'Device, {device_uuid}, is not finished booting')
+        return False
+    except RuntimeError:
+        logger.warning(f'Connection to device {device_uuid} could not be made')
+        return False
+
+
 def get_available_device():
     # Get all active devices that have less than or equal to 155 installed clones and are not currently in use
     available_devices = Device.objects.filter(is_active=True, installed_clones__lte=155, in_use='')
@@ -594,35 +609,16 @@ def start_campaigns():
             campaign.save()
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            if available_device:
-                logger.info(f'Device is needed and available, checking connection to the following device: {available_device.serial}')
-
-                client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
-                devices = client.devices()
-                serials = [device.serial for device in devices]
-
-                if available_device.serial not in serials:
-                    logger.info('A connection to the device could not be made')
-                    available_device = None
-                else:
-                    if available_device.serial in serials:
-                        adb_device = client.device(serial=available_device.serial)
-                        device_ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-
-                        if not device_ready:
-                            available_device = None
-                            logger.info('Device is available but has not finished booting')
-
-                if available_device:
-                    logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
-                    available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                    available_device.in_use = campaign.posh_user.username
-                    available_device.save(update_fields=['checkout_time', 'in_use'])
-                    campaign.status = Campaign.IN_QUEUE
-                    campaign.queue_status = 'N/A'
-                    campaign.save()
-                    CampaignTask.delay(campaign.id, device_id=available_device.id)
-                    available_device = None
+            if available_device and is_device_ready(available_device.serial, logger):
+                logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
+                available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                available_device.in_use = campaign.posh_user.username
+                available_device.save(update_fields=['checkout_time', 'in_use'])
+                campaign.status = Campaign.IN_QUEUE
+                campaign.queue_status = 'N/A'
+                campaign.save(update_fields=['status', 'queue_status'])
+                CampaignTask.delay(campaign.id, device_id=available_device.id)
+                available_device = None
             else:
                 campaign.queue_status = str(queue_num)
                 campaign.save()
