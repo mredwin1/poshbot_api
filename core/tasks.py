@@ -555,6 +555,7 @@ def is_device_ready(device_uuid, logger):
 
             if ready:
                 logger.debug(f'Device, {device_uuid}, is ready')
+                time.sleep(5)
                 return True
 
             logger.debug(f'Device, {device_uuid}, is not finished booting')
