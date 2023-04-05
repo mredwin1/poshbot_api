@@ -455,7 +455,7 @@ class PoshMarkClient(AppiumClient):
 
                             username = self.locate(AppiumBy.ID, 'username')
                             self.campaign.posh_user.username = username.text
-                            self.campaign.posh_user.save()
+                            self.campaign.posh_user.save(update_fields=['username'])
 
                         self.finished_registering = True
                     else:
@@ -474,7 +474,7 @@ class PoshMarkClient(AppiumClient):
                         if 'email address is already tied to another user' in error.text or 'Please enter a valid email address' in error.text:
                             self.logger.info('Setting the user inactive since the email is taken or it is invalid.')
                             self.campaign.posh_user.is_active_in_posh = False
-                            self.campaign.posh_user.save()
+                            self.campaign.posh_user.save(update_fields=['is_active_in_posh'])
 
                         else:
                             self.logger.warning('No handler for this error')
@@ -963,7 +963,7 @@ class PoshMarkClient(AppiumClient):
                                 if 'you cannot currently perform this request' in error_message.text.lower():
                                     self.logger.info('User is inactive and cannot list items. Setting inactive...')
                                     self.campaign.posh_user.is_active_in_posh = False
-                                    self.campaign.posh_user.save()
+                                    self.campaign.posh_user.save(update_fields=['is_active_in_posh'])
 
                                     return False
                                 else:

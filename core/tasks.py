@@ -75,7 +75,7 @@ class CampaignTask(Task):
                 self.campaign.posh_user.clone_installed = installed
                 self.campaign.posh_user.device = device
                 self.campaign.posh_user.time_to_install_clone = time_to_install
-                self.campaign.posh_user.save()
+                self.campaign.posh_user.save(update_fields=['clone_installed', 'device', 'time_to_install_clone'])
 
                 device.refresh_from_db(fields=['installed_clones'])
                 device.installed_clones += 1
@@ -91,7 +91,7 @@ class CampaignTask(Task):
 
                 if not app_launched and not self.campaign.posh_user.is_registered:
                     self.campaign.posh_user.clone_installed = False
-                    self.campaign.posh_user.save()
+                    self.campaign.posh_user.save(update_fields=['clone_installed'])
 
                     return False
 
@@ -108,7 +108,7 @@ class CampaignTask(Task):
 
                     if not app_launched and not self.campaign.posh_user.is_registered:
                         self.campaign.posh_user.clone_installed = False
-                        self.campaign.posh_user.save()
+                        self.campaign.posh_user.save(update_fields=['clone_installed'])
 
                         return False
 
@@ -116,7 +116,7 @@ class CampaignTask(Task):
                     clone_app_package = client.driver.current_package
 
                 self.campaign.posh_user.app_package = clone_app_package
-                self.campaign.posh_user.save()
+                self.campaign.posh_user.save(update_fields=['app_package'])
 
         return self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package
 
@@ -135,7 +135,7 @@ class CampaignTask(Task):
 
                     if not app_launched and not self.campaign.posh_user.is_registered:
                         self.campaign.posh_user.clone_installed = False
-                        self.campaign.posh_user.save()
+                        self.campaign.posh_user.save(update_fields=['clone_installed'])
 
                         return False
 
@@ -148,7 +148,7 @@ class CampaignTask(Task):
 
                 self.campaign.posh_user.time_to_register = time_to_register
                 self.campaign.posh_user.is_registered = registered
-                self.campaign.posh_user.save()
+                self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
 
                 if registered:
                     finish_registration_and_list = self.finish_registration(device, list_items, False, client)
@@ -160,7 +160,7 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                self.campaign.save()
+                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
 
                 return False
 
@@ -186,7 +186,7 @@ class CampaignTask(Task):
 
                 self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                 self.campaign.posh_user.finished_registration = registration_finished
-                self.campaign.posh_user.save()
+                self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
 
                 if registration_finished and list_items:
                     listed = self.list_items(device, False, client)
@@ -204,7 +204,7 @@ class CampaignTask(Task):
 
                         if not app_launched and not self.campaign.posh_user.is_registered:
                             self.campaign.posh_user.clone_installed = False
-                            self.campaign.posh_user.save()
+                            self.campaign.posh_user.save(update_fields=['clone_installed'])
 
                             return False
 
@@ -217,7 +217,7 @@ class CampaignTask(Task):
 
                     self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                     self.campaign.posh_user.finished_registration = registration_finished
-                    self.campaign.posh_user.save()
+                    self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
 
                     if registration_finished and list_items:
                         listed = self.list_items(device, False, client)
@@ -229,7 +229,7 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                self.campaign.save()
+                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
                 return False
 
             return True
@@ -261,7 +261,7 @@ class CampaignTask(Task):
                         item_to_list.time_to_list = time_to_list
                         item_to_list.status = ListedItem.UNDER_REVIEW
                         item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                        item_to_list.save()
+                        item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed'])
             else:
                 with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                     if client.driver.current_package != self.campaign.posh_user.app_package:
@@ -274,7 +274,7 @@ class CampaignTask(Task):
 
                         if not app_launched and not self.campaign.posh_user.is_registered:
                             self.campaign.posh_user.clone_installed = False
-                            self.campaign.posh_user.save()
+                            self.campaign.posh_user.save(update_fields=['clone_installed'])
 
                             return False
 
@@ -292,7 +292,7 @@ class CampaignTask(Task):
                             item_to_list.time_to_list = time_to_list
                             item_to_list.status = ListedItem.UNDER_REVIEW
                             item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                            item_to_list.save()
+                            item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed'])
 
                             if not item_listed:
                                 item_listed = listed
@@ -305,13 +305,13 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                self.campaign.save()
+                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
             else:
                 all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
 
                 if all_items.count() == 0:
                     self.campaign.status = Campaign.PAUSED
-                    self.campaign.save()
+                    self.campaign.save(update_fields=['status'])
 
             return item_listed
 
@@ -339,7 +339,7 @@ class CampaignTask(Task):
 
             if profile_updated:
                 self.campaign.posh_user.profile_updated = True
-                self.campaign.posh_user.save()
+                self.campaign.posh_user.save(update_fields=['profile_updated'])
 
             if logged_in:
                 while all_listings is None and all_listings_retries < 3:
@@ -357,15 +357,15 @@ class CampaignTask(Task):
                             if listing_title in all_listings['shareable_listings']:
                                 if listed_item.status != ListedItem.UP:
                                     listed_item.status = ListedItem.UP
-                                    listed_item.save()
+                                    listed_item.save(update_fields=['status'])
                                 listings_can_share.append(listing_title)
                             elif listing_title in all_listings['sold_listings'] and not listed_item.datetime_sold:
                                 listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 listed_item.status = ListedItem.SOLD
-                                listed_item.save()
+                                listed_item.save(update_fields=['status', 'datetime_sold'])
                             elif listing_title in all_listings['reserved_listings'] and listed_item.status != ListedItem.RESERVED:
                                 listed_item.status = ListedItem.RESERVED
-                                listed_item.save()
+                                listed_item.save(update_fields=['status'])
 
                         except ListedItem.DoesNotExist:
                             self.logger.warning(f'Could not find a listed item for {self.campaign.posh_user} with title {listing_title}. Creating it now...')
@@ -379,14 +379,16 @@ class CampaignTask(Task):
 
                             if listing_title in all_listings['reserved_listings']:
                                 listed_item.status = ListedItem.RESERVED
+                                listed_item.save(update_fields=['status'])
                             elif listing_title in all_listings['sold_listings']:
                                 listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 listed_item.status = ListedItem.SOLD
+                                listed_item.save(update_fields=['status', 'datetime_sold'])
                             else:
                                 listed_item.status = ListedItem.UP
+                                listed_item.save(update_fields=['status'])
                                 listings_can_share.append(listing_title)
 
-                            listed_item.save()
                         except ListedItem.MultipleObjectsReturned:
                             pass
 
@@ -426,21 +428,21 @@ class CampaignTask(Task):
                         self.logger.info('The remaining listings are under review. Pausing campaign.')
 
                         self.campaign.status = Campaign.PAUSED
-                        self.campaign.save()
+                        self.campaign.save(update_fields=['status'])
 
                         return False
                     else:
                         self.logger.info('There are no listings on this user\'s account. Stopping campaign.')
 
                         self.campaign.status = Campaign.STOPPED
-                        self.campaign.save()
+                        self.campaign.save(update_fields=['status'])
 
                         return False
             else:
                 self.logger.info('Stopping campaign because user could not log in')
 
                 self.campaign.status = Campaign.STOPPED
-                self.campaign.save()
+                self.campaign.save(update_fields=['status'])
                 return False
 
     def run(self, campaign_id, logger_id=None, device_id=None, attempt=1, *args, **kwargs):
@@ -460,7 +462,7 @@ class CampaignTask(Task):
 
             self.campaign.status = Campaign.RUNNING
             self.campaign.queue_status = 'N/A'
-            self.campaign.save()
+            self.campaign.save(update_fields=['status', 'queue_status'])
 
             items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
             need_to_list = items_to_list.count() > 0
@@ -484,7 +486,7 @@ class CampaignTask(Task):
                     success = self.share_and_more()
                 else:
                     self.campaign.status = Campaign.STOPPING
-                    self.campaign.save()
+                    self.campaign.save(update_fields=['status'])
 
                     success = False
             except WebDriverException:
@@ -501,7 +503,7 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STARTING
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 self.campaign.queue_status = 'Unknown'
-                self.campaign.save()
+                self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
             except Exception:
                 self.logger.debug(traceback.format_exc())
                 self.logger.error('Sending campaign to the end of the line due to an unhandled error')
@@ -509,13 +511,13 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STARTING
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 self.campaign.queue_status = 'Unknown'
-                self.campaign.save()
+                self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
             end_time = time.time()
 
             if not self.campaign.posh_user.is_active_in_posh:
                 self.campaign.status = Campaign.STOPPED
-                self.campaign.save()
+                self.campaign.save(update_fields=['status'])
 
             if self.device:
                 self.logger.info('Releasing device')
@@ -534,7 +536,7 @@ class CampaignTask(Task):
 
                 self.campaign.status = Campaign.IDLE
                 self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
-                self.campaign.save()
+                self.campaign.save(update_fields=['status', 'next_runtime'])
                 self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
 
         self.logger.info('Campaign ended')
@@ -597,16 +599,16 @@ def start_campaigns():
             campaign.status = Campaign.STOPPED
             campaign.queue_status = 'N/A'
             campaign.next_runtime = None
-            campaign.save()
+            campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
         elif campaign.status == Campaign.IDLE and campaign.next_runtime and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
-            campaign.save()
+            campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and campaign.posh_user.is_registered and items_to_list.count() == 0:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
-            campaign.save()
+            campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
             if available_device and is_device_ready(available_device.serial, logger):
@@ -621,7 +623,7 @@ def start_campaigns():
                 available_device = None
             else:
                 campaign.queue_status = str(queue_num)
-                campaign.save()
+                campaign.save(update_fields=['queue_status'])
                 queue_num += 1
 
 
@@ -648,21 +650,20 @@ def check_posh_users():
                         if listing_title in all_listings['shareable_listings'] and listed_item.status != ListedItem.UP:
                             if listed_item.status == ListedItem.UNDER_REVIEW:
                                 listed_item.datetime_passed_review = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-
                                 listed_item.status = ListedItem.UP
-                                listed_item.save()
+                                listed_item.save(update_fields=['status', 'datetime_passed_review'])
                             elif listed_item.status != ListedItem.UNDER_REVIEW and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
                                 listed_item.status = ListedItem.UP
-                                listed_item.save()
+                                listed_item.save(update_fields=['status'])
 
                         elif listing_title in all_listings['sold_listings'] and listed_item.status != ListedItem.SOLD:
                             listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                             listed_item.status = ListedItem.SOLD
 
-                            listed_item.save()
+                            listed_item.save(update_fields=['status', 'datetime_sold'])
                         elif listing_title in all_listings['reserved_listings'] and listed_item.status != ListedItem.RESERVED:
                             listed_item.status = ListedItem.RESERVED
-                            listed_item.save()
+                            listed_item.save(update_fields=['status'])
 
                     except ListedItem.DoesNotExist:
                         logger.warning(f'Could not find a listed item for {posh_user} with title {listing_title}.')
@@ -679,13 +680,14 @@ def check_posh_users():
 
                             if listing_title in all_listings['reserved_listings']:
                                 listed_item.status = ListedItem.RESERVED
+                                listed_item.save(update_fields=['status'])
                             elif listing_title in all_listings['sold_listings']:
                                 listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                                 listed_item.status = ListedItem.SOLD
+                                listed_item.save(update_fields=['status', 'datetime_sold'])
                             else:
                                 listed_item.status = ListedItem.UP
-
-                            listed_item.save()
+                                listed_item.save(update_fields=['status'])
                     except ListedItem.MultipleObjectsReturned:
                         pass
 
@@ -694,7 +696,7 @@ def check_posh_users():
                     campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                     campaign.queue_status = 'CALCULATING'
                     campaign.status = Campaign.STARTING
-                    campaign.save()
+                    campaign.save(update_fields=['next_runtime', 'queue_status', 'status'])
 
             # Checks if the user is inactive when there are no listings and
             if sum([len(y) for y in all_listings.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
@@ -703,12 +705,12 @@ def check_posh_users():
 
                 if not is_active_in_posh:
                     posh_user.is_active_in_posh = False
-                    posh_user.save()
+                    posh_user.save(update_fields=['is_active_in_posh'])
 
                     if campaign:
                         logger.info('Stopping campaign...')
                         campaign.status = Campaign.STOPPED
-                        campaign.save()
+                        campaign.save(update_fields=['status'])
 
 
 @shared_task

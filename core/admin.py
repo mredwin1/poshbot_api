@@ -36,7 +36,7 @@ def start_campaigns(modeladmin, request, queryset):
             campaign.status = models.Campaign.STARTING
             campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
             campaign.queue_status = 'CALCULATING'
-            campaign.save()
+            campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
 
 @admin.action(description='Stop selected campaigns')

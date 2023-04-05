@@ -39,7 +39,7 @@ def posh_user_saved(sender, instance, *args, **kwargs):
             if listed_item.status not in (ListedItem.NOT_LISTED, ListedItem.SOLD, ListedItem.REMOVED):
                 listed_item.datetime_removed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 listed_item.status = ListedItem.REMOVED
-                listed_item.save()
+                listed_item.save(update_fields=['status', 'datetime_removed'])
 
 
 @receiver(post_delete, sender=Listing)

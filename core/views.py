@@ -76,12 +76,12 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         try:
             campaign = Campaign.objects.get(user=self.request.user, posh_user=posh_user)
             campaign.posh_user = None
-            campaign.save()
+            campaign.save(update_fields=['posh_user'])
         except Campaign.DoesNotExist:
             pass
         
         posh_user.is_active = False
-        posh_user.save()
+        posh_user.save(update_fields=['is_active'])
 
         serializer = self.get_serializer(posh_user)
 
@@ -180,7 +180,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             campaign.status = Campaign.STARTING
             campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
             campaign.queue_status = 'CALCULATING'
-            campaign.save()
+            campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
         return Response(serializer.data)
 
@@ -188,7 +188,7 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
     def stop(self, request, pk):
         campaign = self.get_object()
         campaign.status = Campaign.STOPPING
-        campaign.save()
+        campaign.save(update_fields=['status'])
 
         serializer = self.get_serializer(campaign)
 
