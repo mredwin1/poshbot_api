@@ -581,7 +581,7 @@ def get_available_device(logger):
             continue
 
         # Check if the device is still in use but its checkout_time was more than 20 minutes ago
-        if device.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time.replace(tzinfo=pytz.utc)).total_seconds() > 1200:
+        if device.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200:
             logger.info('####################### REPLACED ########################')
             return device
         logger.info(f'Availble device {device.serial} In Use: {device.in_use}')
