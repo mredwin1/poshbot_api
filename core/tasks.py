@@ -518,7 +518,7 @@ class CampaignTask(Task):
                 self.campaign.save()
 
             if self.device:
-                self.logger.info('Releasing self.device')
+                self.logger.info('Releasing device')
                 self.device.in_use = ''
                 self.device.save(update_fields=['in_use'])
 
