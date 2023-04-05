@@ -551,13 +551,19 @@ def is_device_ready(device_uuid, logger):
         adb_device = client.device(serial=device_uuid)
 
         if adb_device:
-            logger.debug(f'Device, {device_uuid}, is ready')
-            return adb_device.shell('getprop sys.boot_completed').strip() == '1'
+            ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
 
-        logger.warning(f'Device, {device_uuid}, is not finished booting')
+            if ready:
+                logger.debug(f'Device, {device_uuid}, is ready')
+                return True
+
+            logger.debug(f'Device, {device_uuid}, is not finished booting')
+            return False
+
+        logger.warning(f'Connection to device, {device_uuid}, could not be made')
         return False
     except RuntimeError:
-        logger.warning(f'Connection to device {device_uuid} could not be made')
+        logger.warning(f'Connection to device, {device_uuid}, could not be made')
         return False
 
 
@@ -621,11 +627,11 @@ def start_campaigns():
                 campaign.queue_status = 'N/A'
                 campaign.save(update_fields=['status', 'queue_status'])
                 CampaignTask.delay(campaign.id, device_id=available_device.id)
-                available_device = None
             else:
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
+            available_device = None
 
 
 @shared_task
