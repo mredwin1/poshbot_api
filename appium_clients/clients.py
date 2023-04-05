@@ -1109,25 +1109,28 @@ class AppClonerClient(AppiumClient):
 
                 while self.is_present(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.TextView'):
                     title = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.TextView')
-                    if title.text == 'Cloning Poshmark':
-                        self.logger.info('Waiting for app to finish cloning...')
-                        self.sleep(8)
-                    elif title.text == 'App cloned':
-                        self.logger.info('App finished cloning')
-                        app_cloned = True
-                        install_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                        install_button.click()
+                    try:
+                        if title.text == 'Cloning Poshmark':
+                            self.logger.info('Waiting for app to finish cloning...')
+                            self.sleep(8)
+                        elif title.text == 'App cloned':
+                            self.logger.info('App finished cloning')
+                            app_cloned = True
+                            install_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                            install_button.click()
 
-                    elif self.is_present(AppiumBy.ID, 'android:id/message'):
-                        message = self.locate(AppiumBy.ID, 'android:id/message')
+                        elif self.is_present(AppiumBy.ID, 'android:id/message'):
+                            message = self.locate(AppiumBy.ID, 'android:id/message')
 
-                        if 'sorry' in message.text.lower():
-                            excluded_clone_numbers.append(current_number)
-                            ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                            ok_button.click()
-                            sorry_message = True
-                    else:
-                        self.logger.debug('There is some message on the screen but no handler')
+                            if 'sorry' in message.text.lower():
+                                excluded_clone_numbers.append(current_number)
+                                ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                                ok_button.click()
+                                sorry_message = True
+                        else:
+                            self.logger.debug('There is some message on the screen but no handler')
+                    except StaleElementReferenceException:
+                        pass
 
             self.sleep(.5)
 
