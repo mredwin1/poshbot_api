@@ -584,7 +584,7 @@ def get_available_device(logger):
         if device.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time.replace(tzinfo=pytz.utc)).total_seconds() > 1200:
             logger.info('####################### REPLACED ########################')
             return device
-
+        logger.info(f'Availble device {device.serial} In Use: {device.in_use}')
         return device
 
     return None  # No available device found
