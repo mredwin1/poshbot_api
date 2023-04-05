@@ -543,27 +543,34 @@ class CampaignTask(Task):
 CampaignTask = app.register_task(CampaignTask())
 
 
+def get_available_device():
+    # Get all active devices that have less than or equal to 155 installed clones and are not currently in use
+    available_devices = Device.objects.filter(is_active=True, installed_clones__lte=155, in_use='')
+
+    # Get the IP reset URLs of all devices that are currently in use
+    in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
+
+    # Check if there is an available device that has the same IP reset URL as a device that is currently in use
+    for device in available_devices:
+        if device.ip_reset_url in in_use_ip_reset_urls:
+            continue
+
+        # Check if the device is still in use but its checkout_time was more than 20 minutes ago
+        if device.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200:
+            return device
+
+        return device
+
+    return None  # No available device found
+
+
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
-    available_device = None
+    available_device = get_available_device()
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     queue_num = 1
-
-    all_devices = Device.objects.filter(is_active=True, installed_clones__lt=155)
-    available_devices = all_devices.filter(in_use='')
-
-    if available_devices.count() > 0:
-        available_device = available_devices.first()
-        if all_devices.filter(ip_reset_url=available_device.ip_reset_url).exclude(in_use='', id=available_device.id).count() > 0:
-            available_device = None
-    else:
-        for device in all_devices:
-            if (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).seconds >= 1200:
-                available_device = device
-
-                break
 
     if not available_device:
         logger.info('No device available')
