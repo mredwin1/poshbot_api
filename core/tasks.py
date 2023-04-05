@@ -568,7 +568,7 @@ def is_device_ready(device_uuid, logger):
         return False
 
 
-def get_available_device():
+def get_available_device(logger):
     # Get all active devices that have less than or equal to 155 installed clones and are not currently in use
     available_devices = Device.objects.filter(is_active=True, installed_clones__lte=155, in_use='')
 
@@ -581,7 +581,8 @@ def get_available_device():
             continue
 
         # Check if the device is still in use but its checkout_time was more than 20 minutes ago
-        if device.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200:
+        if device.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time.replace(tzinfo=pytz.utc)).total_seconds() > 1200:
+            logger.info('####################### REPLACED ########################')
             return device
 
         return device
@@ -592,7 +593,7 @@ def get_available_device():
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
-    available_device = get_available_device()
+    available_device = get_available_device(logger)
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     queue_num = 1
