@@ -72,10 +72,6 @@ class Device(models.Model):
     mjpeg_server_port = models.SmallIntegerField(unique=True)
     installed_clones = models.SmallIntegerField(default=0)
 
-    @property
-    def available(self):
-        return (self.is_active and self.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - self.checkout_time).total_seconds() > 1200) or (self.is_active and self.in_use == '')
-
     def __str__(self):
         return self.serial
 
