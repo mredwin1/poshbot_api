@@ -574,8 +574,8 @@ def is_device_ready(device_uuid, logger):
         return False
 
 
-def get_available_device():
-    devices = Device.objects.filter(is_active=True)
+def get_available_device(excluded_device_ids):
+    devices = Device.objects.filter(is_active=True).exclude(id__in=excluded_device_ids)
 
     for device in devices:
         if (device.in_use and (device.checkout_time is None or (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)) or device.in_use == '':
@@ -596,6 +596,8 @@ def start_campaigns():
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     queue_num = 1
+    excluded_device_ids = []
+    device_ready = False
 
     for campaign in campaigns:
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
@@ -616,9 +618,15 @@ def start_campaigns():
             campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            available_device = get_available_device()
+            available_device = get_available_device(excluded_device_ids)
 
-            if available_device and is_device_ready(available_device.serial, logger):
+            if available_device:
+                device_ready = is_device_ready(available_device.serial, logger)
+
+            if available_device and not device_ready:
+                excluded_device_ids.append(available_device.id)
+
+            if available_device and device_ready:
                 logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
                 available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 available_device.in_use = campaign.posh_user.username
