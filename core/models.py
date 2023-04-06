@@ -74,9 +74,7 @@ class Device(models.Model):
 
     @property
     def available(self):
-        in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
-
-        return (self.is_active and self.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - self.checkout_time).total_seconds() > 1200) or (self.is_active and self.in_use == '' and self.ip_reset_url not in in_use_ip_reset_urls)
+        return (self.is_active and self.in_use and (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - self.checkout_time).total_seconds() > 1200) or (self.is_active and self.in_use == '')
 
     def __str__(self):
         return self.serial
