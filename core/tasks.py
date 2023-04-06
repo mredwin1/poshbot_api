@@ -52,7 +52,13 @@ class CampaignTask(Task):
             self.logger.info(response.text)
             return True
 
-        self.logger.info(f'Could not reset IP after {retries} retries')
+        self.logger.info(f'Could not reset IP after {retries} retries. Sending campaign to the end of the line')
+
+        self.campaign.status = Campaign.STARTING
+        self.campaign.queue_status = 'Unknown'
+        self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+
         return False
 
     def init_logger(self, logger_id=None):
