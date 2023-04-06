@@ -568,28 +568,28 @@ def is_device_ready(device_uuid, logger):
         return False
 
 
-def get_available_devices():
+def get_available_device():
     devices = Device.objects.filter(is_active=True)
-    in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
-    available_devices = []
 
     for device in devices:
-        if device.available and device.ip_reset_url not in in_use_ip_reset_urls:
-            available_devices.append(available_devices)
+        if (device.in_use and (device.checkout_time is None or (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)) or device.in_use == '':
+            if device.in_use:
+                device.in_use = ''
+                device.checkout_time = None
+                device.save(update_fields=['in_use', 'checkout_time'])
 
-    return available_devices
+            in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
+
+            if device.ip_reset_url not in in_use_ip_reset_urls:
+                return device
 
 
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
-    available_devices = get_available_devices()
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     queue_num = 1
-
-    if not available_devices:
-        logger.info('No device available')
 
     for campaign in campaigns:
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
@@ -610,16 +610,17 @@ def start_campaigns():
             campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            if available_devices and is_device_ready(available_devices[0].serial, logger):
-                logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_devices[0]}')
-                available_devices[0].checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                available_devices[0].in_use = campaign.posh_user.username
-                available_devices[0].save(update_fields=['checkout_time', 'in_use'])
+            available_device = get_available_device()
+
+            if available_device and is_device_ready(available_device.serial, logger):
+                logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
+                available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                available_device.in_use = campaign.posh_user.username
+                available_device.save(update_fields=['checkout_time', 'in_use'])
                 campaign.status = Campaign.IN_QUEUE
                 campaign.queue_status = 'N/A'
                 campaign.save(update_fields=['status', 'queue_status'])
-                CampaignTask.delay(campaign.id, device_id=available_devices[0].id)
-                available_devices.pop(0)
+                CampaignTask.delay(campaign.id, device_id=available_device.id)
             else:
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
