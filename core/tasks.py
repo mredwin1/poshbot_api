@@ -554,17 +554,17 @@ def is_device_ready(device_uuid, logger):
             ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
 
             if ready:
-                logger.debug(f'Device, {device_uuid}, is ready')
+                logger.info(f'Device, {device_uuid}, is ready')
                 time.sleep(5)
                 return True
 
-            logger.debug(f'Device, {device_uuid}, is not finished booting')
+            logger.info(f'Device, {device_uuid}, is not finished booting')
             return False
 
-        logger.warning(f'Connection to device, {device_uuid}, could not be made')
+        logger.info(f'Connection to device, {device_uuid}, could not be made')
         return False
     except RuntimeError:
-        logger.warning(f'Connection to device, {device_uuid}, could not be made')
+        logger.info(f'Connection to device, {device_uuid}, could not be made')
         return False
 
 
@@ -611,6 +611,7 @@ def start_campaigns():
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
             available_device = get_available_device()
+            logger.info(f'The following device is available {available_device}. In Use: {available_device.in_use} Checkout Time: {available_device.checkout_time}')
 
             if available_device and is_device_ready(available_device.serial, logger):
                 logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
