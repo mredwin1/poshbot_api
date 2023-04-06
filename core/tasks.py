@@ -574,14 +574,10 @@ def is_device_ready(device_uuid, logger):
         return False
 
 
-def get_available_device(logger):
+def get_available_device():
     devices = Device.objects.filter(is_active=True)
 
     for device in devices:
-        if device.checkout_time:
-            logger.info((datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds())
-        else:
-            logger.info('No checkout time')
         if (device.in_use and (device.checkout_time is None or (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)) or device.in_use == '':
             if device.in_use:
                 device.in_use = ''
@@ -609,7 +605,7 @@ def start_campaigns():
             campaign.queue_status = 'N/A'
             campaign.next_runtime = None
             campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
-        elif campaign.status == Campaign.IDLE and campaign.next_runtime and campaign.next_runtime <= now:
+        elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
             campaign.save(update_fields=['status', 'queue_status'])
@@ -620,9 +616,7 @@ def start_campaigns():
             campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            available_device = get_available_device(logger)
-            if available_device:
-                logger.info(f'The following device is available {available_device}. In Use: {available_device.in_use} Checkout Time: {available_device.checkout_time}')
+            available_device = get_available_device()
 
             if available_device and is_device_ready(available_device.serial, logger):
                 logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
