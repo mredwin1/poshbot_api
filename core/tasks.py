@@ -622,8 +622,6 @@ def start_campaigns():
 
             if available_device:
                 device_ready = is_device_ready(available_device.serial, logger)
-
-            if available_device and not device_ready:
                 excluded_device_ids.append(available_device.id)
 
             if available_device and device_ready:
