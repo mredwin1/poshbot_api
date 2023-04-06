@@ -579,7 +579,7 @@ def get_available_device(logger):
 
     for device in devices:
         if device.checkout_time:
-            logger.info((datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)
+            logger.info((datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds())
         else:
             logger.info('No checkout time')
         if (device.in_use and (device.checkout_time is None or (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)) or device.in_use == '':
