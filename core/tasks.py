@@ -598,6 +598,7 @@ def start_campaigns():
     queue_num = 1
     excluded_device_ids = []
     device_ready = False
+    available_device = None
 
     for campaign in campaigns:
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
@@ -618,7 +619,8 @@ def start_campaigns():
             campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            available_device = get_available_device(excluded_device_ids)
+            if queue_num == 1:
+                available_device = get_available_device(excluded_device_ids)
 
             if available_device:
                 device_ready = is_device_ready(available_device.serial, logger)
