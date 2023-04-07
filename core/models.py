@@ -414,7 +414,7 @@ class LogGroup(models.Model):
     created_date = models.DateTimeField(auto_now_add=True)
 
     def log(self, message, log_level=None, image=None):
-        timestamp = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        timestamp = timezone.now()
 
         log_entry = LogEntry(
             level=log_level if log_level else LogEntry.NOTSET,

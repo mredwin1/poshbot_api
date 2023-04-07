@@ -1,11 +1,9 @@
-import datetime
-import pytz
-
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import IntegerField, Case, When, Value, Count
 from django.db.models.aggregates import Count
 from django.db.models.functions import Cast
+from django.utils import timezone
 from django.utils.html import format_html, urlencode
 from django.urls import reverse
 from . import models
@@ -34,7 +32,7 @@ def start_campaigns(modeladmin, request, queryset):
                     items_to_list.append(item_to_list)
 
             campaign.status = models.Campaign.STARTING
-            campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+            campaign.next_runtime = timezone.now()
             campaign.queue_status = 'CALCULATING'
             campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
@@ -46,7 +44,7 @@ def stop_campaigns(modeladmin, request, queryset):
 
 @admin.action(description='Disable posh user')
 def disable_posh_users(modeladmin, request, queryset):
-    queryset.update(is_active=False, date_disabled=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+    queryset.update(is_active=False, date_disabled=timezone.now())
 
 
 @admin.action(description='Enable posh user')
