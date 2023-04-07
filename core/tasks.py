@@ -630,7 +630,10 @@ def start_campaigns():
                 device_ready = is_device_ready(available_device.serial, logger)
                 excluded_device_ids.append(available_device.id)
 
-            if available_device and device_ready:
+                if not device_ready:
+                    available_device = None
+
+            if available_device:
                 logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
                 available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
                 available_device.in_use = campaign.posh_user.username
