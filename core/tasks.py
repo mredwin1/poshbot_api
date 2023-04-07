@@ -580,6 +580,8 @@ def get_available_device(excluded_device_ids):
     for device in devices:
         if (device.in_use and (device.checkout_time is None or (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)) or device.in_use == '':
             if device.in_use:
+                log = LogGroup.objects.filter(posh_user__username=device.in_use).first()
+                log.warning('Another campaign will be started on this device because this one took too long.')
                 device.in_use = ''
                 device.checkout_time = None
                 device.save(update_fields=['in_use', 'checkout_time'])
