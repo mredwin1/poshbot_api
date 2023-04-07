@@ -8,6 +8,7 @@ import time
 import traceback
 
 from celery import shared_task, Task
+from django.utils import timezone
 from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
 
@@ -56,7 +57,7 @@ class CampaignTask(Task):
 
         self.campaign.status = Campaign.STARTING
         self.campaign.queue_status = 'Unknown'
-        self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+        self.campaign.next_runtime = timezone.now()
         self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
 
         return False
@@ -65,7 +66,7 @@ class CampaignTask(Task):
         if logger_id:
             self.logger = LogGroup.objects.get(id=logger_id)
         else:
-            self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=datetime.datetime.utcnow().replace(tzinfo=pytz.utc))
+            self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=timezone.now())
             self.logger.save()
 
     def install_clone(self, device):
@@ -165,7 +166,7 @@ class CampaignTask(Task):
                 self.logger.info('Restarting campaign due to error')
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.next_runtime = timezone.now()
                 self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
 
                 return False
@@ -234,7 +235,7 @@ class CampaignTask(Task):
                 self.logger.info('Did not list properly or finish registration. Restarting campaign')
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.next_runtime = timezone.now()
                 self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
                 return False
 
@@ -266,7 +267,7 @@ class CampaignTask(Task):
 
                         item_to_list.time_to_list = time_to_list
                         item_to_list.status = ListedItem.UNDER_REVIEW
-                        item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                        item_to_list.datetime_listed = timezone.now()
                         item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed'])
             else:
                 with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
@@ -297,7 +298,7 @@ class CampaignTask(Task):
 
                             item_to_list.time_to_list = time_to_list
                             item_to_list.status = ListedItem.UNDER_REVIEW
-                            item_to_list.datetime_listed = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                            item_to_list.datetime_listed = timezone.now()
                             item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed'])
 
                             if not item_listed:
@@ -310,7 +311,7 @@ class CampaignTask(Task):
 
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.next_runtime = timezone.now()
                 self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
             else:
                 all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
@@ -366,7 +367,7 @@ class CampaignTask(Task):
                                     listed_item.save(update_fields=['status'])
                                 listings_can_share.append(listing_title)
                             elif listing_title in all_listings['sold_listings'] and not listed_item.datetime_sold:
-                                listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.datetime_sold = timezone.now()
                                 listed_item.status = ListedItem.SOLD
                                 listed_item.save(update_fields=['status', 'datetime_sold'])
                             elif listing_title in all_listings['reserved_listings'] and listed_item.status != ListedItem.RESERVED:
@@ -385,16 +386,14 @@ class CampaignTask(Task):
 
                             if listing_title in all_listings['reserved_listings']:
                                 listed_item.status = ListedItem.RESERVED
-                                listed_item.save(update_fields=['status'])
                             elif listing_title in all_listings['sold_listings']:
-                                listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.datetime_sold = timezone.now()
                                 listed_item.status = ListedItem.SOLD
-                                listed_item.save(update_fields=['status', 'datetime_sold'])
                             else:
                                 listed_item.status = ListedItem.UP
-                                listed_item.save(update_fields=['status'])
                                 listings_can_share.append(listing_title)
 
+                            listed_item.save()
                         except ListedItem.MultipleObjectsReturned:
                             pass
 
@@ -410,7 +409,7 @@ class CampaignTask(Task):
 
                             if random.random() < .20 and shared:
                                 self.logger.info('Seeing if it is time to send offers to likers')
-                                now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                now = timezone.now()
                                 nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
                                                             minute=0, second=0).replace(tzinfo=pytz.utc)
                                 midnight = nine_pm + datetime.timedelta(hours=3)
@@ -507,7 +506,7 @@ class CampaignTask(Task):
                 self.logger.warning(f'Sending campaign to the end of the line due to an error')
 
                 self.campaign.status = Campaign.STARTING
-                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.next_runtime = timezone.now()
                 self.campaign.queue_status = 'Unknown'
                 self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
             except Exception:
@@ -515,7 +514,7 @@ class CampaignTask(Task):
                 self.logger.error('Sending campaign to the end of the line due to an unhandled error')
 
                 self.campaign.status = Campaign.STARTING
-                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                self.campaign.next_runtime = timezone.now()
                 self.campaign.queue_status = 'Unknown'
                 self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
@@ -527,8 +526,7 @@ class CampaignTask(Task):
 
             if self.device:
                 self.logger.info('Releasing device')
-                self.device.in_use = ''
-                self.device.save(update_fields=['in_use'])
+                self.device.check_in()
 
             if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED, Campaign.STARTING):
                 if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
@@ -541,7 +539,7 @@ class CampaignTask(Task):
                 minutes, seconds = divmod(remainder, 60)
 
                 self.campaign.status = Campaign.IDLE
-                self.campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc) + datetime.timedelta(seconds=campaign_delay)
+                self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=campaign_delay)
                 self.campaign.save(update_fields=['status', 'next_runtime'])
                 self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
 
@@ -551,57 +549,38 @@ class CampaignTask(Task):
 CampaignTask = app.register_task(CampaignTask())
 
 
-def is_device_ready(device_uuid, logger):
-    try:
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
-        adb_device = client.device(serial=device_uuid)
-
-        if adb_device:
-            ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-
-            if ready:
-                logger.info(f'Device, {device_uuid}, is ready')
-                time.sleep(5)
-                return True
-
-            logger.info(f'Device, {device_uuid}, is not finished booting')
-            return False
-
-        logger.info(f'Connection to device, {device_uuid}, could not be made')
-        return False
-    except RuntimeError:
-        logger.info(f'Connection to device, {device_uuid}, could not be made')
-        return False
-
-
 def get_available_device(excluded_device_ids):
     devices = Device.objects.filter(is_active=True).exclude(id__in=excluded_device_ids)
+    in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
 
     for device in devices:
-        if (device.in_use and (device.checkout_time is None or (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)) or device.in_use == '':
-            if device.in_use:
+        if device.ip_reset_url not in in_use_ip_reset_urls:
+            if device.is_ready():
+                return device
+        else:
+            if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200:
                 log = LogGroup.objects.filter(posh_user__username=device.in_use).first()
                 log.warning('Another campaign will be started on this device because this one took too long.')
-                device.in_use = ''
-                device.checkout_time = None
-                device.save(update_fields=['in_use', 'checkout_time'])
+                device.check_in()
 
-            in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
+                in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
 
-            if device.ip_reset_url not in in_use_ip_reset_urls:
-                return device
+                if device.ip_reset_url not in in_use_ip_reset_urls:
+                    if device.is_ready():
+                        return device
 
 
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING], posh_user__isnull=False).order_by('next_runtime')
-    now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+    now = timezone.now()
     queue_num = 1
     excluded_device_ids = []
-    available_device = None
 
     for campaign in campaigns:
+        available_device = None
+        device_ready = False
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
 
         if campaign.status == Campaign.STOPPING:
@@ -624,17 +603,12 @@ def start_campaigns():
                 available_device = get_available_device(excluded_device_ids)
 
             if available_device:
-                device_ready = is_device_ready(available_device.serial, logger)
+                device_ready = available_device.is_available()
                 excluded_device_ids.append(available_device.id)
 
-                if not device_ready:
-                    available_device = None
-
-            if available_device:
+            if available_device and device_ready:
                 logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
-                available_device.checkout_time = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
-                available_device.in_use = campaign.posh_user.username
-                available_device.save(update_fields=['checkout_time', 'in_use'])
+                available_device.check_out()
                 campaign.status = Campaign.IN_QUEUE
                 campaign.queue_status = 'N/A'
                 campaign.save(update_fields=['status', 'queue_status'])
@@ -668,7 +642,7 @@ def check_posh_users():
 
                         if listing_title in all_listings['shareable_listings'] and listed_item.status != ListedItem.UP:
                             if listed_item.status == ListedItem.UNDER_REVIEW:
-                                listed_item.datetime_passed_review = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.datetime_passed_review = timezone.now()
                                 listed_item.status = ListedItem.UP
                                 listed_item.save(update_fields=['status', 'datetime_passed_review'])
                             elif listed_item.status != ListedItem.UNDER_REVIEW and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
@@ -676,7 +650,7 @@ def check_posh_users():
                                 listed_item.save(update_fields=['status'])
 
                         elif listing_title in all_listings['sold_listings'] and listed_item.status != ListedItem.SOLD:
-                            listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                            listed_item.datetime_sold = timezone.now()
                             listed_item.status = ListedItem.SOLD
 
                             listed_item.save(update_fields=['status', 'datetime_sold'])
@@ -699,20 +673,19 @@ def check_posh_users():
 
                             if listing_title in all_listings['reserved_listings']:
                                 listed_item.status = ListedItem.RESERVED
-                                listed_item.save(update_fields=['status'])
                             elif listing_title in all_listings['sold_listings']:
-                                listed_item.datetime_sold = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                                listed_item.datetime_sold = timezone.now()
                                 listed_item.status = ListedItem.SOLD
-                                listed_item.save(update_fields=['status', 'datetime_sold'])
                             else:
                                 listed_item.status = ListedItem.UP
-                                listed_item.save(update_fields=['status'])
+
+                            listed_item.save()
                     except ListedItem.MultipleObjectsReturned:
                         pass
 
                 if (all_listings['shareable_listings'] or all_listings['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
-                    campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
+                    campaign.next_runtime = timezone.now()
                     campaign.queue_status = 'CALCULATING'
                     campaign.status = Campaign.STARTING
                     campaign.save(update_fields=['next_runtime', 'queue_status', 'status'])
@@ -745,6 +718,6 @@ def log_cleanup():
 
 @shared_task
 def posh_user_cleanup():
-    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - datetime.timedelta(days=30))
+    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=timezone.now() - datetime.timedelta(days=30))
 
     posh_users.delete()
