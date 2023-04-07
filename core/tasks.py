@@ -608,7 +608,7 @@ def start_campaigns():
 
             if available_device and device_ready:
                 logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
-                available_device.check_out()
+                available_device.check_out(campaign.posh_user.username)
                 campaign.status = Campaign.IN_QUEUE
                 campaign.queue_status = 'N/A'
                 campaign.save(update_fields=['status', 'queue_status'])
