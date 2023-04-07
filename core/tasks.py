@@ -75,9 +75,10 @@ class CampaignTask(Task):
                 start_time = time.time()
                 installed = client.add_clone()
                 end_time = time.time()
-                time_to_install = datetime.timedelta(seconds=round(end_time - start_time))
+                if installed:
+                    time_to_install = datetime.timedelta(seconds=round(end_time - start_time))
 
-                self.logger.info(f'Time to install clone: {time_to_install}')
+                    self.logger.info(f'Time to install clone: {time_to_install}')
 
                 self.campaign.posh_user.clone_installed = installed
                 self.campaign.posh_user.device = device
@@ -149,9 +150,10 @@ class CampaignTask(Task):
                 start_time = time.time()
                 registered = client.register()
                 end_time = time.time()
-                time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
+                if registered:
+                    time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
 
-                self.logger.info(f'Time to register user: {time_to_register}')
+                    self.logger.info(f'Time to register user: {time_to_register}')
 
                 self.campaign.posh_user.time_to_register = time_to_register
                 self.campaign.posh_user.is_registered = registered
@@ -187,9 +189,10 @@ class CampaignTask(Task):
                 start_time = time.time()
                 registration_finished = client.finish_registration()
                 end_time = time.time()
-                time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+                if registration_finished:
+                    time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
 
-                self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
+                    self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
 
                 self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                 self.campaign.posh_user.finished_registration = registration_finished
@@ -218,9 +221,10 @@ class CampaignTask(Task):
                     start_time = time.time()
                     registration_finished = client.finish_registration()
                     end_time = time.time()
-                    time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+                    if registration_finished:
+                        time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
 
-                    self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
+                        self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
 
                     self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                     self.campaign.posh_user.finished_registration = registration_finished
