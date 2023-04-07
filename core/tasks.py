@@ -603,7 +603,7 @@ def start_campaigns():
                 available_device = get_available_device(excluded_device_ids)
 
             if available_device:
-                device_ready = available_device.is_available()
+                device_ready = available_device.is_ready()
                 excluded_device_ids.append(available_device.id)
 
             if available_device and device_ready:
