@@ -639,6 +639,7 @@ def start_campaigns():
                 campaign.queue_status = 'N/A'
                 campaign.save(update_fields=['status', 'queue_status'])
                 CampaignTask.delay(campaign.id, device_id=available_device.id)
+                time.sleep(5)
             else:
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
