@@ -597,7 +597,7 @@ def get_available_device(excluded_device_ids):
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
-    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
+    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING], posh_user__isnull=False).order_by('next_runtime')
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     queue_num = 1
     excluded_device_ids = []
