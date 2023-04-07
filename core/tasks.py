@@ -577,10 +577,6 @@ def is_device_ready(device_uuid, logger):
 def get_available_device(excluded_device_ids):
     devices = Device.objects.filter(is_active=True).exclude(id__in=excluded_device_ids)
 
-    logger = logging.getLogger(__name__)
-    logger.info(devices)
-    logger.info(excluded_device_ids)
-
     for device in devices:
         if (device.in_use and (device.checkout_time is None or (datetime.datetime.utcnow().replace(tzinfo=pytz.utc) - device.checkout_time).total_seconds() > 1200)) or device.in_use == '':
             if device.in_use:
@@ -601,7 +597,6 @@ def start_campaigns():
     now = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
     queue_num = 1
     excluded_device_ids = []
-    device_ready = False
     available_device = None
 
     for campaign in campaigns:
