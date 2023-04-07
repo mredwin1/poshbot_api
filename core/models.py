@@ -10,9 +10,11 @@ from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
 from django.db import models
+from django.utils import timezone
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
 from mailslurp_client.rest import ApiException
+from ppadb.client import Client as AdbClient
 from uuid import uuid4
 
 
@@ -71,6 +73,42 @@ class Device(models.Model):
     system_port = models.SmallIntegerField(unique=True)
     mjpeg_server_port = models.SmallIntegerField(unique=True)
     installed_clones = models.SmallIntegerField(default=0)
+
+    def is_ready(self):
+        if not self.is_active:
+            return False
+
+        if self.in_use:
+            return False
+
+        try:
+            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+            adb_device = client.device(serial=self.serial)
+
+            if adb_device:
+                ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+
+                if ready:
+                    return True
+
+            return False
+        except RuntimeError:
+            return False
+
+    def check_out(self, posh_user_username):
+        """Check out the device for use by a posh user."""
+        if not self.is_ready():
+            raise ValueError('Device is already in use')
+
+        self.in_use = posh_user_username
+        self.checkout_time = timezone.now()
+        self.save(update_fields=['in_use', 'checkout_time'])
+
+    def check_in(self):
+        """Check in the device after use."""
+        self.in_use = ''
+        self.checkout_time = None
+        self.save(update_fields=['in_use', 'checkout_time'])
 
     def __str__(self):
         return self.serial
