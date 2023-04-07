@@ -580,7 +580,6 @@ def start_campaigns():
 
     for campaign in campaigns:
         available_device = None
-        device_ready = False
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
 
         if campaign.status == Campaign.STOPPING:
@@ -603,17 +602,17 @@ def start_campaigns():
                 available_device = get_available_device(excluded_device_ids)
 
             if available_device:
-                device_ready = available_device.is_ready()
                 excluded_device_ids.append(available_device.id)
-
-            if available_device and device_ready:
-                logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
-                available_device.check_out(campaign.posh_user.username)
-                campaign.status = Campaign.IN_QUEUE
-                campaign.queue_status = 'N/A'
-                campaign.save(update_fields=['status', 'queue_status'])
-                CampaignTask.delay(campaign.id, device_id=available_device.id)
-                time.sleep(5)
+                try:
+                    available_device.check_out(campaign.posh_user.username)
+                    campaign.status = Campaign.IN_QUEUE
+                    campaign.queue_status = 'N/A'
+                    campaign.save(update_fields=['status', 'queue_status'])
+                    CampaignTask.delay(campaign.id, device_id=available_device.id)
+                    logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
+                    time.sleep(5)
+                except ValueError:
+                    logger.info(f'Device: {available_device} is not ready')
             else:
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
