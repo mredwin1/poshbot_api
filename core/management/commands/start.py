@@ -6,7 +6,7 @@ import time
 from django.core.management import call_command
 from django.core.management.base import BaseCommand
 from django.db.utils import OperationalError
-from core.models import User
+from core.models import User, Campaign
 
 
 class Command(BaseCommand):
@@ -44,6 +44,13 @@ class Command(BaseCommand):
 
         logging.info('Running collectstatic...')
         call_command("collectstatic", interactive=False, clear=True)
+
+        logging.info('Clearing worker sigkills')
+        for campaign in Campaign.objects.all():
+            campaign.sigkill_sent = False
+            campaign.task_pid = 0
+            campaign.worker_hostname = ''
+            campaign.save(update_fields=['sigkill_sent', 'task_id', 'worker_hostname'])
 
         logging.info('Starting server...')
         os.system("gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 8 -w 4")
