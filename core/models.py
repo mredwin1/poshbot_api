@@ -92,15 +92,7 @@ class Device(models.Model):
                 current_time = parse(current_time_str).replace(tzinfo=pytz.utc)
                 boot_time_str = adb_device.shell('uptime -s').strip()
 
-                import logging
-                logger = logging.getLogger(__name__)
-                logger.info(boot_time_str)
-
                 boot_time = datetime.datetime.strptime(boot_time_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=current_time.tzinfo)
-                logger.info(current_time)
-                logger.info(boot_time)
-                logger.info((current_time - boot_time).total_seconds())
-
 
                 if ready and (current_time - boot_time).total_seconds() > 10:
                     return True

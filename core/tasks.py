@@ -7,7 +7,7 @@ import requests
 import time
 import traceback
 
-from celery import shared_task, Task
+from celery import shared_task, Task, current_app, beat
 from django.utils import timezone
 from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
@@ -16,6 +16,32 @@ from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePosh
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
 from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem
+
+
+class DedupScheduler(beat.ScheduleEntry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_due(self):
+        # Extract the task name and args from the schedule entry
+        task_name = self.task
+        task_args = self.args
+
+        # Check if the task is already in the queue
+        try:
+            reserved_tasks = current_app.control.inspect().reserved()
+            if reserved_tasks:
+                for worker, tasks in reserved_tasks.items():
+                    for task in tasks:
+                        if task.get('name') == task_name and task.get('args', ()) == task_args:
+                            # Task is already in the queue, don't schedule it again
+                            return False, 60.0  # return False to indicate that the task is not due
+        except Exception as exc:
+            current_app.log.error("Error checking reserved tasks: %r", exc)
+            pass
+
+        # Schedule the task if it's not already in the queue
+        return super().is_due()
 
 
 class CampaignTask(Task):
@@ -538,9 +564,6 @@ def get_available_device(excluded_device_ids, logger):
     devices = Device.objects.filter(is_active=True).exclude(id__in=excluded_device_ids)
     in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
 
-    logger.info(excluded_device_ids)
-    logger.info(devices)
-
     for device in devices:
         if device.ip_reset_url not in in_use_ip_reset_urls:
             if device.is_ready():
@@ -557,9 +580,10 @@ def get_available_device(excluded_device_ids, logger):
                         return device
 
 
-@shared_task(max_instances=1)
+@shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
+    logger.info('Running start campaigns')
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING], posh_user__isnull=False).order_by('next_runtime')
     now = timezone.now()
     queue_num = 1
@@ -585,15 +609,12 @@ def start_campaigns():
             campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            logger.info(f'Queue Num: {queue_num} - Available Device: {available_device}')
             if queue_num == 1:
-                available_device = get_available_device(excluded_device_ids, logger)
+                available_device = get_available_device(excluded_device_ids)
 
             if available_device:
                 excluded_device_ids.append(available_device.id)
-                logger.info(f'Excluded Device Ids: {excluded_device_ids}')
                 try:
-                    logger.info(f'Device, {available_device}, checkout out. In Use: {available_device.in_use}')
                     available_device.check_out(campaign.posh_user.username)
                     campaign.status = Campaign.IN_QUEUE
                     campaign.queue_status = 'N/A'
@@ -608,8 +629,9 @@ def start_campaigns():
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
 
+    time.sleep(40)
 
-@shared_task(max_instances=1)
+@shared_task
 def check_posh_users():
     logger = logging.getLogger(__name__)
     logger.info('Checking posh users')
@@ -694,7 +716,7 @@ def check_posh_users():
                         campaign.save(update_fields=['status'])
 
 
-@shared_task(max_instances=1)
+@shared_task
 def log_cleanup():
     campaigns = Campaign.objects.all()
 
@@ -705,7 +727,7 @@ def log_cleanup():
             log.delete()
 
 
-@shared_task(max_instances=1)
+@shared_task
 def posh_user_cleanup():
     day_ago = timezone.now() - datetime.timedelta(days=1)
     two_weeks_ago = timezone.now() - datetime.timedelta(days=14)
