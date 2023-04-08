@@ -483,7 +483,9 @@ class CampaignTask(Task):
                 client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
                 adb_device = client.device(serial=self.device.serial)
 
-                adb_device.reboot()
+                if self.device.in_use == self.campaign.posh_user.username:
+                    self.logger.warning('Rebooting device')
+                    adb_device.reboot()
 
                 self.logger.warning(f'Sending campaign to the end of the line due to an error')
 
