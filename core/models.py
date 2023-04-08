@@ -3,6 +3,7 @@ import datetime
 import mailslurp_client
 import os
 import random
+import pytz
 import string
 
 from dateutil.parser import parse
@@ -88,7 +89,7 @@ class Device(models.Model):
             if adb_device:
                 ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
                 current_time_str = adb_device.shell('date').strip()
-                current_time = parse(current_time_str)
+                current_time = parse(current_time_str).replace(tzinfo=pytz.utc)
                 boot_time_str = adb_device.shell('uptime -s').strip()
 
                 import logging

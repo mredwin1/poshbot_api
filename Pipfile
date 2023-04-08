@@ -29,6 +29,7 @@ mailslurp-client = "*"
 fake-useragent = "*"
 appium-python-client = "*"
 pure-python-adb = "*"
+python-dateutil = "*"
 
 [dev-packages]
 
