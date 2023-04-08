@@ -622,7 +622,7 @@ class KillCampaignTask(Task):
         else:
             campaign.task_pid = 0
             campaign.worker_hostname = ''
-            campaign.save(update_fields=['task_id', 'worker_hostname'])
+            campaign.save(update_fields=['task_pid', 'worker_hostname'])
             logger.info('Missing data to send signal. Ensuring task_pid and worker_hostname are reset')
 
 
