@@ -476,21 +476,21 @@ class CampaignTask(Task):
                     self.campaign.save(update_fields=['status'])
 
                     success = False
-            # except WebDriverException:
-            #     self.logger.debug(traceback.format_exc())
-            #     success = False
-            #
-            #     client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
-            #     adb_device = client.device(serial=self.device.serial)
-            #
-            #     adb_device.reboot()
-            #
-            #     self.logger.warning(f'Sending campaign to the end of the line due to an error')
-            #
-            #     self.campaign.status = Campaign.STARTING
-            #     self.campaign.next_runtime = timezone.now()
-            #     self.campaign.queue_status = 'Unknown'
-            #     self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
+            except WebDriverException:
+                self.logger.debug(traceback.format_exc())
+                success = False
+
+                client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+                adb_device = client.device(serial=self.device.serial)
+
+                adb_device.reboot()
+
+                self.logger.warning(f'Sending campaign to the end of the line due to an error')
+
+                self.campaign.status = Campaign.STARTING
+                self.campaign.next_runtime = timezone.now()
+                self.campaign.queue_status = 'Unknown'
+                self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
             except Exception:
                 self.logger.debug(traceback.format_exc())
                 self.logger.error('Sending campaign to the end of the line due to an unhandled error')
@@ -506,7 +506,7 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STOPPED
                 self.campaign.save(update_fields=['status'])
 
-            if self.device:
+            if self.device and self.device.in_use == self.campaign.posh_user.username:
                 time.sleep(8)
                 self.logger.info('Releasing device')
                 self.device.check_in()
