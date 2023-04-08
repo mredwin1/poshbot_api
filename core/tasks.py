@@ -91,7 +91,7 @@ class CampaignTask(Task):
         self.campaign.task_pid = os.getpid()
         self.campaign.save(update_fields=['worker_hostname', 'task_pid'])
 
-        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+        if self.campaign.status in (Campaign.STOPPING, Campaign.STOPPED):
             response['status'] = False
             response['errors'].append(f'Campaign status is {self.campaign.status}')
 
