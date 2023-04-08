@@ -534,7 +534,7 @@ class CampaignTask(Task):
 CampaignTask = app.register_task(CampaignTask())
 
 
-def get_available_device(excluded_device_ids):
+def get_available_device(excluded_device_ids, logger):
     devices = Device.objects.filter(is_active=True).exclude(id__in=excluded_device_ids)
     in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
 
@@ -544,8 +544,7 @@ def get_available_device(excluded_device_ids):
                 return device
         else:
             if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200:
-                log = LogGroup.objects.filter(posh_user__username=device.in_use).first()
-                log.warning('Another campaign will be started on this device because this one took too long.')
+                logger.info('Another campaign will be started on this device because this one took too long.')
                 device.check_in()
 
                 in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
@@ -583,8 +582,9 @@ def start_campaigns():
             campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
+            logger.info(f'Queue Num: {queue_num}')
             if queue_num == 1:
-                available_device = get_available_device(excluded_device_ids)
+                available_device = get_available_device(excluded_device_ids, logger)
 
             if available_device:
                 excluded_device_ids.append(available_device.id)
