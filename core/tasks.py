@@ -610,7 +610,7 @@ def start_campaigns():
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
             if queue_num == 1:
-                available_device = get_available_device(excluded_device_ids)
+                available_device = get_available_device(excluded_device_ids, logger)
 
             if available_device:
                 excluded_device_ids.append(available_device.id)
