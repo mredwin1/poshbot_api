@@ -535,7 +535,7 @@ CampaignTask = app.register_task(CampaignTask())
 
 
 def get_available_device(excluded_device_ids, logger):
-    devices = Device.objects.filter(is_active=True).exclude(id__exact=excluded_device_ids)
+    devices = Device.objects.filter(is_active=True).exclude(id__in=excluded_device_ids)
     in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
 
     logger.info(excluded_device_ids)
