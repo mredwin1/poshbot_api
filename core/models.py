@@ -5,6 +5,7 @@ import os
 import random
 import string
 
+from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
@@ -86,8 +87,8 @@ class Device(models.Model):
 
             if adb_device:
                 ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-                current_time_str = adb_device.shell('date').strip().replace(' ', '')
-                current_time = datetime.datetime.strptime(current_time_str, '%a%b%d%H:%M:%S%Z%Y')
+                current_time_str = adb_device.shell('date').strip()
+                current_time = parse(current_time_str)
                 boot_time_str = adb_device.shell('uptime -s').strip()
 
                 import logging
