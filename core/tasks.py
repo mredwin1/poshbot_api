@@ -602,7 +602,7 @@ def start_campaigns():
         available_device = None
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
 
-        if campaign.status == Campaign.STOPPING:
+        if campaign.status == Campaign.STOPPING or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
             campaign.status = Campaign.STOPPED
             campaign.queue_status = 'N/A'
             campaign.next_runtime = None
