@@ -88,6 +88,10 @@ class Device(models.Model):
 
             if adb_device:
                 ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+                uptime = adb_device.shell('uptime -s')
+
+                import logging
+                logging.getLogger(__name__).info(uptime)
 
                 time.sleep(10)
 
