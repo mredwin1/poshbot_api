@@ -585,7 +585,7 @@ def start_campaigns():
             campaign.save(update_fields=['status', 'queue_status'])
             CampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            logger.info(f'Queue Num: {queue_num}')
+            logger.info(f'Queue Num: {queue_num} - Available Device: {available_device}')
             if queue_num == 1:
                 available_device = get_available_device(excluded_device_ids, logger)
 
