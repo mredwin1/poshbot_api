@@ -50,7 +50,7 @@ class Command(BaseCommand):
             campaign.sigkill_sent = False
             campaign.task_pid = 0
             campaign.worker_hostname = ''
-            campaign.save(update_fields=['sigkill_sent', 'task_id', 'worker_hostname'])
+            campaign.save(update_fields=['sigkill_sent', 'task_pid', 'worker_hostname'])
 
         logging.info('Starting server...')
         os.system("gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 8 -w 4")
