@@ -310,6 +310,7 @@ class Campaign(models.Model):
 
     auto_run = models.BooleanField(default=True)
     generate_users = models.BooleanField(default=True)
+    sigkill_sent = models.BooleanField(default=False)
 
     next_runtime = models.DateTimeField(null=True, blank=True)
 

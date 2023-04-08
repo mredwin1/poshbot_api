@@ -113,6 +113,7 @@ class CampaignTask(Task):
         self.check_device_in()
 
         self.campaign.worker_hostname = ''
+        self.campaign.sigkill_sent = False
         self.campaign.task_pid = 0
         self.campaign.save(update_fields=['worker_hostname', 'task_pid'])
 
@@ -639,9 +640,14 @@ def get_available_device(excluded_device_ids, logger):
                 return device
 
         if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.in_use:
-            logger.info('Killing the campaign that is using this Device')
             campaign = Campaign.objects.get(posh_user__username=device.in_use)
-            KillCampaignTask.delay(campaign.id)
+            if not campaign.sigkill_sent:
+                logger.info('Killing the campaign that is using this Device')
+                campaign.sigkill_sent = True
+                campaign.save(update_fields=['sigkill_sent'])
+                KillCampaignTask.delay(campaign.id)
+            else:
+                logger.info('SIGKILL was sent, campaign should terminate shortly')
 
 
 @shared_task
@@ -658,13 +664,16 @@ def start_campaigns():
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
 
         if campaign.status == Campaign.STOPPING or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
+            update_fields = ['status', 'queue_status', 'next_runtime']
             campaign.status = Campaign.STOPPED
             campaign.queue_status = 'N/A'
             campaign.next_runtime = None
-            campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
 
             if campaign.worker_hostname and campaign.task_pid:
+                campaign.sigkill_sent = True
+                update_fields.append('sigkill_sent')
                 KillCampaignTask.delay(campaign.id)
+            campaign.save(update_fields=update_fields)
         elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
