@@ -86,7 +86,7 @@ class Device(models.Model):
 
             if adb_device:
                 ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-                current_time = datetime.datetime.strptime(adb_device.shell('date'), '%a %b %d %H:%M:%S %Z %Y')
+                current_time = datetime.datetime.strptime(adb_device.shell('date').strip(), '%a %b %d %H:%M:%S %Z %Y')
                 boot_time_str = adb_device.shell('uptime -s')
 
                 import logging
