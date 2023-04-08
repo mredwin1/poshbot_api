@@ -1,6 +1,6 @@
 from django.contrib import admin
 from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
-from django.db.models import IntegerField, Case, When, Value, Count
+from django.db.models import IntegerField, Case, When, Value
 from django.db.models.aggregates import Count
 from django.db.models.functions import Cast
 from django.utils import timezone
