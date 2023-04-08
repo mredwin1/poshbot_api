@@ -4,6 +4,7 @@ import os
 import pytz
 import random
 import requests
+import signal
 import time
 import traceback
 
@@ -73,6 +74,67 @@ class CampaignTask(Task):
                 return delay_after_elapsed_time_in_seconds
             else:
                 return random_delay_in_seconds
+
+    def check_device_in(self):
+        if self.device and self.device.in_use == self.campaign.posh_user.username:
+            time.sleep(8)
+            self.logger.info('Releasing device')
+            self.device.check_in()
+
+    def init_campaign(self):
+        response = {
+            'status': True,
+            'errors': []
+        }
+
+        self.campaign.worker_hostname = self.request.hostname
+        self.campaign.task_pid = os.getpid()
+        self.campaign.save(update_fields=['worker_hostname', 'task_pid'])
+
+        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+            response['status'] = False
+            response['errors'].append(f'Campaign status is {self.campaign.status}')
+
+        if not self.campaign.posh_user:
+            response['status'] = False
+            response['errors'].append('Campaign has no posh user assigned')
+
+        if not self.campaign.posh_user.is_active:
+            response['status'] = False
+            response['errors'].append(f'Posh User, {self.campaign.posh_user}, is disabled')
+
+        if not self.campaign.posh_user.is_active_in_posh:
+            response['status'] = False
+            response['errors'].append('Posh user, {self.campaign.posh_user}, is inactive')
+
+        return response
+
+    def finalize_campaign(self, success, campaign_delay, duration):
+        self.check_device_in()
+
+        self.campaign.worker_hostname = ''
+        self.campaign.task_pid = 0
+        self.campaign.save(update_fields=['worker_hostname', 'task_pid'])
+
+        if not self.campaign.posh_user.is_active_in_posh:
+            self.campaign.status = Campaign.STOPPING
+            self.campaign.next_runtime = None
+            self.campaign.queue_status = 'N/A'
+            self.campaign.save(update_fields=['status'])
+        elif self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED, Campaign.STARTING):
+            if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
+                campaign_delay = 3600
+
+            if not campaign_delay:
+                campaign_delay = self.get_random_delay(duration)
+
+            hours, remainder = divmod(campaign_delay, 3600)
+            minutes, seconds = divmod(remainder, 60)
+
+            self.campaign.status = Campaign.IDLE
+            self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=campaign_delay)
+            self.campaign.save(update_fields=['status', 'next_runtime'])
+            self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
 
     def launch_app(self, client):
         app_launched = False
@@ -456,25 +518,49 @@ class CampaignTask(Task):
                     else:
                         self.logger.info('There are no listings on this user\'s account. Stopping campaign.')
 
-                        self.campaign.status = Campaign.STOPPED
+                        self.campaign.status = Campaign.STOPPING
                         self.campaign.save(update_fields=['status'])
 
                         return False
             else:
                 self.logger.info('Stopping campaign because user could not log in')
 
-                self.campaign.status = Campaign.STOPPED
+                self.campaign.status = Campaign.STOPPING
                 self.campaign.save(update_fields=['status'])
                 return False
+
+    def on_failure(self, exc, task_id, args, kwargs, einfo):
+        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+            self.campaign.status = Campaign.STARTING
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
+        else:
+            self.logger.warning('Campaign task was killed')
+
+        self.finalize_campaign(False, None, 0)
+
+        exc_type, exc_value, exc_traceback = einfo.exc_info
+        self.logger.error(f'Campaign failed due to {exc_type}: {exc_value}')
+        self.logger.debug(traceback.format_exc())
+        self.logger.info('Campaign was sent to the end of the line')
+
+        if exc_type is WebDriverException and self.device.in_use == self.campaign.posh_user.username:
+            client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+            adb_device = client.device(serial=self.device.serial)
+
+            self.logger.warning('Rebooting device')
+            adb_device.reboot()
 
     def run(self, campaign_id, logger_id=None, device_id=None, attempt=1, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
         campaign_delay = None
-        success = False
 
         self.init_logger(logger_id)
 
-        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED) and self.campaign.posh_user:
+        campaign_init = self.init_campaign()
+
+        if campaign_init['status']:
             self.logger.info(f'Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}')
 
             try:
@@ -490,83 +576,57 @@ class CampaignTask(Task):
             need_to_list = items_to_list.count() > 0
 
             start_time = time.time()
-            try:
-                if not (self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package) and self.device and self.campaign.mode == Campaign.ADVANCED_SHARING:
-                    installed = self.install_clone(self.device)
-                elif self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package and self.device and self.campaign.mode == Campaign.ADVANCED_SHARING:
-                    installed = True
-                else:
-                    installed = False
 
-                if installed and not self.campaign.posh_user.is_registered:
-                    success = self.register(device=self.device, list_items=need_to_list)
-                elif installed and not self.campaign.posh_user.finished_registration:
-                    success = self.finish_registration(device=self.device, list_items=need_to_list, reset_ip=True)
-                elif installed and items_to_list:
-                    success = self.list_items(self.device)
-                elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
-                    success = self.share_and_more()
-                else:
-                    self.campaign.status = Campaign.STOPPING
-                    self.campaign.save(update_fields=['status'])
+            if not (self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package) and self.device and self.campaign.mode == Campaign.ADVANCED_SHARING:
+                installed = self.install_clone(self.device)
+            elif self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package and self.device and self.campaign.mode == Campaign.ADVANCED_SHARING:
+                installed = True
+            else:
+                installed = False
 
-                    success = False
-            except WebDriverException:
-                self.logger.debug(traceback.format_exc())
-                success = False
-
-                client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
-                adb_device = client.device(serial=self.device.serial)
-
-                if self.device.in_use == self.campaign.posh_user.username:
-                    self.logger.warning('Rebooting device')
-                    adb_device.reboot()
-
-                self.logger.warning(f'Sending campaign to the end of the line due to an error')
-
-                self.campaign.status = Campaign.STARTING
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
-            except Exception:
-                self.logger.debug(traceback.format_exc())
-                self.logger.error('Sending campaign to the end of the line due to an unhandled error')
-
-                self.campaign.status = Campaign.STARTING
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
-
-            end_time = time.time()
-
-            if not self.campaign.posh_user.is_active_in_posh:
-                self.campaign.status = Campaign.STOPPED
+            if installed and not self.campaign.posh_user.is_registered:
+                success = self.register(device=self.device, list_items=need_to_list)
+            elif installed and not self.campaign.posh_user.finished_registration:
+                success = self.finish_registration(device=self.device, list_items=need_to_list, reset_ip=True)
+            elif installed and items_to_list:
+                success = self.list_items(self.device)
+            elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
+                success = self.share_and_more()
+            else:
+                self.campaign.status = Campaign.STOPPING
                 self.campaign.save(update_fields=['status'])
 
-            if self.device and self.device.in_use == self.campaign.posh_user.username:
-                time.sleep(8)
-                self.logger.info('Releasing device')
-                self.device.check_in()
+                success = False
 
-            if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED, Campaign.PAUSED, Campaign.STARTING):
-                if not success and self.campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
-                    campaign_delay = 3600
+            end_time = time.time()
+            duration = end_time - start_time
 
-                if not campaign_delay:
-                    campaign_delay = self.get_random_delay(end_time - start_time)
-
-                hours, remainder = divmod(campaign_delay, 3600)
-                minutes, seconds = divmod(remainder, 60)
-
-                self.campaign.status = Campaign.IDLE
-                self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=campaign_delay)
-                self.campaign.save(update_fields=['status', 'next_runtime'])
-                self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
-
+            self.finalize_campaign(success, campaign_delay, duration)
+        else:
+            self.logger.info(f'Campaign could not be initiated due to the following issues {", ".join(campaign_init["errors"])}')
         self.logger.info('Campaign ended')
 
 
+class KillCampaignTask(Task):
+    def run(self, campaign_id):
+        campaign = Campaign.objects.get(id=campaign_id)
+        logger = logging.getLogger(__name__)
+
+        if campaign.worker_hostname and campaign.worker_hostname != self.request.hostname:
+            self.delay(campaign_id)
+            logger.info(f'Worker hostname must be {campaign.worker_hostname} and it is {self.request.hostname} for Campaign {campaign}')
+        elif campaign.worker_hostname and campaign.worker_hostname == self.request.hostname and campaign.task_pid:
+            os.kill(campaign.task_pid, signal.SIGKILL)
+            logger.info(f'Sent SIGKILL signal to {campaign}')
+        else:
+            campaign.task_pid = 0
+            campaign.worker_hostname = ''
+            campaign.save(update_fields=['task_id', 'worker_hostname'])
+            logger.info('Missing data to send signal. Ensuring task_pid and worker_hostname are reset')
+
+
 CampaignTask = app.register_task(CampaignTask())
+KillCampaignTask = app.register_task(KillCampaignTask())
 
 
 def get_available_device(excluded_device_ids, logger):
@@ -607,6 +667,9 @@ def start_campaigns():
             campaign.queue_status = 'N/A'
             campaign.next_runtime = None
             campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+
+            if campaign.worker_hostname and campaign.task_pid:
+                KillCampaignTask.delay(campaign.id)
         elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
