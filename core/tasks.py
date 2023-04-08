@@ -636,7 +636,6 @@ def start_campaigns():
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
 
-    time.sleep(40)
 
 @shared_task
 def check_posh_users():
