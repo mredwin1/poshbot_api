@@ -39,6 +39,22 @@ class CampaignTask(Task):
             else:
                 return random_delay_in_seconds
 
+    def launch_app(self, client):
+        app_launched = False
+        retries = 0
+
+        while not app_launched and retries < 2:
+            app_launched = client.launch_app(self.campaign.posh_user.username)
+            retries += 1
+
+        if not app_launched and not self.campaign.posh_user.is_registered:
+            self.campaign.posh_user.clone_installed = False
+            self.campaign.posh_user.save(update_fields=['clone_installed'])
+
+            return False
+
+        return app_launched
+
     def reset_ip(self, reset_url):
         response = requests.get(reset_url)
         retries = 0
@@ -90,34 +106,18 @@ class CampaignTask(Task):
                 device.save(update_fields=['installed_clones'])
 
             if not self.campaign.posh_user.app_package:
-                app_launched = False
-                retries = 0
+                app_launched = self.launch_app(client)
 
-                while not app_launched and retries < 2:
-                    app_launched = client.launch_app(self.campaign.posh_user.username)
-                    retries += 1
-
-                if not app_launched and not self.campaign.posh_user.is_registered:
-                    self.campaign.posh_user.clone_installed = False
-                    self.campaign.posh_user.save(update_fields=['clone_installed'])
-
+                if not app_launched:
                     return False
 
                 clone_app_package = client.driver.current_package
 
                 while 'poshmark' not in clone_app_package:
                     self.logger.info(f'App did not launch properly. Current app package {clone_app_package}')
-                    app_launched = False
-                    retries = 0
+                    app_launched = self.launch_app(client)
 
-                    while not app_launched and retries < 2:
-                        app_launched = client.launch_app(self.campaign.posh_user.username)
-                        retries += 1
-
-                    if not app_launched and not self.campaign.posh_user.is_registered:
-                        self.campaign.posh_user.clone_installed = False
-                        self.campaign.posh_user.save(update_fields=['clone_installed'])
-
+                    if not app_launched:
                         return False
 
                     time.sleep(.5)
@@ -134,28 +134,21 @@ class CampaignTask(Task):
         if ip_reset:
             with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                 if client.driver.current_package != self.campaign.posh_user.app_package:
-                    app_launched = False
-                    retries = 0
+                    app_launched = self.launch_app(client)
 
-                    while not app_launched and retries < 2:
-                        app_launched = client.launch_app(self.campaign.posh_user.username)
-                        retries += 1
-
-                    if not app_launched and not self.campaign.posh_user.is_registered:
-                        self.campaign.posh_user.clone_installed = False
-                        self.campaign.posh_user.save(update_fields=['clone_installed'])
-
+                    if not app_launched:
                         return False
 
                 start_time = time.time()
                 registered = client.register()
                 end_time = time.time()
+
                 if registered:
                     time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
 
+                    self.campaign.posh_user.time_to_register = time_to_register
                     self.logger.info(f'Time to register user: {time_to_register}')
 
-                self.campaign.posh_user.time_to_register = time_to_register
                 self.campaign.posh_user.is_registered = registered
                 self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
 
@@ -189,12 +182,12 @@ class CampaignTask(Task):
                 start_time = time.time()
                 registration_finished = client.finish_registration()
                 end_time = time.time()
+
                 if registration_finished:
                     time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
-
+                    self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                     self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
 
-                self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                 self.campaign.posh_user.finished_registration = registration_finished
                 self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
 
@@ -205,28 +198,21 @@ class CampaignTask(Task):
             else:
                 with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                     if client.driver.current_package != self.campaign.posh_user.app_package:
-                        app_launched = False
-                        retries = 0
+                        app_launched = self.launch_app(client)
 
-                        while not app_launched and retries < 2:
-                            app_launched = client.launch_app(self.campaign.posh_user.username)
-                            retries += 1
-
-                        if not app_launched and not self.campaign.posh_user.is_registered:
-                            self.campaign.posh_user.clone_installed = False
-                            self.campaign.posh_user.save(update_fields=['clone_installed'])
-
+                        if not app_launched:
                             return False
 
                     start_time = time.time()
                     registration_finished = client.finish_registration()
                     end_time = time.time()
+
                     if registration_finished:
                         time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
 
+                        self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                         self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
 
-                    self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
                     self.campaign.posh_user.finished_registration = registration_finished
                     self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
 
@@ -276,17 +262,9 @@ class CampaignTask(Task):
             else:
                 with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                     if client.driver.current_package != self.campaign.posh_user.app_package:
-                        app_launched = False
-                        retries = 0
+                        app_launched = self.launch_app(client)
 
-                        while not app_launched and retries < 2:
-                            app_launched = client.launch_app(self.campaign.posh_user.username)
-                            retries += 1
-
-                        if not app_launched and not self.campaign.posh_user.is_registered:
-                            self.campaign.posh_user.clone_installed = False
-                            self.campaign.posh_user.save(update_fields=['clone_installed'])
-
+                        if not app_launched:
                             return False
 
                     for item_to_list in items_to_list:
