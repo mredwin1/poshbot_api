@@ -29,6 +29,14 @@ class DedupScheduler(beat.ScheduleEntry):
 
         # Check if the task is already in the queue
         try:
+            active_tasks = current_app.control.inspect().active()
+            if active_tasks:
+                for worker, tasks in active_tasks.items():
+                    for task in tasks:
+                        if task.get('name') == task_name and task.get('args', ()) == task_args:
+                            # Task is already running, don't schedule it again
+                            return False, 60.0  # return False to indicate that the task is not due
+
             reserved_tasks = current_app.control.inspect().reserved()
             if reserved_tasks:
                 for worker, tasks in reserved_tasks.items():
@@ -37,10 +45,10 @@ class DedupScheduler(beat.ScheduleEntry):
                             # Task is already in the queue, don't schedule it again
                             return False, 60.0  # return False to indicate that the task is not due
         except Exception as exc:
-            current_app.log.error("Error checking reserved tasks: %r", exc)
+            current_app.log.error("Error checking tasks: %r", exc)
             pass
 
-        # Schedule the task if it's not already in the queue
+        # Schedule the task if it's not already in the queue or running
         return super().is_due()
 
 
