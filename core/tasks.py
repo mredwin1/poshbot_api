@@ -507,6 +507,7 @@ class CampaignTask(Task):
                 self.campaign.save(update_fields=['status'])
 
             if self.device:
+                time.sleep(8)
                 self.logger.info('Releasing device')
                 self.device.check_in()
 
