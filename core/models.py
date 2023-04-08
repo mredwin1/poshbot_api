@@ -93,7 +93,9 @@ class Device(models.Model):
                 logger = logging.getLogger(__name__)
                 logger.info(boot_time_str)
 
-                boot_time = datetime.datetime.strptime(adb_device.shell('uptime -s'), '%Y-%m-%d %H:%M:S').replace(tzinfo=current_time.tzinfo)
+                boot_time = datetime.datetime.strptime(adb_device.shell('uptime -s').strip(), '%Y-%m-%d %H:%M:S').replace(tzinfo=current_time.tzinfo)
+                logger.info(current_time)
+                logger.info(boot_time)
                 logger.info((current_time - boot_time).total_seconds())
 
 
