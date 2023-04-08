@@ -591,6 +591,7 @@ def start_campaigns():
 
             if available_device:
                 excluded_device_ids.append(available_device.id)
+                logger.info(f'Excluded Device Ids: {excluded_device_ids}')
                 try:
                     logger.info(f'Device, {available_device}, checkout out. In Use: {available_device.in_use}')
                     available_device.check_out(campaign.posh_user.username)
