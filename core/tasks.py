@@ -589,6 +589,7 @@ def start_campaigns():
             if available_device:
                 excluded_device_ids.append(available_device.id)
                 try:
+                    logger.info(f'Device, {available_device}, checkout out. In Use: {available_device.in_use}')
                     available_device.check_out(campaign.posh_user.username)
                     campaign.status = Campaign.IN_QUEUE
                     campaign.queue_status = 'N/A'
