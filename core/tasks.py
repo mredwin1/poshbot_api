@@ -34,7 +34,6 @@ class DedupScheduler(beat.ScheduleEntry):
             if active_tasks:
                 for worker, tasks in active_tasks.items():
                     for task in tasks:
-                        logger.info(task)
                         if task.get('name') == task_name and task.get('args', ()) == task_args:
                             # Task is already running, don't schedule it again
                             return False, 60.0  # return False to indicate that the task is not due
@@ -43,7 +42,6 @@ class DedupScheduler(beat.ScheduleEntry):
             if reserved_tasks:
                 for worker, tasks in reserved_tasks.items():
                     for task in tasks:
-                        logger.info(task)
                         if task.get('name') == task_name and task.get('args', ()) == task_args:
                             # Task is already in the queue, don't schedule it again
                             return False, 60.0  # return False to indicate that the task is not due
@@ -639,7 +637,7 @@ def start_campaigns():
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
-    time.sleep(40)
+
 
 @shared_task
 def check_posh_users():
