@@ -5,6 +5,7 @@ import os
 import pytz
 import random
 import string
+import time
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -87,6 +88,8 @@ class Device(models.Model):
 
             if adb_device:
                 ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+
+                time.sleep(10)
 
                 if ready:
                     return True
