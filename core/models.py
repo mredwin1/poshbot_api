@@ -4,7 +4,6 @@ import mailslurp_client
 import os
 import random
 import string
-import time
 
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -88,14 +87,17 @@ class Device(models.Model):
             if adb_device:
                 ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
                 current_time = datetime.datetime.strptime(adb_device.shell('date'), '%a %b %d %H:%M:%S %Z %Y')
-                boot_time = datetime.datetime.strptime(adb_device.shell('uptime -s'), '%Y-%m-%d %H:%M:S').replace(tzinfo=current_time.tzinfo)
+                boot_time_str = adb_device.shell('uptime -s')
 
                 import logging
-                logging.getLogger(__name__).info(f'{(current_time - boot_time).total_seconds()}')
+                logger = logging.getLogger(__name__)
+                logger.info(boot_time_str)
 
-                time.sleep(10)
+                boot_time = datetime.datetime.strptime(adb_device.shell('uptime -s'), '%Y-%m-%d %H:%M:S').replace(tzinfo=current_time.tzinfo)
+                logger.info((current_time - boot_time).total_seconds())
 
-                if ready:
+
+                if ready and (current_time - boot_time).total_seconds() > 10:
                     return True
 
             return False
