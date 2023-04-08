@@ -2,7 +2,6 @@ import boto3
 import datetime
 import mailslurp_client
 import os
-import pytz
 import random
 import string
 import time
@@ -88,10 +87,11 @@ class Device(models.Model):
 
             if adb_device:
                 ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-                uptime = adb_device.shell('uptime -s')
+                current_time = datetime.datetime.strptime(adb_device.shell('date'), '%a %b %d %H:%M:%S %Z %Y')
+                boot_time = datetime.datetime.strptime(adb_device.shell('uptime -s'), '%Y-%m-%d %H:%M:S').replace(tzinfo=current_time.tzinfo)
 
                 import logging
-                logging.getLogger(__name__).info(uptime)
+                logging.getLogger(__name__).info(f'{(current_time - boot_time).total_seconds()}')
 
                 time.sleep(10)
 
