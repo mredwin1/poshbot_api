@@ -699,12 +699,23 @@ def log_cleanup():
 
 @shared_task
 def posh_user_cleanup():
-    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=timezone.now() - datetime.timedelta(days=1))
+    day_ago = timezone.now() - datetime.timedelta(days=1)
+    two_weeks_ago = timezone.now() - datetime.timedelta(days=14)
 
+    # Get all posh_users who have been inactive for at least a day
+    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
+
+    # Get all sold items for the relevant posh_users
+    sold_items = ListedItem.objects.filter(posh_user__in=posh_users, status=ListedItem.SOLD, date_sold__lt=day_ago)
+
+    # Create a dictionary of posh_users and their last sale date
+    last_sale_dates = {}
+    for sold_item in sold_items:
+        posh_user = sold_item.posh_user
+        if posh_user not in last_sale_dates or last_sale_dates[posh_user] < sold_item.date_sold:
+            last_sale_dates[posh_user] = sold_item.date_sold
+
+    # Delete posh_users who have been inactive for at least 14 days, or who have not made a sale in the last day
     for posh_user in posh_users:
-        sold_items = None
-        if posh_user.date_disabled < timezone.now() - datetime.timedelta(days=14):
-            sold_items = ListedItem.objects.filter(posh_user=posh_user, status=ListedItem.SOLD)
-
-        if not sold_items or (sold_items and sold_items.count() > 0):
+        if posh_user.date_disabled < two_weeks_ago or posh_user not in last_sale_dates or last_sale_dates[posh_user] < day_ago:
             posh_user.delete()
