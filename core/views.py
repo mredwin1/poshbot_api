@@ -113,7 +113,7 @@ class ListingViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, Des
         data = serializer.data
 
         try:
-            campaign = Campaign.objects.get(listings__contains=instance)
+            campaign = Campaign.objects.get(listings__exact=instance)
         except Campaign.DoesNotExist:
             campaign = None
 
