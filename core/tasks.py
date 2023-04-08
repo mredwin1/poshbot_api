@@ -557,7 +557,7 @@ def get_available_device(excluded_device_ids, logger):
                         return device
 
 
-@shared_task
+@shared_task(max_instances=1)
 def start_campaigns():
     logger = logging.getLogger(__name__)
     campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING], posh_user__isnull=False).order_by('next_runtime')
@@ -609,7 +609,7 @@ def start_campaigns():
                 queue_num += 1
 
 
-@shared_task
+@shared_task(max_instances=1)
 def check_posh_users():
     logger = logging.getLogger(__name__)
     logger.info('Checking posh users')
@@ -694,7 +694,7 @@ def check_posh_users():
                         campaign.save(update_fields=['status'])
 
 
-@shared_task
+@shared_task(max_instances=1)
 def log_cleanup():
     campaigns = Campaign.objects.all()
 
@@ -705,7 +705,7 @@ def log_cleanup():
             log.delete()
 
 
-@shared_task
+@shared_task(max_instances=1)
 def posh_user_cleanup():
     day_ago = timezone.now() - datetime.timedelta(days=1)
     two_weeks_ago = timezone.now() - datetime.timedelta(days=14)
