@@ -699,6 +699,12 @@ def log_cleanup():
 
 @shared_task
 def posh_user_cleanup():
-    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=timezone.now() - datetime.timedelta(days=30))
+    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=timezone.now() - datetime.timedelta(days=1))
 
-    posh_users.delete()
+    for posh_user in posh_users:
+        sold_items = None
+        if posh_user.date_disabled < timezone.now() - datetime.timedelta(days=14):
+            sold_items = ListedItem.objects.filter(posh_user=posh_user, status=ListedItem.SOLD)
+
+        if not sold_items or (sold_items and sold_items.count() > 0):
+            posh_user.delete()
