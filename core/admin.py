@@ -266,12 +266,6 @@ class CampaignAdmin(admin.ModelAdmin):
                 ('mode',),
                 ('title', 'delay', 'lowest_price'),
             )
-        }),
-        ('Other Information', {
-            'classes': ('collapse',),
-            'fields': (
-                ('worker_hostname', 'task_id'),
-            )
         })
     )
 
