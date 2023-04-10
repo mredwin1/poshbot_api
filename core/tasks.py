@@ -655,7 +655,7 @@ def get_available_device(excluded_device_ids, logger):
                 logger.info('Killing the campaign that is using this Device')
                 campaign.sigkill_sent = True
                 campaign.save(update_fields=['sigkill_sent'])
-                KillCampaignTask.delay(campaign.id, hostname=campaign.worker_hostname)
+                KillCampaignTask.delay(campaign.id, task_id=f'KillCampaignTask@{campaign.worker_hostname}')
             elif campaign.status != Campaign.RUNNING:
                 logger.info('Campaign isn\'t running, checking in.')
                 device.check_in()
@@ -682,7 +682,7 @@ def start_campaigns():
             if campaign.worker_hostname and campaign.task_pid:
                 campaign.sigkill_sent = True
                 update_fields.append('sigkill_sent')
-                KillCampaignTask.delay(campaign.id, hostname=campaign.worker_hostname)
+                KillCampaignTask.delay(campaign.id, task_id=f'KillCampaignTask@{campaign.worker_hostname}')
             campaign.save(update_fields=update_fields)
         elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE
