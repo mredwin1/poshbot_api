@@ -639,25 +639,26 @@ def get_available_device(excluded_device_ids, logger):
             if device.is_ready():
                 return device
 
-        if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200:
-            logger.info('Another campaign will be started on this device because this one took too long.')
-            device.check_in()
+        # if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200:
+        #     logger.info('Another campaign will be started on this device because this one took too long.')
+        #     device.check_in()
+        #
+        #     in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
+        #
+        #     if device.ip_reset_url not in in_use_ip_reset_urls:
+        #         if device.is_ready():
+        #             return device
 
-            in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
-
-            if device.ip_reset_url not in in_use_ip_reset_urls:
-                if device.is_ready():
-                    return device
-
-        # if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.in_use:
-        #     campaign = Campaign.objects.get(posh_user__username=device.in_use)
-        #     if not campaign.sigkill_sent:
-        #         logger.info('Killing the campaign that is using this Device')
-        #         campaign.sigkill_sent = True
-        #         campaign.save(update_fields=['sigkill_sent'])
-        #         KillCampaignTask.delay(campaign.id)
-        #     else:
-        #         logger.info('SIGKILL was sent, campaign should terminate shortly')
+        if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.in_use:
+            campaign = Campaign.objects.get(posh_user__username=device.in_use)
+            if not campaign.sigkill_sent and campaign.status == Campaign.RUNNING:
+                logger.info('Killing the campaign that is using this Device')
+                campaign.sigkill_sent = True
+                campaign.save(update_fields=['sigkill_sent'])
+                KillCampaignTask.delay(campaign.id, hostname=campaign.worker_hostname)
+            elif campaign.status != Campaign.RUNNING:
+                logger.info('Campaign isn\'t running, checking in.')
+                device.check_in()
 
 
 @shared_task
@@ -681,7 +682,7 @@ def start_campaigns():
             if campaign.worker_hostname and campaign.task_pid:
                 campaign.sigkill_sent = True
                 update_fields.append('sigkill_sent')
-                KillCampaignTask.delay(campaign.id)
+                KillCampaignTask.delay(campaign.id, hostname=campaign.worker_hostname)
             campaign.save(update_fields=update_fields)
         elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE
