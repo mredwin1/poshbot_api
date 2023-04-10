@@ -248,7 +248,7 @@ class CampaignTask(Task):
 
                 client.driver.press_keycode(3)
 
-            if not (registered and finish_registration_and_list):
+            if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
                 self.logger.info('Restarting campaign due to error')
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
@@ -312,7 +312,7 @@ class CampaignTask(Task):
 
                     client.driver.press_keycode(3)
 
-            if not (registration_finished and listed):
+            if not (registration_finished and listed) and self.campaign.status == Campaign.RUNNING:
                 self.logger.info('Did not list properly or finish registration. Restarting campaign')
                 self.campaign.status = Campaign.STARTING
                 self.campaign.queue_status = 'Unknown'
@@ -379,7 +379,7 @@ class CampaignTask(Task):
 
                     client.driver.press_keycode(3)
 
-            if not item_listed:
+            if not item_listed and self.campaign.status == Campaign.RUNNING:
                 self.logger.info('Did not list successfully. Restarting campaign.')
 
                 self.campaign.status = Campaign.STARTING
