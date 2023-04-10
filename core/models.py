@@ -302,15 +302,12 @@ class Campaign(models.Model):
     title = models.CharField(max_length=30)
     status = models.CharField(max_length=15, choices=STATUS_CHOICES, default=STOPPED)
     queue_status = models.CharField(max_length=15, default='N/A')
-    worker_hostname = models.CharField(max_length=255, default='N/A')
 
     delay = models.SmallIntegerField()
     lowest_price = models.SmallIntegerField(default=250)
-    task_pid = models.IntegerField()
 
     auto_run = models.BooleanField(default=True)
     generate_users = models.BooleanField(default=True)
-    sigkill_sent = models.BooleanField(default=False)
 
     next_runtime = models.DateTimeField(null=True, blank=True)
 

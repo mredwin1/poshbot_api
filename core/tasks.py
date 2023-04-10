@@ -78,9 +78,6 @@ class CampaignTask(Task):
             else:
                 return random_delay_in_seconds
 
-    def handle_sigtermclean(self, signum, frame):
-        self.request.cancel()
-
     def check_device_in(self):
         if self.device and self.device.in_use == self.campaign.posh_user.username:
             time.sleep(8)
@@ -92,10 +89,6 @@ class CampaignTask(Task):
             'status': True,
             'errors': []
         }
-
-        self.campaign.worker_hostname = self.request.hostname
-        self.campaign.task_pid = os.getpid()
-        self.campaign.save(update_fields=['worker_hostname', 'task_pid'])
 
         if self.campaign.status in (Campaign.STOPPING, Campaign.STOPPED):
             response['status'] = False
@@ -117,11 +110,6 @@ class CampaignTask(Task):
 
     def finalize_campaign(self, success, campaign_delay, duration):
         self.check_device_in()
-
-        self.campaign.worker_hostname = ''
-        self.campaign.sigkill_sent = False
-        self.campaign.task_pid = 0
-        self.campaign.save(update_fields=['worker_hostname', 'task_pid'])
 
         if not self.campaign.posh_user.is_active_in_posh:
             self.campaign.status = Campaign.STOPPING
@@ -537,6 +525,12 @@ class CampaignTask(Task):
                 return False
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
+        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+            self.campaign.status = Campaign.STARTING
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
+
         if type(exc) is WebDriverException and self.device.in_use == self.campaign.posh_user.username:
             client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
             adb_device = client.device(serial=self.device.serial)
@@ -545,8 +539,6 @@ class CampaignTask(Task):
             adb_device.reboot()
         elif type(exc) is TimeLimitExceeded:
             self.logger.warning('Campaign ended because it exceeded the run time allowed')
-        elif type(exc) is SoftTimeLimitExceeded:
-            self.logger.warning('Campaign was stopped by the user')
 
         self.finalize_campaign(False, None, 0)
 
@@ -554,16 +546,9 @@ class CampaignTask(Task):
         self.logger.error(f'Campaign failed due to {exc_type}: {exc_value}')
         self.logger.debug(traceback.format_exc())
 
-        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
-            self.campaign.status = Campaign.STARTING
-            self.campaign.next_runtime = timezone.now()
-            self.campaign.queue_status = 'Unknown'
-            self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
-
         self.logger.info('Campaign was sent to the end of the line and will start soon')
 
     def run(self, campaign_id, logger_id=None, device_id=None, attempt=1, *args, **kwargs):
-        signal.signal(signal.SIGUSR1, self.handle_sigtermclean)
         self.campaign = Campaign.objects.get(id=campaign_id)
         campaign_delay = None
 
@@ -618,34 +603,7 @@ class CampaignTask(Task):
         self.logger.info('Campaign ended')
 
 
-class KillCampaignTask(Task):
-    def run(self, campaign_id):
-        campaign = Campaign.objects.get(id=campaign_id)
-        logger = logging.getLogger(__name__)
-
-        if campaign.worker_hostname and campaign.worker_hostname != self.request.hostname:
-            time.sleep(10)
-            KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})
-            logger.info(f'Worker hostname must be {campaign.worker_hostname} and it is {self.request.hostname} for Campaign {campaign}')
-        elif campaign.worker_hostname and campaign.worker_hostname == self.request.hostname and campaign.task_pid:
-            try:
-                os.kill(campaign.task_pid, signal.SIGUSR1)
-                logger.info(f'Sent SIGKILL signal to {campaign}')
-            except ProcessLookupError:
-                campaign.worker_hostname = ''
-                campaign.task_pid = 0
-                campaign.save(update_fields=['task_pid', 'worker_hostname'])
-                device = Device.objects.get(in_use=campaign.posh_user.username)
-                device.check_in()
-        else:
-            campaign.task_pid = 0
-            campaign.worker_hostname = ''
-            campaign.save(update_fields=['task_pid', 'worker_hostname'])
-            logger.info('Missing data to send signal. Ensuring task_pid and worker_hostname are reset')
-
-
 CampaignTask = app.register_task(CampaignTask())
-KillCampaign = app.register_task(KillCampaignTask())
 
 
 def get_available_device(excluded_device_ids, logger):
@@ -682,10 +640,6 @@ def start_campaigns():
             campaign.queue_status = 'N/A'
             campaign.next_runtime = None
 
-            if campaign.worker_hostname and campaign.task_pid:
-                campaign.sigkill_sent = True
-                update_fields.append('sigkill_sent')
-                KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})
             campaign.save(update_fields=update_fields)
         elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE

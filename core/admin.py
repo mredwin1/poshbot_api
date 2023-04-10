@@ -211,7 +211,6 @@ class CampaignAdmin(admin.ModelAdmin):
     autocomplete_fields = ['posh_user']
     list_display = ['title', 'status', 'queue_status_num', 'associated_user', 'associated_posh_user', 'listings_count', 'latest_log']
     search_fields = ['title__istartswith', 'posh_user__username__istartswith']
-    readonly_fields = ['worker_hostname', 'task_pid']
     list_filter = ['status', 'user']
     inlines = [ListingInline]
     actions = [start_campaigns, stop_campaigns]
