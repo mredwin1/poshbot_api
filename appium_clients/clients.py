@@ -243,7 +243,7 @@ class AppiumClient:
     def cleanup_files(self):
         self.logger.debug('Cleaning up files')
         for file_path in self.files_sent:
-            self.driver.remove_file(file_path)
+            self.driver.execute_script('mobile: shell', {'command': 'rm ' + file_path})
 
 
 class PoshMarkClient(AppiumClient):
