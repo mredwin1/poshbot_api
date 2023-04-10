@@ -56,7 +56,8 @@ class DedupScheduler(beat.ScheduleEntry):
 
 
 class CampaignTask(Task):
-    def __init__(self):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
         self.soft_time_limit = datetime.timedelta(minutes=1)
         self.time_limit = datetime.timedelta(minutes=15)
         self.campaign = None
