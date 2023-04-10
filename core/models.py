@@ -306,7 +306,7 @@ class Campaign(models.Model):
 
     delay = models.SmallIntegerField()
     lowest_price = models.SmallIntegerField(default=250)
-    task_pid = models.SmallIntegerField(default=250)
+    task_pid = models.IntegerField()
 
     auto_run = models.BooleanField(default=True)
     generate_users = models.BooleanField(default=True)
