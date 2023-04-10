@@ -266,7 +266,7 @@ class CampaignAdmin(admin.ModelAdmin):
                 ('mode',),
                 ('title', 'delay', 'lowest_price'),
             )
-        })
+        }),
     )
 
 
