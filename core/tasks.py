@@ -624,7 +624,7 @@ class KillCampaignTask(Task):
         logger = logging.getLogger(__name__)
 
         if campaign.worker_hostname and campaign.worker_hostname != self.request.hostname:
-            KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})(campaign_id)
+            KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})
             logger.info(f'Worker hostname must be {campaign.worker_hostname} and it is {self.request.hostname} for Campaign {campaign}')
         elif campaign.worker_hostname and campaign.worker_hostname == self.request.hostname and campaign.task_pid:
             try:
