@@ -657,6 +657,12 @@ def get_available_device(excluded_device_ids, logger):
             if device.is_ready():
                 return device
 
+        if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.in_use:
+            campaign = Campaign.objects.get(posh_user__username=device.in_use)
+            if campaign.status != Campaign.RUNNING:
+                logger.info('Campaign isn\'t running, checking in.')
+                device.check_in()
+
 
 @shared_task
 def start_campaigns():
