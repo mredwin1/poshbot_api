@@ -4,7 +4,6 @@ import os
 import pytz
 import random
 import requests
-import signal
 import time
 import traceback
 
@@ -57,8 +56,8 @@ class DedupScheduler(beat.ScheduleEntry):
 
 class CampaignTask(Task):
     def __init__(self):
-        self.soft_time_limit = 60
-        self.time_limit = 90
+        self.soft_time_limit = 900
+        self.time_limit = 1200
         self.campaign = None
         self.logger = None
         self.device = None
@@ -537,7 +536,7 @@ class CampaignTask(Task):
 
             self.logger.warning('Rebooting device')
             adb_device.reboot()
-        elif type(exc) is TimeLimitExceeded:
+        elif type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
             self.logger.warning('Campaign ended because it exceeded the run time allowed')
 
         self.finalize_campaign(False, None, 0)
