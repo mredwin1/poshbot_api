@@ -25,6 +25,7 @@ class AppiumClient:
     def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger, capabilities):
         self.driver = None
         self.logger = logger
+        self.files_sent = []
 
         capabilities['udid'] = device_serial
         capabilities['adbExecTimeout'] = 50000
@@ -47,6 +48,8 @@ class AppiumClient:
     def close(self):
         """Closes the appium driver session"""
         if self.driver:
+            self.cleanup_files()
+
             self.driver.quit()
             self.logger.debug('Driver was quit')
             self.sleep(8)
@@ -233,6 +236,15 @@ class AppiumClient:
 
         return current_focus[space_index + 1:divider_index]
 
+    def send_file(self, destination_path, source_path):
+        self.driver.push_file(destination_path=destination_path, source_path=source_path)
+        self.files_sent.append(destination_path)
+
+    def cleanup_files(self):
+        self.logger.debug('Cleaning up files')
+        for file_path in self.files_sent:
+            self.driver.remove_file(file_path)
+
 
 class PoshMarkClient(AppiumClient):
     def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, campaign: Campaign, logger, app_package='com.poshmark.app'):
@@ -303,7 +315,7 @@ class PoshMarkClient(AppiumClient):
         filename = key.split('/')[-1]
         download_location = f'/{download_folder}/{filename}'
         self.bucket.download_file(key, download_location)
-        self.driver.push_file(destination_path=f'/sdcard/Pictures/{filename}', source_path=download_location)
+        self.send_file(destination_path=f'/sdcard/Pictures/{filename}', source_path=download_location)
 
     def alert_check(self):
         self.logger.info('Checking for an alert')
