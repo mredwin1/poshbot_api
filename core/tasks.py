@@ -614,7 +614,7 @@ class KillCampaignTask(Task):
         logger = logging.getLogger(__name__)
 
         if campaign.worker_hostname and campaign.worker_hostname != self.request.hostname:
-            self.delay(campaign_id)
+            KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})(campaign_id)
             logger.info(f'Worker hostname must be {campaign.worker_hostname} and it is {self.request.hostname} for Campaign {campaign}')
         elif campaign.worker_hostname and campaign.worker_hostname == self.request.hostname and campaign.task_pid:
             os.kill(campaign.task_pid, signal.SIGKILL)
@@ -627,7 +627,7 @@ class KillCampaignTask(Task):
 
 
 CampaignTask = app.register_task(CampaignTask())
-KillCampaignTask = app.register_task(KillCampaignTask())
+KillCampaign = app.register_task(KillCampaignTask())
 
 
 def get_available_device(excluded_device_ids, logger):
@@ -655,7 +655,7 @@ def get_available_device(excluded_device_ids, logger):
                 logger.info('Killing the campaign that is using this Device')
                 campaign.sigkill_sent = True
                 campaign.save(update_fields=['sigkill_sent'])
-                KillCampaignTask.delay(campaign.id, task_id=f'KillCampaignTask@{campaign.worker_hostname}')
+                KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})
             elif campaign.status != Campaign.RUNNING:
                 logger.info('Campaign isn\'t running, checking in.')
                 device.check_in()
@@ -682,7 +682,7 @@ def start_campaigns():
             if campaign.worker_hostname and campaign.task_pid:
                 campaign.sigkill_sent = True
                 update_fields.append('sigkill_sent')
-                KillCampaignTask.delay(campaign.id, task_id=f'KillCampaignTask@{campaign.worker_hostname}')
+                KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})
             campaign.save(update_fields=update_fields)
         elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
             campaign.status = Campaign.IN_QUEUE
