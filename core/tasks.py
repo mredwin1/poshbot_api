@@ -9,6 +9,7 @@ import time
 import traceback
 
 from celery import shared_task, Task, current_app, beat
+from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from django.utils import timezone
 from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
@@ -74,6 +75,9 @@ class CampaignTask(Task):
                 return delay_after_elapsed_time_in_seconds
             else:
                 return random_delay_in_seconds
+
+    def handle_sigtermclean(self, signum, frame):
+        self.request.cancel()
 
     def check_device_in(self):
         if self.device and self.device.in_use == self.campaign.posh_user.username:
@@ -531,29 +535,33 @@ class CampaignTask(Task):
                 return False
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
-        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
-            self.campaign.status = Campaign.STARTING
-            self.campaign.next_runtime = timezone.now()
-            self.campaign.queue_status = 'Unknown'
-            self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
-        else:
-            self.logger.warning('Campaign task was killed')
+        if type(exc) is WebDriverException and self.device.in_use == self.campaign.posh_user.username:
+            client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
+            adb_device = client.device(serial=self.device.serial)
+
+            self.logger.warning('Rebooting device')
+            adb_device.reboot()
+        elif type(exc) is TimeLimitExceeded:
+            self.logger.warning('Campaign ended because it exceeded the run time allowed')
+        elif type(exc) is SoftTimeLimitExceeded:
+            self.logger.warning('Campaign was stopped by the user')
 
         self.finalize_campaign(False, None, 0)
 
         exc_type, exc_value, exc_traceback = einfo.exc_info
         self.logger.error(f'Campaign failed due to {exc_type}: {exc_value}')
         self.logger.debug(traceback.format_exc())
-        self.logger.info('Campaign was sent to the end of the line')
 
-        if exc_type is WebDriverException and self.device.in_use == self.campaign.posh_user.username:
-            client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
-            adb_device = client.device(serial=self.device.serial)
+        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+            self.campaign.status = Campaign.STARTING
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
-            self.logger.warning('Rebooting device')
-            adb_device.reboot()
+        self.logger.info('Campaign was sent to the end of the line and will start soon')
 
     def run(self, campaign_id, logger_id=None, device_id=None, attempt=1, *args, **kwargs):
+        signal.signal(signal.SIGUSR1, self.handle_sigtermclean)
         self.campaign = Campaign.objects.get(id=campaign_id)
         campaign_delay = None
 
@@ -617,8 +625,15 @@ class KillCampaignTask(Task):
             KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})(campaign_id)
             logger.info(f'Worker hostname must be {campaign.worker_hostname} and it is {self.request.hostname} for Campaign {campaign}')
         elif campaign.worker_hostname and campaign.worker_hostname == self.request.hostname and campaign.task_pid:
-            os.kill(campaign.task_pid, signal.SIGKILL)
-            logger.info(f'Sent SIGKILL signal to {campaign}')
+            try:
+                os.kill(campaign.task_pid, signal.SIGUSR1)
+                logger.info(f'Sent SIGKILL signal to {campaign}')
+            except ProcessLookupError:
+                campaign.worker_hostname = ''
+                campaign.task_pid = 0
+                campaign.save(update_fields=['task_pid', 'worker_hostname'])
+                device = Device.objects.get(in_use=campaign.posh_user.username)
+                device.check_in()
         else:
             campaign.task_pid = 0
             campaign.worker_hostname = ''
@@ -638,27 +653,6 @@ def get_available_device(excluded_device_ids, logger):
         if device.ip_reset_url not in in_use_ip_reset_urls:
             if device.is_ready():
                 return device
-
-        # if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200:
-        #     logger.info('Another campaign will be started on this device because this one took too long.')
-        #     device.check_in()
-        #
-        #     in_use_ip_reset_urls = Device.objects.exclude(in_use='').values_list('ip_reset_url', flat=True)
-        #
-        #     if device.ip_reset_url not in in_use_ip_reset_urls:
-        #         if device.is_ready():
-        #             return device
-
-        if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.in_use:
-            campaign = Campaign.objects.get(posh_user__username=device.in_use)
-            if not campaign.sigkill_sent and campaign.status == Campaign.RUNNING:
-                logger.info('Killing the campaign that is using this Device')
-                campaign.sigkill_sent = True
-                campaign.save(update_fields=['sigkill_sent'])
-                KillCampaign.apply_async(args=[campaign.id], options={'hostname': campaign.worker_hostname})
-            elif campaign.status != Campaign.RUNNING:
-                logger.info('Campaign isn\'t running, checking in.')
-                device.check_in()
 
 
 @shared_task
