@@ -242,8 +242,10 @@ class AppiumClient:
 
     def cleanup_files(self):
         self.logger.debug('Cleaning up files')
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        adb_device = client.device(serial=self.capabilities['udid'])
         for file_path in self.files_sent:
-            self.driver.execute_script('mobile: shell', {'command': 'rm ' + file_path})
+            adb_device.shell(f'rm {file_path}')
 
 
 class PoshMarkClient(AppiumClient):
