@@ -889,7 +889,12 @@ class PoshMarkClient(AppiumClient):
                             if 'required' in size_button.text.lower():
                                 self.click(size_button)
 
-                                if 'belt' in (listing.category + ' ' + listing.subcategory).lower():
+                                if listing.size.lower() == 'os':
+                                    one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
+                                    self.click(one_size)
+
+                                    self.logger.info('Clicked one size')
+                                else:
                                     custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
                                     self.click(custom_size_button)
 
@@ -903,11 +908,6 @@ class PoshMarkClient(AppiumClient):
                                     self.click(next_button)
 
                                     self.logger.info(f'Put in {listing.size} for the size')
-                                else:
-                                    one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
-                                    self.click(one_size)
-
-                                    self.logger.info('Clicked one size')
 
                             added_size = True
 
