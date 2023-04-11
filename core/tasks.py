@@ -560,6 +560,8 @@ class CampaignTask(Task):
 
             try:
                 self.device = Device.objects.get(id=device_id)
+                self.device.checkout_time = timezone.now()
+                self.device.save()
             except Device.DoesNotExist:
                 pass
 
