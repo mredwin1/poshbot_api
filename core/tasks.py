@@ -620,6 +620,7 @@ def get_available_device(excluded_device_ids, logger):
                 logger.info('Campaign isn\'t running, checking in.')
                 device.check_in()
 
+
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
@@ -656,7 +657,7 @@ def start_campaigns():
             if available_device:
                 excluded_device_ids.append(available_device.id)
                 try:
-                    available_device.check_out(campaign.posh_user.username)
+                    available_device.check_out(campaign.id)
                     campaign.status = Campaign.IN_QUEUE
                     campaign.queue_status = 'N/A'
                     campaign.save(update_fields=['status', 'queue_status'])

@@ -373,6 +373,8 @@ class PoshMarkClient(AppiumClient):
             else:
                 element.send_keys(text)
 
+    def find_element_or_scroll(self, by, locator):
+
     def register(self):
         self.logger.info('Starting Registration Process')
         campaign_folder = f'/{slugify(self.campaign.title)}'
@@ -797,9 +799,15 @@ class PoshMarkClient(AppiumClient):
 
                         if not added_category:
                             self.logger.info('Selecting category for the listing')
+                            scroll_attempts = 0
                             while not self.is_present(AppiumBy.ID, 'catalog_edit_text'):
                                 self.logger.info('Could not find category input, scrolling...')
                                 self.swipe('up', 1000)
+
+                                if scroll_attempts > 3:
+                                    self.alert_check()
+
+                                scroll_attempts += 1
 
                             category = self.locate(AppiumBy.ID, 'catalog_edit_text')
 
@@ -864,10 +872,16 @@ class PoshMarkClient(AppiumClient):
 
                         if not added_size:
                             self.logger.info('Putting in size')
+                            scroll_attempts = 0
 
                             while not self.is_present(AppiumBy.ID, 'size_edit_text'):
                                 self.logger.info('Could not find size input, scrolling...')
                                 self.swipe('up', 1000)
+
+                                if scroll_attempts > 3:
+                                    self.alert_check()
+
+                                scroll_attempts += 1
 
                             size_button = self.locate(AppiumBy.ID, 'size_edit_text')
                             if 'required' in size_button.text.lower():
