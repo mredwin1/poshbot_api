@@ -52,6 +52,11 @@ def enable_posh_users(modeladmin, request, queryset):
     queryset.update(is_active=True, date_disabled=None)
 
 
+@admin.action(description='Check device in')
+def check_devices_in(modeladmin, request, queryset):
+    queryset.update(in_use='', checkout_time=None)
+
+
 class ListingInline(admin.StackedInline):
     model = models.Listing
     extra = 0
@@ -104,6 +109,7 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
 @admin.register(models.Device)
 class DeviceAdmin(admin.ModelAdmin):
     readonly_fields = ['in_use']
+    actions = [check_devices_in]
 
 
 @admin.register(models.User)
