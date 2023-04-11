@@ -624,7 +624,7 @@ def get_available_device(excluded_device_ids, logger):
 @shared_task
 def start_campaigns():
     logger = logging.getLogger(__name__)
-    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING], posh_user__isnull=False).order_by('next_runtime')
+    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
     now = timezone.now()
     queue_num = 1
     excluded_device_ids = []
@@ -633,7 +633,7 @@ def start_campaigns():
         available_device = None
         items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
 
-        if campaign.status == Campaign.STOPPING or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
+        if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
             update_fields = ['status', 'queue_status', 'next_runtime']
             campaign.status = Campaign.STOPPED
             campaign.queue_status = 'N/A'
