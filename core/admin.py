@@ -115,7 +115,7 @@ class DeviceAdmin(admin.ModelAdmin):
     @admin.display(ordering='associated_campaign')
     def associated_campaign(self, device):
         campaign = models.Campaign.objects.get(id=device.checked_out_by)
-        url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'campaign__id': str(campaign.id)})}"
+        url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(campaign.id)})}"
         return format_html('<a href="{}">{}</a>', url, campaign.title)
 
 
