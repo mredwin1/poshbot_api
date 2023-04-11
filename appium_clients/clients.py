@@ -1069,9 +1069,10 @@ class AppClonerClient(AppiumClient):
         super(AppClonerClient, self).__init__(device_serial, system_port, mjpeg_server_port, logger, capabilities)
 
     def add_clone(self):
-        excluded_clone_numbers = [134, 135, 136, 137, 138, 163, 164, 165, 166, 167, 168, 169, 170, 171]
+        excluded_clone_numbers = [134, 135, 136, 137, 138, 139, 140, 163, 164, 165, 166, 167, 168, 169, 170, 171]
         app_cloned = False
         sorry_message = False
+        reset_to_beginning = True
         try:
             search_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Search apps')
             search_button.click()
@@ -1091,9 +1092,13 @@ class AppClonerClient(AppiumClient):
                 clone_number.click()
 
                 clone_number_input = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.EditText')
-                clone_number_input.clear()
-                clone_number_input.send_keys('1')
-                starting_number = 1
+                if reset_to_beginning:
+                    clone_number_input.clear()
+                    clone_number_input.send_keys('1')
+                    starting_number = 1
+                else:
+                    starting_number = int(clone_number_input.text)
+                    reset_to_beginning = False
                 current_number = None
                 ok_clicked = False
 
