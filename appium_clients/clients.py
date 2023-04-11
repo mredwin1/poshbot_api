@@ -1057,7 +1057,7 @@ class AppClonerClient(AppiumClient):
         super(AppClonerClient, self).__init__(device_serial, system_port, mjpeg_server_port, logger, capabilities)
 
     def add_clone(self):
-        excluded_clone_numbers = [134, 163, 164, 165, 166, 167, 168, 169, 170, 171]
+        excluded_clone_numbers = [134, 135, 136, 137, 138, 163, 164, 165, 166, 167, 168, 169, 170, 171]
         app_cloned = False
         sorry_message = False
         try:
