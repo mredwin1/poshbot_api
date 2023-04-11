@@ -373,6 +373,17 @@ class PoshMarkClient(AppiumClient):
             else:
                 element.send_keys(text)
 
+    def scroll_until_found(self, by, locator):
+        scroll_attempts = 0
+        while not self.is_present(by, locator):
+            self.logger.info(f'Could not find {locator}, scrolling...')
+            self.swipe('up', 1000)
+
+            if scroll_attempts > 3:
+                self.alert_check()
+
+            scroll_attempts += 1
+
     def register(self):
         self.logger.info('Starting Registration Process')
         campaign_folder = f'/{slugify(self.campaign.title)}'
@@ -797,9 +808,7 @@ class PoshMarkClient(AppiumClient):
 
                         if not added_category:
                             self.logger.info('Selecting category for the listing')
-                            while not self.is_present(AppiumBy.ID, 'catalog_edit_text'):
-                                self.logger.info('Could not find category input, scrolling...')
-                                self.swipe('up', 1000)
+                            self.scroll_until_found(AppiumBy.ID, 'catalog_edit_text')
 
                             category = self.locate(AppiumBy.ID, 'catalog_edit_text')
 
@@ -865,9 +874,7 @@ class PoshMarkClient(AppiumClient):
                         if not added_size:
                             self.logger.info('Putting in size')
 
-                            while not self.is_present(AppiumBy.ID, 'size_edit_text'):
-                                self.logger.info('Could not find size input, scrolling...')
-                                self.swipe('up', 1000)
+                            self.scroll_until_found(AppiumBy.ID, 'size_edit_text')
 
                             size_button = self.locate(AppiumBy.ID, 'size_edit_text')
                             if 'required' in size_button.text.lower():
@@ -903,9 +910,7 @@ class PoshMarkClient(AppiumClient):
                         if not added_brand and listing.brand:
                             self.logger.info('Putting in brand')
 
-                            while not self.is_present(AppiumBy.ID, 'brand_edit_text'):
-                                self.logger.info('Could not find brand input, scrolling...')
-                                self.swipe('up', 1000)
+                            self.scroll_until_found(AppiumBy.ID, 'brand_edit_text')
 
                             brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
                             while brand_input.text.lower() != listing.brand.lower():
@@ -929,18 +934,14 @@ class PoshMarkClient(AppiumClient):
                                     self.driver.back()
                                     self.sleep(.2)
 
-                                while not self.is_present(AppiumBy.ID, 'brand_edit_text'):
-                                    self.logger.info('Could not find brand input after pressing back, scrolling...')
-                                    self.swipe('up', 1000)
+                                self.scroll_until_found(AppiumBy.ID, 'brand_edit_text')
 
                                 brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
                             added_brand = True
                             self.logger.info('Brand inputted')
 
                         if not added_original_price:
-                            while not self.is_present(AppiumBy.ID, 'original_price_edit_text'):
-                                self.logger.info('Could not find original price input, scrolling...')
-                                self.swipe('up', 1000)
+                            self.scroll_until_found(AppiumBy.ID, 'original_price_edit_text')
 
                             original_price = self.locate(AppiumBy.ID, 'original_price_edit_text')
                             self.input_text(original_price, str(listing.original_price))
@@ -948,9 +949,7 @@ class PoshMarkClient(AppiumClient):
                             added_original_price = True
 
                         if not added_listing_price:
-                            while not self.is_present(AppiumBy.ID, 'listing_price_edit_text'):
-                                self.logger.info('Could not find listing price input, scrolling...')
-                                self.swipe('up', 1000)
+                            self.scroll_until_found(AppiumBy.ID, 'listing_price_edit_text')
 
                             listing_price = self.locate(AppiumBy.ID, 'listing_price_edit_text')
                             self.input_text(listing_price, str(listing.listing_price))
