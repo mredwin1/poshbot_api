@@ -667,6 +667,8 @@ class PoshMarkClient(AppiumClient):
 
                     self.logger.info('Sell button clicked. Uploading cover photo')
 
+                    self.sleep(1)
+
                     if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
                         deny_button = self.locate(AppiumBy.ID,
                                                   'com.android.permissioncontroller:id/permission_deny_button')
