@@ -895,6 +895,16 @@ class PoshMarkClient(AppiumClient):
 
                                     self.logger.info('Clicked one size')
                                 else:
+                                    swipe_attempts = 0
+
+                                    while not self.is_present(AppiumBy.ACCESSIBILITY_ID, 'Custom') and swipe_attempts < 7:
+                                        self.swipe('left', 500)
+                                        swipe_attempts += 1
+
+                                    if swipe_attempts >= 7:
+                                        self.logger.warning('Could not find custom size button. Exiting')
+                                        return False
+
                                     custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
                                     self.click(custom_size_button)
 
