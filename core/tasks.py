@@ -608,7 +608,7 @@ CampaignTask = app.register_task(CampaignTask())
 
 
 def get_available_device(excluded_device_ids, logger):
-    devices = Device.objects.filter(is_active=True).exclude(id__in=excluded_device_ids)
+    devices = Device.objects.filter(is_active=True, installed_clones__lte=155).exclude(id__in=excluded_device_ids)
     in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
 
     for device in devices:
