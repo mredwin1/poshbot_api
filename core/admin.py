@@ -108,8 +108,15 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
 
 @admin.register(models.Device)
 class DeviceAdmin(admin.ModelAdmin):
-    readonly_fields = ['in_use']
+    list_display = ['serial', 'is_active', 'associated_campaign', 'checkout_time']
+    readonly_fields = ['checked_out_by', 'checkout_time']
     actions = [check_devices_in]
+
+    @admin.display(ordering='associated_campaign')
+    def associated_campaign(self, device):
+        campaign = models.Campaign.objects.get(id=device.checked_out_by)
+        url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'campaign__id': str(campaign.id)})}"
+        return format_html('<a href="{}">{}</a>', url, campaign.title)
 
 
 @admin.register(models.User)

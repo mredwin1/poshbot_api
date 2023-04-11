@@ -78,7 +78,7 @@ class CampaignTask(Task):
                 return random_delay_in_seconds
 
     def check_device_in(self):
-        if self.device and self.device.in_use == self.campaign.posh_user.username:
+        if self.device and self.device.checked_out_by == self.campaign.id:
             time.sleep(8)
             self.logger.info('Releasing device')
             self.device.check_in()
@@ -530,7 +530,7 @@ class CampaignTask(Task):
             self.campaign.queue_status = 'Unknown'
             self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
-        if type(exc) is WebDriverException and self.device.in_use == self.campaign.posh_user.username:
+        if type(exc) is WebDriverException and self.device.checked_out_by == self.campaign.id:
             client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
             adb_device = client.device(serial=self.device.serial)
 
@@ -614,12 +614,11 @@ def get_available_device(excluded_device_ids, logger):
             if device.is_ready():
                 return device
 
-        if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.in_use:
-            campaign = Campaign.objects.get(posh_user__username=device.in_use)
+        if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.checked_out_by:
+            campaign = Campaign.objects.get(id=device.checked_out_by)
             if campaign.status != Campaign.RUNNING:
                 logger.info('Campaign isn\'t running, checking in.')
                 device.check_in()
-
 
 @shared_task
 def start_campaigns():

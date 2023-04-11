@@ -63,7 +63,7 @@ def path_and_rename(instance, filename):
 class Device(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
-    in_use = models.CharField(max_length=15, blank=True)
+    checked_out_by = models.UUIDField(blank=True, null=True)
     serial = models.CharField(max_length=12, unique=True)
     ip_reset_url = models.URLField()
 
@@ -79,7 +79,7 @@ class Device(models.Model):
         if not self.is_active:
             return False
 
-        if self.in_use:
+        if self.checked_out_by:
             return False
 
         try:
@@ -101,20 +101,20 @@ class Device(models.Model):
         except RuntimeError:
             return False
 
-    def check_out(self, posh_user_username):
+    def check_out(self, campaign_id: uuid4):
         """Check out the device for use by a posh user."""
         if not self.is_ready():
             raise ValueError('Device is already in use')
 
-        self.in_use = posh_user_username
+        self.checked_out_by = campaign_id
         self.checkout_time = timezone.now()
-        self.save(update_fields=['in_use', 'checkout_time'])
+        self.save(update_fields=['checked_out_by', 'checkout_time'])
 
     def check_in(self):
         """Check in the device after use."""
-        self.in_use = ''
+        self.checked_out_by = None
         self.checkout_time = None
-        self.save(update_fields=['in_use', 'checkout_time'])
+        self.save(update_fields=['checked_out_by', 'checkout_time'])
 
     def __str__(self):
         return self.serial
