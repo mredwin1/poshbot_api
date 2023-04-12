@@ -904,7 +904,9 @@ class PoshMarkClient(AppiumClient):
                                 added_category = True
 
                         while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
-                            self.driver.back()
+                            for _ in range(3):
+                                self.driver.back()
+                                self.sleep(.2)
 
                         if not added_size:
                             self.logger.info('Putting in size')
@@ -949,7 +951,9 @@ class PoshMarkClient(AppiumClient):
                                 added_size = True
 
                         while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
-                            self.driver.back()
+                            for _ in range(3):
+                                self.driver.back()
+                                self.sleep(.2)
 
                         if not added_brand and listing.brand:
                             self.logger.info('Putting in brand')
@@ -1064,10 +1068,10 @@ class PoshMarkClient(AppiumClient):
                                 self.logger.info('Item listed successfully')
 
                         self.listed = True
-                    elif window_title or self.is_present(AppiumBy.ID, 'actionbar_closet_layout') or self.is_present(AppiumBy.ID, 'actionbarTitleLayout'):
-                        for _ in range(4):
+                    elif window_title or self.is_present(AppiumBy.ID, 'actionbar_closet_layout') or self.is_present(AppiumBy.ID, 'actionbarTitleLayout') or self.is_present(AppiumBy.ID, 'select_a_brand_title'):
+                        for _ in range(3):
                             self.driver.back()
-                            self.sleep(.1)
+                            self.sleep(.2)
                     elif self.is_present(AppiumBy.ID, 'design_bottom_sheet'):
                         self.driver.back()
                     else:
