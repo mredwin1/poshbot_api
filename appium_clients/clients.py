@@ -734,7 +734,7 @@ class PoshMarkClient(AppiumClient):
                             self.logger.info('Downloading and sending listing images')
                             added_images_found = False
                             if not new_listing:
-                                added_images_found = self.scroll_until_found(AppiumBy.ID, 'container', 'up')
+                                added_images_found = self.scroll_until_found(AppiumBy.XPATH, f"//*[contains(@text, 'PHOTOS & VIDEO')]")
                                 if added_images_found:
                                     added_images = self.locate_all(AppiumBy.ID, 'container')
                                     listing_images = listing_images[len(added_images) - 2:]
