@@ -1047,7 +1047,7 @@ class PoshMarkClient(AppiumClient):
                                 self.logger.info('Item listed successfully')
 
                         self.listed = True
-                    elif window_title:
+                    elif window_title or self.is_present(AppiumBy.ID, 'actionbar_closet_layout'):
                         for _ in range(3):
                             self.driver.back()
                             self.sleep(.2)
