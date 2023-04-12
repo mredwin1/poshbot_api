@@ -1048,6 +1048,8 @@ class PoshMarkClient(AppiumClient):
                         for _ in range(4):
                             self.driver.back()
                             self.sleep(.1)
+                    elif self.is_present(AppiumBy.ID, 'design_bottom_sheet'):
+                        self.driver.back()
                     else:
                         self.logger.info('Window title element not found.')
                         self.alert_check()
