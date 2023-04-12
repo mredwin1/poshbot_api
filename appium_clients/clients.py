@@ -883,10 +883,8 @@ class PoshMarkClient(AppiumClient):
 
                                 added_category = True
 
-                        if not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
-                            for _ in range(3):
-                                self.driver.back()
-                                self.sleep(.2)
+                        while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
+                            self.driver.back()
 
                         if not added_size:
                             self.logger.info('Putting in size')
@@ -930,10 +928,8 @@ class PoshMarkClient(AppiumClient):
 
                                 added_size = True
 
-                        if not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
-                            for _ in range(3):
-                                self.driver.back()
-                                self.sleep(.2)
+                        while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
+                            self.driver.back()
 
                         if not added_brand and listing.brand:
                             self.logger.info('Putting in brand')
@@ -1048,10 +1044,10 @@ class PoshMarkClient(AppiumClient):
                                 self.logger.info('Item listed successfully')
 
                         self.listed = True
-                    elif window_title or self.is_present(AppiumBy.ID, 'actionbar_closet_layout'):
-                        for _ in range(3):
+                    elif window_title or self.is_present(AppiumBy.ID, 'actionbar_closet_layout') or self.is_present(AppiumBy.ID, 'actionbarTitleLayout'):
+                        for _ in range(4):
                             self.driver.back()
-                            self.sleep(.2)
+                            self.sleep(.1)
                     else:
                         self.logger.info('Window title element not found.')
                         self.alert_check()
