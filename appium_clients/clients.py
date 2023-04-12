@@ -342,6 +342,10 @@ class PoshMarkClient(AppiumClient):
 
                 self.click(button_1)
 
+                return True
+            else:
+                self.logger.info(f'No handler for alert with the following title: {title}')
+
         elif self.is_present(AppiumBy.ID, 'android:id/message'):
             message = self.locate(AppiumBy.ID, 'android:id/message')
 
