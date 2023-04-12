@@ -333,6 +333,15 @@ class PoshMarkClient(AppiumClient):
                 self.posh_party_alert_dismissed = True
 
                 return True
+            elif 'error' in title.lower():
+                message = self.locate(AppiumBy.ID, 'android:id/message')
+                self.logger.info(f'Error alert was found with message: {message.text}')
+                button_1 = self.locate(AppiumBy.ID, 'android:id/button1')
+
+                self.logger.info(f'Clicking {button_1.text} button')
+
+                self.click(button_1)
+
         elif self.is_present(AppiumBy.ID, 'android:id/message'):
             message = self.locate(AppiumBy.ID, 'android:id/message')
 
