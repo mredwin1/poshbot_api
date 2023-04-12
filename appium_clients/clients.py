@@ -732,7 +732,7 @@ class PoshMarkClient(AppiumClient):
                     if window_title and window_title.text == 'Listing Details':
                         if not added_media_items and len(listing_images) > 0:
                             self.logger.info('Downloading and sending listing images')
-                            added_images_found = False
+                            added_images_found = True
                             if not new_listing:
                                 added_images_found = self.scroll_until_found(AppiumBy.XPATH, f"//*[contains(@text, 'PHOTOS & VIDEO')]")
                                 if added_images_found:
