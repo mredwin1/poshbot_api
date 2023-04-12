@@ -970,7 +970,7 @@ class PoshMarkClient(AppiumClient):
                                     brand_search.send_keys(listing.brand.lower())
 
                                     self.sleep(1)
-                                    brand_selector = listing.brand.lower().replace("'", "\\'")
+                                    brand_selector = listing.brand.lower()
                                     brand_xpath = f'//*[translate(@content-desc, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "{brand_selector}"]'
                                     self.logger.debug(f'Brand XPATH: {brand_xpath}')
                                     if not self.is_present(AppiumBy.XPATH, brand_xpath):
