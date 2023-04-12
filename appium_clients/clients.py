@@ -386,11 +386,12 @@ class PoshMarkClient(AppiumClient):
             else:
                 element.send_keys(text)
 
-    def scroll_until_found(self, by, locator):
+    def scroll_until_found(self, by, locator, direction='down'):
+        swipe_direction = 'up' if direction == 'down' else 'down'
         scroll_attempts = 0
         while not self.is_present(by, locator) and scroll_attempts < 10:
             self.logger.info(f'Could not find {locator}, scrolling...')
-            self.swipe('up', 1000)
+            self.swipe(swipe_direction, 1000)
 
             if scroll_attempts > 3:
                 self.alert_check()
@@ -731,76 +732,82 @@ class PoshMarkClient(AppiumClient):
                     if window_title and window_title.text == 'Listing Details':
                         if not added_media_items and len(listing_images) > 0:
                             self.logger.info('Downloading and sending listing images')
+                            added_images_found = False
                             if not new_listing:
-                                added_images = self.locate_all(AppiumBy.ID, 'container')
-                                listing_images = listing_images[len(added_images) - 2:]
+                                added_images_found = self.scroll_until_found(AppiumBy.ID, 'container', 'up')
+                                if added_images_found:
+                                    added_images = self.locate_all(AppiumBy.ID, 'container')
+                                    listing_images = listing_images[len(added_images) - 2:]
 
-                            if listing_images:
-                                for listing_image in listing_images:
-                                    image_key = listing_image.image.name
-                                    self.download_and_send_file(image_key, listing_folder)
+                            if added_images_found:
+                                if listing_images:
+                                    for listing_image in listing_images:
+                                        image_key = listing_image.image.name
+                                        self.download_and_send_file(image_key, listing_folder)
 
-                                add_more_button = self.locate(AppiumBy.ID, 'add_more')
-                                self.click(add_more_button)
+                                    add_more_button = self.locate(AppiumBy.ID, 'add_more')
+                                    self.click(add_more_button)
 
-                                self.logger.info('Clicked add more button')
+                                    self.logger.info('Clicked add more button')
 
-                                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
-                                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
-                                    self.click(deny_button)
+                                    if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button'):
+                                        deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_and_dont_ask_again_button')
+                                        self.click(deny_button)
 
-                                    self.logger.info('Denied access to camera permanently')
+                                        self.logger.info('Denied access to camera permanently')
 
-                                if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
-                                    deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
-                                    self.click(deny_button)
+                                    if self.is_present(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button'):
+                                        deny_button = self.locate(AppiumBy.ID, 'com.android.permissioncontroller:id/permission_deny_button')
+                                        self.click(deny_button)
 
-                                    self.logger.info('Denied access to microphone')
+                                        self.logger.info('Denied access to microphone')
 
-                                gallery_button = self.locate(AppiumBy.ID, 'gallery')
-                                self.click(gallery_button)
+                                    gallery_button = self.locate(AppiumBy.ID, 'gallery')
+                                    self.click(gallery_button)
 
-                                self.logger.info('Clicked gallery button')
+                                    self.logger.info('Clicked gallery button')
 
-                                self.sleep(1)
+                                    self.sleep(1)
 
-                                group_num = 0
-                                self.swipe('up', 530)
-                                self.sleep(.75)
-                                for x in range(1, len(listing_images) + 1):
-                                    img_index = x - group_num
-                                    img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{img_index}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-                                    if x == 1:
-                                        self.long_click(img)
+                                    group_num = 0
+                                    self.swipe('up', 530)
+                                    self.sleep(.75)
+                                    for x in range(1, len(listing_images) + 1):
+                                        img_index = x - group_num
+                                        img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{img_index}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
+                                        if x == 1:
+                                            self.long_click(img)
+                                        else:
+                                            img.click()
+
+                                        if x % 6 == 0 and x != len(listing_images):
+                                            self.swipe('up', 580 * 3)
+                                            group_num += 4 if not group_num else 6
+                                            self.sleep(.75)
+
+                                    select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
+                                    self.click(select_button)
+
+                                    self.logger.info('All images selected')
+
+                                    self.sleep(1)
+
+                                    if self.is_present(AppiumBy.ID, 'nextButton'):
+                                        next_button = self.locate(AppiumBy.ID, 'nextButton')
+                                        self.click(next_button)
                                     else:
-                                        img.click()
+                                        self.click(element=None, x=500, y=500)
 
-                                    if x % 6 == 0 and x != len(listing_images):
-                                        self.swipe('up', 580 * 3)
-                                        group_num += 4 if not group_num else 6
-                                        self.sleep(.75)
+                                        next_button = self.locate(AppiumBy.ID, 'nextButton')
+                                        self.click(next_button)
 
-                                select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
-                                self.click(select_button)
-
-                                self.logger.info('All images selected')
-
-                                self.sleep(1)
-
-                                if self.is_present(AppiumBy.ID, 'nextButton'):
-                                    next_button = self.locate(AppiumBy.ID, 'nextButton')
-                                    self.click(next_button)
+                                    self.logger.info('Listing images uploaded')
                                 else:
-                                    self.click(element=None, x=500, y=500)
+                                    self.logger.info('All listing images seem to be in there already. Skipping...')
 
-                                    next_button = self.locate(AppiumBy.ID, 'nextButton')
-                                    self.click(next_button)
-
-                                self.logger.info('Listing images uploaded')
+                                added_media_items = True
                             else:
-                                self.logger.info('All listing images seem to be in there already. Skipping...')
-
-                            added_media_items = True
+                                self.logger.info('Listing images were not sent because could not check if there were any previously uploaded')
 
                         if not added_title:
                             title_input = self.locate(AppiumBy.ID, 'title_edit_text')
