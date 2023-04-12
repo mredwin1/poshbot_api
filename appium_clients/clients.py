@@ -375,7 +375,7 @@ class PoshMarkClient(AppiumClient):
 
     def scroll_until_found(self, by, locator):
         scroll_attempts = 0
-        while not self.is_present(by, locator):
+        while not self.is_present(by, locator) and scroll_attempts < 10:
             self.logger.info(f'Could not find {locator}, scrolling...')
             self.swipe('up', 1000)
 
@@ -383,6 +383,12 @@ class PoshMarkClient(AppiumClient):
                 self.alert_check()
 
             scroll_attempts += 1
+
+        if scroll_attempts < 10:
+            return True
+        else:
+            self.swipe('down', 1000, 3000)
+            return False
 
     def register(self):
         self.logger.info('Starting Registration Process')
@@ -810,72 +816,72 @@ class PoshMarkClient(AppiumClient):
 
                         if not added_category:
                             self.logger.info('Selecting category for the listing')
-                            self.scroll_until_found(AppiumBy.ID, 'catalog_edit_text')
+                            added_category_found = self.scroll_until_found(AppiumBy.ID, 'catalog_edit_text')
+                            if added_category_found:
+                                category = self.locate(AppiumBy.ID, 'catalog_edit_text')
 
-                            category = self.locate(AppiumBy.ID, 'catalog_edit_text')
+                                if 'required' in category.text.lower():
+                                    listing_category = listing.category
+                                    space_index = listing_category.find(' ')
+                                    primary_category = listing_category[:space_index].replace(' ', '_').lower()
+                                    secondary_category = listing_category[space_index + 1:].replace(' ', '_').lower()
+                                    subcategory = listing.subcategory.replace(' ', '_').lower()
 
-                            if 'required' in category.text.lower():
-                                listing_category = listing.category
-                                space_index = listing_category.find(' ')
-                                primary_category = listing_category[:space_index].replace(' ', '_').lower()
-                                secondary_category = listing_category[space_index + 1:].replace(' ', '_').lower()
-                                subcategory = listing.subcategory.replace(' ', '_').lower()
+                                    self.click(category)
 
-                                self.click(category)
+                                    self.sleep(1)
 
-                                self.sleep(1)
+                                    primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
+                                    self.click(primary_category_button)
 
-                                primary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, primary_category.lower())
-                                self.click(primary_category_button)
+                                    self.sleep(1)
 
-                                self.sleep(1)
+                                    secondary_category_clicked = False
+                                    secondary_category_click_attempts = 0
+                                    while not secondary_category_clicked and secondary_category_click_attempts < 7:
+                                        if self.is_present(AppiumBy.ACCESSIBILITY_ID, secondary_category):
+                                            secondary_category_click_attempts += 1
+                                            secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category)
+                                            self.click(secondary_category_button)
+                                            self.logger.info('Category clicked')
+                                            self.sleep(.5)
+                                            secondary_category_clicked = True
+                                        else:
+                                            self.swipe('up', 400)
+                                            self.sleep(.5)
 
-                                secondary_category_clicked = False
-                                secondary_category_click_attempts = 0
-                                while not secondary_category_clicked and secondary_category_click_attempts < 7:
-                                    if self.is_present(AppiumBy.ACCESSIBILITY_ID, secondary_category):
                                         secondary_category_click_attempts += 1
-                                        secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category)
-                                        self.click(secondary_category_button)
-                                        self.logger.info('Category clicked')
-                                        self.sleep(.5)
-                                        secondary_category_clicked = True
-                                    else:
-                                        self.swipe('up', 400)
-                                        self.sleep(.5)
 
-                                    secondary_category_click_attempts += 1
+                                    if secondary_category_click_attempts >= 7 and not secondary_category_clicked:
+                                        return False
 
-                                if secondary_category_click_attempts >= 7 and not secondary_category_clicked:
-                                    return False
+                                    subcategory_clicked = False
+                                    subcategory_click_attempts = 0
+                                    while not subcategory_clicked and subcategory_click_attempts < 7:
+                                        subcategory_click_attempts += 1
+                                        if self.is_present(AppiumBy.ACCESSIBILITY_ID, subcategory):
+                                            subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, subcategory)
+                                            self.click(subcategory_button)
+                                            self.logger.info('Clicked sub category')
+                                            self.sleep(.5)
+                                            subcategory_clicked = True
+                                        else:
+                                            self.swipe('up', 400)
+                                            self.sleep(.5)
 
-                                subcategory_clicked = False
-                                subcategory_click_attempts = 0
-                                while not subcategory_clicked and subcategory_click_attempts < 7:
-                                    subcategory_click_attempts += 1
-                                    if self.is_present(AppiumBy.ACCESSIBILITY_ID, subcategory):
-                                        subcategory_button = self.locate(AppiumBy.ACCESSIBILITY_ID, subcategory)
-                                        self.click(subcategory_button)
-                                        self.logger.info('Clicked sub category')
-                                        self.sleep(.5)
-                                        subcategory_clicked = True
-                                    else:
-                                        self.swipe('up', 400)
-                                        self.sleep(.5)
+                                        subcategory_click_attempts += 1
 
-                                    subcategory_click_attempts += 1
+                                    if subcategory_click_attempts >= 7 and not secondary_category_clicked:
+                                        return False
 
-                                if subcategory_click_attempts >= 7 and not secondary_category_clicked:
-                                    return False
+                                    done_button = self.locate(AppiumBy.ID, 'nextButton')
+                                    self.click(done_button)
 
-                                done_button = self.locate(AppiumBy.ID, 'nextButton')
-                                self.click(done_button)
+                                    self.logger.info('Clicked done button')
+                                else:
+                                    self.logger.info('Category has already been selected')
 
-                                self.logger.info('Clicked done button')
-                            else:
-                                self.logger.info('Category has already been selected')
-
-                            added_category = True
+                                added_category = True
 
                         if not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
                             for _ in range(3):
@@ -885,43 +891,44 @@ class PoshMarkClient(AppiumClient):
                         if not added_size:
                             self.logger.info('Putting in size')
 
-                            self.scroll_until_found(AppiumBy.ID, 'size_edit_text')
+                            added_size_found = self.scroll_until_found(AppiumBy.ID, 'size_edit_text')
 
-                            size_button = self.locate(AppiumBy.ID, 'size_edit_text')
-                            if 'required' in size_button.text.lower():
-                                self.click(size_button)
+                            if added_size_found:
+                                size_button = self.locate(AppiumBy.ID, 'size_edit_text')
+                                if 'required' in size_button.text.lower():
+                                    self.click(size_button)
 
-                                if listing.size.lower() == 'os':
-                                    one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
-                                    self.click(one_size)
+                                    if listing.size.lower() == 'os':
+                                        one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
+                                        self.click(one_size)
 
-                                    self.logger.info('Clicked one size')
-                                else:
-                                    swipe_attempts = 0
+                                        self.logger.info('Clicked one size')
+                                    else:
+                                        swipe_attempts = 0
 
-                                    while not self.is_present(AppiumBy.ACCESSIBILITY_ID, 'Custom') and swipe_attempts < 7:
-                                        self.swipe('left', 500)
-                                        swipe_attempts += 1
+                                        while not self.is_present(AppiumBy.ACCESSIBILITY_ID, 'Custom') and swipe_attempts < 7:
+                                            self.swipe('left', 500)
+                                            swipe_attempts += 1
 
-                                    if swipe_attempts >= 7:
-                                        self.logger.warning('Could not find custom size button. Exiting')
-                                        return False
+                                        if swipe_attempts >= 7:
+                                            self.logger.warning('Could not find custom size button. Exiting')
+                                            return False
 
-                                    custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
-                                    self.click(custom_size_button)
+                                        custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
+                                        self.click(custom_size_button)
 
-                                    add_option = self.locate(AppiumBy.ID, 'container')
-                                    self.click(add_option)
+                                        add_option = self.locate(AppiumBy.ID, 'container')
+                                        self.click(add_option)
 
-                                    custom_size_input = self.locate(AppiumBy.ID, 'messageText')
-                                    custom_size_input.send_keys(listing.size)
+                                        custom_size_input = self.locate(AppiumBy.ID, 'messageText')
+                                        custom_size_input.send_keys(listing.size)
 
-                                    next_button = self.locate(AppiumBy.ID, 'nextButton')
-                                    self.click(next_button)
+                                        next_button = self.locate(AppiumBy.ID, 'nextButton')
+                                        self.click(next_button)
 
-                                    self.logger.info(f'Put in {listing.size} for the size')
+                                        self.logger.info(f'Put in {listing.size} for the size')
 
-                            added_size = True
+                                added_size = True
 
                         if not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
                             for _ in range(3):
@@ -931,52 +938,58 @@ class PoshMarkClient(AppiumClient):
                         if not added_brand and listing.brand:
                             self.logger.info('Putting in brand')
 
-                            self.scroll_until_found(AppiumBy.ID, 'brand_edit_text')
+                            brand_edit_found = self.scroll_until_found(AppiumBy.ID, 'brand_edit_text')
 
-                            brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
-                            while brand_input.text.lower() != listing.brand.lower():
-                                self.click(brand_input)
-                                self.logger.info('Clicked brand button')
-
-                                brand_search = self.locate(AppiumBy.ID, 'searchTextView')
-                                brand_search.send_keys(listing.brand.lower())
-
-                                self.sleep(1)
-                                brand_xpath = f'//*[translate(@content-desc, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "{listing.brand.lower()}"]'
-                                self.logger.debug(f'Brand XPATH: {brand_xpath}')
-                                if not self.is_present(AppiumBy.XPATH, brand_xpath):
-                                    self.logger.info('Brand did not pop up on search... Taping back.')
-                                else:
-                                    brand = self.locate(AppiumBy.XPATH, brand_xpath)
-                                    self.click(brand)
-
-                                    self.logger.info('Clicked brand')
-
-                                while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
-                                    self.driver.back()
-                                    self.sleep(.2)
-
-                                self.scroll_until_found(AppiumBy.ID, 'brand_edit_text')
-
+                            if brand_edit_found:
                                 brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
-                            added_brand = True
-                            self.logger.info('Brand inputted')
+                                while brand_edit_found and brand_input.text.lower() != listing.brand.lower():
+                                    self.click(brand_input)
+                                    self.logger.info('Clicked brand button')
+
+                                    brand_search = self.locate(AppiumBy.ID, 'searchTextView')
+                                    brand_search.send_keys(listing.brand.lower())
+
+                                    self.sleep(1)
+                                    brand_xpath = f'//*[translate(@content-desc, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "{listing.brand.lower()}"]'
+                                    self.logger.debug(f'Brand XPATH: {brand_xpath}')
+                                    if not self.is_present(AppiumBy.XPATH, brand_xpath):
+                                        self.logger.info('Brand did not pop up on search... Taping back.')
+                                    else:
+                                        brand = self.locate(AppiumBy.XPATH, brand_xpath)
+                                        self.click(brand)
+
+                                        self.logger.info('Clicked brand')
+
+                                    while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
+                                        self.driver.back()
+                                        self.sleep(.2)
+
+                                    brand_edit_found = self.scroll_until_found(AppiumBy.ID, 'brand_edit_text')
+
+                                    if brand_edit_found:
+                                        brand_input = self.locate(AppiumBy.ID, 'brand_edit_text')
+                                    else:
+                                        brand_input = None
+                                added_brand = brand_edit_found and brand_input.text.lower() == listing.brand.lower()
+                                self.logger.info('Brand inputted')
 
                         if not added_original_price:
-                            self.scroll_until_found(AppiumBy.ID, 'original_price_edit_text')
+                            original_price_found = self.scroll_until_found(AppiumBy.ID, 'original_price_edit_text')
 
-                            original_price = self.locate(AppiumBy.ID, 'original_price_edit_text')
-                            self.input_text(original_price, str(listing.original_price))
+                            if original_price_found:
+                                original_price = self.locate(AppiumBy.ID, 'original_price_edit_text')
+                                self.input_text(original_price, str(listing.original_price))
 
-                            added_original_price = True
+                                added_original_price = True
 
                         if not added_listing_price:
-                            self.scroll_until_found(AppiumBy.ID, 'listing_price_edit_text')
+                            listing_price_found = self.scroll_until_found(AppiumBy.ID, 'listing_price_edit_text')
 
-                            listing_price = self.locate(AppiumBy.ID, 'listing_price_edit_text')
-                            self.input_text(listing_price, str(listing.listing_price))
+                            if listing_price_found:
+                                listing_price = self.locate(AppiumBy.ID, 'listing_price_edit_text')
+                                self.input_text(listing_price, str(listing.listing_price))
 
-                            added_listing_price = True
+                                added_listing_price = True
 
                         next_button = self.locate(AppiumBy.ID, 'nextButton')
                         self.click(next_button)
