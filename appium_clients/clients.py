@@ -911,9 +911,9 @@ class PoshMarkClient(AppiumClient):
                         if not added_size:
                             self.logger.info('Putting in size')
 
-                            added_size_found = self.scroll_until_found(AppiumBy.ID, 'size_edit_text')
+                            size_input_found = self.scroll_until_found(AppiumBy.ID, 'size_edit_text')
 
-                            if added_size_found:
+                            if size_input_found:
                                 size_button = self.locate(AppiumBy.ID, 'size_edit_text')
                                 if 'required' in size_button.text.lower():
                                     self.click(size_button)
@@ -921,18 +921,17 @@ class PoshMarkClient(AppiumClient):
                                     if listing.size.lower() == 'os':
                                         one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
                                         self.click(one_size)
-
+                                        added_size = True
                                         self.logger.info('Clicked one size')
                                     else:
-                                        swipe_attempts = 0
-
-                                        while not self.is_present(AppiumBy.ACCESSIBILITY_ID, 'Custom') and swipe_attempts < 7:
-                                            self.swipe('left', 500)
-                                            swipe_attempts += 1
-
-                                        if swipe_attempts >= 7:
-                                            self.logger.warning('Could not find custom size button. Exiting')
-                                            return False
+                                        package_name = self.capabilities['appPackage']
+                                        selected_size_category = self.locate(AppiumBy.XPATH, f"//android.widget.TextView[@resource-id='{package_name}:id/size_tab_title_text' and @selected='true']")
+                                        while selected_size_category.text != 'CUSTOM':
+                                            self.logger.info(f'Looking for size in {selected_size_category.text} category')
+                                            size_found = self.scroll_until_found(AppiumBy.ACCESSIBILITY_ID, listing.size)
+                                            if size_found:
+                                                size = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.size)
+                                                self.click(size)
 
                                         custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
                                         self.click(custom_size_button)
@@ -948,7 +947,7 @@ class PoshMarkClient(AppiumClient):
 
                                         self.logger.info(f'Put in {listing.size} for the size')
 
-                                added_size = True
+                                        added_size = True
 
                         while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
                             for _ in range(3):
