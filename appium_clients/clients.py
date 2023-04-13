@@ -863,6 +863,7 @@ class PoshMarkClient(AppiumClient):
                                     secondary_category_clicked = False
                                     secondary_category_click_attempts = 0
                                     while not secondary_category_clicked and secondary_category_click_attempts < 7:
+                                        self.logger.debug(secondary_category)
                                         if self.is_present(AppiumBy.ACCESSIBILITY_ID, secondary_category):
                                             secondary_category_click_attempts += 1
                                             secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category)
