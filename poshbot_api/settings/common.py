@@ -187,7 +187,7 @@ CELERY_TASK_ROUTES = {
 }
 
 CELERY_BEAT_SCHEDULE = {
-    'start_campaigns': {
+    'manage_campaigns': {
         'task': 'core.tasks.ManageCampaignsTask',
         'schedule': timedelta(seconds=10),
         'options': {'scheduler_cls': 'core.tasks.DedupScheduler'}
