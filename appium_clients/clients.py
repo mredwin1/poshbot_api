@@ -155,13 +155,6 @@ class AppiumClient:
         scroll_percents = [1.0] * full_scrolls + [last_scroll]
 
         total_scroll = 0
-        self.logger.debug(f'Scroll Percents: {scroll_percents}')
-        self.logger.debug(f'Scroll X: {scroll_x}')
-        self.logger.debug(f'Scroll Y: {scroll_y}')
-        self.logger.debug(f'Scroll Width: {scroll_width}')
-        self.logger.debug(f'Scroll Height: {scroll_height}')
-        self.logger.debug(f'Scroll Speed: {speed}')
-        self.logger.debug(f'Scroll Direction: {direction}')
         for index, scroll_percent in enumerate(scroll_percents):
             total_scroll += scroll_height * scroll_percent
             self.driver.execute_script('mobile: swipeGesture', {
@@ -399,7 +392,6 @@ class PoshMarkClient(AppiumClient):
     def scroll_until_found(self, by, locator, direction='down', max_scrolls=10):
         swipe_direction = 'up' if direction == 'down' else 'down'
         scroll_attempts = 0
-        self.logger.debug(f'Direction: {direction} Swipe Direction: {swipe_direction}')
         while not self.is_present(by, locator) and scroll_attempts < max_scrolls:
             self.logger.info(f'Could not find {locator}, scrolling...')
             self.swipe(swipe_direction, 1000)
@@ -870,7 +862,6 @@ class PoshMarkClient(AppiumClient):
                                     secondary_category_clicked = False
                                     secondary_category_click_attempts = 0
                                     while not secondary_category_clicked and secondary_category_click_attempts < 7:
-                                        self.logger.debug(secondary_category)
                                         if self.is_present(AppiumBy.ACCESSIBILITY_ID, secondary_category):
                                             secondary_category_click_attempts += 1
                                             secondary_category_button = self.locate(AppiumBy.ACCESSIBILITY_ID, secondary_category)
@@ -991,7 +982,6 @@ class PoshMarkClient(AppiumClient):
                                     self.sleep(1)
                                     brand_selector = listing.brand.lower()
                                     brand_xpath = f'//*[translate(@content-desc, "ABCDEFGHIJKLMNOPQRSTUVWXYZ", "abcdefghijklmnopqrstuvwxyz") = "{brand_selector}"]'
-                                    self.logger.debug(f'Brand XPATH: {brand_xpath}')
                                     if not self.is_present(AppiumBy.XPATH, brand_xpath):
                                         self.logger.info('Brand did not pop up on search... Taping back.')
                                     else:
