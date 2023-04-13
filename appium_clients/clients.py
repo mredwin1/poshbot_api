@@ -155,7 +155,13 @@ class AppiumClient:
         scroll_percents = [1.0] * full_scrolls + [last_scroll]
 
         total_scroll = 0
-        self.logger.debug(scroll_percents)
+        self.logger.debug(f'Scroll Percents: {scroll_percents}')
+        self.logger.debug(f'Scroll X: {scroll_x}')
+        self.logger.debug(f'Scroll Y: {scroll_y}')
+        self.logger.debug(f'Scroll Width: {scroll_width}')
+        self.logger.debug(f'Scroll Height: {scroll_height}')
+        self.logger.debug(f'Scroll Direction: {direction}')
+        self.logger.debug(f'Scroll Speed: {speed}')
         for index, scroll_percent in enumerate(scroll_percents):
             total_scroll += scroll_height * scroll_percent
             self.driver.execute_script('mobile: swipeGesture', {
