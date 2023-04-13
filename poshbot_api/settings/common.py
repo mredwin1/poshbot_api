@@ -178,8 +178,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 
 CELERY_TASK_ROUTES = {
     'core.tasks.CampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
-    'core.tasks.KillCampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
-    'core.tasks.start_campaigns': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+    'core.tasks.ManageCampaignsTask': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.check_posh_users': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.log_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'imagekit.cachefiles.backends._generate_file': {'queue': 'maintenance', 'routing_key': 'maintenance'},
@@ -189,7 +188,7 @@ CELERY_TASK_ROUTES = {
 
 CELERY_BEAT_SCHEDULE = {
     'start_campaigns': {
-        'task': 'core.tasks.start_campaigns',
+        'task': 'core.tasks.ManageCampaignsTask',
         'schedule': timedelta(seconds=10),
         'options': {'scheduler_cls': 'core.tasks.DedupScheduler'}
     },

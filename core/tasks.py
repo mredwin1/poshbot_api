@@ -9,6 +9,7 @@ import traceback
 
 from celery import shared_task, Task, current_app, beat
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
+from django.db.models import Q
 from django.utils import timezone
 from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
@@ -604,74 +605,121 @@ class CampaignTask(Task):
         self.logger.info('Campaign ended')
 
 
-CampaignTask = app.register_task(CampaignTask())
+class ManageCampaignsTask(Task):
+    def __init__(self):
+        self.soft_time_limit = 240
+        self.time_limit = 300
+        self.logger = logging.getLogger(__name__)
+        self.excluded_device_ids = []
 
+    def get_available_device(self):
+        devices = Device.objects.filter(is_active=True, installed_clones__lte=155).exclude(id__in=self.excluded_device_ids)
+        in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
 
-def get_available_device(excluded_device_ids, logger):
-    devices = Device.objects.filter(is_active=True, installed_clones__lte=155).exclude(id__in=excluded_device_ids)
-    in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
+        for device in devices:
+            if device.ip_reset_url not in in_use_ip_reset_urls:
+                if device.is_ready():
+                    return device
 
-    for device in devices:
-        if device.ip_reset_url not in in_use_ip_reset_urls:
-            if device.is_ready():
-                return device
-
-        if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > 1200 and device.checked_out_by:
-            campaign = Campaign.objects.get(id=device.checked_out_by)
-            if campaign.status != Campaign.RUNNING:
-                logger.info('Campaign isn\'t running, checking in.')
-                device.check_in()
-
-
-@shared_task
-def start_campaigns():
-    logger = logging.getLogger(__name__)
-    campaigns = Campaign.objects.filter(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]).order_by('next_runtime')
-    now = timezone.now()
-    queue_num = 1
-    excluded_device_ids = []
-
-    for campaign in campaigns:
-        available_device = None
-        items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
-
-        if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
-            update_fields = ['status', 'queue_status', 'next_runtime']
-            campaign.status = Campaign.STOPPED
-            campaign.queue_status = 'N/A'
-            campaign.next_runtime = None
-
-            campaign.save(update_fields=update_fields)
-        elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and campaign.next_runtime <= now:
-            campaign.status = Campaign.IN_QUEUE
-            campaign.queue_status = 'N/A'
-            campaign.save(update_fields=['status', 'queue_status'])
-            CampaignTask.delay(campaign.id)
-        elif campaign.status == Campaign.STARTING and campaign.posh_user.is_registered and items_to_list.count() == 0:
-            campaign.status = Campaign.IN_QUEUE
-            campaign.queue_status = 'N/A'
-            campaign.save(update_fields=['status', 'queue_status'])
-            CampaignTask.delay(campaign.id)
-        elif campaign.status == Campaign.STARTING and (not campaign.posh_user.is_registered or items_to_list.count() > 0):
-            if queue_num == 1:
-                available_device = get_available_device(excluded_device_ids, logger)
-
-            if available_device:
-                excluded_device_ids.append(available_device.id)
+            if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > CampaignTask.time_limit and device.checked_out_by:
                 try:
-                    available_device.check_out(campaign.id)
+                    campaign = Campaign.objects.get(id=device.checked_out_by)
+                    if campaign.status != Campaign.RUNNING:
+                        self.logger.warning('Campaign isn\'t running, checking in.')
+                        device.check_in()
+                except Campaign.DoesNotExist:
+                    self.logger.warning('Campaign does not exist. Checking in.')
+                    device.check_in()
+
+    def start_campaign(self, campaign, device=None):
+        if device:
+            try:
+                device.check_out(campaign.id)
+
+                campaign.status = Campaign.IN_QUEUE
+                campaign.queue_status = 'N/A'
+
+                campaign.save(update_fields=['status', 'queue_status'])
+
+                CampaignTask.delay(campaign.id, device.id)
+                self.excluded_device_ids.append(device.id)
+                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial}')
+
+                return True
+            except ValueError:
+                self.logger.info(f'Device: {device.serial} is not ready')
+                if campaign.status == Campaign.IDLE:
                     campaign.status = Campaign.IN_QUEUE
                     campaign.queue_status = 'N/A'
                     campaign.save(update_fields=['status', 'queue_status'])
-                    CampaignTask.delay(campaign.id, device_id=available_device.id)
-                    logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {available_device}')
-                    time.sleep(5)
-                except ValueError:
-                    logger.info(f'Device: {available_device} is not ready')
-            else:
+
+                    CampaignTask.delay(campaign.id)
+                    self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
+
+                    return True
+        else:
+            campaign.status = Campaign.IN_QUEUE
+            campaign.queue_status = 'N/A'
+            campaign.save(update_fields=['status', 'queue_status'])
+
+            CampaignTask.delay(campaign.id)
+            self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
+
+            return True
+
+    def run(self, *args, **kwargs):
+        now = timezone.now()
+        campaigns = Campaign.objects.filter(Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING, Campaign.RUNNING]) & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))).order_by('next_runtime')
+        queue_num = 1
+
+        for campaign in campaigns:
+            campaign_started = False
+            available_device = None
+            items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
+            need_to_list = items_to_list.count() > 0
+
+            if queue_num == 1 and (need_to_list or not campaign.posh_user.is_registered):
+                available_device = self.get_available_device()
+
+            if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
+                campaign.status = Campaign.STOPPED
+                campaign.queue_status = 'N/A'
+                campaign.next_runtime = None
+
+                campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+            elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
+                campaign_started = self.start_campaign(campaign, available_device)
+            elif campaign.status == Campaign.STARTING and (available_device or (not need_to_list and campaign.posh_user.is_registered)):
+                campaign_started = self.start_campaign(campaign, available_device)
+            elif campaign.status == Campaign.RUNNING and (now - campaign.next_runtime).total_seconds() > CampaignTask.time_limit:
+                try:
+                    active_tasks = current_app.control.inspect().active()
+                    if active_tasks:
+                        running_campaigns = []
+                        for worker, tasks in active_tasks.items():
+                            for task in tasks:
+                                if task.get('name') == CampaignTask.name:
+                                    running_campaigns.append(task['args'][0])
+
+                        if campaign.id not in running_campaigns:
+                            in_use_device = Device.objects.get(checked_out_by=campaign.id)
+                            in_use_device.check_in()
+
+                            campaign.status = Campaign.STARTING
+                            campaign.queue_status = 'CALCULATING'
+                            campaign.save(update_fields=['status', 'queue_status'])
+                except Exception as exc:
+                    current_app.log.error("Error checking tasks: %r", exc)
+                    pass
+
+            if (not campaign_started and campaign.status == Campaign.STARTING) or (not available_device and campaign.status == Campaign.STARTING):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
+
+
+CampaignTask = app.register_task(CampaignTask())
+ManageCampaignsTask = app.register_task(ManageCampaignsTask())
 
 
 @shared_task
