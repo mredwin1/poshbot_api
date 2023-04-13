@@ -396,8 +396,8 @@ class PoshMarkClient(AppiumClient):
             else:
                 element.send_keys(text)
 
-    def scroll_until_found(self, by, locator, direction='down', max_scrolls=10):
-        swipe_direction = 'up' if direction == 'down' else 'down'
+    def scroll_until_found(self, by, locator, swipe_direction='down', max_scrolls=10):
+        swipe_direction = 'up' if swipe_direction == 'down' else 'down'
         scroll_attempts = 0
         while not self.is_present(by, locator) and scroll_attempts < max_scrolls:
             self.logger.info(f'Could not find {locator}, scrolling...')
