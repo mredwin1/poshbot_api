@@ -131,7 +131,7 @@ class AppiumClient:
         if direction in ('up', 'down'):
             bounding_box_xpercent_min = .5
             bounding_box_xpercent_max = .9
-            bounding_box_ypercent_min = .1
+            bounding_box_ypercent_min = .2
             bounding_box_ypercent_max = .7
         else:
             bounding_box_xpercent_min = .1
