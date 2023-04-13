@@ -54,7 +54,7 @@ def enable_posh_users(modeladmin, request, queryset):
 
 @admin.action(description='Check device in')
 def check_devices_in(modeladmin, request, queryset):
-    queryset.update(in_use='', checkout_time=None)
+    queryset.update(checked_out_by=None, checkout_time=None)
 
 
 class ListingInline(admin.StackedInline):
