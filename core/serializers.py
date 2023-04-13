@@ -116,8 +116,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
         last_name = user_info['name']['last']
         gender = user_info['gender'][0].upper()
         username = self.generate_username(first_name, last_name)
-        profile_image_url = f'https://source.unsplash.com/600x600/'
-        # profile_image_url = f'https://source.unsplash.com/600x600/?{user_info["gender"]}'
+        profile_image_url = f'https://picsum.photos/600'
         date_of_birth = datetime.strptime(user_info['dob']['date'][:-5], '%Y-%m-%dT%H:%M:%S')
         email_id = ''
 
