@@ -155,13 +155,6 @@ class AppiumClient:
         scroll_percents = [1.0] * full_scrolls + [last_scroll]
 
         total_scroll = 0
-        self.logger.debug(f'Scroll Percents: {scroll_percents}')
-        self.logger.debug(f'Scroll X: {scroll_x}')
-        self.logger.debug(f'Scroll Y: {scroll_y}')
-        self.logger.debug(f'Scroll Width: {scroll_width}')
-        self.logger.debug(f'Scroll Height: {scroll_height}')
-        self.logger.debug(f'Scroll Direction: {direction}')
-        self.logger.debug(f'Scroll Speed: {speed}')
         for index, scroll_percent in enumerate(scroll_percents):
             total_scroll += scroll_height * scroll_percent
             self.driver.execute_script('mobile: swipeGesture', {
@@ -744,7 +737,7 @@ class PoshMarkClient(AppiumClient):
                             self.logger.info('Downloading and sending listing images')
                             added_images_found = True
                             if not new_listing:
-                                added_images_found = self.scroll_until_found(AppiumBy.XPATH, f"//*[contains(@text, 'PHOTOS & VIDEO')]")
+                                added_images_found = self.scroll_until_found(AppiumBy.XPATH, f"//*[contains(@text, 'PHOTOS & VIDEO')]", direction='up')
                                 if added_images_found:
                                     added_images = self.locate_all(AppiumBy.ID, 'container')
                                     listing_images = listing_images[len(added_images) - 2:]
