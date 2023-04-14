@@ -171,9 +171,9 @@ class CampaignTask(Task):
         return False
 
     def init_logger(self, logger_id=None):
-        if logger_id:
+        try:
             self.logger = LogGroup.objects.get(id=logger_id)
-        else:
+        except LogGroup.DoesNotExist:
             self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=timezone.now())
             self.logger.save()
 
