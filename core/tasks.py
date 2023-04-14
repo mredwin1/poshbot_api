@@ -709,7 +709,7 @@ class ManageCampaignsTask(Task):
                             campaign.queue_status = 'CALCULATING'
                             campaign.save(update_fields=['status', 'queue_status'])
                 except Exception as exc:
-                    current_app.log.error("Error checking tasks: %r", exc)
+                    self.logger.error(f'Error checking tasks: {exc}')
                     pass
 
             if (not campaign_started and campaign.status == Campaign.STARTING) or (not available_device and campaign.status == Campaign.STARTING):
