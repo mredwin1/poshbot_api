@@ -613,7 +613,7 @@ class ManageCampaignsTask(Task):
         self.excluded_device_ids = []
 
     def get_available_device(self):
-        devices = Device.objects.filter(is_active=True, installed_clones__lte=155).exclude(id__in=self.excluded_device_ids)
+        devices = Device.objects.filter(is_active=True, installed_clones__lt=155).exclude(id__in=self.excluded_device_ids)
         in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
 
         for device in devices:
