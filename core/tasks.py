@@ -669,7 +669,7 @@ class ManageCampaignsTask(Task):
 
     def run(self, *args, **kwargs):
         now = timezone.now()
-        campaigns = Campaign.objects.filter(Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING, Campaign.RUNNING]) & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))).order_by('next_runtime')
+        campaigns = Campaign.objects.filter(Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]) & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))).order_by('next_runtime')
         queue_num = 1
 
         for campaign in campaigns:
@@ -691,26 +691,25 @@ class ManageCampaignsTask(Task):
                 campaign_started = self.start_campaign(campaign, available_device)
             elif campaign.status == Campaign.STARTING and (available_device or (not need_to_list and campaign.posh_user.is_registered)):
                 campaign_started = self.start_campaign(campaign, available_device)
-            elif campaign.status == Campaign.RUNNING and (now - campaign.next_runtime).total_seconds() > CampaignTask.time_limit:
-                try:
-                    active_tasks = current_app.control.inspect().active()
-                    if active_tasks:
-                        running_campaigns = []
-                        for worker, tasks in active_tasks.items():
-                            for task in tasks:
-                                if task.get('name') == CampaignTask.name:
-                                    running_campaigns.append(task['args'][0])
-
-                        if campaign.id not in running_campaigns:
-                            in_use_device = Device.objects.get(checked_out_by=campaign.id)
-                            in_use_device.check_in()
-
-                            campaign.status = Campaign.STARTING
-                            campaign.queue_status = 'CALCULATING'
-                            campaign.save(update_fields=['status', 'queue_status'])
-                except Exception as exc:
-                    self.logger.error(f'Error checking tasks: {exc}')
-                    pass
+            # elif campaign.status == Campaign.RUNNING and (now - campaign.next_runtime).total_seconds() > CampaignTask.time_limit:
+            #     try:
+            #         active_tasks = current_app.control.inspect().active()
+            #         if active_tasks:
+            #             running_campaigns = []
+            #             for worker, tasks in active_tasks.items():
+            #                 for task in tasks:
+            #                     if task.get('name') == CampaignTask.name:
+            #                         running_campaigns.append(task['args'][0])
+            #
+            #             if campaign.id not in running_campaigns:
+            #                 in_use_device = Device.objects.get(checked_out_by=campaign.id)
+            #                 in_use_device.check_in()
+            #
+            #                 campaign.status = Campaign.STARTING
+            #                 campaign.queue_status = 'CALCULATING'
+            #                 campaign.save(update_fields=['status', 'queue_status'])
+            #     except Exception as exc:
+            #         self.logger.error(f'Error checking tasks: {exc}')
 
             if (not campaign_started and campaign.status == Campaign.STARTING) or (not available_device and campaign.status == Campaign.STARTING):
                 campaign.queue_status = str(queue_num)
