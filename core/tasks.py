@@ -612,8 +612,10 @@ class ManageCampaignsTask(Task):
         self.logger = logging.getLogger(__name__)
         self.excluded_device_ids = []
 
-    def get_available_device(self):
+    def get_available_device(self, needed_device=None):
         devices = Device.objects.filter(is_active=True, installed_clones__lt=155).exclude(id__in=self.excluded_device_ids)
+        if needed_device:
+            devices = devices.filter(id=needed_device.id)
         in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
 
         for device in devices:
@@ -679,7 +681,7 @@ class ManageCampaignsTask(Task):
             need_to_list = items_to_list.count() > 0
 
             if queue_num == 1 and (need_to_list or not campaign.posh_user.is_registered):
-                available_device = self.get_available_device()
+                available_device = self.get_available_device(campaign.posh_user.device)
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
