@@ -680,6 +680,7 @@ class ManageCampaignsTask(Task):
 
             if queue_num == 1 and (need_to_list or not campaign.posh_user.is_registered):
                 available_device = self.get_available_device()
+                self.logger.info(f'###############{available_device}#####################')
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
