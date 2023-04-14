@@ -192,11 +192,11 @@ CELERY_BEAT_SCHEDULE = {
         'schedule': timedelta(seconds=10),
         'options': {'scheduler_cls': 'core.tasks.DedupScheduler'}
     },
-    # 'check_posh_users': {
-    #     'task': 'core.tasks.check_posh_users',
-    #     'schedule': timedelta(minutes=10),
-    #     'options': {'scheduler_cls': 'core.tasks.DedupScheduler'}
-    # },
+    'check_posh_users': {
+        'task': 'core.tasks.check_posh_users',
+        'schedule': timedelta(minutes=10),
+        'options': {'scheduler_cls': 'core.tasks.DedupScheduler'}
+    },
     'log_cleanup': {
         'task': 'core.tasks.log_cleanup',
         'schedule': timedelta(hours=1),
