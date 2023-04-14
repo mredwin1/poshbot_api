@@ -620,8 +620,6 @@ class ManageCampaignsTask(Task):
             devices = devices.filter(installed_clones__lt=155)
         in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
 
-        self.logger.info(devices)
-
         for device in devices:
             if device.ip_reset_url not in in_use_ip_reset_urls:
                 if device.is_ready():
