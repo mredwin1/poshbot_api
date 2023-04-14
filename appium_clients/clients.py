@@ -180,7 +180,7 @@ class AppiumClient:
                 word = word.strip()
                 try:
                     for char in word:
-                        action.send_keys(char).pause(random.uniform(.1, .2))
+                        action.send_keys(char(ord(char))).pause(random.uniform(.1, .2))
 
                     if len(words) > 1 and inner_index != len(words) - 1:
                         action.send_keys(' ')
