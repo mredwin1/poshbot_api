@@ -641,7 +641,7 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=['status', 'queue_status'])
 
-                CampaignTask.delay(campaign.id, device.id)
+                CampaignTask.delay(campaign.id, device_id=device.id)
                 self.excluded_device_ids.append(device.id)
                 self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial}')
 
