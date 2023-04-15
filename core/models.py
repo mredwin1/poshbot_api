@@ -6,7 +6,6 @@ import random
 import requests
 import pytz
 import string
-import time
 
 from dateutil.parser import parse
 from django.conf import settings
@@ -14,7 +13,6 @@ from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
-from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
 from ppadb.client import Client as AdbClient
@@ -249,11 +247,7 @@ class PoshUser(models.Model):
         return username
 
     @staticmethod
-    def generate(user, password, email, email_password='', email_id=None, excluded_names=None, excluded_profile_picture_ids=None):
-        current_time = int(time.time())
-
-        fake = Faker()
-        fake.seed(current_time)
+    def generate(fake, user, password, email, email_password='', email_id=None, excluded_names=None, excluded_profile_picture_ids=None):
         attempts = 0
         profile_picture_id = fake.random_int(min=1, max=1000)
 

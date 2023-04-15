@@ -1,10 +1,12 @@
 import datetime
 import pytz
+import time
 
 from django.db.models import Value
 from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from email_retrieval import zke_yahoo
+from faker import Faker
 from rest_framework import filters
 from rest_framework import status
 from rest_framework.decorators import action
@@ -42,16 +44,27 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
     def get_serializer_context(self):
         context = super(PoshUserViewSet, self).get_serializer_context()
+        new_context = {'user': self.request.user, 'path': self.request.path}
 
-        # Retrieve the 'full_name' property from all PoshUser objects
-        full_names = PoshUser.objects.annotate(full_name=Concat('first_name', Value(' '), 'last_name')).values_list('full_name', flat=True)
-        profile_picture_ids = PoshUser.objects.values_list('profile_picture_id', flat=True)
+        if self.action == 'generate':
+            current_time = int(time.time())
 
-        # Convert the QuerySet to a list
-        full_names_list = list(full_names)
-        profile_picture_ids_list = list(profile_picture_ids)
+            fake = Faker()
+            fake.seed(current_time)
 
-        context.update({'user': self.request.user, 'path': self.request.path, 'used_full_names': full_names_list, 'used_profile_picture_ids': profile_picture_ids_list})
+            # Retrieve the 'full_name' property from all PoshUser objects
+            full_names = PoshUser.objects.annotate(full_name=Concat('first_name', Value(' '), 'last_name')).values_list('full_name', flat=True)
+            profile_picture_ids = PoshUser.objects.values_list('profile_picture_id', flat=True)
+
+            # Convert the QuerySet to a list
+            full_names_list = list(full_names)
+            profile_picture_ids_list = list(profile_picture_ids)
+
+            new_context['used_full_names'] = full_names_list
+            new_context['used_profile_picture_ids'] = profile_picture_ids_list
+            new_context['faker_obj'] = fake
+
+        context.update(new_context)
 
         return context
 
@@ -84,8 +97,6 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             count = zke_yahoo.check_availability()
             if count < num_valid_users:
                 return Response({"error": f"Only {count} emails are available"}, status=status.HTTP_400_BAD_REQUEST)
-
-
 
         self.perform_create(serializer)
 
