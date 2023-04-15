@@ -32,7 +32,7 @@ def get_email():
 
     cursor.execute("SELECT id, mail, pass, status FROM yahoo_edwincruz WHERE status = 'free' LIMIT 1")
 
-    return cursor.fetchall()
+    return cursor.fetchall()[0]
 
 
 def update_email_status(email_id, status):
