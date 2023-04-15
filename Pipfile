@@ -23,13 +23,12 @@ whitenoise = "*"
 gunicorn = "*"
 celery = "*"
 selenium = "*"
-selenium-stealth = "*"
 pycurl = "*"
-mailslurp-client = "*"
-fake-useragent = "*"
 appium-python-client = "*"
 pure-python-adb = "*"
 python-dateutil = "*"
+faker = "*"
+selenium-stealth = "*"
 
 [dev-packages]
 

@@ -1,8 +1,9 @@
 import boto3
 import datetime
-import mailslurp_client
+import logging
 import os
 import random
+import requests
 import pytz
 import string
 
@@ -12,14 +13,12 @@ from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
+from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
-from mailslurp_client.rest import ApiException
 from ppadb.client import Client as AdbClient
 from uuid import uuid4
 
-
-import logging
 
 def path_and_rename(instance, filename):
     ext = filename.split('.')[-1]
@@ -212,55 +211,73 @@ class PoshUser(models.Model):
         return None
 
     @staticmethod
-    def get_mail_slurp_config():
-        configuration = mailslurp_client.Configuration()
-        configuration.api_key['x-api-key'] = os.environ['MAIL_SLURP_API_KEY']
+    def _generate_username(faker_obj, first_name, last_name):
+        # Split the names into separate words
+        first_name_words = first_name.lower().split()
+        last_name_words = last_name.lower().split()
 
-        return configuration
+        # Initialize the username with the first letter of the first name
+        first_letter = first_name_words[0][0]
+        username = first_letter
 
-    @staticmethod
-    def check_email_availability(email):
-        with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
-            inbox_controller = mailslurp_client.InboxControllerApi(api_client)
-            inboxes = inbox_controller.get_all_inboxes(page=0)
+        # Add a random name word, last name, or random word to the username
+        choices = first_name_words + last_name_words + [faker_obj.word()]
+        name_choice = random.choice(choices)
+        if name_choice[0] != first_letter:
+            username += name_choice
+        else:
+            # Choose a different name or word
+            choices.remove(name_choice)
+            username += random.choice(choices)
 
-            all_emails = [content.email_address for content in inboxes.content]
+        # Add a random lowercase letter to the username
+        username += random.choice(string.ascii_lowercase)
 
-            return email not in all_emails
+        # Add a random number to the end of the username (with 60% probability)
+        if random.random() < 0.6:
+            username += str(faker_obj.random_int(min=10, max=99))
 
-    @staticmethod
-    def create_email(first_name, last_name, forward_to=None):
-        with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
-            api_instance = mailslurp_client.InboxControllerApi(api_client)
-            email = f'{first_name.lower()}_{last_name.lower()}@{os.environ["DOMAIN"]}'
+        # Truncate the username if it is longer than 15 characters
+        if len(username) > 15:
+            username = username[:15]
 
-            while not PoshUser.check_email_availability(email):
-                email = f'{first_name.lower()}_{last_name.lower()}{random.randint(100, 999)}@{os.environ["DOMAIN"]}'
-            inbox = api_instance.create_inbox(name=f'{first_name} {last_name}')
+        return username
 
-            if forward_to:
-                PoshUser.create_email_forwarder(inbox.id, forward_to)
+    def generate(self, email):
+        fake = Faker()
+        attempts = 0
+        profile_picture_id = fake.random_int(min=1, max=1000)
 
-            return inbox.id, inbox.email_address
+        while attempts < 10 and PoshUser.objects.filter(profile_picture_id=profile_picture_id).exists():
+            profile_picture_id = fake.random_int(min=1, max=1000)
 
-    @staticmethod
-    def create_email_forwarder(inbox_id, forward_to):
-        with mailslurp_client.ApiClient(PoshUser.get_mail_slurp_config()) as api_client:
-            api_instance = mailslurp_client.InboxForwarderControllerApi(api_client)
-            create_inbox_forwarder_options = mailslurp_client.CreateInboxForwarderOptions(field='SENDER', match='*', forward_to_recipients=[forward_to])
+        profile_picture_url = f'https://picsum.photos/id/{profile_picture_id}/600'
+        header_picture_url = f'https://picsum.photos/1920/300'
 
-            try:
-                api_response = api_instance.create_new_inbox_forwarder(
-                    create_inbox_forwarder_options=create_inbox_forwarder_options,
-                    inbox_id=inbox_id)
-            except ApiException as e:
-                print(f"Exception when calling InboxForwarderControllerApi->create_new_inbox_forwarder: {e}")
+        profile_picture_content = requests.get(profile_picture_url).content
+        profile_picture_file = ContentFile(profile_picture_content)
 
-    def delete_email(self):
-        if self.email_id:
-            with mailslurp_client.ApiClient(self.get_mail_slurp_config()) as api_client:
-                api_instance = mailslurp_client.InboxControllerApi(api_client)
-                api_instance.delete_inbox(self.email_id)
+        header_picture_content = requests.get(header_picture_url).content
+        header_picture_file = ContentFile(header_picture_content)
+
+        first_name = fake.first_name()
+        last_name = fake.last_name()
+
+        username = self._generate_username(fake, first_name, last_name)
+
+        posh_user = PoshUser.objects.create(
+            first_name=first_name,
+            last_name=last_name,
+            username=username,
+            gender=fake.random_element(elements=('M', 'F')),
+            email=email,
+            date_of_birth=timezone.make_aware(fake.date_of_birth(minimum_age=18, maximum_age=30), timezone.utc),
+            zipcode=fake.zipcode(),
+            profile_picture=profile_picture_file,
+            header_picture=header_picture_file
+        )
+
+        return posh_user
 
     def __str__(self):
         return self.username
