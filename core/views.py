@@ -40,7 +40,14 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
     def get_serializer_context(self):
         context = super(PoshUserViewSet, self).get_serializer_context()
-        context.update({'user': self.request.user, 'path': self.request.path})
+
+        # Retrieve the 'full_name' property from all PoshUser objects
+        full_names = PoshUser.objects.values_list('full_name', flat=True)
+
+        # Convert the QuerySet to a list
+        full_names_list = list(full_names)
+
+        context.update({'user': self.request.user, 'path': self.request.path, 'used_full_names': full_names_list})
 
         return context
 
@@ -73,6 +80,8 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             count = zke_yahoo.check_availability()
             if count < num_valid_users:
                 return Response({"error": f"Only {count} emails are available"}, status=status.HTTP_400_BAD_REQUEST)
+
+
 
         self.perform_create(serializer)
 

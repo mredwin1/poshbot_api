@@ -6,6 +6,7 @@ import random
 import requests
 import pytz
 import string
+import time
 
 from dateutil.parser import parse
 from django.conf import settings
@@ -210,6 +211,10 @@ class PoshUser(models.Model):
 
         return None
 
+    @property
+    def full_name(self):
+        return f'{self.first_name} {self.last_name}'
+
     @staticmethod
     def _generate_username(faker_obj, first_name, last_name):
         # Split the names into separate words
@@ -244,7 +249,11 @@ class PoshUser(models.Model):
         return username
 
     @staticmethod
-    def generate(user, password, email, email_password='', email_id=None):
+    def generate(user, password, email, email_password='', email_id=None, excluded_names=None):
+        current_time = int(time.time())
+
+        random.seed(current_time)
+
         fake = Faker()
         attempts = 0
         profile_picture_id = fake.random_int(min=1, max=1000)
@@ -263,6 +272,13 @@ class PoshUser(models.Model):
 
         first_name = fake.first_name()
         last_name = fake.last_name()
+
+        if excluded_names:
+            attempts = 0
+            while f'{first_name} {last_name}' in excluded_names and attempts < 10:
+                first_name = fake.first_name()
+                last_name = fake.last_name()
+                attempts += 1
 
         username = PoshUser._generate_username(fake, first_name, last_name)
 
