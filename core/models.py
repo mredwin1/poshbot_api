@@ -175,6 +175,8 @@ class PoshUser(models.Model):
     time_to_register = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
     time_to_finish_registration = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
 
+    zipcode = models.IntegerField(blank=True)
+
     @property
     def status(self):
         if not self.is_active:
@@ -272,6 +274,7 @@ class PoshUser(models.Model):
             gender=fake.random_element(elements=('M', 'F')),
             email=email,
             date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=30),
+            zipcode=fake.zipcode_in_state('FL'),
             profile_picture=profile_picture_file,
             header_picture=header_picture_file
         )
