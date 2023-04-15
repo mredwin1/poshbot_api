@@ -26,13 +26,13 @@ def check_availability():
     return count
 
 
-def get_email():
+def get_emails(quantity):
     email_db = _connect_to_db()
     cursor = email_db.cursor()
 
-    cursor.execute("SELECT id, mail, pass FROM yahoo_edwincruz WHERE status = 'free' LIMIT 1")
+    cursor.execute(f"SELECT id, mail, pass FROM yahoo_edwincruz WHERE status = 'free' LIMIT {quantity}")
 
-    return cursor.fetchall()[0]
+    return cursor.fetchall()
 
 
 def update_email_status(email_id, status):

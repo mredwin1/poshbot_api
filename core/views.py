@@ -95,6 +95,12 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             if count < num_valid_users:
                 return Response({"error": f"Only {count} emails are available"}, status=status.HTTP_400_BAD_REQUEST)
 
+            emails = zke_yahoo.get_emails(count)
+            for index, email in enumerate(emails):
+                serializer.validated_data[index]['email_id'] = email[0]
+                serializer.validated_data[index]['email'] = email[1]
+                serializer.validated_data[index]['email_password'] = email[2]
+
         self.perform_create(serializer)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)

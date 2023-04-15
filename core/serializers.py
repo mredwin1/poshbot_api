@@ -68,13 +68,10 @@ class PoshUserSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         path = self.context.get('path')
         if 'generate' in path:
-            password = validated_data.pop('password')
-            try:
-                email = validated_data.pop('email')
-                email_password = ''
-                email_id = None
-            except KeyError:
-                email_id, email, email_password = zke_yahoo.get_email()
+            password = validated_data.get('password')
+            email = validated_data.get('email')
+            email_password = validated_data.get('email_password', None)
+            email_id = validated_data.get('email_id', None)
 
             posh_user = PoshUser.generate(faker_obj, user, password, email, email_password=email_password, email_id=email_id, excluded_names=used_full_names, excluded_profile_picture_ids=used_profile_picture_ids)
 
