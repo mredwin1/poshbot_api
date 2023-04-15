@@ -169,7 +169,7 @@ class PoshUserAdmin(admin.ModelAdmin):
         ('Other Information', {
             'classes': ('collapse',),
             'fields': (
-                ('first_name', 'last_name'),
+                ('first_name', 'last_name', 'zipcode'),
                 ('date_of_birth', 'gender'),
                 ('profile_picture', 'profile_picture_id'),
                 ('header_picture')
