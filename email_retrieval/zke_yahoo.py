@@ -35,10 +35,11 @@ def get_emails(quantity):
     return cursor.fetchall()
 
 
-def update_email_status(email_id, status):
+def update_email_status(email_ids, status):
     email_db = _connect_to_db()
     cursor = email_db.cursor()
 
-    cursor.execute(f"UPDATE yahoo_edwincruz SET status = '{status}' WHERE id = {email_id}")
+    email_ids_str = ",".join(str(email_id) for email_id in email_ids)
+    cursor.execute(f"UPDATE yahoo_edwincruz SET status = '{status}' WHERE id IN ({email_ids_str})")
 
     cursor.execute("COMMIT")
