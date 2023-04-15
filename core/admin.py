@@ -134,7 +134,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
-    readonly_fields = ['sales', 'date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration', 'is_active', 'date_disabled']
+    readonly_fields = ['date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration', 'is_active', 'date_disabled']
     list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email']
     search_fields = ['username__istartswith', 'email__istartswith']
     list_filter = ['user', PoshUserStatusFilter]
@@ -161,7 +161,7 @@ class PoshUserAdmin(admin.ModelAdmin):
                 ('is_active', 'is_active_in_posh', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated'),
                 ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration'),
                 ('user', 'app_package'),
-                ('date_added', 'date_disabled', 'sales'),
+                ('date_added', 'date_disabled'),
                 ('username', 'password', 'email'),
                 ('phone_number',)
             )

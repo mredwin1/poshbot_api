@@ -159,9 +159,6 @@ class PoshUser(models.Model):
     header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
 
     email = models.EmailField(blank=True)
-    email_id = models.CharField(max_length=255, blank=True)
-
-    sales = models.PositiveSmallIntegerField(default=0, blank=True)
 
     date_added = models.DateField(auto_now_add=True)
     date_disabled = models.DateField(null=True, blank=True)
@@ -264,9 +261,10 @@ class PoshUser(models.Model):
         first_name = fake.first_name()
         last_name = fake.last_name()
 
-        username = self._generate_username(fake, first_name, last_name)
+        username = PoshUser._generate_username(fake, first_name, last_name)
 
         posh_user = PoshUser.objects.create(
+            user=user,
             first_name=first_name,
             last_name=last_name,
             username=username,
