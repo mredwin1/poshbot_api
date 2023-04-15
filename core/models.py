@@ -243,7 +243,8 @@ class PoshUser(models.Model):
 
         return username
 
-    def generate(self, email):
+    @staticmethod
+    def generate(email, user):
         fake = Faker()
         attempts = 0
         profile_picture_id = fake.random_int(min=1, max=1000)

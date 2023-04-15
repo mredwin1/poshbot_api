@@ -76,7 +76,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
             except KeyError:
                 pass
 
-            posh_user = PoshUser.generate(email)
+            posh_user = PoshUser.generate(email, user)
 
         else:
             posh_user = PoshUser(**validated_data)
