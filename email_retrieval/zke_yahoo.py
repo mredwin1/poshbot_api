@@ -12,11 +12,12 @@ def _connect_to_db():
     )
 
     if db.is_connected():
-        return db.cursor()
+        return db
 
 
 def check_availability():
-    cursor = _connect_to_db()
+    email_db = _connect_to_db()
+    cursor = email_db.cursor()
 
     cursor.execute(f"SELECT COUNT(*) FROM yahoo_edwincruz WHERE status = 'free'")
 
@@ -26,7 +27,8 @@ def check_availability():
 
 
 def get_email():
-    cursor = _connect_to_db()
+    email_db = _connect_to_db()
+    cursor = email_db.cursor()
 
     cursor.execute("SELECT id, mail, pass, status FROM yahoo_edwincruz WHERE status = 'free' LIMIT 1")
 
@@ -34,7 +36,8 @@ def get_email():
 
 
 def update_email_status(email_id, status):
-    cursor = _connect_to_db()
+    email_db = _connect_to_db()
+    cursor = email_db.cursor()
 
     cursor.execute(f"UPDATE yahoo_edwincruz SET status = '{status}' WHERE id = {email_id}")
 
