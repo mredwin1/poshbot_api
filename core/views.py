@@ -103,11 +103,11 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
             logger.info(serializer.validated_data)
             logger.info(emails)
-            for index, email in enumerate(emails):
-                email_ids.append(email[0])
-                serializer.validated_data[index]['email_id'] = email[0]
-                serializer.validated_data[index]['email'] = email[1]
-                serializer.validated_data[index]['email_password'] = email[2]
+            for index, data in serializer.validated_data:
+                email_ids.append(emails[index][0])
+                data['email_id'] = emails[index][0]
+                data['email'] = emails[index][1]
+                data['email_password'] = emails[index][2]
 
             zke_yahoo.update_email_status(email_ids, 'on_hold')
 
