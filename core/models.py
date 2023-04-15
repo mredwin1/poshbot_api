@@ -252,9 +252,8 @@ class PoshUser(models.Model):
     def generate(user, password, email, email_password='', email_id=None, excluded_names=None):
         current_time = int(time.time())
 
-        random.seed(current_time)
-
         fake = Faker()
+        fake.seed(current_time)
         attempts = 0
         profile_picture_id = fake.random_int(min=1, max=1000)
 
