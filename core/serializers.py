@@ -1,11 +1,6 @@
-import os
-import random
-import requests
-import urllib3
-
-from datetime import datetime
 from django.core.files.base import ContentFile
 from djoser.serializers import UserSerializer as BaseUserSerializer, UserCreateSerializer as BaseUserCreateSerializer
+from email_retrieval import zke_yahoo
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as BaseTokenObtainPairSerializer
@@ -71,13 +66,16 @@ class PoshUserSerializer(serializers.ModelSerializer):
         path = self.context.get('path')
         if 'generate' in path:
             password = validated_data.pop('password')
-            email = None
             try:
                 email = validated_data.pop('email')
+                email_password = ''
+                email_id = None
             except KeyError:
-                pass
+                email_id, email, email_password = zke_yahoo.get_email()
 
-            posh_user = PoshUser.generate(user, email, password)
+            posh_user = PoshUser.generate(user, password, email, email_password=email_password, email_id=email_id)
+
+            zke_yahoo.update_email_status(email_id, 'used')
 
         else:
             posh_user = PoshUser(**validated_data)

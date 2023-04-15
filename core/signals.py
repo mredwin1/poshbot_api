@@ -3,6 +3,7 @@ import os
 from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
+from email_retrieval import zke_yahoo
 from ppadb.client import Client as AdbClient
 
 from core.models import PoshUser, Listing, ListingImage, LogEntry, ListedItem
@@ -17,6 +18,9 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
 
     instance.profile_picture.delete(save=False)
     instance.header_picture.delete(save=False)
+
+    if not instance.is_registered and instance.email_id:
+        zke_yahoo.update_email_status(instance.email_id, 'free')
 
     if instance.app_package and instance.device:
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)

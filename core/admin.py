@@ -162,7 +162,7 @@ class PoshUserAdmin(admin.ModelAdmin):
                 ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration'),
                 ('user', 'app_package'),
                 ('date_added', 'date_disabled'),
-                ('username', 'password', 'email'),
+                ('username', 'password', 'email', 'email_password'),
                 ('phone_number',)
             )
         }),

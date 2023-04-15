@@ -154,11 +154,14 @@ class PoshUser(models.Model):
     phone_number = models.CharField(max_length=20, default='', blank=True)
     profile_picture_id = models.CharField(max_length=200, blank=True)
     app_package = models.CharField(max_length=100, blank=True)
+    email_password = models.CharField(max_length=250, blank=True)
 
     profile_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
     header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
 
     email = models.EmailField(blank=True)
+
+    email_id = models.IntegerField(null=True, blank=True)
 
     date_added = models.DateField(auto_now_add=True)
     date_disabled = models.DateField(null=True, blank=True)
@@ -241,7 +244,7 @@ class PoshUser(models.Model):
         return username
 
     @staticmethod
-    def generate(user, email, password):
+    def generate(user, password, email, email_password='', email_id=None):
         fake = Faker()
         attempts = 0
         profile_picture_id = fake.random_int(min=1, max=1000)
@@ -271,6 +274,8 @@ class PoshUser(models.Model):
             password=password,
             gender=fake.random_element(elements=('M', 'F')),
             email=email,
+            email_password=email_password,
+            email_id=email_id,
             date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=30),
         )
 

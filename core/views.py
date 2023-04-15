@@ -2,6 +2,7 @@ import datetime
 import pytz
 
 from django_filters.rest_framework import DjangoFilterBackend
+from email_retrieval import zke_yahoo
 from rest_framework import filters
 from rest_framework import status
 from rest_framework.decorators import action
@@ -12,7 +13,6 @@ from rest_framework.viewsets import GenericViewSet
 from rest_framework_simplejwt.views import TokenObtainPairView as BaseTokenObtainPairView
 from .mixins import DestroyWithPayloadModelMixin
 from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup, ListedItem
-from .tasks import CampaignTask
 from . import serializers
 
 
@@ -65,6 +65,15 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
     def generate(self, request):
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
+
+        if serializer.validated_data[0].get('email'):
+            # Get the number of valid PoshUser instances
+            num_valid_users = len(serializer.validated_data)
+
+            count = zke_yahoo.check_availability()
+            if count < num_valid_users:
+                return Response({"error": f"Only {count} emails are available"}, status=status.HTTP_400_BAD_REQUEST)
+
         self.perform_create(serializer)
 
         return Response(serializer.data, status=status.HTTP_201_CREATED)
