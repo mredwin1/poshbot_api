@@ -70,7 +70,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
         if 'generate' in path:
             password = validated_data.get('password')
             email = validated_data.get('email')
-            email_password = validated_data.get('email_password', None)
+            email_password = validated_data.get('email_password', '')
             email_id = validated_data.get('email_id', None)
 
             try:
