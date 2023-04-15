@@ -19,6 +19,8 @@ from ppadb.client import Client as AdbClient
 from uuid import uuid4
 
 
+import logging
+
 def path_and_rename(instance, filename):
     ext = filename.split('.')[-1]
     rand_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
@@ -82,6 +84,8 @@ class Device(models.Model):
         if self.checked_out_by:
             return False
 
+        logger = logging.getLogger(__name__)
+
         try:
             client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
             adb_device = client.device(serial=self.serial)
@@ -98,7 +102,8 @@ class Device(models.Model):
                     return True
 
             return False
-        except RuntimeError:
+        except RuntimeError as e:
+            logger.error(e, exc_info=True)
             return False
 
     def check_out(self, campaign_id: uuid4):
