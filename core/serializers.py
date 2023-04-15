@@ -63,6 +63,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
     def create(self, validated_data):
         used_full_names = self.context.get('used_full_names')
+        used_profile_picture_ids = self.context.get('used_profile_picture_ids')
         user = self.context.get('user')
         path = self.context.get('path')
         if 'generate' in path:
@@ -74,7 +75,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
             except KeyError:
                 email_id, email, email_password = zke_yahoo.get_email()
 
-            posh_user = PoshUser.generate(user, password, email, email_password=email_password, email_id=email_id, excluded_names=used_full_names)
+            posh_user = PoshUser.generate(user, password, email, email_password=email_password, email_id=email_id, excluded_names=used_full_names, excluded_profile_picture_ids=used_profile_picture_ids)
 
             zke_yahoo.update_email_status(email_id, 'used')
 

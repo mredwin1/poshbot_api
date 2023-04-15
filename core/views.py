@@ -43,11 +43,13 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
         # Retrieve the 'full_name' property from all PoshUser objects
         full_names = PoshUser.objects.values_list('full_name', flat=True)
+        profile_picture_ids = PoshUser.objects.values_list('profile_picture_id', flat=True)
 
         # Convert the QuerySet to a list
         full_names_list = list(full_names)
+        profile_picture_ids_list = list(profile_picture_ids)
 
-        context.update({'user': self.request.user, 'path': self.request.path, 'used_full_names': full_names_list})
+        context.update({'user': self.request.user, 'path': self.request.path, 'used_full_names': full_names_list, 'used_profile_picture_ids': profile_picture_ids_list})
 
         return context
 

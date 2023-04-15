@@ -249,7 +249,7 @@ class PoshUser(models.Model):
         return username
 
     @staticmethod
-    def generate(user, password, email, email_password='', email_id=None, excluded_names=None):
+    def generate(user, password, email, email_password='', email_id=None, excluded_names=None, excluded_profile_picture_ids=None):
         current_time = int(time.time())
 
         fake = Faker()
@@ -257,7 +257,10 @@ class PoshUser(models.Model):
         attempts = 0
         profile_picture_id = fake.random_int(min=1, max=1000)
 
-        while attempts < 10 and PoshUser.objects.filter(profile_picture_id=profile_picture_id).exists():
+        if not excluded_profile_picture_ids:
+            excluded_profile_picture_ids = []
+
+        while attempts < 10 and profile_picture_id in excluded_profile_picture_ids:
             profile_picture_id = fake.random_int(min=1, max=1000)
 
         profile_picture_url = f'https://picsum.photos/id/{profile_picture_id}/600'
