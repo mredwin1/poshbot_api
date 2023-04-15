@@ -20,7 +20,7 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
     instance.header_picture.delete(save=False)
 
     if not instance.is_registered and instance.email_id:
-        zke_yahoo.update_email_status(instance.email_id, 'free')
+        zke_yahoo.update_email_status([instance.email_id], 'free')
 
     if instance.app_package and instance.device:
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
