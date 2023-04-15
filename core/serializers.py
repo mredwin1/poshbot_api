@@ -78,7 +78,8 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
             posh_user = PoshUser.generate(faker_obj, user, password, email, email_password=email_password, email_id=email_id, excluded_names=used_full_names, excluded_profile_picture_ids=used_profile_picture_ids)
 
-            zke_yahoo.update_email_status(email_id, 'used')
+            if email_id:
+                zke_yahoo.update_email_status(email_id, 'used')
 
         else:
             posh_user = PoshUser(**validated_data)
