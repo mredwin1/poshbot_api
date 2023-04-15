@@ -47,10 +47,7 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         new_context = {'user': self.request.user, 'path': self.request.path}
 
         if self.action == 'generate':
-            current_time = int(time.time())
-
             fake = Faker()
-            fake.seed(current_time)
 
             # Retrieve the 'full_name' property from all PoshUser objects
             full_names = PoshUser.objects.annotate(full_name=Concat('first_name', Value(' '), 'last_name')).values_list('full_name', flat=True)
