@@ -1,6 +1,8 @@
 import datetime
 import pytz
 
+from django.db.models import Value
+from django.db.models.functions import Concat
 from django_filters.rest_framework import DjangoFilterBackend
 from email_retrieval import zke_yahoo
 from rest_framework import filters
@@ -42,7 +44,7 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         context = super(PoshUserViewSet, self).get_serializer_context()
 
         # Retrieve the 'full_name' property from all PoshUser objects
-        full_names = PoshUser.objects.values_list('full_name', flat=True)
+        full_names = PoshUser.objects.annotate(full_name=Concat('first_name', Value(' '), 'last_name')).values_list('full_name', flat=True)
         profile_picture_ids = PoshUser.objects.values_list('profile_picture_id', flat=True)
 
         # Convert the QuerySet to a list
