@@ -98,11 +98,6 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
             email_ids = []
             emails = zke_yahoo.get_emails(count)
 
-            import logging
-            logger = logging.getLogger(__name__)
-
-            logger.info(serializer.validated_data)
-            logger.info(emails)
             for index, data in enumerate(serializer.validated_data):
                 email_ids.append(emails[index][0])
                 data['email_id'] = emails[index][0]

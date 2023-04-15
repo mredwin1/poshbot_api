@@ -78,9 +78,10 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
                 if email_id:
                     zke_yahoo.update_email_status([email_id], 'used')
-            except Exception:
+            except Exception as e:
                 if email_id:
                     zke_yahoo.update_email_status(email_id, 'free')
+                raise e
 
         else:
             posh_user = PoshUser(**validated_data)
