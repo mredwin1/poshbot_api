@@ -272,9 +272,12 @@ class PoshUser(models.Model):
             gender=fake.random_element(elements=('M', 'F')),
             email=email,
             date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=30),
-            profile_picture=profile_picture_file,
-            header_picture=header_picture_file
         )
+
+        posh_user.profile_picture.save(f'profile_{posh_user.id}.png', profile_picture_file, save=False)
+        posh_user.header_picture.save(f'profile_{posh_user.id}.png', header_picture_file, save=False)
+
+        posh_user.save()
 
         return posh_user
 
