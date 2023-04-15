@@ -262,7 +262,6 @@ class PoshUser(models.Model):
         last_name = fake.last_name()
 
         username = PoshUser._generate_username(fake, first_name, last_name)
-        date_of_birth = fake.date_of_birth(minimum_age=18, maximum_age=30)
 
         posh_user = PoshUser.objects.create(
             user=user,
@@ -272,7 +271,7 @@ class PoshUser(models.Model):
             password=password,
             gender=fake.random_element(elements=('M', 'F')),
             email=email,
-            date_of_birth=timezone.make_aware(datetime.datetime.combine(date_of_birth, datetime.datetime.min().time()), timezone.utc),
+            date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=30),
             zipcode=fake.zipcode(),
             profile_picture=profile_picture_file,
             header_picture=header_picture_file
