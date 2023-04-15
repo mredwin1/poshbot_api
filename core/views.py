@@ -103,7 +103,7 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
 
             logger.info(serializer.validated_data)
             logger.info(emails)
-            for index, data in serializer.validated_data:
+            for index, data in enumerate(serializer.validated_data):
                 email_ids.append(emails[index][0])
                 data['email_id'] = emails[index][0]
                 data['email'] = emails[index][1]
