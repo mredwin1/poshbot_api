@@ -5,10 +5,10 @@ import os
 def _connect_to_db():
     db = mysql.connector.connect(
         host=os.environ['ZKE_YAHOO_HOST'],
-        port='3306',
-        user='EdwinCruz',
-        password='To12Tu7ovI2e',
-        database="zennolab"
+        port=os.environ['ZKE_YAHOO_PORT'],
+        user=os.environ['ZKE_YAHOO_USER'],
+        password=os.environ['ZKE_YAHOO_PASSWORD'],
+        database=os.environ['ZKE_YAHOO_DATABASE']
     )
 
     if db.is_connected():
