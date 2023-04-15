@@ -29,6 +29,7 @@ pure-python-adb = "*"
 python-dateutil = "*"
 faker = "*"
 selenium-stealth = "*"
+mysql-connector-python = "*"
 
 [dev-packages]
 
