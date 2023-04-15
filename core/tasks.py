@@ -612,16 +612,12 @@ class ManageCampaignsTask(Task):
         self.logger = logging.getLogger(__name__)
 
     def get_available_device(self, needed_device=None):
-        self.logger.info(self.excluded_device_ids)
         devices = Device.objects.filter(is_active=True, checked_out_by__isnull=True)
         if needed_device:
             devices = devices.filter(id=needed_device.id)
         else:
             devices = devices.filter(installed_clones__lt=155)
         in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
-
-        self.logger.info(devices)
-        self.logger.info(needed_device)
 
         for device in devices:
             if device.ip_reset_url not in in_use_ip_reset_urls:
