@@ -70,13 +70,14 @@ class PoshUserSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         path = self.context.get('path')
         if 'generate' in path:
+            password = validated_data.pop('password')
             email = None
             try:
                 email = validated_data.pop('email')
             except KeyError:
                 pass
 
-            posh_user = PoshUser.generate(email, user)
+            posh_user = PoshUser.generate(user, email, password)
 
         else:
             posh_user = PoshUser(**validated_data)

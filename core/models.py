@@ -241,7 +241,7 @@ class PoshUser(models.Model):
         return username
 
     @staticmethod
-    def generate(email, user):
+    def generate(user, email, password):
         fake = Faker()
         attempts = 0
         profile_picture_id = fake.random_int(min=1, max=1000)
@@ -268,6 +268,7 @@ class PoshUser(models.Model):
             first_name=first_name,
             last_name=last_name,
             username=username,
+            password=password,
             gender=fake.random_element(elements=('M', 'F')),
             email=email,
             date_of_birth=timezone.make_aware(fake.date_of_birth(minimum_age=18, maximum_age=30), timezone.utc),
