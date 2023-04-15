@@ -610,11 +610,10 @@ class ManageCampaignsTask(Task):
         self.soft_time_limit = 240
         self.time_limit = 300
         self.logger = logging.getLogger(__name__)
-        self.excluded_device_ids = []
 
     def get_available_device(self, needed_device=None):
         self.logger.info(self.excluded_device_ids)
-        devices = Device.objects.filter(is_active=True, checked_out_by__isnull=True)  # .exclude(id__in=self.excluded_device_ids)
+        devices = Device.objects.filter(is_active=True, checked_out_by__isnull=True)
         if needed_device:
             devices = devices.filter(id=needed_device.id)
         else:
@@ -650,7 +649,6 @@ class ManageCampaignsTask(Task):
                 campaign.save(update_fields=['status', 'queue_status'])
 
                 CampaignTask.delay(campaign.id, device_id=device.id)
-                self.excluded_device_ids.append(device.id)
                 self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial}')
 
                 return True
