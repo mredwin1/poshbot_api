@@ -272,7 +272,6 @@ class PoshUser(models.Model):
             gender=fake.random_element(elements=('M', 'F')),
             email=email,
             date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=30),
-            zipcode=fake.zipcode(),
             profile_picture=profile_picture_file,
             header_picture=header_picture_file
         )
