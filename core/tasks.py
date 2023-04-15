@@ -614,7 +614,7 @@ class ManageCampaignsTask(Task):
 
     def get_available_device(self, needed_device=None):
         self.logger.info(self.excluded_device_ids)
-        devices = Device.objects.filter(is_active=True)  # .exclude(id__in=self.excluded_device_ids)
+        devices = Device.objects.filter(is_active=True, checked_out_by__isnull=True)  # .exclude(id__in=self.excluded_device_ids)
         if needed_device:
             devices = devices.filter(id=needed_device.id)
         else:
