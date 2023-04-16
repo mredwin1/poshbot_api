@@ -471,6 +471,10 @@ class PoshMarkClient(AppiumClient):
 
                             self.sleep(1)
 
+                            while self.is_present(AppiumBy.ID, 'progressBar'):
+                                self.logger.info('Loading...')
+                                self.sleep(5)
+
                             next_button = self.locate(AppiumBy.ID, 'nextButton')
                             self.click(next_button)
 
