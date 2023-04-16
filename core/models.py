@@ -289,6 +289,7 @@ class PoshUser(models.Model):
             email_password=email_password,
             email_id=email_id,
             date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=30),
+            profile_picture_id=profile_picture_id
         )
 
         posh_user.profile_picture.save(f'profile_{posh_user.id}.png', profile_picture_file, save=False)
