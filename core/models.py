@@ -2,10 +2,11 @@ import boto3
 import datetime
 import logging
 import os
+import pytz
 import random
 import requests
-import pytz
 import string
+import time
 
 from dateutil.parser import parse
 from django.conf import settings
@@ -254,13 +255,25 @@ class PoshUser(models.Model):
         if not excluded_profile_picture_ids:
             excluded_profile_picture_ids = []
 
-        while attempts < 10 and profile_picture_id in excluded_profile_picture_ids:
+        profile_picture_content = None
+        while attempts < 10 and profile_picture_id in excluded_profile_picture_ids and not profile_picture_content:
             profile_picture_id = str(fake.random_int(min=1, max=1000))
+            profile_picture_url = f'https://picsum.photos/id/{profile_picture_id}/600'
+            response = requests.get(profile_picture_url)
 
-        profile_picture_url = f'https://picsum.photos/id/{profile_picture_id}/600'
+            if response.status_code == requests.codes.ok:
+                profile_picture_content = response.content
+
+            if not profile_picture_content:
+                time.sleep(2)
+
+        if not profile_picture_content:
+            response = requests.get('https://picsum.photos/600')
+            profile_picture_content = response.content
+            profile_picture_id = response.url.split('/')[4]
+
         header_picture_url = f'https://picsum.photos/1920/300'
 
-        profile_picture_content = requests.get(profile_picture_url).content
         profile_picture_file = ContentFile(profile_picture_content)
 
         header_picture_content = requests.get(header_picture_url).content
