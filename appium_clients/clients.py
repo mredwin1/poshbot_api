@@ -459,6 +459,7 @@ class PoshMarkClient(AppiumClient):
                         self.logger.info('Clicked continue button')
                     elif window_title and 'Welcome, ' in window_title.text:
                         if not self.profile_picture_added:
+                            self.logger.info('Uploading profile picture')
                             picture_elem = self.locate(AppiumBy.ID, 'addPictureButton')
                             self.click(picture_elem)
 
@@ -471,9 +472,15 @@ class PoshMarkClient(AppiumClient):
 
                             self.sleep(1)
 
-                            while self.is_present(AppiumBy.ID, 'progressBar'):
+                            attempts = 0
+                            while self.is_present(AppiumBy.ID, 'progressBar') and attempts < 4:
                                 self.logger.info('Loading...')
                                 self.sleep(5)
+                                attempts += 1
+
+                            if attempts >= 4:
+                                self.logger.info('Never finished loading. Exiting')
+                                return False
 
                             next_button = self.locate(AppiumBy.ID, 'nextButton')
                             self.click(next_button)
