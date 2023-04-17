@@ -812,16 +812,11 @@ def posh_user_cleanup():
     # Get all posh_users who have been inactive for at least a day
     posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
 
-    logger = logging.getLogger(__name__)
-    logger.info(posh_users)
-
     for posh_user in posh_users:
         last_sale_date = ListedItem.objects.filter(
             posh_user=posh_user,
             status=ListedItem.SOLD
         ).aggregate(Max('datetime_sold'))['datetime_sold__max']
-
-        logger.info(f'Last Sale Date: {last_sale_date} < Two Weeks Ago: {two_weeks_ago}')
 
         if last_sale_date is None or last_sale_date < two_weeks_ago:
             posh_user.delete()
