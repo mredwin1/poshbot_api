@@ -9,7 +9,7 @@ import traceback
 
 from celery import shared_task, Task, current_app, beat
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
-from django.db.models import Q
+from django.db.models import Q, Max
 from django.utils import timezone
 from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
@@ -812,17 +812,11 @@ def posh_user_cleanup():
     # Get all posh_users who have been inactive for at least a day
     posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
 
-    # Get all sold items for the relevant posh_users
-    sold_items = ListedItem.objects.filter(posh_user__in=posh_users, status=ListedItem.SOLD, datetime_sold__lt=day_ago)
-
-    # Create a dictionary of posh_users and their last sale date
-    last_sale_dates = {}
-    for sold_item in sold_items:
-        posh_user = sold_item.posh_user
-        if posh_user not in last_sale_dates or last_sale_dates[posh_user] < sold_item.datetime_sold:
-            last_sale_dates[posh_user] = sold_item.datetime_sold
-
-    # Delete posh_users who have been inactive for at least 14 days, or who have not made a sale in the last day
     for posh_user in posh_users:
-        if posh_user.date_disabled < two_weeks_ago or posh_user not in last_sale_dates or last_sale_dates[posh_user] < day_ago:
+        last_sale_date = ListedItem.objects.filter(
+            posh_user=posh_user,
+            status=ListedItem.SOLD
+        ).aggregate(Max('datetime_sold'))['datetime_sold__max']
+
+        if last_sale_date is None or last_sale_date < two_weeks_ago:
             posh_user.delete()
