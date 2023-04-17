@@ -813,7 +813,7 @@ def posh_user_cleanup():
     posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
 
     # Get all sold items for the relevant posh_users
-    sold_items = ListedItem.objects.filter(posh_user__in=posh_users, status=ListedItem.SOLD, date_sold__lt=day_ago)
+    sold_items = ListedItem.objects.filter(posh_user__in=posh_users, status=ListedItem.SOLD, datetime_sold__lt=day_ago)
 
     # Create a dictionary of posh_users and their last sale date
     last_sale_dates = {}
