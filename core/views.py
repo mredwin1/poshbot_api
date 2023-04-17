@@ -4,6 +4,7 @@ import time
 
 from django.db.models import Value
 from django.db.models.functions import Concat
+from django.utils import timezone
 from django_filters.rest_framework import DjangoFilterBackend
 from email_retrieval import zke_yahoo
 from faker import Faker
@@ -115,13 +116,19 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         posh_user = self.get_object()
 
         try:
+            update_fields = ['posh_user']
             campaign = Campaign.objects.get(user=self.request.user, posh_user=posh_user)
+
+            if campaign.status not in (Campaign.STOPPED, Campaign.STOPPING):
+                update_fields.append('status')
+                campaign.status = Campaign.STOPPING
             campaign.posh_user = None
-            campaign.save(update_fields=['posh_user'])
+            campaign.save(update_fields=update_fields)
         except Campaign.DoesNotExist:
             pass
         
         posh_user.is_active = False
+        posh_user.date_disabled = timezone.now().date()
         posh_user.save(update_fields=['is_active'])
 
         serializer = self.get_serializer(posh_user)
