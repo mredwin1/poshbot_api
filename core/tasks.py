@@ -616,7 +616,7 @@ class ManageCampaignsTask(Task):
         if needed_device:
             devices = devices.filter(id=needed_device.id)
         else:
-            devices = devices.filter(installed_clones__lt=155)
+            devices = devices.filter(installed_clones__lt=147)
         in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
 
         for device in devices:
