@@ -819,8 +819,8 @@ def posh_user_cleanup():
     last_sale_dates = {}
     for sold_item in sold_items:
         posh_user = sold_item.posh_user
-        if posh_user not in last_sale_dates or last_sale_dates[posh_user] < sold_item.date_sold:
-            last_sale_dates[posh_user] = sold_item.date_sold
+        if posh_user not in last_sale_dates or last_sale_dates[posh_user] < sold_item.datetime_sold:
+            last_sale_dates[posh_user] = sold_item.datetime_sold
 
     # Delete posh_users who have been inactive for at least 14 days, or who have not made a sale in the last day
     for posh_user in posh_users:
