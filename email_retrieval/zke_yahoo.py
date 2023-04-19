@@ -30,7 +30,7 @@ def get_emails(quantity):
     email_db = _connect_to_db()
     cursor = email_db.cursor()
 
-    cursor.execute(f"SELECT id, mail, pass FROM yahoo_edwincruz WHERE status = 'free' LIMIT {quantity}")
+    cursor.execute(f"SELECT id, mail, pass, imap FROM yahoo_edwincruz WHERE status = 'free' LIMIT {quantity}")
 
     return cursor.fetchall()
 

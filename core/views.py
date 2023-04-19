@@ -104,6 +104,7 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
                 data['email_id'] = emails[index][0]
                 data['email'] = emails[index][1]
                 data['email_password'] = emails[index][2]
+                data['email_imap_password'] = emails[index][3]
 
             zke_yahoo.update_email_status(email_ids, 'on_hold')
 

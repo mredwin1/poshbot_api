@@ -71,10 +71,11 @@ class PoshUserSerializer(serializers.ModelSerializer):
             password = validated_data.get('password')
             email = validated_data.get('email')
             email_password = validated_data.get('email_password', '')
+            email_imap_password = validated_data.get('email_imap_password', '')
             email_id = validated_data.get('email_id', None)
 
             try:
-                posh_user = PoshUser.generate(faker_obj, user, password, email, email_password=email_password, email_id=email_id, excluded_names=used_full_names, excluded_profile_picture_ids=used_profile_picture_ids)
+                posh_user = PoshUser.generate(faker_obj, user, password, email, email_password=email_password, email_imap_password=email_imap_password, email_id=email_id, excluded_names=used_full_names, excluded_profile_picture_ids=used_profile_picture_ids)
 
                 if email_id:
                     zke_yahoo.update_email_status([email_id], 'used')
