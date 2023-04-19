@@ -216,7 +216,7 @@ class PoshUser(models.Model):
         return f'{self.first_name} {self.last_name}'
 
     @staticmethod
-    def _generate_username(faker_obj, first_name, last_name):
+    def _generate_username(faker_obj, first_name, last_name, year_of_birth):
         # Split the names into separate words
         first_name_words = first_name.lower().split()
         last_name_words = last_name.lower().split()
@@ -238,9 +238,14 @@ class PoshUser(models.Model):
         # Add a random lowercase letter to the username
         username += random.choice(string.ascii_lowercase)
 
-        # Add a random number to the end of the username (with 60% probability)
-        if random.random() < 0.6:
-            username += str(faker_obj.random_int(min=10, max=99))
+        # Chance to add random number to the end of the username (with 30% probability)
+        # Or chance to add the birth year to the end of the username (with 30% probability)
+        # Or add nothing (with 40% probability)
+        number_choice = random.random()
+        if number_choice < 0.3:
+            username += str(faker_obj.random_int(min=1, max=999))
+        elif number_choice < .6:
+            username += str(year_of_birth)
 
         # Truncate the username if it is longer than 15 characters
         if len(username) > 15:
@@ -282,6 +287,7 @@ class PoshUser(models.Model):
 
         first_name = fake.first_name()
         last_name = fake.last_name()
+        date_of_birth = fake.date_of_birth(minimum_age=18, maximum_age=30)
 
         if excluded_names:
             attempts = 0
@@ -290,7 +296,7 @@ class PoshUser(models.Model):
                 last_name = fake.last_name()
                 attempts += 1
 
-        username = PoshUser._generate_username(fake, first_name, last_name)
+        username = PoshUser._generate_username(fake, first_name, last_name, date_of_birth.year)
 
         posh_user = PoshUser.objects.create(
             user=user,
@@ -303,7 +309,7 @@ class PoshUser(models.Model):
             email_password=email_password,
             email_imap_password=email_imap_password,
             email_id=email_id,
-            date_of_birth=fake.date_of_birth(minimum_age=18, maximum_age=30),
+            date_of_birth=date_of_birth,
             profile_picture_id=profile_picture_id
         )
 
