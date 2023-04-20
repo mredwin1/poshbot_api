@@ -48,7 +48,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoshUser
         fields = [
-            'id', 'username', 'first_name', 'last_name', 'email', 'email_password', 'password', 'phone_number', 'profile_picture',
+            'id', 'username', 'first_name', 'last_name', 'email', 'email_password', 'email_imap_password', 'password', 'phone_number', 'profile_picture',
             'status', 'profile_url', 'sold_listings', 'last_sale_time'
         ]
         extra_kwargs = {
