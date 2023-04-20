@@ -263,7 +263,7 @@ class PoshUser(models.Model):
 
         profile_picture_content = None
         while attempts < 10 and profile_picture_id in excluded_profile_picture_ids and not profile_picture_content:
-            profile_picture_id = str(fake.random_int(min=1, max=1000))
+            profile_picture_id = str(fake.random_int(min=1, max=1084))
             profile_picture_url = f'https://picsum.photos/id/{profile_picture_id}/600'
             response = requests.get(profile_picture_url)
 
