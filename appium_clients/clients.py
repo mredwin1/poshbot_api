@@ -1112,6 +1112,8 @@ class PoshMarkClient(AppiumClient):
             user_tab = self.locate(AppiumBy.ID, 'userTab')
             self.click(user_tab)
 
+            self.sleep(1)
+
             if self.is_present(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton'):
                 my_closet = self.locate(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton')
                 self.click(my_closet)
