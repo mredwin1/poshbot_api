@@ -786,18 +786,20 @@ class PoshMarkClient(AppiumClient):
                                     group_num = 0
                                     self.swipe('up', 530)
                                     self.sleep(.75)
-                                    for x in range(1, len(listing_images) + 1):
-                                        img_index = x - group_num
-                                        img = self.locate(AppiumBy.XPATH, f'/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/androidx.drawerlayout.widget.DrawerLayout/android.widget.ScrollView/android.widget.FrameLayout/android.widget.FrameLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[{img_index}]/androidx.cardview.widget.CardView/android.widget.RelativeLayout/android.widget.FrameLayout[1]/android.widget.ImageView[1]')
-                                        if x == 1:
+                                    counter = 0
+                                    while counter < len(listing_images):
+                                        img = self.locate(AppiumBy.XPATH, "//android.widget.ImageView[@resource-id='com.google.android.documentsui:id/icon_thumb' and @selected='false']")
+                                        if counter == 0:
                                             self.long_click(img)
                                         else:
                                             img.click()
 
-                                        if x % 6 == 0 and x != len(listing_images):
+                                        if counter != 0 and counter % 5 == 0 and counter != len(listing_images):
                                             self.swipe('up', 580 * 3)
-                                            group_num += 4 if not group_num else 6
+                                            group_num += 5 if not group_num else 7
                                             self.sleep(.75)
+
+                                        counter += 1
 
                                     select_button = self.locate(AppiumBy.ID, 'com.google.android.documentsui:id/action_menu_select')
                                     self.click(select_button)
