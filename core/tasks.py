@@ -188,14 +188,14 @@ class CampaignTask(Task):
 
                     self.logger.info(f'Time to install clone: {time_to_install}')
 
-                self.campaign.posh_user.clone_installed = installed
-                self.campaign.posh_user.device = device
-                self.campaign.posh_user.time_to_install_clone = time_to_install
-                self.campaign.posh_user.save(update_fields=['clone_installed', 'device', 'time_to_install_clone'])
+                    self.campaign.posh_user.clone_installed = installed
+                    self.campaign.posh_user.device = device
+                    self.campaign.posh_user.time_to_install_clone = time_to_install
+                    self.campaign.posh_user.save(update_fields=['clone_installed', 'device', 'time_to_install_clone'])
 
-                device.refresh_from_db(fields=['installed_clones'])
-                device.installed_clones += 1
-                device.save(update_fields=['installed_clones'])
+                    device.refresh_from_db(fields=['installed_clones'])
+                    device.installed_clones += 1
+                    device.save(update_fields=['installed_clones'])
 
             if not self.campaign.posh_user.app_package:
                 app_launched = self.launch_app(client)
