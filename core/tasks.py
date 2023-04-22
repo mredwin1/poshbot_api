@@ -806,7 +806,7 @@ def log_cleanup():
 
 @shared_task
 def posh_user_cleanup():
-    day_ago = timezone.now() - datetime.timedelta(hours=12)
+    day_ago = timezone.now() - datetime.timedelta(days=1)
     two_weeks_ago = timezone.now() - datetime.timedelta(days=14)
 
     # Get all posh_users who have been inactive for at least a day
