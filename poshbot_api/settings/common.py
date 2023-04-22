@@ -204,7 +204,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'posh_user_cleanup': {
         'task': 'core.tasks.posh_user_cleanup',
-        'schedule': timedelta(days=1),
+        'schedule': timedelta(hours=4),
         'options': {'scheduler_cls': 'core.tasks.DedupScheduler'}
     },
 }
