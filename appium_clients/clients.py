@@ -1108,30 +1108,36 @@ class PoshMarkClient(AppiumClient):
             return self.listed
 
     def get_listed_item_id(self):
-        user_tab = self.locate(AppiumBy.ID, 'userTab')
-        self.click(user_tab)
+        try:
+            user_tab = self.locate(AppiumBy.ID, 'userTab')
+            self.click(user_tab)
 
-        if self.is_present(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton'):
-            my_closet = self.locate(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton')
-            self.click(my_closet)
+            if self.is_present(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton'):
+                my_closet = self.locate(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton')
+                self.click(my_closet)
 
-        first_share_button = self.locate(AppiumBy.XPATH, f"//*[@resource-id='{self.capabilities['appPackage']}:id/shareButton']")
-        self.click(first_share_button)
+            first_share_button = self.locate(AppiumBy.XPATH, f"//*[@resource-id='{self.capabilities['appPackage']}:id/shareButton']")
+            self.click(first_share_button)
 
-        copy_link_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'copyButton')
-        self.click(copy_link_button)
+            copy_link_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'copyButton')
+            self.click(copy_link_button)
 
-        self.sleep(1)
+            self.sleep(1)
 
-        short_link = self.driver.get_clipboard_text()
+            short_link = self.driver.get_clipboard_text()
 
-        response = requests.get(short_link)
+            response = requests.get(short_link)
 
-        soup = BeautifulSoup(response.text, "html.parser")
-        a_tag = soup.find("a", {"class": "secondary-action"})
-        listing_url = a_tag["href"]
+            soup = BeautifulSoup(response.text, "html.parser")
+            a_tag = soup.find("a", {"class": "secondary-action"})
+            listing_url = a_tag["href"]
 
-        return listing_url.split("/")[-1].split("?")[0]
+            return listing_url.split("/")[-1].split("?")[0]
+        except Exception as e:
+            self.logger.error(traceback.format_exc())
+            self.logger.info(self.driver.page_source)
+
+            return ''
 
 
 class AppClonerClient(AppiumClient):
