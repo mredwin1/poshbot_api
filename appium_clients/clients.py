@@ -1124,7 +1124,14 @@ class PoshMarkClient(AppiumClient):
 
         self.sleep(1)
 
-        response = requests.get(self.driver.get_clipboard_text())
+        short_link = self.driver.get_clipboard_text()
+
+        self.logger.debug(short_link)
+
+        response = requests.get(short_link)
+
+        self.logger.debug(response.text)
+
         soup = BeautifulSoup(response.text, "html.parser")
         listing_url = soup.find("meta", property="og:url")["content"]
 
