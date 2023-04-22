@@ -305,7 +305,7 @@ class LogGroupAdmin(admin.ModelAdmin):
 
 @admin.register(models.ListedItem)
 class ListedItemAdmin(admin.ModelAdmin):
-    readonly_fields = ['time_to_list', 'listed_item_id']
+    readonly_fields = ['time_to_list']
     autocomplete_fields = ['posh_user']
     list_display = ['listing_title', 'status', 'associated_user', 'associated_posh_user', 'datetime_sold']
     search_fields = ['listing_title__istartswith', 'posh_user__username__istartswith']
