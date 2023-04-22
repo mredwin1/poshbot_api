@@ -794,7 +794,7 @@ class PoshMarkClient(AppiumClient):
                                         else:
                                             img.click()
 
-                                        if counter != 0 and counter % 5 == 0 and counter != len(listing_images):
+                                        if counter != 0 and counter % 5 == 0 and counter != len(listing_images) - 1:
                                             self.swipe('up', 580 * 3)
                                             group_num += 5 if not group_num else 7
                                             self.sleep(.75)
