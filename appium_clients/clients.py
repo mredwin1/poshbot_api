@@ -7,6 +7,7 @@ import traceback
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils.text import slugify
 from ppadb.client import Client as AdbClient
@@ -1104,6 +1105,28 @@ class PoshMarkClient(AppiumClient):
             self.logger.info(self.driver.page_source)
 
             return self.listed
+
+    def get_listed_item_id(self):
+        user_tab = self.locate(AppiumBy.ID, 'userTab')
+        self.click(user_tab)
+
+        if self.is_present(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton'):
+            my_closet = self.locate(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton')
+            self.click(my_closet)
+
+        first_share_button = self.locate(AppiumBy.XPATH, f"//*[@resource-id='{self.capabilities['appPackage']}:id/shareButton']")
+        self.click(first_share_button)
+
+        copy_link_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'copyButton')
+        self.click(copy_link_button)
+
+        self.sleep(1)
+
+        response = requests.get(self.driver.get_clipboard_text())
+        soup = BeautifulSoup(response.text, "html.parser")
+        listing_url = soup.find("meta", property="og:url")["content"]
+
+        return listing_url.split("/")[-1].split("?")[0]
 
 
 class AppClonerClient(AppiumClient):

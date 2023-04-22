@@ -452,6 +452,7 @@ class ListedItem(models.Model):
     listing = models.ForeignKey(Listing, on_delete=models.SET_NULL, null=True, blank=True)
 
     listing_title = models.CharField(max_length=50)
+    listed_item_id = models.CharField(max_length=255)
     datetime_listed = models.DateTimeField(null=True, blank=True)
     datetime_passed_review = models.DateTimeField(null=True, blank=True)
     datetime_removed = models.DateTimeField(null=True, blank=True)

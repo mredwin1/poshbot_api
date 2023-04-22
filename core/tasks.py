@@ -347,10 +347,15 @@ class CampaignTask(Task):
                     if item_listed:
                         self.logger.info(f'Time to list item: {time_to_list}')
 
+                        listed_item_id = client.get_listed_item_id()
+
+                        self.logger.info(f'Listed item ID: {listed_item_id}')
+
+                        item_to_list.listed_item_id = listed_item_id
                         item_to_list.time_to_list = time_to_list
                         item_to_list.status = ListedItem.UNDER_REVIEW
                         item_to_list.datetime_listed = timezone.now()
-                        item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed'])
+                        item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
             else:
                 with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
                     if client.driver.current_package != self.campaign.posh_user.app_package:
@@ -370,10 +375,15 @@ class CampaignTask(Task):
                         if listed:
                             self.logger.info(f'Time to list item: {time_to_list}')
 
+                            listed_item_id = client.get_listed_item_id()
+
+                            self.logger.info(f'Listed item ID: {listed_item_id}')
+
+                            item_to_list.listed_item_id = listed_item_id
                             item_to_list.time_to_list = time_to_list
                             item_to_list.status = ListedItem.UNDER_REVIEW
                             item_to_list.datetime_listed = timezone.now()
-                            item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed'])
+                            item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
 
                             if not item_listed:
                                 item_listed = listed
