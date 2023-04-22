@@ -799,7 +799,7 @@ def check_posh_users():
 
                     if campaign:
                         logger.info('Stopping campaign...')
-                        campaign.status = Campaign.STOPPED
+                        campaign.status = Campaign.STOPPING
                         campaign.save(update_fields=['status'])
 
 

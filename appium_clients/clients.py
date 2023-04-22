@@ -1133,7 +1133,8 @@ class PoshMarkClient(AppiumClient):
         self.logger.debug(response.text)
 
         soup = BeautifulSoup(response.text, "html.parser")
-        listing_url = soup.find("meta", property="og:url")["content"]
+        a_tag = soup.find("a", {"class": "secondary-action"})
+        listing_url = a_tag["href"]
 
         return listing_url.split("/")[-1].split("?")[0]
 
