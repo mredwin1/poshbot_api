@@ -517,7 +517,6 @@ class PoshMarkClient(AppiumClient):
                             username = self.locate(AppiumBy.ID, 'username')
                             self.campaign.posh_user.username = username.text
                             self.campaign.posh_user.save(update_fields=['username'])
-
                         self.finished_registering = True
                     else:
                         if window_title:
@@ -1126,11 +1125,7 @@ class PoshMarkClient(AppiumClient):
 
         short_link = self.driver.get_clipboard_text()
 
-        self.logger.debug(short_link)
-
         response = requests.get(short_link)
-
-        self.logger.debug(response.text)
 
         soup = BeautifulSoup(response.text, "html.parser")
         a_tag = soup.find("a", {"class": "secondary-action"})
