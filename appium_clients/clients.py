@@ -1108,6 +1108,9 @@ class PoshMarkClient(AppiumClient):
             return self.listed
 
     def get_listed_item_id(self):
+        response = None
+        soup = None
+        a_tag = None
         try:
             user_tab = self.locate(AppiumBy.ID, 'userTab')
             self.click(user_tab)
@@ -1138,6 +1141,9 @@ class PoshMarkClient(AppiumClient):
         except Exception as e:
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
+            self.logger.debug(soup)
+            self.logger.debug(response)
+            self.logger.debug(a_tag)
 
             return ''
 
