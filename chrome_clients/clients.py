@@ -1613,12 +1613,14 @@ class PublicPoshMarkClient(BaseClient):
         listed_items = {
             'shareable_listings': [],
             'sold_listings': [],
-            'reserved_listings': []
+            'reserved_listings': [],
+            'not_for_sale_listings': [],
         }
 
         shareable_listing_titles = []
         sold_listing_titles = []
         reserved_listing_titles = []
+        not_for_sale_listing_titles = []
 
         self.logger.info(f'Getting all listings for {username}')
 
@@ -1651,6 +1653,9 @@ class PublicPoshMarkClient(BaseClient):
                     elif icon.text == 'RESERVED':
                         listed_items['reserved_listings'].append(listing)
                         reserved_listing_titles.append(listing['title'])
+                    elif icon.text == 'NOT FOR SALE':
+                        listed_items['not_for_sale_listings'].append(listing)
+                        not_for_sale_listing_titles.append(listing['title'])
 
             self.logger.info(f'Found the following listings: {listed_items }')
 
