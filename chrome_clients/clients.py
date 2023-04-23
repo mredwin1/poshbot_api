@@ -789,7 +789,7 @@ class PoshMarkClient(BaseClient):
     def get_all_listings(self):
         """Goes to a user's closet and returns a list of all the listings, excluding Ones that have an inventory tag"""
         try:
-            listings = {
+            listed_items = {
                 'shareable_listings': [],
                 'sold_listings': [],
                 'reserved_listings': []
@@ -804,8 +804,8 @@ class PoshMarkClient(BaseClient):
             self.go_to_closet()
 
             if self.is_present(By.CLASS_NAME, 'card--small'):
-                listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-                for listed_item in listed_items:
+                all_listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
+                for listed_item in all_listed_items:
                     title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     listing_id = title.get_attribute("data-et-prop-listing_id")
                     try:
@@ -819,13 +819,13 @@ class PoshMarkClient(BaseClient):
                     }
 
                     if not icon:
-                        listings['shareable_listings'].append(listing)
+                        listed_items['shareable_listings'].append(listing)
                         shareable_listing_titles.append(listing['title'])
                     elif icon.text == 'SOLD':
-                        listings['sold_listings'].append(listing)
+                        listed_items['sold_listings'].append(listing)
                         sold_listing_titles.append(listing['title'])
                     elif icon.text == 'RESERVED':
-                        listings['reserved_listings'].append(listing)
+                        listed_items['reserved_listings'].append(listing)
                         reserved_listing_titles.append(listing['title'])
             else:
                 self.logger.info('No listings found')
@@ -843,14 +843,14 @@ class PoshMarkClient(BaseClient):
 
             grid = '{:<20} {:<20} {}\n'.format('Type', 'Id', 'Title')
 
-            for type_key, listings in listings.items():
+            for type_key, listings in listed_items.items():
                 type_str = type_key.replace('_', ' ')[:-1].capitalize()
                 for listing in listings:
                     grid += '{:<20} {:<20} {}\n'.format(type_str, listing['id'], listing['title'])
 
             self.logger.info(f'Found the following listings: \n\n{grid}')
 
-            return listings
+            return listed_items
 
         except Exception as e:
             self.handle_error('Error while getting all listings', 'get_all_listings_error.png')
@@ -1610,7 +1610,7 @@ class PublicPoshMarkClient(BaseClient):
 
     def get_all_listings(self, username):
         """Goes to a user's closet and returns a list of all the listings"""
-        listings = {
+        listed_items = {
             'shareable_listings': [],
             'sold_listings': [],
             'reserved_listings': []
@@ -1628,8 +1628,8 @@ class PublicPoshMarkClient(BaseClient):
 
         try:
             if self.is_present(By.CLASS_NAME, 'card--small'):
-                listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-                for listed_item in listed_items:
+                all_listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
+                for listed_item in all_listed_items:
                     title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
                     listing_id = title.get_attribute("data-et-prop-listing_id")
                     try:
@@ -1643,25 +1643,25 @@ class PublicPoshMarkClient(BaseClient):
                     }
 
                     if not icon:
-                        listings['shareable_listings'].append(listing)
+                        listed_items['shareable_listings'].append(listing)
                         shareable_listing_titles.append(listing['title'])
                     elif icon.text == 'SOLD':
-                        listings['sold_listings'].append(listing)
+                        listed_items['sold_listings'].append(listing)
                         sold_listing_titles.append(listing['title'])
                     elif icon.text == 'RESERVED':
-                        listings['reserved_listings'].append(listing)
+                        listed_items['reserved_listings'].append(listing)
                         reserved_listing_titles.append(listing['title'])
 
             grid = '{:<20} {:<20} {}\n'.format('Type', 'Id', 'Title')
 
-            for type_key, listings in listings.items():
+            for type_key, listings in listed_items.items():
                 type_str = type_key.replace('_', ' ')[:-1].capitalize()
                 for listing in listings:
                     grid += '{:<20} {:<20} {}\n'.format(type_str, listing['id'], listing['title'])
 
             self.logger.info(f'Found the following listings: \n\n{grid}')
 
-            return listings
+            return listed_items
 
         except TimeoutException:
             self.logger.error(traceback.format_exc())
