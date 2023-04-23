@@ -437,6 +437,8 @@ class CampaignTask(Task):
                     listed_items = client.get_all_listings()
                     all_listings_retries += 1
 
+                self.logger.debug(listed_items)
+
                 if listed_items:
                     listings_can_share = []
 
@@ -487,6 +489,8 @@ class CampaignTask(Task):
                             listed_item_obj.save()
                         except ListedItem.MultipleObjectsReturned:
                             pass
+
+                    self.logger.debug(listings_can_share)
 
                     if listings_can_share:
                         for listing_title in listings_can_share:
