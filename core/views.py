@@ -237,7 +237,8 @@ class CampaignViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
     def stop(self, request, pk):
         campaign = self.get_object()
         campaign.status = Campaign.STOPPING
-        campaign.save(update_fields=['status'])
+        campaign.next_runtime = None
+        campaign.save(update_fields=['status', 'next_runtime'])
 
         serializer = self.get_serializer(campaign)
 
