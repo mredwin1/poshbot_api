@@ -454,7 +454,7 @@ class CampaignTask(Task):
                                     if listed_item_obj.status != ListedItem.UP:
                                         listed_item_obj.status = ListedItem.UP
                                         listed_item_obj.save(update_fields=['status'])
-                                    listings_can_share.append(listing['title'])
+                                    listings_can_share.append(listed_item['title'])
                                 elif listing_type == 'sold_listings' and not listed_item_obj.datetime_sold:
                                     listed_item_obj.datetime_sold = timezone.now()
                                     listed_item_obj.status = ListedItem.SOLD
