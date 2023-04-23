@@ -257,7 +257,7 @@ class CampaignAdmin(admin.ModelAdmin):
 
     @admin.display()
     def latest_log(self, campaign):
-        log = campaign.loggroup_set.first()
+        log = campaign.loggroup_set.filter(posh_user=campaign.posh_user).first()
         if log:
             url = f"{reverse('admin:core_loggroup_change', args=[log.id])}"
             return format_html('<a href="{}">{}</a>', url, log.created_date.strftime('%m-%d-%Y %I:%M:%S'))
