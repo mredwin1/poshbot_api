@@ -412,7 +412,7 @@ class CampaignTask(Task):
         all_listings_retries = 0
         listing_shared_retries = 0
         profile_updated = self.campaign.posh_user.profile_updated
-        listed_items = None
+        listed_items = {}
         listing_shared = None
         shared = None
         with PoshMarkClient(self.campaign, self.logger) as client:
@@ -433,16 +433,16 @@ class CampaignTask(Task):
                 self.campaign.posh_user.save(update_fields=['profile_updated'])
 
             if logged_in:
-                while listed_items is None and all_listings_retries < 3:
+                while not listed_items and all_listings_retries < 3:
                     listed_items = client.get_all_listings()
                     all_listings_retries += 1
 
                 self.logger.debug(listed_items)
 
-                if listed_items:
+                if any(values for values in listed_items.values() if values):
                     listings_can_share = []
 
-                    for listing_type, listed_item in listed_items:
+                    for listing_type, listed_item in listed_items.items():
                         try:
                             listed_item_obj = ListedItem.objects.get(posh_user=self.campaign.posh_user, listing_title=listed_item['title'])
 
@@ -742,8 +742,8 @@ def check_posh_users():
                 campaign = None
 
             listed_items = client.get_all_listings(posh_user.username)
-            if listed_items:
-                for listed_item_type, listed_item in listed_items:
+            if any(values for values in listed_items.values() if values):
+                for listed_item_type, listed_item in listed_items.items():
                     try:
                         listed_item_obj = ListedItem.objects.get(posh_user=posh_user, listing_title=listed_item['title'])
 
