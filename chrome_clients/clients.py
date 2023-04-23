@@ -1652,14 +1652,7 @@ class PublicPoshMarkClient(BaseClient):
                         listed_items['reserved_listings'].append(listing)
                         reserved_listing_titles.append(listing['title'])
 
-            grid = '{:<20} {:<20} {}\n'.format('Type', 'Id', 'Title')
-
-            for type_key, listings in listed_items.items():
-                type_str = type_key.replace('_', ' ')[:-1].capitalize()
-                for listing in listings:
-                    grid += '{:<20} {:<20} {}\n'.format(type_str, listing['id'], listing['title'])
-
-            self.logger.info(f'Found the following listings: \n\n{grid}')
+            self.logger.info(f'Found the following listings: {listed_items }')
 
             return listed_items
 
