@@ -789,9 +789,15 @@ class PoshMarkClient(BaseClient):
     def get_all_listings(self):
         """Goes to a user's closet and returns a list of all the listings, excluding Ones that have an inventory tag"""
         try:
-            shareable_listings = []
-            sold_listings = []
-            reserved_listings = []
+            listings = {
+                'shareable_listings': [],
+                'sold_listings': [],
+                'reserved_listings': []
+            }
+
+            shareable_listing_titles = []
+            sold_listing_titles = []
+            reserved_listing_titles = []
 
             self.logger.info(f'Getting all listings for {self.campaign.posh_user.username}')
 
@@ -801,30 +807,28 @@ class PoshMarkClient(BaseClient):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
                     title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
+                    listing_id = title.get_attribute("data-et-prop-listing_id")
                     try:
                         icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
                     except NoSuchElementException:
                         icon = None
 
+                    listing = {
+                        'id': listing_id,
+                        'title': title.text
+                    }
+
                     if not icon:
-                        shareable_listings.append(title.text)
+                        listings['shareable_listings'].append(listing)
+                        shareable_listing_titles.append(listing['title'])
                     elif icon.text == 'SOLD':
-                        sold_listings.append(title.text)
+                        listings['sold_listings'].append(listing)
+                        sold_listing_titles.append(listing['title'])
                     elif icon.text == 'RESERVED':
-                        reserved_listings.append(title.text)
-
-                if shareable_listings:
-                    self.logger.info(f"Found the following listings: {','.join(shareable_listings)}")
-                else:
-                    sold_listings_str = '\n'.join(sold_listings) if sold_listings else 'None'
-                    reserved_listings_str = '\n'.join(reserved_listings) if reserved_listings else 'None'
-
-                    self.logger.info(f'Sold Listings: {sold_listings_str}')
-                    self.logger.info(f'Reserved Listings: {reserved_listings_str}')
-                    image_path = f'/log_images/{self.campaign.title}/no_listings.png'
-                    self.web_driver.save_screenshot(image_path)
-                    self.logger.info('No shareable listings found')
+                        listings['reserved_listings'].append(listing)
+                        reserved_listing_titles.append(listing['title'])
             else:
+                self.logger.info('No listings found')
                 is_logged_in = self.check_logged_in()
                 if is_logged_in:
                     is_inactive = self.check_inactive()
@@ -837,11 +841,14 @@ class PoshMarkClient(BaseClient):
                     return None
                 return None
 
-            listings = {
-                'shareable_listings': shareable_listings,
-                'sold_listings': sold_listings,
-                'reserved_listings': reserved_listings
-            }
+            grid = '{:<20} {:<20} {}\n'.format('Type', 'Id', 'Title')
+
+            for type_key, listings in listings.items():
+                type_str = type_key.replace('_', ' ')[:-1].capitalize()
+                for listing in listings:
+                    grid += '{:<20} {:<20} {}\n'.format(type_str, listing['id'], listing['title'])
+
+            self.logger.info(f'Found the following listings: \n\n{grid}')
 
             return listings
 
@@ -1603,10 +1610,15 @@ class PublicPoshMarkClient(BaseClient):
 
     def get_all_listings(self, username):
         """Goes to a user's closet and returns a list of all the listings"""
-        shareable_listings = []
-        sold_listings = []
-        reserved_listings = []
-        not_for_sale_listings = []
+        listings = {
+            'shareable_listings': [],
+            'sold_listings': [],
+            'reserved_listings': []
+        }
+
+        shareable_listing_titles = []
+        sold_listing_titles = []
+        reserved_listing_titles = []
 
         self.logger.info(f'Getting all listings for {username}')
 
@@ -1619,44 +1631,40 @@ class PublicPoshMarkClient(BaseClient):
                 listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
                 for listed_item in listed_items:
                     title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
+                    listing_id = title.get_attribute("data-et-prop-listing_id")
                     try:
                         icon = listed_item.find_element(By.CLASS_NAME, 'inventory-tag__text')
                     except NoSuchElementException:
                         icon = None
 
+                    listing = {
+                        'id': listing_id,
+                        'title': title.text
+                    }
+
                     if not icon:
-                        shareable_listings.append(title.text)
+                        listings['shareable_listings'].append(listing)
+                        shareable_listing_titles.append(listing['title'])
                     elif icon.text == 'SOLD':
-                        sold_listings.append(title.text)
+                        listings['sold_listings'].append(listing)
+                        sold_listing_titles.append(listing['title'])
                     elif icon.text == 'RESERVED':
-                        reserved_listings.append(title.text)
-                    elif icon.text == 'NOT FOR SALE':
-                        not_for_sale_listings.append(title.text)
-                    else:
-                        self.logger.info(f'Unhandled icon text, {icon.text}, on the listing')
+                        listings['reserved_listings'].append(listing)
+                        reserved_listing_titles.append(listing['title'])
 
-                sold_listings_str = ', '.join(sold_listings) if sold_listings else 'None'
-                reserved_listings_str = ', '.join(reserved_listings) if reserved_listings else 'None'
-                shareable_listings_str = ', '.join(shareable_listings) if shareable_listings else 'None'
-                not_for_sale_listings_str = ', '.join(not_for_sale_listings) if not_for_sale_listings else 'None'
+            grid = '{:<20} {:<20} {}\n'.format('Type', 'Id', 'Title')
 
-                self.logger.info(f'Sold Listings: {sold_listings_str}')
-                self.logger.info(f'Reserved Listings: {reserved_listings_str}')
-                self.logger.info(f'Shareable Listings: {shareable_listings_str}')
-                self.logger.info(f'Not For Sale Listings: {not_for_sale_listings_str}')
-            else:
-                self.logger.info('No listing cards found')
+            for type_key, listings in listings.items():
+                type_str = type_key.replace('_', ' ')[:-1].capitalize()
+                for listing in listings:
+                    grid += '{:<20} {:<20} {}\n'.format(type_str, listing['id'], listing['title'])
+
+            self.logger.info(f'Found the following listings: \n\n{grid}')
+
+            return listings
+
         except TimeoutException:
             self.logger.error(traceback.format_exc())
-
-        listings = {
-            'shareable_listings': shareable_listings,
-            'sold_listings': sold_listings,
-            'reserved_listings': reserved_listings,
-            'not_for_sale_listings': not_for_sale_listings
-        }
-
-        return listings
 
     def check_inactive(self, username):
         """Will check if the current user is inactive"""

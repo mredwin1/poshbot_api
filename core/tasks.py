@@ -412,7 +412,7 @@ class CampaignTask(Task):
         all_listings_retries = 0
         listing_shared_retries = 0
         profile_updated = self.campaign.posh_user.profile_updated
-        all_listings = None
+        listed_items = None
         listing_shared = None
         shared = None
         with PoshMarkClient(self.campaign, self.logger) as client:
@@ -433,51 +433,58 @@ class CampaignTask(Task):
                 self.campaign.posh_user.save(update_fields=['profile_updated'])
 
             if logged_in:
-                while all_listings is None and all_listings_retries < 3:
-                    all_listings = client.get_all_listings()
+                while listed_items is None and all_listings_retries < 3:
+                    listed_items = client.get_all_listings()
                     all_listings_retries += 1
 
-                if all_listings:
-                    listing_titles = all_listings['shareable_listings'] + all_listings['sold_listings'] + all_listings['reserved_listings']
+                if listed_items:
                     listings_can_share = []
 
-                    for listing_title in listing_titles:
+                    for listing_type, listed_item in listed_items:
                         try:
-                            listed_item = ListedItem.objects.get(posh_user=self.campaign.posh_user, listing_title=listing_title)
+                            listed_item_obj = ListedItem.objects.get(posh_user=self.campaign.posh_user, listing_title=listed_item['title'])
 
-                            if listing_title in all_listings['shareable_listings']:
-                                if listed_item.status != ListedItem.UP:
-                                    listed_item.status = ListedItem.UP
-                                    listed_item.save(update_fields=['status'])
-                                listings_can_share.append(listing_title)
-                            elif listing_title in all_listings['sold_listings'] and not listed_item.datetime_sold:
-                                listed_item.datetime_sold = timezone.now()
-                                listed_item.status = ListedItem.SOLD
-                                listed_item.save(update_fields=['status', 'datetime_sold'])
-                            elif listing_title in all_listings['reserved_listings'] and listed_item.status != ListedItem.RESERVED:
-                                listed_item.status = ListedItem.RESERVED
-                                listed_item.save(update_fields=['status'])
+                            listed_item_obj.listed_item_id = listed_item['id']
+                            listed_item_obj.save(update_fields=['listed_item_id'])
+
+                            if listing_type == 'shareable_listings':
+                                if listed_item_obj.status != ListedItem.UP:
+                                    listed_item_obj.status = ListedItem.UP
+                                    listed_item_obj.save(update_fields=['status'])
+                                listings_can_share.append(listing['title'])
+                            elif listing_type == 'sold_listings' and not listed_item_obj.datetime_sold:
+                                listed_item_obj.datetime_sold = timezone.now()
+                                listed_item_obj.status = ListedItem.SOLD
+                                listed_item_obj.save(update_fields=['status', 'datetime_sold'])
+                            elif listing_type == 'reserved_listings' and listed_item_obj.status != ListedItem.RESERVED:
+                                listed_item_obj.status = ListedItem.RESERVED
+                                listed_item_obj.save(update_fields=['status'])
 
                         except ListedItem.DoesNotExist:
-                            self.logger.warning(f'Could not find a listed item for {self.campaign.posh_user} with title {listing_title}. Creating it now...')
+                            self.logger.warning(f'Could not find a listed item for {self.campaign.posh_user} with title {listed_item["title"]}. Creating it now...')
 
                             try:
-                                listing = Listing.objects.get(title=listing_title)
+                                listing = Listing.objects.get(title=listed_item["title"])
                             except Listing.DoesNotExist:
                                 listing = None
 
-                            listed_item = ListedItem(posh_user=self.campaign.posh_user, listing=listing, listing_title=listing_title)
+                            listed_item_obj = ListedItem(
+                                posh_user=self.campaign.posh_user,
+                                listing=listing,
+                                listing_title=listed_item['title'],
+                                listed_item_id=listed_item['id']
+                            )
 
-                            if listing_title in all_listings['reserved_listings']:
-                                listed_item.status = ListedItem.RESERVED
-                            elif listing_title in all_listings['sold_listings']:
-                                listed_item.datetime_sold = timezone.now()
-                                listed_item.status = ListedItem.SOLD
+                            if listing_type == 'reserved_listings':
+                                listed_item_obj.status = ListedItem.RESERVED
+                            elif listing_type == 'sold_listings':
+                                listed_item_obj.datetime_sold = timezone.now()
+                                listed_item_obj.status = ListedItem.SOLD
                             else:
-                                listed_item.status = ListedItem.UP
-                                listings_can_share.append(listing_title)
+                                listed_item_obj.status = ListedItem.UP
+                                listings_can_share.append(listed_item['title'])
 
-                            listed_item.save()
+                            listed_item_obj.save()
                         except ListedItem.MultipleObjectsReturned:
                             pass
 
@@ -508,12 +515,12 @@ class CampaignTask(Task):
 
                         return shared
 
-                    elif all_listings['reserved_listings']:
+                    elif listed_items['reserved_listings']:
                         self.logger.info('There are only reserved listing on this user\'s account.')
 
                         return False
 
-                    elif not listings_can_share and all_listings['shareable_listings']:
+                    elif not listings_can_share and listed_items['shareable_listings']:
                         self.logger.info('The remaining listings are under review. Pausing campaign.')
 
                         self.campaign.status = Campaign.PAUSED
@@ -730,58 +737,59 @@ def check_posh_users():
             except Campaign.DoesNotExist:
                 campaign = None
 
-            all_listings = client.get_all_listings(posh_user.username)
-            if all_listings:
-                listing_titles = all_listings['shareable_listings'] + all_listings['sold_listings'] + all_listings['reserved_listings']
-
-                for listing_title in listing_titles:
+            listed_items = client.get_all_listings(posh_user.username)
+            if listed_items:
+                for listed_item_type, listed_item in listed_items:
                     try:
-                        listed_item = ListedItem.objects.get(posh_user=posh_user, listing_title=listing_title)
+                        listed_item_obj = ListedItem.objects.get(posh_user=posh_user, listing_title=listed_item['title'])
 
-                        if listing_title in all_listings['shareable_listings'] and listed_item.status != ListedItem.UP:
-                            if listed_item.status == ListedItem.UNDER_REVIEW:
-                                listed_item.datetime_passed_review = timezone.now()
-                                listed_item.status = ListedItem.UP
-                                listed_item.save(update_fields=['status', 'datetime_passed_review'])
-                            elif listed_item.status != ListedItem.UNDER_REVIEW and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
-                                listed_item.status = ListedItem.UP
-                                listed_item.save(update_fields=['status'])
+                        listed_item_obj.listed_item_id = listed_item['id']
+                        listed_item_obj.save(update_fields=['listed_item_id'])
 
-                        elif listing_title in all_listings['sold_listings'] and listed_item.status != ListedItem.SOLD:
-                            listed_item.datetime_sold = timezone.now()
-                            listed_item.status = ListedItem.SOLD
+                        if listed_item_type == 'shareable_listings' and listed_item_obj.status != ListedItem.UP:
+                            if listed_item_obj.status == ListedItem.UNDER_REVIEW:
+                                listed_item_obj.datetime_passed_review = timezone.now()
+                                listed_item_obj.status = ListedItem.UP
+                                listed_item_obj.save(update_fields=['status', 'datetime_passed_review'])
+                            elif listed_item_obj.status != ListedItem.UNDER_REVIEW and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
+                                listed_item_obj.status = ListedItem.UP
+                                listed_item_obj.save(update_fields=['status'])
 
-                            listed_item.save(update_fields=['status', 'datetime_sold'])
-                        elif listing_title in all_listings['reserved_listings'] and listed_item.status != ListedItem.RESERVED:
-                            listed_item.status = ListedItem.RESERVED
-                            listed_item.save(update_fields=['status'])
+                        elif listed_item_type == 'sold_listings' and listed_item_obj.status != ListedItem.SOLD:
+                            listed_item_obj.datetime_sold = timezone.now()
+                            listed_item_obj.status = ListedItem.SOLD
+
+                            listed_item_obj.save(update_fields=['status', 'datetime_sold'])
+                        elif listed_item_type == 'reserved_listings' and listed_item_obj.status != ListedItem.RESERVED:
+                            listed_item_obj.status = ListedItem.RESERVED
+                            listed_item_obj.save(update_fields=['status'])
 
                     except ListedItem.DoesNotExist:
-                        logger.warning(f'Could not find a listed item for {posh_user} with title {listing_title}.')
+                        logger.warning(f'Could not find a listed item for {posh_user} with title {listed_item["title"]}.')
 
                         if not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING):
                             logger.warning(f'Creating the listed item now...')
 
                             try:
-                                listing = Listing.objects.get(title=listing_title)
+                                listing = Listing.objects.get(title=listed_item['title'])
                             except Listing.DoesNotExist:
                                 listing = None
 
-                            listed_item = ListedItem(posh_user=posh_user, listing=listing, listing_title=listing_title)
+                            listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=listed_item['title'])
 
-                            if listing_title in all_listings['reserved_listings']:
-                                listed_item.status = ListedItem.RESERVED
-                            elif listing_title in all_listings['sold_listings']:
-                                listed_item.datetime_sold = timezone.now()
-                                listed_item.status = ListedItem.SOLD
+                            if listed_item_type == 'reserved_listings':
+                                listed_item_obj.status = ListedItem.RESERVED
+                            elif listed_item_type == 'sold_listings':
+                                listed_item_obj.datetime_sold = timezone.now()
+                                listed_item_obj.status = ListedItem.SOLD
                             else:
-                                listed_item.status = ListedItem.UP
+                                listed_item_obj.status = ListedItem.UP
 
-                            listed_item.save()
+                            listed_item_obj.save()
                     except ListedItem.MultipleObjectsReturned:
                         pass
 
-                if (all_listings['shareable_listings'] or all_listings['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
+                if (listed_items['shareable_listings'] or listed_items['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
                     campaign.next_runtime = timezone.now()
                     campaign.queue_status = 'CALCULATING'
@@ -789,7 +797,7 @@ def check_posh_users():
                     campaign.save(update_fields=['next_runtime', 'queue_status', 'status'])
 
             # Checks if the user is inactive when there are no listings and
-            if sum([len(y) for y in all_listings.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
+            if sum([len(y) for y in listed_items.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
                 logger.info('User has no listings available...')
                 is_active_in_posh = client.check_inactive(posh_user.username)
 
