@@ -9,7 +9,7 @@ from django.urls import reverse
 from . import models
 
 
-admin.site.register(models.Offer)
+admin.site.register(models.ListedItemOffer)
 
 
 @admin.action(description='Start selected campaigns')

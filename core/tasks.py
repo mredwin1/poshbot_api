@@ -409,10 +409,7 @@ class CampaignTask(Task):
     def share_and_more(self):
         login_retries = 0
         update_profile_retries = 0
-        all_listings_retries = 0
-        listing_shared_retries = 0
         profile_updated = self.campaign.posh_user.profile_updated
-        all_listed_items = {}
         listing_shared = None
         shared = None
         with PoshMarkClient(self.campaign, self.logger) as client:
@@ -433,112 +430,69 @@ class CampaignTask(Task):
                 self.campaign.posh_user.save(update_fields=['profile_updated'])
 
             if logged_in:
-                while not all_listed_items and all_listings_retries < 3:
-                    all_listed_items = client.get_all_listings()
-                    all_listings_retries += 1
+                all_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user)
+                shareable_listed_items = all_listed_items.filter(status=ListedItem.UP).exclude(listed_item_id='')
 
-                self.logger.debug(all_listed_items)
+                if shareable_listed_items:
+                    for listed_item in shareable_listed_items:
+                        listing_shared_retries = 0
+                        while listing_shared is None and listing_shared_retries < 3:
+                            listing_shared = client.share_item(listed_item.listed_item_id, listed_item.listing_title)
+                            listing_shared_retries += 1
 
-                if any(values for values in all_listed_items.values() if values):
-                    listings_can_share = []
+                        if not shared:
+                            shared = listing_shared
+                        listing_shared = None
 
-                    for listing_type, listed_items in all_listed_items.items():
-                        for listed_item in listed_items:
-                            try:
-                                listed_item_obj = ListedItem.objects.get(posh_user=self.campaign.posh_user, listing_title=listed_item['title'])
+                        if random.random() < .20 and shared:
+                            self.logger.info('Seeing if it is time to send offers to likers')
+                            now = timezone.now()
+                            nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
+                                                        minute=0, second=0).replace(tzinfo=pytz.utc)
+                            midnight = nine_pm + datetime.timedelta(hours=3)
 
-                                listed_item_obj.listed_item_id = listed_item['id']
-                                listed_item_obj.save(update_fields=['listed_item_id'])
+                            if nine_pm < now < midnight:
+                                client.send_offer_to_likers(listed_item)
+                            else:
+                                self.logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
 
-                                if listing_type == 'shareable_listings':
-                                    if listed_item_obj.status != ListedItem.UP:
-                                        listed_item_obj.status = ListedItem.UP
-                                        listed_item_obj.save(update_fields=['status'])
-                                    listings_can_share.append(listed_item['title'])
-                                elif listing_type == 'sold_listings' and not listed_item_obj.datetime_sold:
-                                    listed_item_obj.datetime_sold = timezone.now()
-                                    listed_item_obj.status = ListedItem.SOLD
-                                    listed_item_obj.save(update_fields=['status', 'datetime_sold'])
-                                elif listing_type == 'reserved_listings' and listed_item_obj.status != ListedItem.RESERVED:
-                                    listed_item_obj.status = ListedItem.RESERVED
-                                    listed_item_obj.save(update_fields=['status'])
+                        if random.random() < .20 and shared:
+                            client.check_offers(listed_item.listing_title)
 
-                            except ListedItem.DoesNotExist:
-                                self.logger.warning(f'Could not find a listed item for {self.campaign.posh_user} with title {listed_item["title"]}. Creating it now...')
-
-                                try:
-                                    listing = Listing.objects.get(title=listed_item["title"])
-                                except Listing.DoesNotExist:
-                                    listing = None
-
-                                listed_item_obj = ListedItem(
-                                    posh_user=self.campaign.posh_user,
-                                    listing=listing,
-                                    listing_title=listed_item['title'],
-                                    listed_item_id=listed_item['id']
-                                )
-
-                                if listing_type == 'reserved_listings':
-                                    listed_item_obj.status = ListedItem.RESERVED
-                                elif listing_type == 'sold_listings':
-                                    listed_item_obj.datetime_sold = timezone.now()
-                                    listed_item_obj.status = ListedItem.SOLD
-                                else:
-                                    listed_item_obj.status = ListedItem.UP
-                                    listings_can_share.append(listed_item['title'])
-
-                                listed_item_obj.save()
-                            except ListedItem.MultipleObjectsReturned:
-                                pass
-
-                    self.logger.debug(listings_can_share)
-
-                    if listings_can_share:
-                        for listing_title in listings_can_share:
-                            while listing_shared is None and listing_shared_retries < 3:
-                                listing_shared = client.share_item(listing_title)
-                                listing_shared_retries += 1
-
-                            if not shared:
-                                shared = listing_shared
-                            listing_shared = None
-
-                            if random.random() < .20 and shared:
-                                self.logger.info('Seeing if it is time to send offers to likers')
-                                now = timezone.now()
-                                nine_pm = datetime.datetime(year=now.year, month=now.month, day=now.day, hour=2,
-                                                            minute=0, second=0).replace(tzinfo=pytz.utc)
-                                midnight = nine_pm + datetime.timedelta(hours=3)
-
-                                if nine_pm < now < midnight:
-                                    client.send_offer_to_likers(listing_title)
-                                else:
-                                    self.logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
-
-                            if random.random() < .20 and shared:
-                                client.check_offers(listing_title)
-
-                        return shared
-
-                    elif all_listed_items['reserved_listings']:
-                        self.logger.info('There are only reserved listing on this user\'s account.')
+                    return shared
+                else:
+                    reserved_listed_items = all_listed_items.filter(status=ListedItem.RESERVED)
+                    under_review_listed_items = all_listed_items.filter(status=ListedItem.UNDER_REVIEW)
+                    sold_listed_items = all_listed_items.filter(status=ListedItem.SOLD)
+                    if reserved_listed_items:
+                        self.logger.info('This user has no shareable listings but has some reserved. Setting delay to an hour.')
 
                         return False
-
-                    elif not listings_can_share and all_listed_items['shareable_listings']:
-                        self.logger.info('The remaining listings are under review. Pausing campaign.')
+                    elif under_review_listed_items:
+                        self.logger.info('This user has no shareable listings but has some under review. Pausing campaign')
 
                         self.campaign.status = Campaign.PAUSED
-                        self.campaign.save(update_fields=['status'])
+                        self.campaign.next_runtime = None
+                        self.campaign.save()
+
+                        return False
+                    elif sold_listed_items:
+                        self.logger.info('This user has no shareable listings and only ones sold. Stopping campaign')
+
+                        self.campaign.status = Campaign.STOPPING
+                        self.campaign.next_runtime = None
+                        self.campaign.save()
 
                         return False
                     else:
-                        self.logger.info('There are no listings on this user\'s account. Stopping campaign.')
+                        self.logger.info('This user has no listings for sale. Stopping campaign')
 
                         self.campaign.status = Campaign.STOPPING
-                        self.campaign.save(update_fields=['status'])
+                        self.campaign.next_runtime = None
+                        self.campaign.save()
 
                         return False
+
             else:
                 self.logger.info('Stopping campaign because user could not log in')
 

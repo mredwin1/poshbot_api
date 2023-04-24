@@ -22,7 +22,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, Offer
+from core.models import Campaign, ListedItemOffer
 
 
 class Captcha:
@@ -411,59 +411,52 @@ class PoshMarkClient(BaseClient):
 
                     return 'UNKNOWN'
 
-    def check_listing_timestamp(self, listing_title):
+    def check_listing_timestamp(self, listed_item_id, listed_item_tile):
         """Given a listing title will check the last time the listing was shared"""
         try:
-            self.logger.info(f'Checking the timestamp on following item: {listing_title}')
+            self.logger.info(f'Checking the timestamp on following item: {listed_item_tile}')
 
-            self.go_to_closet()
+            self.web_driver.get(f'https://poshmark.com/listing/{listed_item_id}')
 
-            listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-            for listed_item in listed_items:
-                title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
-                if title.text == listing_title:
-                    listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
-                    listing_button.click()
+            self.sleep(1)
+            timestamp_element = self.locate(
+                By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[1]/div[1]/header/div/div/div/div'
+            )
+            timestamp = timestamp_element.text
 
-                    self.sleep(1)
-                    timestamp_element = self.locate(
-                        By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[1]/div[1]/header/div/div/div/div'
-                    )
-                    timestamp = timestamp_element.text
+            timestamp = timestamp[8:]
+            elapsed_time = 9001
 
-                    timestamp = timestamp[8:]
-                    elapsed_time = 9001
+            self.logger.info(f'Timestamp: {timestamp}')
 
-                    self.logger.info(f'Timestamp: {timestamp}')
+            space_index = timestamp.find(' ')
 
-                    space_index = timestamp.find(' ')
+            if timestamp == 'now':
+                elapsed_time = 0
+            elif timestamp[:space_index] == 'a':
+                elapsed_time = 60
+            elif timestamp[:space_index].isnumeric():
+                offset = space_index + 1
+                second_space_index = timestamp[offset:].find(' ') + offset
+                unit = timestamp[offset:second_space_index]
 
-                    if timestamp == 'now':
-                        elapsed_time = 0
-                    elif timestamp[:space_index] == 'a':
-                        elapsed_time = 60
-                    elif timestamp[:space_index].isnumeric():
-                        offset = space_index + 1
-                        second_space_index = timestamp[offset:].find(' ') + offset
-                        unit = timestamp[offset:second_space_index]
+                if unit == 'secs':
+                    elapsed_time = int(timestamp[:space_index])
+                elif unit == 'mins':
+                    elapsed_time = int(timestamp[:space_index]) * 60
+                elif unit == 'hours':
+                    elapsed_time = int(timestamp[:space_index]) * 60 * 60
 
-                        if unit == 'secs':
-                            elapsed_time = int(timestamp[:space_index])
-                        elif unit == 'mins':
-                            elapsed_time = int(timestamp[:space_index]) * 60
-                        elif unit == 'hours':
-                            elapsed_time = int(timestamp[:space_index]) * 60 * 60
+            if elapsed_time > 60:
+                hours, remainder = divmod(elapsed_time, 3600)
+                minutes, seconds = divmod(remainder, 60)
+                self.logger.error(f'Sharing does not seem to be working '
+                                  f'Elapsed Time: {hours} hours, {minutes} minutes, and {seconds} seconds')
+                return False
+            else:
+                self.logger.info(f'Shared successfully')
 
-                    if elapsed_time > 60:
-                        hours, remainder = divmod(elapsed_time, 3600)
-                        minutes, seconds = divmod(remainder, 60)
-                        self.logger.error(f'Sharing does not seem to be working '
-                                          f'Elapsed Time: {hours} hours, {minutes} minutes, and {seconds} seconds')
-                        return False
-                    else:
-                        self.logger.info(f'Shared successfully')
-
-                        return True
+                return True
 
         except TimeoutException:
             self.handle_error('Error while checking listing timestamp', 'listing_timestamp_error.png')
@@ -1123,29 +1116,25 @@ class PoshMarkClient(BaseClient):
         except Exception as e:
             return self.handle_error('Error while listing', 'list_item_error.png')
 
-    def share_item(self, listing_title):
+    def share_item(self, listed_item_id, listed_item_title):
         """Will share an item in the closet"""
         try:
-            self.logger.info(f'Sharing the following item: {listing_title}')
+            self.logger.info(f'Sharing the following item: {listed_item_title}')
 
             self.go_to_closet()
 
-            listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-            for listed_item in listed_items:
-                title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
-                if title.text == listing_title:
-                    share_button = listed_item.find_element(By.CLASS_NAME, 'social-action-bar__share')
-                    share_button.click()
+            share_button = self.locate(By.CSS_SELECTOR, f"div[data-et-prop-listing_id='{listed_item_id}'][class*='social-action-bar_share']")
 
-                    self.sleep(1)
+            share_button.click()
 
-                    to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
-                    to_followers_button.click()
+            self.sleep(1)
 
-                    self.web_driver.save_screenshot(f'/log_images/{self.campaign.title}/item_shared.png')
-                    self.logger.info('Item Shared')
+            to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
+            to_followers_button.click()
 
-                    return self.check_listing_timestamp(listing_title)
+            self.logger.info('Item Shared')
+
+            return self.check_listing_timestamp(listed_item_id, listed_item_title)
 
         except Exception as e:
             self.handle_error('Error while sharing item', 'share_item_error.png')
@@ -1283,84 +1272,77 @@ class PoshMarkClient(BaseClient):
         except Exception as e:
             self.handle_error('Error while checking offers', 'check_offers_error.png')
 
-    def send_offer_to_likers(self, listing_title):
+    def send_offer_to_likers(self, listed_item):
         """Will send offers to all likers for a given listing"""
         try:
-            self.logger.info(f'Sending offers to all likers for the following item: {listing_title}')
+            self.logger.info(f'Sending offers to all likers for the following item: {listed_item.listing_title}')
             today = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
             start_date = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=0, minute=0,
                                            second=0).replace(tzinfo=pytz.utc)
             end_date = datetime.datetime(year=today.year, month=today.month, day=today.day, hour=23, minute=59,
                                          second=59).replace(tzinfo=pytz.utc)
 
-            offers = Offer.objects.filter(
-                listing_title=listing_title,
+            offers = ListedItemOffer.objects.filter(
+                listed_item=listed_item,
                 posh_user=self.campaign.posh_user,
                 datetime_sent__range=(start_date, end_date)
             ).order_by('datetime_sent')
             first_offer = offers.first()
 
             if not first_offer:
-                self.go_to_closet()
+                self.web_driver.get(f'https://poshmark.com/listing/{listed_item.listed_item_id}')
 
-                listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-                for listed_item in listed_items:
-                    title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
-                    if title.text == listing_title:
-                        listing_price_text = listed_item.find_element(By.CLASS_NAME, 'fw--bold').text
-                        listing_price = int(re.findall(r'\d+', listing_price_text)[-1])
+                self.sleep(1)
 
-                        listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
-                        listing_button.click()
+                offer_button = self.locate(
+                    By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div/button'
+                )
+                offer_button.click()
 
-                        self.sleep(2)
+                offer_to_likers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/div[2]/div/button')
+                offer_to_likers_button.click()
 
-                        offer_button = self.locate(
-                            By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div/button'
-                        )
-                        offer_button.click()
+                self.sleep(1)
 
-                        offer_to_likers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/div[2]/div/button')
-                        offer_to_likers_button.click()
+                offer_modal = self.locate(By.CLASS_NAME, 'offer-modal__bundle')
+                listing_price = int(offer_modal.find_element_by_css_selector('.fw--med').text.strip('$'))
 
-                        self.sleep(1)
+                offer_amount = int(listing_price - (listing_price * .1))
 
-                        offer_amount = int(listing_price - (listing_price * .1))
+                self.logger.info(f'Sending offers to likers for ${offer_amount}')
 
-                        self.logger.info(f'Sending offers to likers for ${offer_amount}')
+                offer_input = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[1]/input')
+                offer_input.send_keys(str(offer_amount))
 
-                        offer_input = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[1]/input')
-                        offer_input.send_keys(str(offer_amount))
+                self.sleep(2)
 
-                        self.sleep(2)
+                shipping_dropdown = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[2]/div[1]/div/div/div/div[1]/div')
+                shipping_dropdown.click()
 
-                        shipping_dropdown = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[2]/div[1]/div/div/div/div[1]/div')
-                        shipping_dropdown.click()
+                shipping_options = self.locate_all(By.CLASS_NAME, 'dropdown__menu__item')
 
-                        shipping_options = self.locate_all(By.CLASS_NAME, 'dropdown__menu__item')
+                for shipping_option in shipping_options:
+                    if shipping_option.text == 'FREE':
+                        shipping_option.click()
+                        break
 
-                        for shipping_option in shipping_options:
-                            if shipping_option.text == 'FREE':
-                                shipping_option.click()
-                                break
+                apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div/button[2]')
+                apply_button.click()
 
-                        apply_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[3]/div/button[2]')
-                        apply_button.click()
+                done_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[2]/div[3]/button')
+                done_button.click()
 
-                        done_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[2]/div[3]/button')
-                        done_button.click()
+                offer = ListedItemOffer(
+                    amount=offer_amount,
+                    listed_item=listed_item,
+                    posh_user=self.campaign.posh_user,
+                    datetime_sent=today
+                )
+                offer.save()
 
-                        offer = Offer(
-                            amount=offer_amount,
-                            listing_title=listing_title,
-                            posh_user=self.campaign.posh_user,
-                            datetime_sent=today
-                        )
-                        offer.save()
+                self.logger.info('Offers successfully sent!')
 
-                        self.logger.info('Offers successfully sent!')
-
-                        return True
+                return True
             else:
                 self.logger.info('Not sending another offer the following offer was sent today: ')
                 self.logger.info(f'Datetime Sent - {first_offer.datetime_sent} Offer Amount - {first_offer.amount}')
