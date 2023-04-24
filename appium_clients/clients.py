@@ -1141,9 +1141,9 @@ class PoshMarkClient(AppiumClient):
         except Exception as e:
             self.logger.error(traceback.format_exc())
             self.logger.info(self.driver.page_source)
-            self.logger.debug(soup)
-            self.logger.debug(response)
-            self.logger.debug(a_tag)
+            self.logger.debug(str(soup))
+            self.logger.debug(str(response))
+            self.logger.debug(str(a_tag))
 
             return ''
 
