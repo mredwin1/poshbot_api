@@ -600,6 +600,8 @@ class ManageCampaignsTask(Task):
                 if device.is_ready():
                     return device
 
+            self.logger.info(str((timezone.now() - device.checkout_time).total_seconds()))
+
             if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > CampaignTask.time_limit and device.checked_out_by:
                 try:
                     campaign = Campaign.objects.get(id=device.checked_out_by)
