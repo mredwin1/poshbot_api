@@ -69,7 +69,7 @@ services:
     init: true
     container_name: celery_maintenance_poshbot_api
     restart: always
-    entrypoint: celery -A poshbot_api worker -Q maintenance -l INFO
+    entrypoint: celery -A poshbot_api worker --autoscale=3,1 -Q maintenance -l INFO
     stop_grace_period: "1m"
     stop_signal: SIGTERM
     env_file:
