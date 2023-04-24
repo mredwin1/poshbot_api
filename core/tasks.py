@@ -421,17 +421,16 @@ class CampaignTask(Task):
                 logged_in = client.login(login_retries)
                 login_retries += 1
 
-            while not profile_updated and update_profile_retries < 3 and logged_in:
-                profile_updated = client.update_profile(update_profile_retries)
-                update_profile_retries += 1
-
-            if profile_updated:
-                self.campaign.posh_user.profile_updated = True
-                self.campaign.posh_user.save(update_fields=['profile_updated'])
-
             if logged_in:
-                all_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user)
-                shareable_listed_items = all_listed_items.filter(status=ListedItem.UP).exclude(listed_item_id='')
+                while not profile_updated and update_profile_retries < 3 and logged_in:
+                    profile_updated = client.update_profile(update_profile_retries)
+                    update_profile_retries += 1
+
+                    if profile_updated:
+                        self.campaign.posh_user.profile_updated = True
+                        self.campaign.posh_user.save(update_fields=['profile_updated'])
+
+                shareable_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP).exclude(listed_item_id='')
 
                 if shareable_listed_items:
                     for listed_item in shareable_listed_items:
@@ -461,6 +460,7 @@ class CampaignTask(Task):
 
                     return shared
                 else:
+                    all_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user)
                     reserved_listed_items = all_listed_items.filter(status=ListedItem.RESERVED)
                     under_review_listed_items = all_listed_items.filter(status=ListedItem.UNDER_REVIEW)
                     sold_listed_items = all_listed_items.filter(status=ListedItem.SOLD)
