@@ -517,7 +517,8 @@ class PoshMarkClient(AppiumClient):
                             username = self.locate(AppiumBy.ID, 'username')
                             self.campaign.posh_user.username = username.text
                             self.campaign.posh_user.save(update_fields=['username'])
-                        self.finished_registering = True
+                    elif window_title and window_title.text in ('Sizes', 'Complete your Profile'):
+                        self.is_registered = True
                     else:
                         if window_title:
                             self.logger.info(f'No handler for screen with title {window_title.text}')
@@ -546,10 +547,6 @@ class PoshMarkClient(AppiumClient):
                         self.sleep(5)
 
                         self.need_alert_check = True
-
-                if self.finished_registering:
-                    response = requests.get(f'https://poshmark.com/closet/{self.campaign.posh_user.username}', timeout=30)
-                    self.is_registered = response.status_code == requests.codes.ok
 
             return self.is_registered
         except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
