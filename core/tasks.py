@@ -688,7 +688,7 @@ ManageCampaignsTask = app.register_task(ManageCampaignsTask())
 def check_posh_users():
     logger = logging.getLogger(__name__)
     logger.info('Checking posh users')
-    posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True)
+    posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True, username='abary1996')
     with PublicPoshMarkClient(logger) as client:
         for posh_user in posh_users:
             try:
