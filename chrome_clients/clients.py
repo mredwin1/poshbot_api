@@ -1126,8 +1126,9 @@ class PoshMarkClient(BaseClient):
             self.sleep(2)
 
             self.logger.debug(self.web_driver.page_source)
-
-            share_button = self.locate(By.CSS_SELECTOR, f"//div[@data-et-prop-listing_id='{listed_item_id}' and contains(@class, 'social-action-bar__share')]")
+            xpath = f"//div[@data-et-prop-listing_id='{listed_item_id}' and contains(@class, 'social-action-bar__share')]"
+            self.logger.debug(xpath)
+            share_button = self.locate(By.CSS_SELECTOR, xpath)
 
             share_button.click()
 
