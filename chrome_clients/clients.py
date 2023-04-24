@@ -1123,7 +1123,7 @@ class PoshMarkClient(BaseClient):
 
             self.go_to_closet()
 
-            share_button = self.locate(By.CSS_SELECTOR, f"div[data-et-prop-listing_id='{listed_item_id}'][class*='social-action-bar_share']")
+            share_button = self.locate(By.CSS_SELECTOR, f"//div[@class='tiles_container']//div[@data-et-prop-listing_id='{listed_item_id}' and contains(@class, 'social-action-bar_share')]")
 
             share_button.click()
 
