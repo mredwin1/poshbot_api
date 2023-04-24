@@ -769,6 +769,9 @@ def check_posh_users():
                             elif listed_item_type == 'reserved_listings' and listed_item_obj.status != ListedItem.RESERVED:
                                 listed_item_obj.status = ListedItem.RESERVED
                                 listed_item_obj.save(update_fields=['status'])
+                            elif listed_item_type == 'not_for_sale_listings':
+                                listed_item_obj.status = ListedItem.NOT_FOR_SALE
+                                listed_item_obj.save()
 
                         except ListedItem.DoesNotExist:
                             logger.warning(f'Could not find a listed item for {posh_user} with title {listed_item["title"]}.')
@@ -788,6 +791,8 @@ def check_posh_users():
                                 elif listed_item_type == 'sold_listings':
                                     listed_item_obj.datetime_sold = timezone.now()
                                     listed_item_obj.status = ListedItem.SOLD
+                                elif listed_item_type == 'not_for_sale_listings':
+                                    listed_item_obj.status = ListedItem.NOT_FOR_SALE
                                 else:
                                     listed_item_obj.status = ListedItem.UP
 

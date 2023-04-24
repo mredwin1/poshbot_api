@@ -433,6 +433,7 @@ class ListingImage(models.Model):
 
 class ListedItem(models.Model):
     NOT_LISTED = 'NOT LISTED'
+    NOT_FOR_SALE = 'NOT FOR SALE'
     UP = 'UP'
     UNDER_REVIEW = 'UNDER REVIEW'
     RESERVED = 'RESERVED'
@@ -441,6 +442,7 @@ class ListedItem(models.Model):
 
     STATUS_CHOICES = [
         (NOT_LISTED, NOT_LISTED),
+        (NOT_FOR_SALE, NOT_FOR_SALE),
         (UP, UP),
         (UNDER_REVIEW, UNDER_REVIEW),
         (RESERVED, RESERVED),
