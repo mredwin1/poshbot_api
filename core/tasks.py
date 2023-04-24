@@ -701,10 +701,7 @@ def check_posh_users():
                 for listed_item_type, listed_items in all_listed_items.items():
                     for listed_item in listed_items:
                         try:
-                            listed_item_obj = ListedItem.objects.get(posh_user=posh_user, listing_title=listed_item['title'])
-
-                            listed_item_obj.listed_item_id = listed_item['id']
-                            listed_item_obj.save(update_fields=['listed_item_id'])
+                            listed_item_obj = ListedItem.objects.get(posh_user=posh_user, listed_item_id=listed_item['id'])
 
                             if listed_item_type == 'shareable_listings' and listed_item_obj.status != ListedItem.UP:
                                 if listed_item_obj.status == ListedItem.UNDER_REVIEW:
@@ -738,7 +735,7 @@ def check_posh_users():
                                 except Listing.DoesNotExist:
                                     listing = None
 
-                                listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=listed_item['title'])
+                                listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=listed_item['title'], listed_item_id=listed_item['id'])
 
                                 if listed_item_type == 'reserved_listings':
                                     listed_item_obj.status = ListedItem.RESERVED
