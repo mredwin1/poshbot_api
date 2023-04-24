@@ -104,7 +104,7 @@ class CampaignTask(Task):
 
         if not self.campaign.posh_user.is_active_in_posh:
             response['status'] = False
-            response['errors'].append('Posh user, {self.campaign.posh_user}, is inactive')
+            response['errors'].append(f'Posh user, {self.campaign.posh_user}, is inactive')
 
         return response
 
