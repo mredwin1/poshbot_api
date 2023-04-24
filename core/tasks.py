@@ -588,7 +588,7 @@ class ManageCampaignsTask(Task):
         self.logger = logging.getLogger(__name__)
 
     def get_available_device(self, needed_device=None):
-        devices = Device.objects.filter(is_active=True, checked_out_by__isnull=True)
+        devices = Device.objects.filter(is_active=True)
         if needed_device:
             devices = devices.filter(id=needed_device.id)
         else:
@@ -596,13 +596,9 @@ class ManageCampaignsTask(Task):
         in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
 
         for device in devices:
-            if device.ip_reset_url not in in_use_ip_reset_urls:
+            if device.ip_reset_url not in in_use_ip_reset_urls and not device.checked_out_by:
                 if device.is_ready():
                     return device
-
-            if device.checkout_time is not None:
-                self.logger.info(str((timezone.now() - device.checkout_time).total_seconds()))
-                self.logger.info(CampaignTask.time_limit)
 
             if device.checkout_time is not None and (timezone.now() - device.checkout_time).total_seconds() > CampaignTask.time_limit and device.checked_out_by:
                 try:
