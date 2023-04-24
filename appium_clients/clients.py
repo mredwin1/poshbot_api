@@ -560,6 +560,10 @@ class PoshMarkClient(AppiumClient):
             self.logger.info('Finishing registration')
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
+                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
+                    self.logger.info('Waiting to continue...')
+                    self.sleep(3)
+
                 self.alert_check()
 
                 if self.is_present(AppiumBy.ID, 'titleTextView'):
