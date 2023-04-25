@@ -1138,6 +1138,8 @@ class PoshMarkClient(AppiumClient):
             a_tag = soup.find("a", {"class": "secondary-action"})
             listing_url = a_tag["href"]
 
+            self.driver.back()
+
             return listing_url.split("/")[-1].split("?")[0]
         except Exception as e:
             self.logger.error(traceback.format_exc())
