@@ -431,7 +431,8 @@ class PoshMarkClient(AppiumClient):
                         self.click(sign_up)
 
                         self.logger.info('Clicked sign up button')
-
+                    else:
+                        self.need_alert_check = True
                 else:
                     if not self.account_pop_up_clicked and self.is_present(AppiumBy.ID, 'com.google.android.gms:id/cancel'):
                         none_of_the_above = self.locate(AppiumBy.ID, 'com.google.android.gms:id/cancel')
