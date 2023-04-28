@@ -1097,8 +1097,16 @@ class PoshMarkClient(AppiumClient):
                             self.sleep(.2)
                     elif self.is_present(AppiumBy.ID, 'design_bottom_sheet'):
                         self.driver.back()
+                    elif self.is_present(AppiumBy.XPATH, "//*[starts-with(@resource-id, 'com.google.android.documentsui:id')]"):
+                        self.logger.info('On document screen, going back.')
+                        self.driver.back()
+                        self.driver.back()
+                    elif self.is_present(AppiumBy.ID, 'gallery'):
+                        self.logger.info('On gallery screen, going back')
+                        self.driver.back()
                     else:
                         self.logger.info('Window title element not found.')
+
                         self.alert_check()
 
             return self.listed
