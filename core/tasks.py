@@ -793,10 +793,19 @@ def posh_user_cleanup():
     posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
 
     for posh_user in posh_users:
-        last_sale_date = ListedItem.objects.filter(
-            posh_user=posh_user,
-            status=ListedItem.SOLD
-        ).aggregate(Max('datetime_sold'))['datetime_sold__max']
+        if posh_user.app_package and posh_user.device and posh_user.clone_installed:
+            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+            device = client.device(posh_user.device.serial)
 
-        if last_sale_date is None or last_sale_date < two_weeks_ago:
+            device.uninstall(posh_user.app_package)
+
+            if posh_user.device.installed_clones > 0:
+                posh_user.device.installed_clones -= 1
+                posh_user.device.save(update_fields=['installed_clones'])
+
+            posh_user.clone_installed = False
+            posh_user.device = None
+            posh_user.save(update_fields=['clone_installed', 'device'])
+
+        if posh_user.date_disabled < two_weeks_ago:
             posh_user.delete()
