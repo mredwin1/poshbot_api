@@ -708,7 +708,7 @@ def check_posh_users():
                                     listed_item_obj.datetime_passed_review = timezone.now()
                                     listed_item_obj.status = ListedItem.UP
                                     listed_item_obj.save(update_fields=['status', 'datetime_passed_review'])
-                                elif listed_item_obj.status != ListedItem.UNDER_REVIEW and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
+                                elif listed_item_obj.status != ListedItem.UNDER_REVIEW:
                                     listed_item_obj.status = ListedItem.UP
                                     listed_item_obj.save(update_fields=['status'])
 
@@ -759,7 +759,7 @@ def check_posh_users():
                     campaign.save(update_fields=['next_runtime', 'queue_status', 'status'])
 
             # Checks if the user is inactive when there are no listings and
-            if sum([len(y) for y in all_listed_items.values()]) == 0 and (not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING)):
+            if sum([len(y) for y in all_listed_items.values()]) == 0:
                 logger.info('User has no listings available...')
                 is_active_in_posh = client.check_inactive(posh_user.username)
 
