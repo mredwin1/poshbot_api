@@ -786,6 +786,7 @@ def log_cleanup():
 
 @shared_task
 def posh_user_cleanup():
+    logger = logging.getLogger(__name__)
     day_ago = timezone.now() - datetime.timedelta(days=1)
     two_weeks_ago = timezone.now() - datetime.timedelta(days=14)
 
@@ -793,11 +794,13 @@ def posh_user_cleanup():
     posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
 
     for posh_user in posh_users:
+        logger.info(f'Going through {posh_user}')
         if posh_user.app_package and posh_user.device and posh_user.clone_installed:
+            logger.info('Uninstalled')
             client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
             device = client.device(posh_user.device.serial)
 
-            device.uninstall(posh_user.app_package)
+            worked = device.uninstall(posh_user.app_package)
 
             if posh_user.device.installed_clones > 0:
                 posh_user.device.installed_clones -= 1
@@ -806,6 +809,8 @@ def posh_user_cleanup():
             posh_user.clone_installed = False
             posh_user.device = None
             posh_user.save(update_fields=['clone_installed', 'device'])
+
+            logger.info(f'It worked? {worked}')
 
         if posh_user.date_disabled < two_weeks_ago:
             posh_user.delete()
