@@ -14,10 +14,13 @@ from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
+from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
 from ppadb.client import Client as AdbClient
 from uuid import uuid4
+
+from faker_providers import address_provider
 
 
 def path_and_rename(instance, filename):
@@ -156,6 +159,11 @@ class PoshUser(models.Model):
     app_package = models.CharField(max_length=100, blank=True)
     email_password = models.CharField(max_length=250, blank=True)
     email_imap_password = models.CharField(max_length=250, blank=True)
+    house_number = models.CharField(max_length=50, blank=True)
+    road = models.CharField(max_length=100, blank=True)
+    city = models.CharField(max_length=100, blank=True)
+    state = models.CharField(max_length=50, blank=True)
+    postcode = models.CharField(max_length=20, blank=True)
 
     profile_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
     header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
@@ -163,6 +171,9 @@ class PoshUser(models.Model):
     email = models.EmailField(blank=True)
 
     email_id = models.IntegerField(null=True, blank=True)
+
+    lat = models.DecimalField(max_digits=9, decimal_places=6, default=0)
+    long = models.DecimalField(max_digits=9, decimal_places=6, default=0)
 
     date_added = models.DateField(auto_now_add=True)
     date_disabled = models.DateField(null=True, blank=True)
@@ -255,6 +266,7 @@ class PoshUser(models.Model):
 
     @staticmethod
     def generate(fake, user, password, email, email_password='', email_imap_password='', email_id=None, excluded_names=None, excluded_profile_picture_ids=None):
+        fake.add_provider(address_provider.AddressProvider)
         attempts = 0
         profile_picture_id = str(fake.random_int(min=1, max=1000))
 
@@ -288,6 +300,7 @@ class PoshUser(models.Model):
         first_name = fake.first_name()
         last_name = fake.last_name()
         date_of_birth = fake.date_of_birth(minimum_age=18, maximum_age=30)
+        address = fake.address()
 
         if excluded_names:
             attempts = 0
@@ -310,7 +323,14 @@ class PoshUser(models.Model):
             email_imap_password=email_imap_password,
             email_id=email_id,
             date_of_birth=date_of_birth,
-            profile_picture_id=profile_picture_id
+            profile_picture_id=profile_picture_id,
+            house_number=address['house_number'],
+            road=address['road'],
+            city=address['city'],
+            state=address['state'],
+            postcode=address['postcode'],
+            lat=address['lat'],
+            long=address['lon']
         )
 
         posh_user.profile_picture.save(f'profile_{posh_user.id}.png', profile_picture_file, save=False)
@@ -319,6 +339,35 @@ class PoshUser(models.Model):
         posh_user.save()
 
         return posh_user
+
+    def replace_address(self, delete=True):
+        if delete:
+            current_address = {
+                'house_number': self.house_number,
+                'road': self.road,
+                'city': self.city,
+                'state': self.state,
+                'postcode': self.postcode,
+                'lat': self.lat,
+                'long': self.long
+            }
+
+            address_provider.delete_address_from_source(current_address)
+
+        faker = Faker()
+        faker.add_provider(address_provider.AddressProvider)
+
+        new_address = faker.address(self.postcode)
+
+        self.house_number = new_address['house_number']
+        self.road = new_address['road']
+        self.city = new_address['city']
+        self.state = new_address['state']
+        self.lat = new_address['lat']
+        self.long = new_address['long']
+        self.postcode = new_address['postcode']
+
+        self.save(update_fields=['house_number', 'road', 'city', 'state', 'lat', 'long', 'postcode'])
 
     def __str__(self):
         return self.username
@@ -439,6 +488,8 @@ class ListedItem(models.Model):
     RESERVED = 'RESERVED'
     SOLD = 'SOLD'
     REMOVED = 'REMOVED'
+    SHIPPED = 'SHIPPED'
+    CANCELLED = 'CANCELLED'
 
     STATUS_CHOICES = [
         (NOT_LISTED, NOT_LISTED),
@@ -447,7 +498,9 @@ class ListedItem(models.Model):
         (UNDER_REVIEW, UNDER_REVIEW),
         (RESERVED, RESERVED),
         (SOLD, SOLD),
-        (REMOVED, REMOVED)
+        (REMOVED, REMOVED),
+        (SHIPPED, SHIPPED),
+        (CANCELLED, CANCELLED)
     ]
 
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)

@@ -268,7 +268,6 @@ class PoshMarkClient(AppiumClient):
                                          aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
                                          region_name=settings.AWS_S3_REGION_NAME)
         self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
-        self.zipcodes = [33101, 33109, 33125, 33126, 33127, 33128, 33129, 33130, 33131, 33132, 33133, 33134, 33135, 33136, 33137, 33138, 33139, 33142, 33144, 33145, 33146, 33147, 33149, 32789, 32801, 32802, 32803, 32804, 32805, 32806, 32807, 32808, 32809, 32810, 32811, 32812, 32814, 32819, 32821, 32822, 32824, 32827, 32829, 32832, 32834, 32835, 32839, 32853, 32854, 32855, 32856, 32861, 32862, 32878, 32885, 32886, 32891, 32897, 32114, 32117, 32118, 32119, 32124, 32129, 32174, 33109, 33132, 33139, 33140, 33141, 33559, 33602, 33603, 33604, 33605, 33606, 33607, 33609, 33610, 33611, 33612, 33613, 33614, 33616, 33617, 33618, 33619, 33620, 33621, 33629, 33634]
 
         capabilities = dict(
             platformName='Android',
@@ -620,7 +619,7 @@ class PoshMarkClient(AppiumClient):
 
                     zip_input = self.locate(AppiumBy.ID, zipcode_id)
 
-                    self.input_text(zip_input, str(random.choice(self.zipcodes)), False)
+                    self.input_text(zip_input, self.campaign.posh_user.postcode, False)
 
                     self.logger.info('Zipcode inserted')
 
