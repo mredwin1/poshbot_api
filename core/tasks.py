@@ -761,6 +761,7 @@ def check_posh_users():
                 all_posh_listed_item_ids = [value['id'] for sublist in all_posh_listed_items.values() for value in sublist]
                 for listed_item in ListedItem.objects.filter(posh_user=posh_user, status=ListedItem.UP):
                     if listed_item.listed_item_id not in all_posh_listed_item_ids:
+                        logger.info(f'{listed_item.listing_title} is not in the listed items. Changing to removed.')
                         listed_item.status = ListedItem.REMOVED
                         listed_item.datetime_removed = timezone.now()
                         listed_item.save(update_fields=['status', 'datetime_removed'])
