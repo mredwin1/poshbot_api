@@ -27,7 +27,7 @@ class AddressProvider(BaseProvider):
         self.load_addresses()
 
     def load_addresses(self):
-        directory_path = "output_address_files"
+        directory_path = "addresses"
         for filename in os.listdir(directory_path):
             with open(os.path.join(directory_path, filename), "r") as f:
                 data = json.load(f)
