@@ -696,12 +696,12 @@ def check_posh_users():
             except Campaign.DoesNotExist:
                 campaign = None
 
-            all_listed_items = client.get_all_listings(posh_user.username)
-            if any(values for values in all_listed_items.values() if values):
-                for listed_item_type, listed_items in all_listed_items.items():
-                    for listed_item in listed_items:
+            all_posh_listed_items = client.get_all_listings(posh_user.username)
+            if any(values for values in all_posh_listed_items.values() if values):
+                for listed_item_type, posh_listed_items in all_posh_listed_items.items():
+                    for posh_listed_item in posh_listed_items:
                         try:
-                            listed_item_obj = ListedItem.objects.get(posh_user=posh_user, listed_item_id=listed_item['id'])
+                            listed_item_obj = ListedItem.objects.get(posh_user=posh_user, listed_item_id=posh_listed_item['id'])
 
                             if listed_item_type == 'shareable_listings' and listed_item_obj.status != ListedItem.UP:
                                 if listed_item_obj.status == ListedItem.UNDER_REVIEW:
@@ -725,17 +725,17 @@ def check_posh_users():
                                 listed_item_obj.save()
 
                         except ListedItem.DoesNotExist:
-                            logger.warning(f'Could not find a listed item for {posh_user} with title {listed_item["title"]}.')
+                            logger.warning(f'Could not find a listed item for {posh_user} with title {posh_listed_item["title"]}.')
 
                             if not campaign or campaign.status not in (Campaign.IDLE, Campaign.RUNNING, Campaign.STARTING):
                                 logger.warning(f'Creating the listed item now...')
 
                                 try:
-                                    listing = Listing.objects.get(title=listed_item['title'])
+                                    listing = Listing.objects.get(title=posh_listed_item['title'])
                                 except Listing.DoesNotExist:
                                     listing = None
 
-                                listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=listed_item['title'], listed_item_id=listed_item['id'])
+                                listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=posh_listed_item['title'], listed_item_id=posh_listed_item['id'])
 
                                 if listed_item_type == 'reserved_listings':
                                     listed_item_obj.status = ListedItem.RESERVED
@@ -751,15 +751,26 @@ def check_posh_users():
                         except ListedItem.MultipleObjectsReturned:
                             pass
 
-                if (all_listed_items['shareable_listings'] or all_listed_items['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
+                if (all_posh_listed_items['shareable_listings'] or all_posh_listed_items['reserved_listings']) and campaign and campaign.status == Campaign.PAUSED:
                     logger.info('User has shareable listings and its campaign is paused. Resuming...')
                     campaign.next_runtime = timezone.now()
                     campaign.queue_status = 'CALCULATING'
                     campaign.status = Campaign.STARTING
                     campaign.save(update_fields=['next_runtime', 'queue_status', 'status'])
 
+                all_posh_listed_item_ids = [value['id'] for sublist in all_posh_listed_items.values() for value in sublist]
+                for listed_item in ListedItem.objects.filter(posh_user=posh_user, status=ListedItem.UP):
+                    if listed_item.listed_item_id not in all_posh_listed_item_ids:
+                        listed_item.status = ListedItem.REMOVED
+                        listed_item.datetime_removed = timezone.now()
+                        listed_item.save(update_fields=['status', 'datetime_removed'])
+
+                if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.UP, ListedItem.RESERVED)).count() == 0 and campaign and campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+                    campaign.status = Campaign.STOPPING
+                    campaign.save(update_fields=['status'])
+
             # Checks if the user is inactive when there are no listings and
-            if sum([len(y) for y in all_listed_items.values()]) == 0:
+            if sum([len(y) for y in all_posh_listed_items.values()]) == 0:
                 logger.info('User has no listings available...')
                 is_active_in_posh = client.check_inactive(posh_user.username)
 
