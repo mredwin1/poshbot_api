@@ -23,13 +23,13 @@ def delete_address_from_source(address_dict):
 class AddressProvider(BaseProvider):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+        self.directory_path = os.path.join(os.path.dirname(__file__), "addresses")
         self.addresses = []
         self.load_addresses()
 
     def load_addresses(self):
-        directory_path = "addresses"
-        for filename in os.listdir(directory_path):
-            with open(os.path.join(directory_path, filename), "r") as f:
+        for filename in os.listdir(self.directory_path):
+            with open(os.path.join(self.directory_path, filename), "r") as f:
                 data = json.load(f)
                 self.addresses += data
 
