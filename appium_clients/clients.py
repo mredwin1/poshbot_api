@@ -418,6 +418,10 @@ class PoshMarkClient(AppiumClient):
         self.download_and_send_file(profile_picture_key, campaign_folder)
 
         try:
+            if self.is_present(AppiumBy.ID, 'userTab'):
+                self.logger.info('User is registered')
+                return True
+
             while not self.is_registered:
                 if self.need_alert_check:
                     self.alert_check()
