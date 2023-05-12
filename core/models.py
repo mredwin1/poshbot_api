@@ -330,7 +330,7 @@ class PoshUser(models.Model):
             state=address['state'],
             postcode=address['postcode'],
             lat=address['lat'],
-            long=address['lon']
+            long=address['long']
         )
 
         posh_user.profile_picture.save(f'profile_{posh_user.id}.png', profile_picture_file, save=False)
