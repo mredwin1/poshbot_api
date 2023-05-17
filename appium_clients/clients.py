@@ -424,8 +424,11 @@ class PoshMarkClient(AppiumClient):
 
             while not self.is_registered:
                 if self.need_alert_check:
-                    self.alert_check()
+                    alert_dismissed = self.alert_check()
                     self.need_alert_check = False
+
+                    if not alert_dismissed:
+                        self.driver.back()
 
                 if not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('No screen title elements, probably at init screen.')
@@ -565,11 +568,11 @@ class PoshMarkClient(AppiumClient):
             self.logger.info('Finishing registration')
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
-                while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
-                    self.logger.info('Waiting to continue...')
-                    self.sleep(3)
+                if self.need_alert_check:
+                    alert_dismissed = self.alert_check()
 
-                self.alert_check()
+                    if not alert_dismissed:
+                        self.driver.back()
 
                 if self.is_present(AppiumBy.ID, 'titleTextView'):
                     window_title = self.locate(AppiumBy.ID, 'titleTextView')
@@ -659,6 +662,8 @@ class PoshMarkClient(AppiumClient):
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting to continue...')
                     self.sleep(3)
+
+                    self.need_alert_check = True
 
             return True
         except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
