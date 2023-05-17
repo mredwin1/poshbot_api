@@ -697,13 +697,14 @@ class PoshMarkClient(AppiumClient):
             if not listing_folder_exists:
                 os.mkdir(listing_folder)
 
-            cover_photo_key = listing.cover_photo.name
-            self.download_and_send_file(cover_photo_key, listing_folder)
-
-            listing_images.reverse()
-
             while not self.listed:
                 if self.is_present(AppiumBy.ID, 'sellTab'):
+                    self.logger.info('Downloading cover photo')
+                    cover_photo_key = listing.cover_photo.name
+                    self.download_and_send_file(cover_photo_key, listing_folder)
+
+                    listing_images.reverse()
+
                     self.logger.info('At main screen')
 
                     sell_button = self.locate(AppiumBy.ID, 'sellTab')
