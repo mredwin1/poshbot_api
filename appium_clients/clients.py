@@ -318,7 +318,11 @@ class PoshMarkClient(AppiumClient):
 
     def download_and_send_file(self, key, download_folder):
         filename = key.split('/')[-1]
-        download_location = f'/{download_folder}/{filename}'
+        download_location = f'{download_folder}/{filename}'
+
+        if not download_location.startswith('/'):
+            download_location = '/' + download_location
+
         self.bucket.download_file(key, download_location)
         self.send_file(destination_path=f'/sdcard/Pictures/{filename}', source_path=download_location)
 
