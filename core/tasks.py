@@ -776,7 +776,7 @@ def check_posh_users():
                         listed_item.datetime_removed = timezone.now()
                         listed_item.save(update_fields=['status', 'datetime_removed'])
 
-                if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.UP, ListedItem.RESERVED, ListedItem.UNDER_REVIEW)).count() == 0 and campaign and campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+                if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.UP, ListedItem.RESERVED, ListedItem.UNDER_REVIEW, ListedItem.NOT_LISTED)).count() == 0 and campaign and campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
                     campaign.status = Campaign.STOPPING
                     campaign.save(update_fields=['status'])
 
