@@ -334,8 +334,9 @@ class PoshMarkClient(AppiumClient):
             title = self.locate(AppiumBy.ID, 'android:id/alertTitle').text
 
             if 'party' in title.lower():
-                self.logger.info('Posh Party Alert found, clicking cancel button')
+                self.logger.info('Posh Party Alert found')
                 cancel = self.locate(AppiumBy.ID, 'android:id/button2')
+                self.logger.info(f'Clicking the {cancel.text} button')
                 self.click(cancel)
 
                 self.posh_party_alert_dismissed = True
@@ -356,13 +357,22 @@ class PoshMarkClient(AppiumClient):
 
         elif self.is_present(AppiumBy.ID, 'android:id/message'):
             message = self.locate(AppiumBy.ID, 'android:id/message')
+            
+            if 'party' in message.text:
+                self.logger.info('Posh Party Alert found')
+                cancel = self.locate(AppiumBy.ID, 'android:id/button2')
+                self.logger.info(f'Clicking the {cancel.text} button')
+                self.click(cancel)
 
-            self.logger.info(f'Alert with the following message popped up: {message.text}')
+                self.posh_party_alert_dismissed = True
+            else:
+                self.logger.info(f'Alert with the following message popped up: {message.text}')
 
-            self.logger.info(self.driver.page_source)
+                self.logger.info(self.driver.page_source)
 
-            ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-            self.click(ok_button)
+                ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                self.logger.info(f'Clicking the {ok_button.text} button')
+                self.click(ok_button)
 
             return True
 
