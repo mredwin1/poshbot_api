@@ -264,6 +264,7 @@ class PoshMarkClient(AppiumClient):
         self.profile_picture_added = False
         self.finished_registering = False
         self.need_alert_check = False
+        self.number_of_alert_checks = 0
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
                                          aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
@@ -428,11 +429,16 @@ class PoshMarkClient(AppiumClient):
 
             while not self.is_registered:
                 if self.need_alert_check:
-                    alert_dismissed = self.alert_check()
                     self.need_alert_check = False
+                    alert_dismissed = self.alert_check()
 
                     if not alert_dismissed:
-                        self.driver.back()
+                        self.number_of_alert_checks += 1
+                        if self.number_of_alert_checks > 2:
+                            self.driver.back()
+                            self.number_of_alert_checks = 0
+                    else:
+                        self.number_of_alert_checks = 0
 
                 if not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('No screen title elements, probably at init screen.')
@@ -559,6 +565,7 @@ class PoshMarkClient(AppiumClient):
                         self.sleep(5)
 
                         self.need_alert_check = True
+                        self.number_of_alert_checks = 0
 
             return self.is_registered
         except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
@@ -573,10 +580,16 @@ class PoshMarkClient(AppiumClient):
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
                 if self.need_alert_check:
-                    alert_dismissed = self.alert_check()
                     self.need_alert_check = False
+                    alert_dismissed = self.alert_check()
+
                     if not alert_dismissed:
-                        self.driver.back()
+                        self.number_of_alert_checks += 1
+                        if self.number_of_alert_checks > 2:
+                            self.driver.back()
+                            self.number_of_alert_checks = 0
+                    else:
+                        self.number_of_alert_checks = 0
 
                 if self.is_present(AppiumBy.ID, 'titleTextView'):
                     window_title = self.locate(AppiumBy.ID, 'titleTextView')
@@ -668,6 +681,7 @@ class PoshMarkClient(AppiumClient):
                     self.sleep(3)
 
                     self.need_alert_check = True
+                    self.number_of_alert_checks = 0
 
             return True
         except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
