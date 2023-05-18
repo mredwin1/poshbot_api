@@ -55,7 +55,7 @@ class DedupScheduler(beat.ScheduleEntry):
                     for task in tasks:
                         if task.get('name') == task_name and task.get('args', ()) == task_args:
                             # Task is already scheduled, don't schedule it again
-                            return False, 20.0 # return False to indicate that the task is not due
+                            return False, 20.0  # return False to indicate that the task is not due
 
         except Exception as exc:
             current_app.log.error("Error checking tasks: %r", exc)
