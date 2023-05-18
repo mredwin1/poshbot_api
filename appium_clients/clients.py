@@ -570,6 +570,7 @@ class PoshMarkClient(AppiumClient):
     def finish_registration(self):
         try:
             self.logger.info('Finishing registration')
+            self.need_alert_check = False
 
             while not self.is_present(AppiumBy.ID, 'sellTab'):
                 if self.need_alert_check:
