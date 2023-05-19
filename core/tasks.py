@@ -23,45 +23,24 @@ logger = logging.getLogger(__name__)
 
 
 class DedupScheduler(beat.Scheduler):
-    def __init__(self, *args, **kwargs):
-        self.app_inspection = app.control.inspect()
-        super().__init__(*args, **kwargs)
-
     def is_due(self, entry):
         # Extract the task name and args from the schedule entry
         task_name = entry.task
         task_args = entry.args
 
         try:
-            # Check if the task is already running
-            active_tasks = self.app_inspection.active()
-            logger.info(active_tasks)
-            if active_tasks:
-                for worker, tasks in active_tasks.items():
-                    for task in tasks:
-                        if task.get('name') == task_name and task.get('args', ()) == task_args:
-                            # Task is already running, don't schedule it again
-                            return False, 20.0  # return False to indicate that the task is not due
+            inspect = self.app.control.inspect()
+            active_tasks = inspect.active()
+            reserved_tasks = inspect.reserved()
+            scheduled_tasks = inspect.scheduled()
 
-            # Check if the task is reserved by a worker
-            reserved_tasks = self.app_inspection.reserved()
-            logger.info(reserved_tasks)
-            if reserved_tasks:
-                for worker, tasks in reserved_tasks.items():
-                    for task in tasks:
-                        if task.get('name') == task_name and task.get('args', ()) == task_args:
-                            # Task is already reserved, don't schedule it again
-                            return False, 20.0  # return False to indicate that the task is not due
-
-            # Check if the task is already scheduled
-            scheduled_tasks = self.app_inspection.scheduled()
-            logger.info(scheduled_tasks)
-            if scheduled_tasks:
-                for worker, tasks in scheduled_tasks.items():
-                    for task in tasks:
-                        if task.get('name') == task_name and task.get('args', ()) == task_args:
-                            # Task is already scheduled, don't schedule it again
-                            return False, 20.0  # return False to indicate that the task is not due
+            if active_tasks or reserved_tasks or scheduled_tasks:
+                for tasks in [active_tasks, reserved_tasks, scheduled_tasks]:
+                    for worker, worker_tasks in tasks.items():
+                        for task in worker_tasks:
+                            if task.get('name') == task_name and task.get('args', ()) == task_args:
+                                # Task is already running, reserved, or scheduled, don't schedule it again
+                                return False, 20.0
 
         except Exception as exc:
             logger.error("Error checking tasks: %r", exc)
