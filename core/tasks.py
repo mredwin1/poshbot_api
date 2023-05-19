@@ -30,10 +30,11 @@ class DedupScheduler(beat.Scheduler):
         # Extract the task name and args from the schedule entry
         task_name = entry.task
         task_args = entry.args
+        app_inspection = self.app.control.inspect()
 
         try:
             # Check if the task is already running
-            active_tasks = self.app.control.inspect().active()
+            active_tasks = app_inspection.active()
             if active_tasks:
                 for worker, tasks in active_tasks.items():
                     for task in tasks:
@@ -42,7 +43,7 @@ class DedupScheduler(beat.Scheduler):
                             return False, 20.0  # return False to indicate that the task is not due
 
             # Check if the task is reserved by a worker
-            reserved_tasks = self.app.control.inspect().reserved()
+            reserved_tasks = app_inspection.reserved()
             if reserved_tasks:
                 for worker, tasks in reserved_tasks.items():
                     for task in tasks:
@@ -51,7 +52,7 @@ class DedupScheduler(beat.Scheduler):
                             return False, 20.0  # return False to indicate that the task is not due
 
             # Check if the task is already scheduled
-            scheduled_tasks = self.app.control.inspect().scheduled()
+            scheduled_tasks = app_inspection.scheduled()
             if scheduled_tasks:
                 for worker, tasks in scheduled_tasks.items():
                     for task in tasks:
