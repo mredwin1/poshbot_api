@@ -21,6 +21,9 @@ from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup,
 
 
 class DedupScheduler(beat.ScheduleEntry):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
     def is_due(self):
         # Extract the task name and args from the schedule entry
         task_name = self.task
