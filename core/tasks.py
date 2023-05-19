@@ -19,6 +19,8 @@ from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
 from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem
 
+logger = logging.getLogger(__name__)
+
 
 class DedupScheduler(beat.Scheduler):
     def __init__(self, *args, **kwargs):
@@ -58,7 +60,7 @@ class DedupScheduler(beat.Scheduler):
                             return False, 20.0  # return False to indicate that the task is not due
 
         except Exception as exc:
-            self.app.log.error("Error checking tasks: %r", exc)
+            logger.error("Error checking tasks: %r", exc)
             pass
 
         # Schedule the task if it's not already in the queue or running
