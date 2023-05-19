@@ -21,9 +21,6 @@ from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup,
 
 
 class DedupScheduler(beat.ScheduleEntry):
-    def __init__(self, *args, **kwargs):
-        super().__init__(*args, **kwargs)
-
     def is_due(self):
         # Extract the task name and args from the schedule entry
         task_name = self.task
@@ -31,7 +28,7 @@ class DedupScheduler(beat.ScheduleEntry):
 
         try:
             # Check if the task is already running
-            active_tasks = current_app.control.inspect().active()
+            active_tasks = self.app.control.inspect().active()
             if active_tasks:
                 for worker, tasks in active_tasks.items():
                     for task in tasks:
@@ -40,7 +37,7 @@ class DedupScheduler(beat.ScheduleEntry):
                             return False, 20.0  # return False to indicate that the task is not due
 
             # Check if the task is reserved by a worker
-            reserved_tasks = current_app.control.inspect().reserved()
+            reserved_tasks = self.app.control.inspect().reserved()
             if reserved_tasks:
                 for worker, tasks in reserved_tasks.items():
                     for task in tasks:
@@ -49,7 +46,7 @@ class DedupScheduler(beat.ScheduleEntry):
                             return False, 20.0  # return False to indicate that the task is not due
 
             # Check if the task is already scheduled
-            scheduled_tasks = current_app.control.inspect().scheduled()
+            scheduled_tasks = self.app.control.inspect().scheduled()
             if scheduled_tasks:
                 for worker, tasks in scheduled_tasks.items():
                     for task in tasks:
@@ -58,7 +55,7 @@ class DedupScheduler(beat.ScheduleEntry):
                             return False, 20.0  # return False to indicate that the task is not due
 
         except Exception as exc:
-            current_app.log.error("Error checking tasks: %r", exc)
+            self.app.log.error("Error checking tasks: %r", exc)
             pass
 
         # Schedule the task if it's not already in the queue or running
