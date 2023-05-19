@@ -20,14 +20,14 @@ from poshbot_api.celery import app
 from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem
 
 
-class DedupScheduler(beat.ScheduleEntry):
+class DedupScheduler(beat.Scheduler):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
 
-    def is_due(self):
+    def is_due(self, entry):
         # Extract the task name and args from the schedule entry
-        task_name = self.task
-        task_args = self.args
+        task_name = entry.task
+        task_args = entry.args
 
         try:
             # Check if the task is already running
@@ -62,7 +62,7 @@ class DedupScheduler(beat.ScheduleEntry):
             pass
 
         # Schedule the task if it's not already in the queue or running
-        return super().is_due()
+        return super().is_due(entry)
 
 
 class CampaignTask(Task):
