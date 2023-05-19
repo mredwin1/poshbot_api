@@ -35,6 +35,7 @@ class DedupScheduler(beat.Scheduler):
         try:
             # Check if the task is already running
             active_tasks = self.app_inspection.active()
+            logger.info(active_tasks)
             if active_tasks:
                 for worker, tasks in active_tasks.items():
                     for task in tasks:
@@ -44,6 +45,7 @@ class DedupScheduler(beat.Scheduler):
 
             # Check if the task is reserved by a worker
             reserved_tasks = self.app_inspection.reserved()
+            logger.info(reserved_tasks)
             if reserved_tasks:
                 for worker, tasks in reserved_tasks.items():
                     for task in tasks:
@@ -53,6 +55,7 @@ class DedupScheduler(beat.Scheduler):
 
             # Check if the task is already scheduled
             scheduled_tasks = self.app_inspection.scheduled()
+            logger.info(scheduled_tasks)
             if scheduled_tasks:
                 for worker, tasks in scheduled_tasks.items():
                     for task in tasks:
