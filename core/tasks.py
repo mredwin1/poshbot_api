@@ -19,36 +19,6 @@ from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
 from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem
 
-logger = logging.getLogger(__name__)
-
-
-class DedupScheduler(beat.Scheduler):
-    def is_due(self, entry):
-        # # Extract the task name and args from the schedule entry
-        # task_name = entry.task
-        # task_args = entry.args
-        #
-        # try:
-        #     inspect = self.app.control.inspect()
-        #     active_tasks = inspect.active()
-        #     reserved_tasks = inspect.reserved()
-        #     scheduled_tasks = inspect.scheduled()
-        #
-        #     if active_tasks or reserved_tasks or scheduled_tasks:
-        #         for tasks in [active_tasks, reserved_tasks, scheduled_tasks]:
-        #             for worker, worker_tasks in tasks.items():
-        #                 for task in worker_tasks:
-        #                     if task.get('name') == task_name and task.get('args', ()) == task_args:
-        #                         # Task is already running, reserved, or scheduled, don't schedule it again
-        #                         return False, 20.0
-        #
-        # except Exception as exc:
-        #     logger.error("Error checking tasks: %r", exc)
-        #     pass
-
-        # Schedule the task if it's not already in the queue or running
-        return super().is_due(entry)
-
 
 class CampaignTask(Task):
     def __init__(self):
