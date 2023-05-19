@@ -51,7 +51,7 @@ class DedupScheduler(beat.Scheduler):
             #                 return False, 20.0  # return False to indicate that the task is not due
 
             # Check if the task is already scheduled
-            scheduled_tasks = self.app.control.inspect().scheduled()
+            scheduled_tasks = app.control.inspect().scheduled()
             if scheduled_tasks:
                 for worker, tasks in scheduled_tasks.items():
                     for task in tasks:
