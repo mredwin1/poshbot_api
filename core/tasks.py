@@ -28,40 +28,40 @@ class DedupScheduler(beat.Scheduler):
 
     def is_due(self, entry):
         # Extract the task name and args from the schedule entry
-        task_name = entry.task
-        task_args = entry.args
-
-        try:
-            # # Check if the task is already running
-            # active_tasks = self.app.control.inspect().active()
-            # if active_tasks:
-            #     for worker, tasks in active_tasks.items():
-            #         for task in tasks:
-            #             if task.get('name') == task_name and task.get('args', ()) == task_args:
-            #                 # Task is already running, don't schedule it again
-            #                 return False, 20.0  # return False to indicate that the task is not due
-            #
-            # # Check if the task is reserved by a worker
-            # reserved_tasks = self.app.control.inspect().reserved()
-            # if reserved_tasks:
-            #     for worker, tasks in reserved_tasks.items():
-            #         for task in tasks:
-            #             if task.get('name') == task_name and task.get('args', ()) == task_args:
-            #                 # Task is already reserved, don't schedule it again
-            #                 return False, 20.0  # return False to indicate that the task is not due
-
-            # Check if the task is already scheduled
-            scheduled_tasks = self.app.control.inspect().scheduled()
-            if scheduled_tasks:
-                for worker, tasks in scheduled_tasks.items():
-                    for task in tasks:
-                        if task.get('name') == task_name and task.get('args', ()) == task_args:
-                            # Task is already scheduled, don't schedule it again
-                            return False, 20.0  # return False to indicate that the task is not due
-
-        except Exception as exc:
-            logger.error("Error checking tasks: %r", exc)
-            pass
+        # task_name = entry.task
+        # task_args = entry.args
+        #
+        # try:
+        #     # # Check if the task is already running
+        #     # active_tasks = self.app.control.inspect().active()
+        #     # if active_tasks:
+        #     #     for worker, tasks in active_tasks.items():
+        #     #         for task in tasks:
+        #     #             if task.get('name') == task_name and task.get('args', ()) == task_args:
+        #     #                 # Task is already running, don't schedule it again
+        #     #                 return False, 20.0  # return False to indicate that the task is not due
+        #     #
+        #     # # Check if the task is reserved by a worker
+        #     # reserved_tasks = self.app.control.inspect().reserved()
+        #     # if reserved_tasks:
+        #     #     for worker, tasks in reserved_tasks.items():
+        #     #         for task in tasks:
+        #     #             if task.get('name') == task_name and task.get('args', ()) == task_args:
+        #     #                 # Task is already reserved, don't schedule it again
+        #     #                 return False, 20.0  # return False to indicate that the task is not due
+        #
+        #     # Check if the task is already scheduled
+        #     scheduled_tasks = self.app.control.inspect().scheduled()
+        #     if scheduled_tasks:
+        #         for worker, tasks in scheduled_tasks.items():
+        #             for task in tasks:
+        #                 if task.get('name') == task_name and task.get('args', ()) == task_args:
+        #                     # Task is already scheduled, don't schedule it again
+        #                     return False, 20.0  # return False to indicate that the task is not due
+        #
+        # except Exception as exc:
+        #     logger.error("Error checking tasks: %r", exc)
+        #     pass
 
         # Schedule the task if it's not already in the queue or running
         return super().is_due(entry)
