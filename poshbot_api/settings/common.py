@@ -173,7 +173,9 @@ CELERY_BROKER_URL = f"sqs://{os.environ.get('AWS_SQS_ACCESS_KEY_ID')}:{os.enviro
 CELERY_BROKER_TRANSPORT_OPTIONS = {
     'region': '',
     'visibility_timeout': 7200,
-    'polling_interval': 1
+    'polling_interval': 1,
+    'gossip': False,
+    'mingle': False
 }
 
 CELERY_TASK_ROUTES = {
