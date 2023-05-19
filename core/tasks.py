@@ -24,7 +24,7 @@ logger = logging.getLogger(__name__)
 
 class DedupScheduler(beat.Scheduler):
     def __init__(self, *args, **kwargs):
-        self.app_inspection = self.app.control.inspect()
+        self.app_inspection = app.control.inspect()
         super().__init__(*args, **kwargs)
 
     def is_due(self, entry):
