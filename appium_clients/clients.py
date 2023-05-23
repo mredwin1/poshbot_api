@@ -358,7 +358,7 @@ class PoshMarkClient(AppiumClient):
         elif self.is_present(AppiumBy.ID, 'android:id/message'):
             message = self.locate(AppiumBy.ID, 'android:id/message')
             
-            if 'party' in message.text:
+            if 'party' in message.text.lower():
                 self.logger.info('Posh Party Alert found')
                 cancel = self.locate(AppiumBy.ID, 'android:id/button2')
                 self.logger.info(f'Clicking the {cancel.text} button')
