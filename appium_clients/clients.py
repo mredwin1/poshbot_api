@@ -591,6 +591,7 @@ class PoshMarkClient(AppiumClient):
             while not self.is_present(AppiumBy.ID, 'sellTab'):
                 if self.need_alert_check:
                     self.need_alert_check = False
+                    self.number_of_alert_checks = 0
                     alert_dismissed = self.alert_check()
 
                     if not alert_dismissed:
