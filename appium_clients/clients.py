@@ -1081,6 +1081,7 @@ class PoshMarkClient(AppiumClient):
                         self.click(list_button)
 
                         list_attempts = 0
+                        sleep_amount = 10
                         self.logger.info('Sell button clicked')
                         self.sleep(5)
                         sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
@@ -1108,6 +1109,7 @@ class PoshMarkClient(AppiumClient):
                                 self.sleep(5)
 
                                 list_attempts = 0
+                                sleep_amount = 20
                             elif self.is_present(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]"):
                                 self.logger.warning('Certify listing page came up. Clicking certify.')
                                 certify_button = self.locate(AppiumBy.XPATH, f"//*[contains(@text, 'Certify Listing')]")
@@ -1120,7 +1122,7 @@ class PoshMarkClient(AppiumClient):
                                 list_attempts = 0
                             else:
                                 self.logger.info('Item not listed yet')
-                                self.sleep(10)
+                                self.sleep(sleep_amount)
                         else:
                             if list_attempts >= 10:
                                 self.logger.error(
