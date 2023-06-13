@@ -134,7 +134,7 @@ class BaseClient:
     def open(self):
         """Used to open the selenium web driver session"""
         service = Service(executable_path='/chrome_clients/chromedriver')
-        self.web_driver = webdriver.Chrome(service, options=self.web_driver_options)
+        self.web_driver = webdriver.Chrome(service=service, options=self.web_driver_options)
         stealth(self.web_driver,
                 languages=["en-US", "en"],
                 vendor="Google Inc.",
