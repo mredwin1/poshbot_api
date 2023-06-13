@@ -14,6 +14,7 @@ from django.utils.text import slugify
 from selenium import webdriver
 from selenium.common.exceptions import NoSuchElementException, TimeoutException
 from selenium.webdriver.chrome.options import Options
+from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
@@ -132,7 +133,8 @@ class BaseClient:
 
     def open(self):
         """Used to open the selenium web driver session"""
-        self.web_driver = webdriver.Chrome(executable_path='/chrome_clients/chromedriver', options=self.web_driver_options)
+        service = Service(executable_path='/chrome_clients/chromedriver')
+        self.web_driver = webdriver.Chrome(service, options=self.web_driver_options)
         stealth(self.web_driver,
                 languages=["en-US", "en"],
                 vendor="Google Inc.",
