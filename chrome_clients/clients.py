@@ -88,18 +88,15 @@ class Captcha:
 
 class BaseClient:
     def __init__(self, logger, proxy_ip=None, proxy_port=None, cookies_filename='cookies'):
-        proxy = Proxy()
-        hostname = proxy_ip if proxy_ip and proxy_port else ''
-        port = proxy_port if proxy_ip and proxy_port else ''
-        proxy.proxy_type = ProxyType.MANUAL if proxy_ip and proxy_port else ProxyType.SYSTEM
+        proxy = f'{proxy_ip}:{proxy_port}' if proxy_ip and proxy_port else ''
         user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
 
-        if proxy_ip:
-            proxy.http_proxy = f'{hostname}:{port}'
-            proxy.ssl_proxy = f'{hostname}:{port}'
-
-        capabilities = webdriver.DesiredCapabilities.CHROME
-        proxy.add_to_capabilities(capabilities)
+        webdriver.DesiredCapabilities.CHROME['proxy'] = {
+            "httpProxy": proxy,
+            "ftpProxy": proxy,
+            "sslProxy": proxy,
+            "proxyType": ProxyType.MANUAL if proxy else ProxyType.SYSTEM
+        }
 
         self.cookies_path = '/bot_data/cookies'
         self.logger = logger
