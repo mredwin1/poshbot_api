@@ -775,11 +775,12 @@ def posh_user_cleanup():
             client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
             device = client.device(posh_user.device.serial)
 
-            device.uninstall(posh_user.app_package)
+            if device:
+                device.uninstall(posh_user.app_package)
 
-            if posh_user.device.installed_clones > 0:
-                posh_user.device.installed_clones -= 1
-                posh_user.device.save(update_fields=['installed_clones'])
+                if posh_user.device.installed_clones > 0:
+                    posh_user.device.installed_clones -= 1
+                    posh_user.device.save(update_fields=['installed_clones'])
 
             posh_user.clone_installed = False
             posh_user.device = None
