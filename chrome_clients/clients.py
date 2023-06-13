@@ -91,12 +91,12 @@ class BaseClient:
         proxy = f'{proxy_ip}:{proxy_port}' if proxy_ip and proxy_port else ''
         user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
 
-        webdriver.DesiredCapabilities.CHROME['proxy'] = {
-            "httpProxy": proxy,
-            "ftpProxy": proxy,
-            "sslProxy": proxy,
-            "proxyType": ProxyType.MANUAL if proxy else ProxyType.SYSTEM
-        }
+        # webdriver.DesiredCapabilities.CHROME['proxy'] = {
+        #     "httpProxy": proxy,
+        #     "ftpProxy": proxy,
+        #     "sslProxy": proxy,
+        #     "proxyType": ProxyType.MANUAL if proxy else ProxyType.SYSTEM
+        # }
 
         self.cookies_path = '/bot_data/cookies'
         self.logger = logger
