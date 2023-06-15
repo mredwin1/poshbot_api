@@ -1306,7 +1306,7 @@ class PoshMarkClient(BaseClient):
                 self.sleep(1)
 
                 offer_modal = self.locate(By.CLASS_NAME, 'offer-modal__bundle')
-                listing_price = int(offer_modal.find_element_by_css_selector('.fw--med').text.strip('$'))
+                listing_price = int(offer_modal.find_element(By.CSS_SELECTOR, '.fw--med').text.strip('$'))
 
                 offer_amount = int(listing_price - (listing_price * .1))
 
