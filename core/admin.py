@@ -30,6 +30,10 @@ def start_campaigns(modeladmin, request, queryset):
                                               listing_title=campaign_listing.title)
                     item_to_list.save()
                     items_to_list.append(item_to_list)
+                except models.ListedItem.MultipleObjectsReturned as e:
+                    import logging
+                    logger = logging.getLogger(__name__)
+                    logger.error(e, exc_info=True)
 
             campaign.status = models.Campaign.STARTING
             campaign.next_runtime = timezone.now()
