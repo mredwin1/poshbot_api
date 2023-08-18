@@ -1657,11 +1657,13 @@ class PublicPoshMarkClient(BaseClient):
             self.sleep(3)
 
             listing_count_element = self.locate(
-                By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div/nav/ul/li[1]/a'
+                By.XPATH, '//*[@id="content"]/div/div/div[1]/div/div/div[2]/div/div/nav/ul/li[1]/a'
             )
             listing_count = listing_count_element.text
             index = listing_count.find('\n')
             total_listings = int(listing_count[:index])
+            self.logger.info(f'Listing Count: {listing_count}')
+            self.logger.info(f'Total Listings: {total_listings}')
 
             if total_listings > 0 and not self.is_present(By.CLASS_NAME, 'card--small'):
                 self.logger.warning('This user does not seem to be active, setting inactive')
