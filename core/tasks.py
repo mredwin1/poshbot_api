@@ -735,7 +735,7 @@ def check_posh_users():
                     campaign.status = Campaign.STOPPING
                     campaign.save(update_fields=['status'])
 
-            # Checks if the user is inactive when there are no listings and
+            # Checks if the user is inactive when there are no listings
             if sum([len(y) for y in all_posh_listed_items.values()]) == 0:
                 logger.info('User has no listings available...')
                 is_active_in_posh = client.check_inactive(posh_user.username)

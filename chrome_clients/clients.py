@@ -1670,5 +1670,6 @@ class PublicPoshMarkClient(BaseClient):
             else:
                 self.logger.info('This user is still active')
                 return True
-        except TimeoutException:
+        except Exception:
             self.logger.error(traceback.format_exc())
+            return True
