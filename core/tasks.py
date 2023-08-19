@@ -395,6 +395,13 @@ class CampaignTask(Task):
                         self.campaign.posh_user.profile_updated = True
                         self.campaign.posh_user.save(update_fields=['profile_updated'])
 
+                # Follow random users
+                random_number = random.random()
+                if random_number < 0.1:
+                    client.follow_random_user()
+                elif random_number < 0.4:
+                    client.follow_random_follower()
+
                 shareable_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP).exclude(listed_item_id='')
 
                 if shareable_listed_items:
