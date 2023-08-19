@@ -1450,8 +1450,7 @@ class PoshMarkClient(BaseClient):
             self.go_to_closet()
 
             self.sleep(3, 5)
-
-            followers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div[2]/nav/ul/li[3]/div')
+            followers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[1]/div/div/div[2]/div/div/nav/ul/li[3]/div')
             followers_button.click()
 
             self.sleep(3, 5)
