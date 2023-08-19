@@ -1455,16 +1455,16 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(3, 5)
 
-            for x in range(random.randint(3, 6)):
+            for x in range(random.randint(2, 5)):
                 self.random_scroll()
-                self.sleep(5, 10)
+                self.sleep(3, 5)
 
             selected_user = None
             available_users = self.locate_all(By.CLASS_NAME, 'follow-list__item')
 
             while not selected_user:
                 selection = random.choice(available_users)
-                follow_button = selection.find_element_by_tag_name('button')
+                follow_button = selection.find_element(By.CLASS_NAME, 'button')
 
                 if follow_button.text.replace(' ', '') == 'Follow':
                     selected_user = selection.find_element(By.CLASS_NAME, 'follow__action__follower ').text
