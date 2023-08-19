@@ -1493,7 +1493,7 @@ class PoshMarkClient(BaseClient):
 
             for x in range(random.randint(2, 5)):
                 self.random_scroll()
-                self.sleep(5, 10)
+                self.sleep(3, 5)
 
             sample_size = random.randint(1, 5)
             available_users = self.locate_all(By.CLASS_NAME, 'feed-page')
