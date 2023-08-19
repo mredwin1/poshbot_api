@@ -17,7 +17,7 @@ from selenium.common.exceptions import WebDriverException
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem
+from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemReport
 
 
 class CampaignTask(Task):
@@ -395,12 +395,16 @@ class CampaignTask(Task):
                         self.campaign.posh_user.profile_updated = True
                         self.campaign.posh_user.save(update_fields=['profile_updated'])
 
-                # Follow random users
+                # Follow random users and report a random listing
                 random_number = random.random()
                 if random_number < 0.1:
-                    client.follow_random_user()
-                elif random_number < 0.4:
                     client.follow_random_follower()
+                elif random_number < 0.4:
+                    client.follow_random_user()
+                elif random_number < .7:
+                    listed_item_report = ListedItemReport.objects.all()
+                    if listed_item_report:
+                        client.report_listing(random.choice(listed_item_report).listed_item_id)
 
                 shareable_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP).exclude(listed_item_id='')
 

@@ -339,3 +339,15 @@ class ListedItemAdmin(admin.ModelAdmin):
             )
         }),
     )
+
+
+@admin.register(models.ListedItemReport)
+class ListedItemAdmin(admin.ModelAdmin):
+    list_display = ['listing_title', 'listed_item_link']
+    search_fields = ['listing_title']
+
+    @admin.display(ordering='listed_item_id')
+    def listed_item_link(self, listed_item: models.ListedItemReport):
+        url = f'https://www.poshmark.com/listing/{listed_item.listed_item_id}'
+        return format_html('<a href="{}">{}</a>', url, listed_item.listed_item_id)
+

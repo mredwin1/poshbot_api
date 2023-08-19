@@ -758,13 +758,15 @@ class PoshMarkClient(BaseClient):
 
             return False
 
-    def go_to_closet(self):
+    def go_to_closet(self, username=None):
         """Ensures the current url for the web driver is at users poshmark closet"""
+        posh_username = username if username else self.posh_user.username
+
         try:
-            if self.web_driver.current_url != f'https://poshmark.com/closet/{self.posh_user.username}':
-                self.web_driver.get(f'https://poshmark.com/closet/{self.posh_user.username}')
+            if self.web_driver.current_url != f'https://poshmark.com/closet/{posh_username}':
+                self.web_driver.get(f'https://poshmark.com/closet/{posh_username}')
             else:
-                self.logger.info(f"Already at {self.posh_user.username}'s closet, refreshing.")
+                self.logger.info(f"Already at {posh_username}'s closet, refreshing.")
                 self.web_driver.refresh()
 
             show_all_listings_xpath = '//*[@id="content"]/div/div[2]/div/div/section/div[2]/div/div/button'
@@ -1120,18 +1122,28 @@ class PoshMarkClient(BaseClient):
         try:
             self.logger.info(f'Sharing the following item: {listed_item_title}')
 
-            self.go_to_closet()
+            self.web_driver.get(f'https://www.poshmark.com/listing/{listed_item_id}')
 
-            self.sleep(2)
-
-            share_button = self.locate(By.XPATH, f"//div[contains(@class, 'tiles_container')]//div[@data-et-prop-listing_id='{listed_item_id}' and contains(@class, 'social-action-bar__share')]")
-
+            share_button = self.locate(By.CLASS_NAME, 'social-action-bar__share')
             share_button.click()
 
             self.sleep(1)
 
             to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
             to_followers_button.click()
+
+            # self.go_to_closet()
+            #
+            # self.sleep(2)
+            #
+            # share_button = self.locate(By.XPATH, f"//div[contains(@class, 'tiles_container')]//div[@data-et-prop-listing_id='{listed_item_id}' and contains(@class, 'social-action-bar__share')]")
+            #
+            # share_button.click()
+            #
+            # self.sleep(1)
+            #
+            # to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
+            # to_followers_button.click()
 
             self.logger.info('Item Shared')
 
@@ -1520,6 +1532,23 @@ class PoshMarkClient(BaseClient):
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():
                 self.login()
+
+    def report_listing(self, listing_id):
+        """Will report a listing"""
+        try:
+            self.logger.info(f'Reporting the following item: {listing_id}')
+
+            self.web_driver.get(f'https://www.poshmark.com/listing/{listing_id}')
+
+            self.sleep(2)
+
+            submit_btn = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[3]/div[1]/div[2]/div/div[2]/div[3]/div/button[2]')
+            submit_btn.click()
+
+            return True
+
+        except Exception as e:
+            self.handle_error('Error while reporting listing', 'report_listing_error.png')
 
     def go_through_feed(self):
         """Will scroll randomly through the users feed"""
