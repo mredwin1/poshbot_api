@@ -1461,15 +1461,16 @@ class PoshMarkClient(BaseClient):
             self.logger.info('Following a random follower')
             self.go_to_closet()
 
-            self.sleep(3, 5)
+            self.sleep(1)
+
             followers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[1]/div/div/div[2]/div/div/nav/ul/li[3]/div')
             followers_button.click()
 
-            self.sleep(3, 5)
+            self.sleep(1)
 
             for x in range(random.randint(2, 5)):
                 self.random_scroll()
-                self.sleep(3, 5)
+                self.sleep(1, 3)
 
             selected_user = None
             available_users = self.locate_all(By.CLASS_NAME, 'follow-list__item')
@@ -1485,12 +1486,11 @@ class PoshMarkClient(BaseClient):
 
                     self.logger.info(f'The following user was selected to be followed: {selected_user}')
 
-                    self.sleep(3, 5)
+                    self.sleep(1)
 
                     follow_button.click()
 
                     self.logger.info(f'Followed {selected_user}')
-
         except Exception:
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():
@@ -1505,7 +1505,7 @@ class PoshMarkClient(BaseClient):
 
             for x in range(random.randint(2, 5)):
                 self.random_scroll()
-                self.sleep(3, 5)
+                self.sleep(1, 3)
 
             sample_size = random.randint(1, 5)
             available_users = self.locate_all(By.CLASS_NAME, 'feed-page')
@@ -1520,14 +1520,11 @@ class PoshMarkClient(BaseClient):
                 actions = ActionChains(self.web_driver)
                 actions.move_to_element(follow_button).perform()
 
-                self.sleep(5, 8)
+                self.sleep(1)
 
                 follow_button.click()
 
                 self.logger.info(f'Followed {username}')
-
-                self.sleep(4, 12)
-
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():
