@@ -415,6 +415,8 @@ class CampaignTask(Task):
 
                         if reported:
                             ListedItemReport.objects.create(posh_user=self.campaign.posh_user, listed_item_to_report=unreported_item)
+                        elif reported is False:
+                            unreported_items.delete()
 
                 shareable_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP).exclude(listed_item_id='')
 

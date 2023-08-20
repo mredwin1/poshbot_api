@@ -1539,6 +1539,14 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(2)
 
+            try:
+                error = self.locate(By.CLASS_NAME, 'error_banner')
+
+                if 'no longer available' in error.text:
+                    return False
+            except (TimeoutException, NoSuchElementException):
+                pass
+
             submit_btn = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[3]/div[1]/div[2]/div/div[2]/div[3]/div/button[2]')
             submit_btn.click()
 
