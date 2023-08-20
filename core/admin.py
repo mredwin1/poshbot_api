@@ -10,6 +10,7 @@ from . import models
 
 
 admin.site.register(models.ListedItemOffer)
+admin.site.register(models.ListedItemReport)
 
 
 @admin.action(description='Start selected campaigns')
@@ -341,13 +342,13 @@ class ListedItemAdmin(admin.ModelAdmin):
     )
 
 
-@admin.register(models.ListedItemReport)
-class ListedItemAdmin(admin.ModelAdmin):
+@admin.register(models.ListedItemToReport)
+class ListedItemToReportAdmin(admin.ModelAdmin):
     list_display = ['listing_title', 'listed_item_link']
     search_fields = ['listing_title']
 
     @admin.display(ordering='listed_item_id')
-    def listed_item_link(self, listed_item: models.ListedItemReport):
+    def listed_item_link(self, listed_item: models.ListedItemToReport):
         url = f'https://www.poshmark.com/listing/{listed_item.listed_item_id}'
         return format_html('<a href="{}">{}</a>', url, listed_item.listed_item_id)
 

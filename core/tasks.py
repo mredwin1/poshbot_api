@@ -17,7 +17,7 @@ from selenium.common.exceptions import WebDriverException
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemReport
+from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport
 
 
 class CampaignTask(Task):
@@ -402,9 +402,16 @@ class CampaignTask(Task):
                 elif random_number < 0.4:
                     client.follow_random_user()
                 elif random_number < .7:
-                    listed_item_report = ListedItemReport.objects.all()
-                    if listed_item_report:
-                        client.report_listing(random.choice(listed_item_report).listed_item_id)
+                    # Get a list of reported item IDs by the given posh_user
+                    reported_item_ids = ListedItemReport.objects.filter(posh_user=self.campaign.posh_user).values_list('listed_item_report__listed_item_id', flat=True)
+
+                    # Get a random unreported item by the given posh_user
+                    unreported_item = random.choice(ListedItemToReport.objects.exclude(listed_item_id__in=reported_item_ids))
+
+                    reported = client.report_listing(unreported_item.listed_item_id)
+
+                    if reported:
+                        ListedItemReport.objects.create(posh_user=self.campaign.posh_user, listed_item_to_report=unreported_item)
 
                 shareable_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP).exclude(listed_item_id='')
 

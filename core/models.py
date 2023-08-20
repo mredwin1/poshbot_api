@@ -521,12 +521,20 @@ class ListedItem(models.Model):
         return f'{self.listing_title}'
 
 
-class ListedItemReport(models.Model):
+class ListedItemToReport(models.Model):
     listing_title = models.CharField(max_length=50)
     listed_item_id = models.CharField(max_length=255)
 
     def __str__(self):
         return f'{self.listing_title}'
+
+
+class ListedItemReport(models.Model):
+    listed_item_to_report = models.ForeignKey(to=ListedItemToReport, on_delete=models.CASCADE, null=True)
+    posh_user = models.ForeignKey(to=PoshUser, on_delete=models.CASCADE, null=True)
+
+    def __str__(self):
+        return f'{self.posh_user.username} reported {self.listed_item_to_report.listing_title}'
 
 
 class ListedItemOffer(models.Model):
