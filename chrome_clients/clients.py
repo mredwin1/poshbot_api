@@ -467,7 +467,7 @@ class PoshMarkClient(BaseClient):
 
             self.go_to_closet()
             listing_count_element = self.locate(
-                By.XPATH, '//*[@id="content"]/div/div[1]/div/div[2]/div/div/nav/ul/li[1]/a'
+                By.XPATH, '//*[@id="content"]/div/div/div[1]/div/div/div[2]/div/div/nav/ul/li[1]/a'
             )
             # '//*[@id="content"]/div/div[1]/div/div[2]/div/div[2]/nav/ul/li[1]/a'
             listing_count = listing_count_element.text
@@ -1546,6 +1546,11 @@ class PoshMarkClient(BaseClient):
                     return False
             except (TimeoutException, NoSuchElementException):
                 pass
+
+            report_button = self.locate(By.CLASS_NAME, 'listing__admin-actions')
+            report_button.click()
+
+            self.sleep(.5)
 
             submit_btn = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[3]/div[1]/div[2]/div/div[2]/div[3]/div/button[2]')
             submit_btn.click()
