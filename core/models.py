@@ -553,7 +553,7 @@ class LogGroup(models.Model):
     campaign = models.ForeignKey(Campaign, on_delete=models.CASCADE)
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
     created_date = models.DateTimeField(auto_now_add=True)
-    error = models.BooleanField(default=False)
+    has_error = models.BooleanField(default=False)
 
     def log(self, message, log_level=None, image=None):
         timestamp = timezone.now()
@@ -574,8 +574,8 @@ class LogGroup(models.Model):
         self.log(message, LogEntry.CRITICAL, image)
 
     def error(self, message, image=None):
-        if not self.error:
-            self.error = True
+        if not self.has_error:
+            self.has_error = True
             self.save()
         self.log(message, LogEntry.ERROR, image)
 
