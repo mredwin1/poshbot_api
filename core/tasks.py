@@ -406,12 +406,15 @@ class CampaignTask(Task):
                     reported_item_ids = ListedItemReport.objects.filter(posh_user=self.campaign.posh_user).values_list('listed_item_to_report__listed_item_id', flat=True)
 
                     # Get a random unreported item by the given posh_user
-                    unreported_item = random.choice(ListedItemToReport.objects.exclude(listed_item_id__in=reported_item_ids))
+                    unreported_items = ListedItemToReport.objects.exclude(listed_item_id__in=reported_item_ids)
 
-                    reported = client.report_listing(unreported_item.listed_item_id)
+                    if unreported_items:
+                        unreported_item = random.choice(unreported_items)
 
-                    if reported:
-                        ListedItemReport.objects.create(posh_user=self.campaign.posh_user, listed_item_to_report=unreported_item)
+                        reported = client.report_listing(unreported_item.listed_item_id)
+
+                        if reported:
+                            ListedItemReport.objects.create(posh_user=self.campaign.posh_user, listed_item_to_report=unreported_item)
 
                 shareable_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP).exclude(listed_item_id='')
 
