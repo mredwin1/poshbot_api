@@ -1713,7 +1713,7 @@ class PublicPoshMarkClient(BaseClient):
         reserved_listing_titles = []
         not_for_sale_listing_titles = []
 
-        self.logger.info(f'Getting all listings for {username}')
+        # self.logger.info(f'Getting all listings for {username}')
 
         self.web_driver.get(f'http://poshmark.com/closet/{username}')
 
@@ -1753,7 +1753,8 @@ class PublicPoshMarkClient(BaseClient):
             return listed_items
 
         except TimeoutException:
-            self.logger.error(traceback.format_exc())
+            # self.logger.error(traceback.format_exc())
+            pass
 
     def check_inactive(self, username):
         """Will check if the current user is inactive"""
@@ -1770,16 +1771,14 @@ class PublicPoshMarkClient(BaseClient):
             listing_count = listing_count_element.text
             index = listing_count.find('\n')
             total_listings = int(listing_count[:index])
-            self.logger.info(f'Listing Count: {listing_count}')
-            self.logger.info(f'Total Listings: {total_listings}')
 
             if total_listings > 0 and not self.is_present(By.CLASS_NAME, 'card--small'):
-                self.logger.warning('This user does not seem to be active, setting inactive')
+                # self.logger.warning('This user does not seem to be active, setting inactive')
 
                 return False
             else:
-                self.logger.info('This user is still active')
+                # self.logger.info('This user is still active')
                 return True
         except Exception:
-            self.logger.error(traceback.format_exc())
+            # self.logger.error(traceback.format_exc())
             return True
