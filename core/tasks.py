@@ -850,7 +850,7 @@ def posh_user_cleanup():
 def send_support_emails():
     logger = logging.getLogger(__name__)
     smtp_server = 'smtp.mail.yahoo.com'
-    smtp_port = 587
+    smtp_port = 465
     posh_users = PoshUser.objects.filter(is_active=True, send_support_email=True)
     all_email_info = PaymentEmailContent.objects.all()
 
