@@ -868,7 +868,7 @@ def send_support_emails():
                     if random.random() <= 0.16:
                         msg = MIMEMultipart()
                         msg['From'] = posh_user.email
-                        msg['To'] = 'ecruz1113@gmail.com'
+                        msg['To'] = 'johnnyhustle41@gmail.com'
                         msg['Subject'] = email_info.subject
                         msg.attach(MIMEText(body, 'plain'))
 
@@ -879,7 +879,7 @@ def send_support_emails():
                                 server.login(posh_user.email, posh_user.email_imap_password)
 
                                 # Send the email
-                                server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
+                                server.sendmail(posh_user.email, 'johnnyhustle41@gmail.com', msg.as_string())
                                 logger.info("Email sent successfully!")
 
                                 # Update the date_last_support_email field
