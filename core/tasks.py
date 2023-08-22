@@ -852,28 +852,29 @@ def send_support_emails():
     posh_users = PoshUser.objects.filter(is_active=True, send_support_email=True)
     all_email_info = PaymentEmailContent.objects.all()
 
-    for posh_user in posh_users:
-        if posh_user.email and posh_user.email_password:
-            email_info: PaymentEmailContent = random.choice(all_email_info)
+    if all_email_info:
+        for posh_user in posh_users:
+            if posh_user.email and posh_user.email_password:
+                email_info: PaymentEmailContent = random.choice(all_email_info)
 
-            msg = MIMEMultipart()
-            msg['From'] = posh_user.email
-            msg['To'] = 'ecruz1113@gmail.com'
-            msg['Subject'] = email_info.subject
-            msg.attach(MIMEText(email_info.body, 'plain'))
+                msg = MIMEMultipart()
+                msg['From'] = posh_user.email
+                msg['To'] = 'ecruz1113@gmail.com'
+                msg['Subject'] = email_info.subject
+                msg.attach(MIMEText(email_info.body, 'plain'))
 
-            try:
-                # Connect to the SMTP server
-                server = smtplib.SMTP(smtp_server, smtp_port)
-                server.starttls()
-                server.login(posh_user.email, posh_user.email_password)
+                try:
+                    # Connect to the SMTP server
+                    server = smtplib.SMTP(smtp_server, smtp_port)
+                    server.starttls()
+                    server.login(posh_user.email, posh_user.email_password)
 
-                # Send the email
-                server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
-                logger.info("Email sent successfully!")
+                    # Send the email
+                    server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
+                    logger.info("Email sent successfully!")
 
-                # Disconnect from the server
-                server.quit()
+                    # Disconnect from the server
+                    server.quit()
 
-            except Exception as e:
-                logger.error("An error occurred", exc_info=True)
+                except Exception as e:
+                    logger.error("An error occurred", exc_info=True)
