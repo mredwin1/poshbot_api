@@ -851,7 +851,7 @@ def posh_user_cleanup():
 def send_support_emails():
     logger = logging.getLogger(__name__)
     smtp_server = 'smtp.mail.yahoo.com'
-    smtp_port = 587
+    smtp_port = 465
     posh_users = PoshUser.objects.filter(is_active=True, send_support_email=True)
     all_email_info = PaymentEmailContent.objects.all()
 
@@ -870,22 +870,18 @@ def send_support_emails():
                 msg.attach(MIMEText(body, 'plain'))
 
                 try:
-                    # Create an SSL context with specific protocol versions
-                    ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
-                    ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
-                    ssl_context.check_hostname = False
-                    ssl_context.verify_mode = ssl.CERT_NONE
-
+                    ssl_context = ssl.create_default_context()
                     # Connect to the SMTP server
-                    server = smtplib.SMTP_SSL(smtp_server, smtp_port, context=ssl_context)
-                    server.login(posh_user.email, posh_user.email_password)
+                    with smtplib.SMTP(smtp_server, smtp_port) as server:
+                        server.ehlo()
+                        server.starttls(context=ssl_context)
+                        server.ehlo()
 
-                    # Send the email
-                    server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
-                    logger.info("Email sent successfully!")
+                        server.login(posh_user.email, posh_user.email_password)
 
-                    # Disconnect from the server
-                    server.quit()
+                        # Send the email
+                        server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
+                        logger.info("Email sent successfully!")
 
                 except Exception as e:
                     logger.error("An error occurred", exc_info=True)
