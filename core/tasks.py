@@ -870,7 +870,7 @@ def send_support_emails():
 
                 try:
                     # Connect to the SMTP server
-                    server = smtplib.SMTP(smtp_server, smtp_port)
+                    server = smtplib.SMTP_SSL(smtp_server, smtp_port)
                     server.starttls()
                     server.login(posh_user.email, posh_user.email_password)
 
