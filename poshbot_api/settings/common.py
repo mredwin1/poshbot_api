@@ -195,7 +195,7 @@ CELERY_BEAT_SCHEDULE = {
     },
     'check_posh_users': {
         'task': 'core.tasks.check_posh_users',
-        'schedule': timedelta(minutes=10),
+        'schedule': timedelta(minutes=25),
     },
     'log_cleanup': {
         'task': 'core.tasks.log_cleanup',
