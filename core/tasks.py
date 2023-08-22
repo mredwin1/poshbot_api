@@ -851,7 +851,7 @@ def posh_user_cleanup():
 def send_support_emails():
     logger = logging.getLogger(__name__)
     smtp_server = 'smtp.mail.yahoo.com'
-    smtp_port = 465
+    smtp_port = 587
     posh_users = PoshUser.objects.filter(is_active=True, send_support_email=True)
     all_email_info = PaymentEmailContent.objects.all()
 
@@ -870,13 +870,8 @@ def send_support_emails():
                 msg.attach(MIMEText(body, 'plain'))
 
                 try:
-                    ssl_context = ssl.create_default_context()
                     # Connect to the SMTP server
                     with smtplib.SMTP(smtp_server, smtp_port) as server:
-                        server.ehlo()
-                        server.starttls(context=ssl_context)
-                        server.ehlo()
-
                         server.login(posh_user.email, posh_user.email_password)
 
                         # Send the email
