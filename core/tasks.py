@@ -436,7 +436,9 @@ class CampaignTask(Task):
                                 "Ugh, these scams are getting dumber by the minute.",
                                 "Yeah right, like anyone's gonna buy into this nonsense.",
                                 "Just another day, just another ridiculous scam attempt.",
-                                "Sigh... Can't believe people still try to pull off these fakes."
+                                "Sigh... Can't believe people still try to pull off these fakes.",
+                                'fake',
+                                'scam'
                             ]
 
                             client.comment_on_listing(unreported_item.listed_item_id, random.choice(comments))
