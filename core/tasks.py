@@ -4,7 +4,7 @@ import os
 import pytz
 import random
 import requests
-import smtplib
+import imaplib
 import time
 import traceback
 
@@ -849,14 +849,14 @@ def posh_user_cleanup():
 @shared_task
 def send_support_emails():
     logger = logging.getLogger(__name__)
-    smtp_server = 'smtp.mail.yahoo.com'
-    smtp_port = 465
+    imap_server = 'imap.mail.yahoo.com'
+    imap_port = 993
     posh_users = PoshUser.objects.filter(is_active=True, send_support_email=True)
     all_email_info = PaymentEmailContent.objects.all()
 
     if all_email_info:
         for posh_user in posh_users:
-            if posh_user.email and posh_user.email_password:
+            if posh_user.email and posh_user.email_imap_password:
                 email_info: PaymentEmailContent = random.choice(all_email_info)
                 body = email_info.body
                 body.replace('{{user_name}}', posh_user.username)
@@ -869,17 +869,19 @@ def send_support_emails():
                 msg.attach(MIMEText(body, 'plain'))
 
                 try:
-                    # Connect to the SMTP server
-                    server = smtplib.SMTP(smtp_server, smtp_port)
-                    server.starttls()
-                    server.login(posh_user.email, posh_user.email_password)
+                    # Connect to the IMAP server
+                    server = imaplib.IMAP4_SSL(imap_server, imap_port)
+                    server.login(posh_user.email, posh_user.email_imap_password)
 
-                    # Send the email
-                    server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
-                    logger.info("Email sent successfully!")
+                    # Create the message payload as bytes
+                    payload = msg.as_string().encode('utf-8')
+
+                    # Send the email using the APPEND command
+                    server.append('INBOX', '', '', payload)
+                    print("Email sent successfully!")
 
                     # Disconnect from the server
-                    server.quit()
+                    server.logout()
 
                 except Exception as e:
                     logger.error("An error occurred", exc_info=True)
