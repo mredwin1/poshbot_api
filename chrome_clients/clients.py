@@ -116,11 +116,7 @@ class BaseClient:
 
         self.cookies_filename = slugify(cookies_filename)
 
-        if not os.path.isdir('/log_images'):
-            try:
-                os.mkdir('/log_images')
-            except FileExistsError:
-                pass
+        os.makedirs('/log_images', exist_ok=True)
 
     def __enter__(self):
         self.open()
@@ -202,8 +198,7 @@ class BaseClient:
     def save_cookies(self):
         self.logger.info('Saving cookies')
 
-        if not os.path.exists(self.cookies_path):
-            os.mkdir(self.cookies_path)
+        os.makedirs(self.cookies_path, exist_ok=True)
 
         with open(f'{self.cookies_path}/{self.cookies_filename}.pkl', 'wb') as file:
             pickle.dump(self.web_driver.get_cookies(), file)
@@ -318,8 +313,7 @@ class PoshMarkClient(BaseClient):
             self.requests_proxy['https'] = f'http://{proxy_hostname}:{proxy_port}'
 
         logs_dir = f'/log_images/{slugify(self.campaign.title)}'
-        if not os.path.isdir(logs_dir):
-            os.mkdir(logs_dir)
+        os.makedirs(logs_dir, exist_ok=True)
 
     def handle_error(self, error_message, filename):
         image_path = f'/log_images/{slugify(self.campaign.title)}/{filename}'
@@ -929,11 +923,7 @@ class PoshMarkClient(BaseClient):
                 campaign_folder = f'/{slugify(self.campaign.title)}'
                 listing_folder = f'{campaign_folder}/{slugify(listing.title)}'
 
-                if not os.path.exists(campaign_folder):
-                    os.mkdir(campaign_folder)
-
-                if not listing_folder:
-                    os.mkdir(listing_folder)
+                os.makedirs(listing_folder, exist_ok=True)
 
                 listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
                 self.bucket.download_file(listing.cover_photo.name, f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')
