@@ -1560,6 +1560,77 @@ class PoshMarkClient(BaseClient):
         except Exception as e:
             self.handle_error('Error while reporting listing', 'report_listing_error.png')
 
+    def comment_on_listing(self, listing_id, comment):
+        """Will add a comment to a listing"""
+        try:
+            self.logger.info(f'Adding comment to the following item: Listing ID - {listing_id} Comment - {comment}')
+
+            self.web_driver.get(f'https://www.poshmark.com/listing/{listing_id}')
+
+            self.sleep(2)
+
+            try:
+                error = self.locate(By.CLASS_NAME, 'error_banner')
+
+                if 'no longer available' in error.text:
+                    return False
+            except (TimeoutException, NoSuchElementException):
+                pass
+
+            comment_button = self.locate(By.CLASS_NAME, 'comment-gray')
+            comment_button.click()
+
+            self.sleep(.5)
+
+            comment_input = self.locate(By.ID, 'comment')
+            comment_input.send_keys(comment)
+
+            submit_button = self.locate(By.XPATH, '//*[@id="commentForm"]/div[2]/button')
+            submit_button.click()
+
+            return True
+
+        except Exception as e:
+            self.handle_error('Error while commenting on listing', 'comment_on_listing_error.png')
+
+    def send_private_bundle_message(self, listing_id, message):
+        """Will create a bundle with the listing and send the user a message"""
+        try:
+            self.logger.info(f'Adding the following item to a bundle and sending a message: Listing Id - {listing_id} Message - {message}')
+
+            self.web_driver.get(f'https://www.poshmark.com/listing/{listing_id}')
+
+            self.sleep(2)
+
+            try:
+                error = self.locate(By.CLASS_NAME, 'error_banner')
+
+                if 'no longer available' in error.text:
+                    return False
+            except (TimeoutException, NoSuchElementException):
+                pass
+
+            bundle_icon = self.locate(By.CLASS_NAME, 'bundle-medium-gray-with-plus-sign')
+            bundle_icon.click()
+
+            self.sleep(.5)
+
+            comment_button = self.locate(By.CLASS_NAME, 'comment-gray')
+            comment_button.click()
+
+            self.sleep(.5)
+
+            comment_input = self.locate(By.ID, 'comment')
+            comment_input.send_keys(message)
+
+            submit_button = self.locate(By.XPATH, '//*[@id="commentForm"]/div[2]/button')
+            submit_button.click()
+
+            return True
+
+        except Exception as e:
+            self.handle_error('Error while adding listing to bundle and sending message', 'send_private_bundle_message_error.png')
+
     def go_through_feed(self):
         """Will scroll randomly through the users feed"""
         try:
