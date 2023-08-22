@@ -848,12 +848,9 @@ class PoshMarkClient(BaseClient):
             self.logger.info(f'Profile update Attempt # {update_profile_retries + 1} for {self.campaign.posh_user.username}')
 
             if self.posh_user.header_picture:
-                self.go_to_closet()
+                self.web_driver.get('https://poshmark.com/user/edit-profile')
 
-                edit_profile_button = self.locate(By.XPATH, '//a[@href="/user/edit-profile"]')
-                edit_profile_button.click()
-
-                self.logger.info('Clicked on edit profile button')
+                self.sleep(1)
 
                 header_picture_name = self.posh_user.header_picture.name.split('/')[-1]
                 self.bucket.download_file(self.posh_user.header_picture.name, header_picture_name)
