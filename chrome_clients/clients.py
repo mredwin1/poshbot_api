@@ -18,7 +18,6 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
-from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
@@ -326,7 +325,7 @@ class PoshMarkClient(BaseClient):
         image_path = f'/log_images/{self.campaign.title}/{filename}'
         self.logger.debug(f'{traceback.format_exc()}')
         self.web_driver.save_screenshot(image_path)
-        self.logger.error(error_message)
+        self.logger.error(error_message, image_path)
         is_logged_in = self.check_logged_in()
         if is_logged_in:
             is_inactive = self.check_inactive()
