@@ -1734,7 +1734,7 @@ class PublicPoshMarkClient(BaseClient):
                         listed_items['not_for_sale_listings'].append(listing)
                         not_for_sale_listing_titles.append(listing['title'])
 
-            self.logger.info(f'Found the following listings: {listed_items }')
+            # self.logger.info(f'Found the following listings: {listed_items }')
 
             return listed_items
 
@@ -1744,7 +1744,7 @@ class PublicPoshMarkClient(BaseClient):
 
     def check_inactive(self, username):
         """Will check if the current user is inactive"""
-        self.logger.info(f'Checking is the following user is inactive: {username}')
+        # self.logger.info(f'Checking is the following user is inactive: {username}')
 
         self.web_driver.get(f'https://poshmark.com/closet/{username}')
 
