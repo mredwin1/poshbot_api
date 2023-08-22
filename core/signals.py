@@ -58,3 +58,9 @@ def listing_image_deleted(sender, instance, *args, **kwargs):
 @receiver(post_delete, sender=LogEntry)
 def log_entry_deleted(sender, instance, *args, **kwargs):
     instance.image.delete(save=False)
+
+
+@receiver(post_save, sender=ListedItem)
+def listed_item_saved(sender, instance: ListedItem, *args, **kwargs):
+    if not instance.listing and instance.status == ListedItem.NOT_LISTED:
+        instance.delete()
