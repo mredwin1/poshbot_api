@@ -4,20 +4,23 @@ import os
 import pytz
 import random
 import requests
+import smtplib
 import time
 import traceback
 
-from celery import shared_task, Task, current_app, beat
+from celery import shared_task, Task
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
-from django.db.models import Q, Max
+from django.db.models import Q
 from django.utils import timezone
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
 
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport
+from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport, PaymentEmailContent
 
 
 class CampaignTask(Task):
@@ -839,3 +842,38 @@ def posh_user_cleanup():
 
         if posh_user.date_disabled < two_weeks_ago:
             posh_user.delete()
+
+
+@shared_task
+def send_support_emails():
+    logger = logging.getLogger(__name__)
+    smtp_server = 'smtp.mail.yahoo.com'
+    smtp_port = 587
+    posh_users = PoshUser.objects.filter(is_active=True, send_support_email=True)
+    all_email_info = PaymentEmailContent.objects.all()
+
+    for posh_user in posh_users:
+        if posh_user.email and posh_user.email_password:
+            email_info: PaymentEmailContent = random.choice(all_email_info)
+
+            msg = MIMEMultipart()
+            msg['From'] = posh_user.email
+            msg['To'] = 'ecruz1113@gmail.com'
+            msg['Subject'] = email_info.subject
+            msg.attach(MIMEText(email_info.body, 'plain'))
+
+            try:
+                # Connect to the SMTP server
+                server = smtplib.SMTP(smtp_server, smtp_port)
+                server.starttls()
+                server.login(posh_user.email, posh_user.email_password)
+
+                # Send the email
+                server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
+                logger.info("Email sent successfully!")
+
+                # Disconnect from the server
+                server.quit()
+
+            except Exception as e:
+                logger.error("An error occurred", exc_info=True)

@@ -185,6 +185,7 @@ class PoshUser(models.Model):
     profile_updated = models.BooleanField(default=False)
     clone_installed = models.BooleanField(default=False)
     finished_registration = models.BooleanField(default=False)
+    send_support_email = models.BooleanField(default=False)
 
     time_to_install_clone = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
     time_to_register = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
@@ -622,3 +623,11 @@ class LogEntry(models.Model):
         options={'quality': 60},
         upload_to=path_and_rename
     )
+
+
+class PaymentEmailContent(models.Model):
+    subject = models.CharField(max_length=255)
+    body = models.TextField()
+
+    def __str__(self):
+        return self.subject

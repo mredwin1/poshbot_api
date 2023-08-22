@@ -163,7 +163,7 @@ class PoshUserAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Important Information', {
             'fields': (
-                ('is_active', 'is_active_in_posh', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated'),
+                ('is_active', 'is_active_in_posh', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated', 'send_support_email'),
                 ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration'),
                 ('user', 'device', 'app_package'),
                 ('date_added', 'date_disabled'),
