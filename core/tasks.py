@@ -871,8 +871,8 @@ def send_support_emails():
 
                 try:
                     # Connect to the SMTP server
-                    with smtplib.SMTP(smtp_server, 25) as server:
-                        server.connect(smtp_server, smtp_port)
+                    with smtplib.SMTP(smtp_server, smtp_port) as server:
+                        server.starttls()
                         server.login(posh_user.email, posh_user.email_password)
 
                         # Send the email
