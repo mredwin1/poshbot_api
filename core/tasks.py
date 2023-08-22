@@ -873,6 +873,8 @@ def send_support_emails():
                     # Create an SSL context with specific protocol versions
                     ssl_context = ssl.create_default_context(ssl.Purpose.CLIENT_AUTH)
                     ssl_context.minimum_version = ssl.TLSVersion.TLSv1_2
+                    ssl_context.check_hostname = False
+                    ssl_context.verify_mode = ssl.CERT_NONE
 
                     # Connect to the SMTP server
                     server = smtplib.SMTP_SSL(smtp_server, smtp_port, context=ssl_context)
