@@ -859,8 +859,8 @@ def send_support_emails():
             if posh_user.email and posh_user.email_password:
                 email_info: PaymentEmailContent = random.choice(all_email_info)
                 body = email_info.body
-                body.replace('user_name', posh_user.username)
-                body.replace('email', posh_user.email)
+                body.replace('{{user_name}}', posh_user.username)
+                body.replace('{{email}}', posh_user.email)
 
                 msg = MIMEMultipart()
                 msg['From'] = posh_user.email
