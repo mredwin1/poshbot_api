@@ -178,6 +178,7 @@ class PoshUser(models.Model):
     date_added = models.DateField(auto_now_add=True)
     date_disabled = models.DateField(null=True, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
+    date_last_support_email = models.DateTimeField(null=True, blank=True)
 
     is_active = models.BooleanField(default=True)
     is_active_in_posh = models.BooleanField(default=True)

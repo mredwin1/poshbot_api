@@ -5,7 +5,6 @@ import pytz
 import random
 import requests
 import smtplib
-import ssl
 import time
 import traceback
 
@@ -863,21 +862,29 @@ def send_support_emails():
                 body = body.replace('{{user_name}}', posh_user.username)
                 body = body.replace('{{email}}', posh_user.email)
 
-                msg = MIMEMultipart()
-                msg['From'] = posh_user.email
-                msg['To'] = 'ecruz1113@gmail.com'
-                msg['Subject'] = email_info.subject
-                msg.attach(MIMEText(body, 'plain'))
+                # Check if last support email was sent at least 24 hours ago
+                if (not posh_user.date_last_support_email or (timezone.now() - posh_user.date_last_support_email) >= datetime.timedelta(hours=24)):
+                    # Randomly decide whether to send an email (25% chance)
+                    if random.random() <= 0.25:
+                        msg = MIMEMultipart()
+                        msg['From'] = posh_user.email
+                        msg['To'] = 'ecruz1113@gmail.com'
+                        msg['Subject'] = email_info.subject
+                        msg.attach(MIMEText(body, 'plain'))
 
-                try:
-                    # Connect to the SMTP server
-                    with smtplib.SMTP(smtp_server, smtp_port) as server:
-                        server.starttls()
-                        server.login(posh_user.email, posh_user.email_imap_password)
+                        try:
+                            # Connect to the SMTP server
+                            with smtplib.SMTP(smtp_server, smtp_port) as server:
+                                server.starttls()
+                                server.login(posh_user.email, posh_user.email_imap_password)
 
-                        # Send the email
-                        server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
-                        logger.info("Email sent successfully!")
+                                # Send the email
+                                server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
+                                logger.info("Email sent successfully!")
 
-                except Exception as e:
-                    logger.error("An error occurred", exc_info=True)
+                                # Update the date_last_support_email field
+                                posh_user.date_last_support_email = timezone.now()
+                                posh_user.save()
+
+                        except Exception as e:
+                            logger.error("An error occurred", exc_info=True)
