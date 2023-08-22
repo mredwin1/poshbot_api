@@ -322,7 +322,7 @@ class PoshMarkClient(BaseClient):
             os.mkdir(logs_dir)
 
     def handle_error(self, error_message, filename):
-        image_path = f'/log_images/{self.campaign.title}/{filename}'
+        image_path = f'/log_images/{slugify(self.campaign.title)}/{filename}'
         self.logger.debug(f'{traceback.format_exc()}')
         self.web_driver.save_screenshot(image_path)
         self.logger.error(error_message, image_path)
@@ -1682,7 +1682,6 @@ class PoshMarkClient(BaseClient):
                             pass
 
                 self.sleep(5, 10)
-
         except:
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():
