@@ -1703,7 +1703,7 @@ class PublicPoshMarkClient(BaseClient):
 
         self.web_driver.get(f'http://poshmark.com/closet/{username}')
 
-        self.sleep(3)
+        time.sleep(3)
 
         try:
             if self.is_present(By.CLASS_NAME, 'card--small'):
@@ -1749,7 +1749,7 @@ class PublicPoshMarkClient(BaseClient):
         self.web_driver.get(f'https://poshmark.com/closet/{username}')
 
         try:
-            self.sleep(3)
+            time.sleep(3)
 
             listing_count_element = self.locate(
                 By.XPATH, '//*[@id="content"]/div/div/div[1]/div/div/div[2]/div/div/nav/ul/li[1]/a'
