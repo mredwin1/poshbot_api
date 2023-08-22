@@ -442,7 +442,7 @@ class PoshMarkClient(BaseClient):
             if elapsed_time > 60:
                 hours, remainder = divmod(elapsed_time, 3600)
                 minutes, seconds = divmod(remainder, 60)
-                self.logger.error(f'Sharing does not seem to be working '
+                self.logger.warning(f'Sharing does not seem to be working '
                                   f'Elapsed Time: {hours} hours, {minutes} minutes, and {seconds} seconds')
                 return False
             else:
