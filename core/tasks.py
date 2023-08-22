@@ -419,33 +419,35 @@ class CampaignTask(Task):
                         if reported:
                             ListedItemReport.objects.create(posh_user=self.campaign.posh_user, listed_item_to_report=unreported_item)
                             bundle_message = 'If you don’t stop flagging my accounts I will start flagging you back just as heavily.'
-                            comments = [
-                                "LOL, people still fall for this? Come on!",
-                                "Are you serious? This is like scamming 101.",
-                                "Hey folks, just a heads up: don't get played by this super obvious scam",
-                                "Scammers be like, 'Let's see how much we can shock them today!'",
-                                "This thing stinks worse than a fish market in July. Total scam.",
-                                "Do yourself a favor and don't touch this scam with a ten-foot pole.",
-                                "Anybody with half a brain can tell this is a straight up scam.",
-                                "cmon, don't be clueless classic scam in action right here",
-                                "Believing this? Might as well believe pigs can fly... Total nonsense.",
-                                "You'd need a lobotomy to think this isn't a scam. Seriously....",
-                                "LOL, this is such an obvious fake!",
-                                "OMG, who actually falls for this? It's a total scam!",
-                                "No way, Jose! This is like the definition of fake.",
-                                "Pssst... Don't even think about believing this crap. It's fake AF.",
-                                "Haha, nice try scammers! This is faker than fake.",
-                                "Hey everyone, check out the scam of the day right here!",
-                                "Ugh, these scams are getting dumber by the minute.",
-                                "Yeah right, like anyone's gonna buy into this nonsense.",
-                                "Just another day, just another ridiculous scam attempt.",
-                                "Sigh... Can't believe people still try to pull off these fakes.",
-                                'fake',
-                                'scam'
-                            ]
-
-                            client.comment_on_listing(unreported_item.listed_item_id, random.choice(comments))
                             client.send_private_bundle_message(unreported_item.listed_item_id, bundle_message)
+
+                            if random_number < .05:
+                                comments = [
+                                    "LOL, people still fall for this? Come on!",
+                                    "Are you serious? This is like scamming 101.",
+                                    "Hey folks, just a heads up: don't get played by this super obvious scam",
+                                    "Scammers be like, 'Let's see how much we can shock them today!'",
+                                    "This thing stinks worse than a fish market in July. Total scam.",
+                                    "Do yourself a favor and don't touch this scam with a ten-foot pole.",
+                                    "Anybody with half a brain can tell this is a straight up scam.",
+                                    "cmon, don't be clueless classic scam in action right here",
+                                    "Believing this? Might as well believe pigs can fly... Total nonsense.",
+                                    "You'd need a lobotomy to think this isn't a scam. Seriously....",
+                                    "LOL, this is such an obvious fake!",
+                                    "OMG, who actually falls for this? It's a total scam!",
+                                    "No way, Jose! This is like the definition of fake.",
+                                    "Pssst... Don't even think about believing this crap. It's fake AF.",
+                                    "Haha, nice try scammers! This is faker than fake.",
+                                    "Hey everyone, check out the scam of the day right here!",
+                                    "Ugh, these scams are getting dumber by the minute.",
+                                    "Yeah right, like anyone's gonna buy into this nonsense.",
+                                    "Just another day, just another ridiculous scam attempt.",
+                                    "Sigh... Can't believe people still try to pull off these fakes.",
+                                    'fake',
+                                    'scam'
+                                ]
+
+                                client.comment_on_listing(unreported_item.listed_item_id, random.choice(comments))
                         elif reported is False:
                             unreported_items.delete()
 
