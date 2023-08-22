@@ -865,7 +865,7 @@ def send_support_emails():
                 # Check if last support email was sent at least 24 hours ago
                 if (not posh_user.date_last_support_email or (timezone.now() - posh_user.date_last_support_email) >= datetime.timedelta(hours=24)):
                     # Randomly decide whether to send an email (25% chance)
-                    if random.random() <= 0.25:
+                    if random.random() <= 0.16:
                         msg = MIMEMultipart()
                         msg['From'] = posh_user.email
                         msg['To'] = 'ecruz1113@gmail.com'
