@@ -857,7 +857,7 @@ def send_support_emails():
 
     if all_email_info:
         for posh_user in posh_users:
-            if posh_user.email and posh_user.email_password:
+            if posh_user.email and posh_user.email_imap_password:
                 email_info: PaymentEmailContent = random.choice(all_email_info)
                 body = email_info.body
                 body = body.replace('{{user_name}}', posh_user.username)
@@ -873,7 +873,7 @@ def send_support_emails():
                     # Connect to the SMTP server
                     with smtplib.SMTP(smtp_server, smtp_port) as server:
                         server.starttls()
-                        server.login(posh_user.email, posh_user.email_password)
+                        server.login(posh_user.email, posh_user.email_imap_password)
 
                         # Send the email
                         server.sendmail(posh_user.email, 'ecruz1113@gmail.com', msg.as_string())
