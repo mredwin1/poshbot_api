@@ -631,6 +631,8 @@ class ManageCampaignsTask(Task):
                     elif runtime > CampaignTask.time_limit * 2:
                         self.logger.warning(f'Campaign has been running for {runtime} sec, checking in.')
                         device.check_in()
+                        campaign.status = Campaign.STARTING
+                        campaign.save()
                 except Campaign.DoesNotExist:
                     self.logger.warning('Campaign does not exist. Checking in.')
                     device.check_in()
