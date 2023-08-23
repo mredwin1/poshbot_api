@@ -621,8 +621,8 @@ class ManageCampaignsTask(Task):
                 if device.is_ready():
                     return device
 
-            runtime = (timezone.now() - device.checkout_time).total_seconds()
-            if device.checkout_time is not None and device.checked_out_by and runtime > CampaignTask.time_limit:
+            runtime = (timezone.now() - device.checkout_time).total_seconds() if device.checkout_time is not None else None
+            if runtime and device.checked_out_by and runtime > CampaignTask.time_limit:
                 try:
                     campaign = Campaign.objects.get(id=device.checked_out_by)
                     if campaign.status != Campaign.RUNNING:
