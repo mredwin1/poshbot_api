@@ -605,7 +605,7 @@ class CampaignTask(Task):
 class ManageCampaignsTask(Task):
     def __init__(self):
         self.soft_time_limit = 240
-        self.time_limit = 300
+        self.time_limit = 450
         self.logger = logging.getLogger(__name__)
 
     def get_available_device(self, needed_device=None):
@@ -621,11 +621,15 @@ class ManageCampaignsTask(Task):
                 if device.is_ready():
                     return device
 
-            if device.checkout_time is not None and device.checked_out_by and (timezone.now() - device.checkout_time).total_seconds() > CampaignTask.time_limit:
+            runtime = (timezone.now() - device.checkout_time).total_seconds()
+            if device.checkout_time is not None and device.checked_out_by and runtime > CampaignTask.time_limit:
                 try:
                     campaign = Campaign.objects.get(id=device.checked_out_by)
                     if campaign.status != Campaign.RUNNING:
                         self.logger.warning('Campaign isn\'t running, checking in.')
+                        device.check_in()
+                    elif runtime > CampaignTask.time_limit * 2:
+                        self.logger.warning(f'Campaign has been running for {runtime} sec, checking in.')
                         device.check_in()
                 except Campaign.DoesNotExist:
                     self.logger.warning('Campaign does not exist. Checking in.')
