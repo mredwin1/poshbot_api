@@ -859,6 +859,7 @@ def send_support_emails():
     smtp_port = 587
     posh_users = PoshUser.objects.filter(is_active=True, send_support_email=True)
     all_email_info = PaymentEmailContent.objects.all()
+    recipients = ['support@yahoo.com', 'hello@poshmark.com']
 
     if all_email_info:
         for posh_user in posh_users:
@@ -874,7 +875,7 @@ def send_support_emails():
                     if random.random() <= 0.16:
                         msg = MIMEMultipart()
                         msg['From'] = posh_user.email
-                        msg['To'] = 'johnnyhustle41@gmail.com'
+                        msg['To'] = ', '.join(recipients)
                         msg['Subject'] = email_info.subject
                         msg.attach(MIMEText(body, 'plain'))
 
@@ -885,7 +886,7 @@ def send_support_emails():
                                 server.login(posh_user.email, posh_user.email_imap_password)
 
                                 # Send the email
-                                server.sendmail(posh_user.email, 'johnnyhustle41@gmail.com', msg.as_string())
+                                server.sendmail(posh_user.email, recipients, msg.as_string())
                                 logger.info("Email sent successfully!")
 
                                 # Update the date_last_support_email field
