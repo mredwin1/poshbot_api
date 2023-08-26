@@ -904,4 +904,6 @@ def get_items_to_report():
     with PublicPoshMarkClient(logger) as client:
         bad_listings = client.find_bad_listings()
 
-        logger.info(bad_listings)
+        for listing in bad_listings:
+            logger.info(listing[0])
+            logger.info(f'https://poshmark.com/listing/{listing[1]}')
