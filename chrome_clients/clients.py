@@ -1795,6 +1795,8 @@ class PublicPoshMarkClient(BaseClient):
         listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
         bad_listings = []
 
+        self.logger.info(len(listed_items))
+
         for listed_item in listed_items:
             listing_id = listed_item.get_attribute('data-et-prop-listing_id')
             listing_link = listed_item.find_element(By.TAG_NAME, 'a')
