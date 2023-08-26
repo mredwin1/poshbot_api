@@ -1794,7 +1794,7 @@ class PublicPoshMarkClient(BaseClient):
 
             number_of_scrolls = 0
             while number_of_scrolls < 5 or len(listed_items) >= 200:
-                self.web_driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
+                self.web_driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
                 self.sleep(3)
 
                 listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')

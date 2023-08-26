@@ -828,11 +828,14 @@ class PoshMarkClient(AppiumClient):
                                     self.sleep(.75)
                                     counter = 0
                                     while counter < len(listing_images):
-                                        img = self.locate(AppiumBy.XPATH, "//android.widget.ImageView[@resource-id='com.google.android.documentsui:id/icon_thumb' and @selected='false']")
-                                        if counter == 0:
-                                            self.long_click(img)
-                                        else:
-                                            img.click()
+                                        try:
+                                            img = self.locate(AppiumBy.XPATH, "//android.widget.ImageView[@resource-id='com.google.android.documentsui:id/icon_thumb' and @selected='false']")
+                                            if counter == 0:
+                                                self.long_click(img)
+                                            else:
+                                                img.click()
+                                        except NoSuchElementException:
+                                            self.logger.warning(f'Could not find another image')
 
                                         if counter != 0 and counter % 5 == 0 and counter != len(listing_images) - 1:
                                             self.swipe('up', 580 * 3)
