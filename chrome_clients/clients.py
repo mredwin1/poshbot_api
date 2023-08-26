@@ -1818,11 +1818,11 @@ class PublicPoshMarkClient(BaseClient):
                     description_element = soup.find(class_='listing__description')
 
                     if description_element:
-                        description_text = description_element.get_text()
+                        description_text = description_element.get_text().strip()
 
                         # self.logger.info(f'Listing Title: {listing_title} Listing Description: {description_text}')
 
-                        if listing_title in description_text:
+                        if description_text.startswith(listing_title):
                             self.logger.info(f"Bad listing found: {listing_id}")
                             bad_listings.append((listing_title, listing_id))
                 else:
