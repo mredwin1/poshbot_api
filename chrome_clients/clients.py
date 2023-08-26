@@ -1795,13 +1795,13 @@ class PublicPoshMarkClient(BaseClient):
             number_of_scrolls = 0
             while number_of_scrolls < 5 or len(listed_items) >= 200:
                 self.web_driver.execute_script("window.scrollTo(0, document.body.scrollHeight);")
-                self.sleep(2)
+                self.sleep(3)
 
                 listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')
                 listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
                 number_of_scrolls += 1
 
-            self.logger.info(len(listed_items))
+                self.logger.info(len(listed_items))
 
             for listed_item in listed_items:
                 listing_id = listed_item.get_attribute('data-et-prop-listing_id')
@@ -1820,7 +1820,7 @@ class PublicPoshMarkClient(BaseClient):
                     if description_element:
                         description_text = description_element.get_text()
 
-                        self.logger.info(f'Listing Title: {listing_title} Listing Description: {description_text}')
+                        # self.logger.info(f'Listing Title: {listing_title} Listing Description: {description_text}')
 
                         if listing_title in description_text:
                             self.logger.info(f"Bad listing found: {listing_id}")
