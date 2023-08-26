@@ -895,3 +895,13 @@ def send_support_emails():
 
                         except Exception as e:
                             logger.error("An error occurred", exc_info=True)
+
+
+@shared_task
+def get_items_to_report():
+    logger = logging.getLogger(__name__)
+
+    with PublicPoshMarkClient(logger) as client:
+        bad_listings = client.find_bad_listings()
+
+        logger.info(bad_listings)

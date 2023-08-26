@@ -9,6 +9,7 @@ import requests
 import time
 import traceback
 
+from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils.text import slugify
 from selenium import webdriver
@@ -1768,3 +1769,53 @@ class PublicPoshMarkClient(BaseClient):
         except Exception:
             # self.logger.error(traceback.format_exc())
             return True
+
+    def find_bad_listings(self):
+        brands = [
+            'Gucci',
+            'LouisVuitton',
+            'Chanel',
+            'YvesSaintLaurent',
+            'SalvatoreFerragamo',
+            'TomFord',
+            'Dior'
+        ]
+        min_price = 100
+        max_price = 300
+
+        selected_brand = random.choice(brands)
+
+        self.logger.info(f'Searching for bad listings in the following brand: {selected_brand}')
+
+        self.web_driver.get(f'https://poshmark.com/brand/{selected_brand}?price%5B%5D={min_price}-{max_price}')
+
+        time.sleep(1)
+
+        listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')
+        listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
+        bad_listings = []
+
+        for listed_item in listed_items:
+            listing_id = listed_item.get_attribute('data-et-prop-listing_id')
+            listing_link = listed_item.find_element(By.TAG_NAME, 'a')
+            listing_url = listing_link.get_attribute('href')
+            listing_title = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__title').text.strip()
+
+            if listing_title.endswith('...'):
+                listing_title = listing_title[:-3]
+
+            response = requests.get(listing_url)
+            if response.status_code == 200:
+                soup = BeautifulSoup(response.content, 'html.parser')
+                description_element = soup.find(class_='listing__description')
+
+                if description_element:
+                    description_text = description_element.get_text()
+
+                    if listing_title in description_text:
+                        self.logger.info(f"Bad listing found: {listing_id}")
+                        bad_listings.append((listing_title, listing_id))
+            else:
+                self.logger.warning(f"Failed to retrieve item: {listing_id}")
+
+        return bad_listings
