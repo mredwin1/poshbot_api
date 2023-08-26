@@ -834,7 +834,7 @@ class PoshMarkClient(AppiumClient):
                                                 self.long_click(img)
                                             else:
                                                 img.click()
-                                        except NoSuchElementException:
+                                        except (TimeoutException, NoSuchElementException):
                                             self.logger.warning(f'Could not find another image')
 
                                         if counter != 0 and counter % 5 == 0 and counter != len(listing_images) - 1:
