@@ -1801,7 +1801,12 @@ class PublicPoshMarkClient(BaseClient):
                 listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
                 number_of_scrolls += 1
 
-                self.logger.info(len(listed_items))
+                dir = '/logs/images'
+                os.makedirs(dir, exist_ok=True)
+                image_name = f'{brand}_{number_of_scrolls}_end.png'
+                self.web_driver.save_screenshot(image_name)
+
+                self.logger.info(len(listed_items), f'{dir}/{image_name}')
 
             for listed_item in listed_items:
                 listing_id = listed_item.get_attribute('data-et-prop-listing_id')
