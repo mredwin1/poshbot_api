@@ -799,6 +799,8 @@ class PoshMarkClient(AppiumClient):
                                         image_key = listing_image.image.name
                                         self.download_and_send_file(image_key, listing_folder)
 
+                                    self.sleep(5)
+
                                     add_more_button = self.locate(AppiumBy.ID, 'add_more')
                                     self.click(add_more_button)
 
