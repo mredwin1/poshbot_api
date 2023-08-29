@@ -1846,6 +1846,7 @@ class PublicPoshMarkClient(BaseClient):
                                     else:
                                         self.logger.warning(f"Listing title too short: {listing_url}")
                                 else:
+                                    self.logger.info(f'Posh Ambassadoe: {closet_url}')
                                     posh_ambassadors.append(closet_url)
 
                     self.logger.info(f'Reviewed {items_reviewed}')
