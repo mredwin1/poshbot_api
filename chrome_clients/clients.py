@@ -1843,6 +1843,8 @@ class PublicPoshMarkClient(BaseClient):
                                                     bad_listings.append((listing_title, listing_id))
                                                 else:
                                                     self.logger.info(f'Description does not start with title: {listing_url}')
+                                        else:
+                                            self.logger.error(response.status_code)
                                     else:
                                         self.logger.warning(f"Listing title too short: {listing_url}")
                                 else:
