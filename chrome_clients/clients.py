@@ -1813,23 +1813,36 @@ class PublicPoshMarkClient(BaseClient):
                 listing_link = listed_item.find_element(By.TAG_NAME, 'a')
                 listing_url = listing_link.get_attribute('href')
                 listing_title = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__title').text.strip()
+                closet = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__creator')
+                closet_url = closet.get_attribute('href')
 
-                if listing_title.endswith('...'):
-                    listing_title = listing_title[:-3]
+                self.logger.info(listing_title)
 
-                response = requests.get(listing_url)
-                if response.status_code == 200:
-                    soup = BeautifulSoup(response.content, 'html.parser')
-                    description_element = soup.find(class_='listing__description')
+                if len(listing_title) > 40:
+                    if listing_title.endswith('...'):
+                        listing_title = listing_title[:-3]
 
-                    if description_element:
-                        description_text = description_element.get_text().strip()
+                    closet_response = requests.get(closet_url)
+                    if closet_response.status_code == 200:
+                        closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
+                        badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
 
-                        # self.logger.info(f'Listing Title: {listing_title} Listing Description: {description_text}')
+                        if badge_div:
+                            badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
+                            if 'ambassador' not in badge_text:
+                                response = requests.get(listing_url)
+                                if response.status_code == 200:
+                                    soup = BeautifulSoup(response.content, 'html.parser')
+                                    description_element = soup.find(class_='listing__description')
 
-                        if description_text.startswith(listing_title):
-                            self.logger.info(f"Bad listing found: {listing_id}")
-                            bad_listings.append((listing_title, listing_id))
+                                    if description_element:
+                                        description_text = description_element.get_text().strip()
+
+                                        if description_text.startswith(listing_title):
+                                            self.logger.info(f"Bad listing found: {listing_id}")
+                                            bad_listings.append((listing_title, listing_id))
+                            else:
+                                self.logger.info(f"Posh Ambassador found: {closet_url}")
                 else:
                     self.logger.warning(f"Failed to retrieve item: {listing_id}")
 
