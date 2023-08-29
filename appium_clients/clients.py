@@ -425,11 +425,11 @@ class PoshMarkClient(AppiumClient):
     def register(self):
         self.logger.info('Starting Registration Process')
         campaign_folder = f'/{slugify(self.campaign.title)}'
-        campaign_folder_exists = os.path.exists(campaign_folder)
-        if not campaign_folder_exists:
-            os.mkdir(campaign_folder)
+        os.makedirs(campaign_folder, exist_ok=True)
 
         profile_picture_key = self.campaign.posh_user.profile_picture.name
+        self.logger.info(profile_picture_key)
+        self.logger.info(campaign_folder)
         self.download_and_send_file(profile_picture_key, campaign_folder)
 
         try:
@@ -717,14 +717,8 @@ class PoshMarkClient(AppiumClient):
 
             campaign_folder = f'/{slugify(self.campaign.title)}'
             listing_folder = f'{campaign_folder}/{slugify(listing.title)}'
-            campaign_folder_exists = os.path.exists(campaign_folder)
-            listing_folder_exists = os.path.exists(listing_folder)
 
-            if not campaign_folder_exists:
-                os.mkdir(campaign_folder)
-
-            if not listing_folder_exists:
-                os.mkdir(listing_folder)
+            os.makedirs(listing_folder, exist_ok=True)
 
             while not self.listed:
                 if self.is_present(AppiumBy.ID, 'sellTab'):
