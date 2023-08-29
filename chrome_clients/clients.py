@@ -1785,7 +1785,7 @@ class PublicPoshMarkClient(BaseClient):
 
         bad_listings = []
         for brand in brands:
-            listed_items = []
+            items_reviewed = []
             self.logger.info(f'Searching for bad listings in the following brand: {brand}')
 
             self.web_driver.get(f'https://poshmark.com/brand/{brand}?price%5B%5D={min_price}-{max_price}')
@@ -1793,7 +1793,7 @@ class PublicPoshMarkClient(BaseClient):
             time.sleep(1)
 
             number_of_scrolls = 0
-            while number_of_scrolls < 5 or len(listed_items) >= 200:
+            while number_of_scrolls < 5 or items_reviewed >= 200:
                 self.web_driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
                 self.sleep(3)
 
@@ -1803,11 +1803,7 @@ class PublicPoshMarkClient(BaseClient):
                 log_dir = '/logs/images'
                 os.makedirs(log_dir, exist_ok=True)
                 image_location = f'{log_dir}/{brand}_{number_of_scrolls}_end.png'
-                page_source_location = f'{log_dir}/{brand}_{number_of_scrolls}_page.html'
                 self.web_driver.save_screenshot(image_location)
-
-                with open(page_source_location, 'w', encoding='utf-8') as file:
-                    file.write(self.web_driver.page_source)
 
                 self.logger.info(len(listed_items), image_location)
 
@@ -1820,46 +1816,45 @@ class PublicPoshMarkClient(BaseClient):
 
                 self.sleep(2)
 
-                self.logger.info(self.web_driver.current_url)
-
                 number_of_scrolls += 1
 
-            for listed_item in listed_items:
-                listing_id = listed_item.get_attribute('data-et-prop-listing_id')
-                listing_link = listed_item.find_element(By.TAG_NAME, 'a')
-                listing_url = listing_link.get_attribute('href')
-                listing_title = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__title').text.strip()
-                closet = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__creator')
-                closet_url = closet.get_attribute('href')
+                for listed_item in listed_items:
+                    items_reviewed += 1
+                    listing_id = listed_item.get_attribute('data-et-prop-listing_id')
+                    listing_link = listed_item.find_element(By.TAG_NAME, 'a')
+                    listing_url = listing_link.get_attribute('href')
+                    listing_title = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__title').text.strip()
+                    closet = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__creator')
+                    closet_url = closet.get_attribute('href')
 
-                self.logger.info(listing_title)
+                    self.logger.info(listing_title)
 
-                if len(listing_title) > 40:
-                    if listing_title.endswith('...'):
-                        listing_title = listing_title[:-3]
+                    if len(listing_title) > 40:
+                        if listing_title.endswith('...'):
+                            listing_title = listing_title[:-3]
 
-                    closet_response = requests.get(closet_url)
-                    if closet_response.status_code == 200:
-                        closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
-                        badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
+                        closet_response = requests.get(closet_url)
+                        if closet_response.status_code == 200:
+                            closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
+                            badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
 
-                        if badge_div:
-                            badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
-                            if 'become a posh ambassador' in badge_text.lower():
-                                response = requests.get(listing_url)
-                                if response.status_code == 200:
-                                    soup = BeautifulSoup(response.content, 'html.parser')
-                                    description_element = soup.find(class_='listing__description')
+                            if badge_div:
+                                badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
+                                if 'become a posh ambassador' in badge_text.lower():
+                                    response = requests.get(listing_url)
+                                    if response.status_code == 200:
+                                        soup = BeautifulSoup(response.content, 'html.parser')
+                                        description_element = soup.find(class_='listing__description')
 
-                                    if description_element:
-                                        description_text = description_element.get_text().strip()
+                                        if description_element:
+                                            description_text = description_element.get_text().strip()
 
-                                        if description_text.startswith(listing_title):
-                                            self.logger.info(f"Bad listing found: {listing_id}")
-                                            bad_listings.append((listing_title, listing_id))
-                            else:
-                                self.logger.info(f"Posh Ambassador found: {closet_url}")
-                else:
-                    self.logger.warning(f"Listing title too short: {listing_url}")
+                                            if description_text.startswith(listing_title):
+                                                self.logger.info(f"Bad listing found: {listing_id}")
+                                                bad_listings.append((listing_title, listing_id))
+                                else:
+                                    self.logger.info(f"Posh Ambassador found: {closet_url}")
+                    else:
+                        self.logger.warning(f"Listing title too short: {listing_url}")
 
         return bad_listings
