@@ -1829,7 +1829,7 @@ class PublicPoshMarkClient(BaseClient):
 
                         if badge_div:
                             badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
-                            if 'ambassador' not in badge_text:
+                            if 'become a posh ambassador' in badge_text.lower():
                                 response = requests.get(listing_url)
                                 if response.status_code == 200:
                                     soup = BeautifulSoup(response.content, 'html.parser')
