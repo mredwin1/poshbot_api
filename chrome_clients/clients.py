@@ -1781,7 +1781,7 @@ class PublicPoshMarkClient(BaseClient):
             'Dior'
         ]
         min_price = 100
-        max_price = 300
+        max_price = 450
 
         bad_listings = []
         for brand in brands:
@@ -1804,7 +1804,11 @@ class PublicPoshMarkClient(BaseClient):
                 log_dir = '/logs/images'
                 os.makedirs(log_dir, exist_ok=True)
                 image_location = f'{log_dir}/{brand}_{number_of_scrolls}_end.png'
+                page_source_location = f'{log_dir}/{brand}_{number_of_scrolls}_page.html'
                 self.web_driver.save_screenshot(image_location)
+
+                with open(page_source_location, 'w', encoding='utf-8') as file:
+                    file.write(self.web_driver.page_source)
 
                 self.logger.info(len(listed_items), image_location)
 
@@ -1844,6 +1848,6 @@ class PublicPoshMarkClient(BaseClient):
                             else:
                                 self.logger.info(f"Posh Ambassador found: {closet_url}")
                 else:
-                    self.logger.warning(f"Failed to retrieve item: {listing_id}")
+                    self.logger.warning(f"Listing title too short: {listing_url}")
 
         return bad_listings
