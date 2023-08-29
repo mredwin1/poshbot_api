@@ -1785,7 +1785,7 @@ class PublicPoshMarkClient(BaseClient):
 
         bad_listings = []
         for brand in brands:
-            items_reviewed = []
+            items_reviewed = 0
             self.logger.info(f'Searching for bad listings in the following brand: {brand}')
 
             self.web_driver.get(f'https://poshmark.com/brand/{brand}?price%5B%5D={min_price}-{max_price}')
