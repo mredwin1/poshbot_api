@@ -1834,11 +1834,11 @@ class PublicPoshMarkClient(BaseClient):
                                                 if description_text.startswith(listing_title):
                                                     self.logger.info(f"Bad listing found: {listing_id}")
                                                     bad_listings.append((listing_title, listing_id))
+                                    else:
+                                        self.logger.warning(f"Listing title too short: {listing_url}")
                                 else:
                                     self.logger.info(f"Posh Ambassador found: {closet_url}")
                                     posh_ambassadors.append(closet_url)
-                    else:
-                        self.logger.warning(f"Listing title too short: {listing_url}")
 
                 self.logger.info(f'Reviewed {items_reviewed}')
 
