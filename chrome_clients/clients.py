@@ -1812,7 +1812,7 @@ class PublicPoshMarkClient(BaseClient):
                 self.logger.info(len(listed_items), image_location)
 
                 # Find and click the "Next" button
-                next_button = self.web_driver.find_element(By.XPATH, '//button[text()="Next"]')
+                next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
                 if not next_button.get_attribute("disabled"):
                     next_button.click()
                 else:
