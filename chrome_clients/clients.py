@@ -1800,12 +1800,12 @@ class PublicPoshMarkClient(BaseClient):
 
                 self.web_driver.get(f'https://poshmark.com/brand/{brand}-{category}?price%5B%5D={min_price}-{max_price}')
 
-                time.sleep(1)
+                self.logger.info(f'Currently at: {self.web_driver.current_url}')
+                self.sleep(1)
 
                 number_of_pages = 0
                 while number_of_pages < 10 and items_reviewed <= 200:
                     self.web_driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
-                    self.sleep(3)
 
                     listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')
                     listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
@@ -1843,10 +1843,12 @@ class PublicPoshMarkClient(BaseClient):
                                                     if description_text.startswith(listing_title):
                                                         self.logger.info(f"Bad listing found: {listing_id}")
                                                         bad_listings.append((listing_title, listing_id))
+                                                    else:
+                                                        self.logger.info(f'Description does not start with title: {listing_url}')
+
                                         else:
                                             self.logger.warning(f"Listing title too short: {listing_url}")
                                     else:
-                                        self.logger.info(f"Posh Ambassador found: {closet_url}")
                                         posh_ambassadors.append(closet_url)
 
                     self.logger.info(f'Reviewed {items_reviewed}')
