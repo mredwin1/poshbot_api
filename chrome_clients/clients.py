@@ -1792,8 +1792,8 @@ class PublicPoshMarkClient(BaseClient):
 
             time.sleep(1)
 
-            number_of_scrolls = 0
-            while number_of_scrolls < 5 or items_reviewed >= 200:
+            number_of_pages = 0
+            while number_of_pages < 10 or items_reviewed >= 200:
                 self.web_driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
                 self.sleep(3)
 
@@ -1809,20 +1809,18 @@ class PublicPoshMarkClient(BaseClient):
                     closet = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__creator')
                     closet_url = closet.get_attribute('href')
 
-                    self.logger.info(listing_title)
+                    closet_response = requests.get(closet_url)
+                    if closet_response.status_code == 200:
+                        closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
+                        badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
 
-                    if len(listing_title) > 40:
-                        if listing_title.endswith('...'):
-                            listing_title = listing_title[:-3]
+                        if badge_div:
+                            badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
+                            if 'become a posh ambassador' in badge_text.lower():
+                                if len(listing_title) > 40:
+                                    if listing_title.endswith('...'):
+                                        listing_title = listing_title[:-3]
 
-                        closet_response = requests.get(closet_url)
-                        if closet_response.status_code == 200:
-                            closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
-                            badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
-
-                            if badge_div:
-                                badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
-                                if 'become a posh ambassador' in badge_text.lower():
                                     response = requests.get(listing_url)
                                     if response.status_code == 200:
                                         soup = BeautifulSoup(response.content, 'html.parser')
@@ -1834,14 +1832,16 @@ class PublicPoshMarkClient(BaseClient):
                                             if description_text.startswith(listing_title):
                                                 self.logger.info(f"Bad listing found: {listing_id}")
                                                 bad_listings.append((listing_title, listing_id))
-                                else:
-                                    self.logger.info(f"Posh Ambassador found: {closet_url}")
+                            else:
+                                self.logger.info(f"Posh Ambassador found: {closet_url}")
                     else:
                         self.logger.warning(f"Listing title too short: {listing_url}")
 
+                self.logger.info(f'Reviewed {items_reviewed}')
+
                 log_dir = '/logs/images'
                 os.makedirs(log_dir, exist_ok=True)
-                image_location = f'{log_dir}/{brand}_{number_of_scrolls}_end.png'
+                image_location = f'{log_dir}/{brand}_{number_of_pages}_end.png'
                 self.web_driver.save_screenshot(image_location)
 
                 self.logger.info(len(listed_items), image_location)
@@ -1855,6 +1855,8 @@ class PublicPoshMarkClient(BaseClient):
 
                 self.sleep(2)
 
-                number_of_scrolls += 1
+                number_of_pages += 1
+
+            self.logger.info(f'Reviewed {items_reviewed} for {brand}')
 
         return bad_listings
