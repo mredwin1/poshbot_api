@@ -899,7 +899,8 @@ def send_support_emails():
 
 @shared_task
 def get_items_to_report():
-    logger = logging.getLogger(__name__)
+    logger = LogGroup(campaign=Campaign.objects.filter(user__username='admin').first(), posh_user=PoshUser.objects.first(), created_date=timezone.now())
+    logger.save()
 
     with PublicPoshMarkClient(logger) as client:
         bad_listings = client.find_bad_listings()
