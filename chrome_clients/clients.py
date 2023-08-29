@@ -23,7 +23,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer
+from core.models import Campaign, ListedItemOffer, PoshUser
 
 
 class Captcha:
@@ -1793,6 +1793,7 @@ class PublicPoshMarkClient(BaseClient):
 
         bad_listings = []
         posh_ambassadors = []
+        usernames = PoshUser.objects.values_list('username', flat=True)
         for brand in brands:
             for category in categories:
                 items_reviewed = 0
@@ -1815,8 +1816,8 @@ class PublicPoshMarkClient(BaseClient):
                         try:
                             closet = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__creator')
                             closet_url = closet.get_attribute('href')
-
-                            if closet_url not in posh_ambassadors:
+                            username = closet_url.split('/')[-1]
+                            if closet_url not in posh_ambassadors and username not in usernames:
                                 listing_id = listed_item.get_attribute('data-et-prop-listing_id')
                                 listing_link = listed_item.find_element(By.TAG_NAME, 'a')
                                 listing_url = listing_link.get_attribute('href')
