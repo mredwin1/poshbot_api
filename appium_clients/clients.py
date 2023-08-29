@@ -428,8 +428,6 @@ class PoshMarkClient(AppiumClient):
         os.makedirs(campaign_folder, exist_ok=True)
 
         profile_picture_key = self.campaign.posh_user.profile_picture.name
-        self.logger.info(profile_picture_key)
-        self.logger.info(campaign_folder)
         self.download_and_send_file(profile_picture_key, campaign_folder)
 
         try:
