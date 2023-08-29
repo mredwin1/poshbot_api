@@ -1799,7 +1799,6 @@ class PublicPoshMarkClient(BaseClient):
 
                 listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')
                 listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
-                number_of_scrolls += 1
 
                 log_dir = '/logs/images'
                 os.makedirs(log_dir, exist_ok=True)
@@ -1811,6 +1810,15 @@ class PublicPoshMarkClient(BaseClient):
                     file.write(self.web_driver.page_source)
 
                 self.logger.info(len(listed_items), image_location)
+
+                # Find and click the "Next" button
+                next_button = self.web_driver.find_element(By.XPATH, '//button[text()="Next"]')
+                if not next_button.get_attribute("disabled"):
+                    next_button.click()
+                else:
+                    break
+
+                number_of_scrolls += 1
 
             for listed_item in listed_items:
                 listing_id = listed_item.get_attribute('data-et-prop-listing_id')
