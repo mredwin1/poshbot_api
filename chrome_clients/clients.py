@@ -1818,6 +1818,10 @@ class PublicPoshMarkClient(BaseClient):
                 else:
                     break
 
+                self.sleep(2)
+
+                self.logger.info(self.web_driver.current_url)
+
                 number_of_scrolls += 1
 
             for listed_item in listed_items:
