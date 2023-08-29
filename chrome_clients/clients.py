@@ -1824,32 +1824,33 @@ class PublicPoshMarkClient(BaseClient):
                             if closet_response.status_code == 200:
                                 closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
                                 badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
+                                badge_text = ''
 
                                 if badge_div:
                                     badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
-                                    if 'become a posh ambassador' in badge_text.lower():
-                                        if len(listing_title) > 40:
-                                            if listing_title.endswith('...'):
-                                                listing_title = listing_title[:-3]
 
-                                            response = requests.get(listing_url)
-                                            if response.status_code == 200:
-                                                soup = BeautifulSoup(response.content, 'html.parser')
-                                                description_element = soup.find(class_='listing__description')
+                                if not badge_div or 'become a posh ambassador' in badge_text.lower():
+                                    if len(listing_title) > 40:
+                                        if listing_title.endswith('...'):
+                                            listing_title = listing_title[:-3]
 
-                                                if description_element:
-                                                    description_text = description_element.get_text().strip()
+                                        response = requests.get(listing_url)
+                                        if response.status_code == 200:
+                                            soup = BeautifulSoup(response.content, 'html.parser')
+                                            description_element = soup.find(class_='listing__description')
 
-                                                    if description_text.startswith(listing_title):
-                                                        self.logger.info(f"Bad listing found: {listing_id}")
-                                                        bad_listings.append((listing_title, listing_id))
-                                                    else:
-                                                        self.logger.info(f'Description does not start with title: {listing_url}')
+                                            if description_element:
+                                                description_text = description_element.get_text().strip()
 
-                                        else:
-                                            self.logger.warning(f"Listing title too short: {listing_url}")
+                                                if description_text.startswith(listing_title):
+                                                    self.logger.info(f"Bad listing found: {listing_id}")
+                                                    bad_listings.append((listing_title, listing_id))
+                                                else:
+                                                    self.logger.info(f'Description does not start with title: {listing_url}')
                                     else:
-                                        posh_ambassadors.append(closet_url)
+                                        self.logger.warning(f"Listing title too short: {listing_url}")
+                                else:
+                                    posh_ambassadors.append(closet_url)
 
                     self.logger.info(f'Reviewed {items_reviewed}')
 
