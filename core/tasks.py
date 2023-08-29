@@ -899,7 +899,7 @@ def send_support_emails():
 
 @shared_task
 def get_items_to_report():
-    logger = LogGroup(campaign=Campaign.objects.filter(user__username='admin').first(), posh_user=PoshUser.objects.first(), created_date=timezone.now())
+    logger = LogGroup(campaign=Campaign.objects.filter(user__username='admin').first(), posh_user=Campaign.objects.filter(user__username='admin').first().posh_user, created_date=timezone.now())
     logger.save()
 
     with PublicPoshMarkClient(logger) as client:
