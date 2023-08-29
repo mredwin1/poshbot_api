@@ -1780,86 +1780,95 @@ class PublicPoshMarkClient(BaseClient):
             'TomFord',
             'Dior'
         ]
+
+        categories = [
+            'Women-Accessories-Belts',
+            'Women-Bags',
+            'Men-Accessories-Belts',
+            'Men-Bags-Wallets'
+        ]
+
         min_price = 100
         max_price = 450
 
         bad_listings = []
         posh_ambassadors = []
         for brand in brands:
-            items_reviewed = 0
-            self.logger.info(f'Searching for bad listings in the following brand: {brand}')
+            for category in categories:
+                items_reviewed = 0
+                self.logger.info(f'Searching for bad listings in the following brand: {brand}')
 
-            self.web_driver.get(f'https://poshmark.com/brand/{brand}?price%5B%5D={min_price}-{max_price}')
+                self.web_driver.get(f'https://poshmark.com/brand/{brand}-{category}?price%5B%5D={min_price}-{max_price}')
 
-            time.sleep(1)
+                time.sleep(1)
 
-            number_of_pages = 0
-            while number_of_pages < 10 or items_reviewed <= 200:
-                self.web_driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
-                self.sleep(3)
+                number_of_pages = 0
+                while number_of_pages < 10 or items_reviewed <= 200:
+                    self.web_driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
+                    self.sleep(3)
 
-                listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')
-                listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
+                    listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')
+                    listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
 
-                for listed_item in listed_items:
-                    items_reviewed += 1
-                    closet = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__creator')
-                    closet_url = closet.get_attribute('href')
+                    for listed_item in listed_items:
+                        items_reviewed += 1
+                        closet = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__creator')
+                        closet_url = closet.get_attribute('href')
 
-                    if closet_url not in posh_ambassadors:
-                        listing_id = listed_item.get_attribute('data-et-prop-listing_id')
-                        listing_link = listed_item.find_element(By.TAG_NAME, 'a')
-                        listing_url = listing_link.get_attribute('href')
-                        listing_title = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__title').text.strip()
-                        closet_response = requests.get(closet_url)
-                        if closet_response.status_code == 200:
-                            closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
-                            badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
+                        if closet_url not in posh_ambassadors:
+                            listing_id = listed_item.get_attribute('data-et-prop-listing_id')
+                            listing_link = listed_item.find_element(By.TAG_NAME, 'a')
+                            listing_url = listing_link.get_attribute('href')
+                            listing_title = listed_item.find_element(By.CSS_SELECTOR, 'a.tile__title').text.strip()
+                            closet_response = requests.get(closet_url)
+                            if closet_response.status_code == 200:
+                                closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
+                                badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
 
-                            if badge_div:
-                                badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
-                                if 'become a posh ambassador' in badge_text.lower():
-                                    if len(listing_title) > 40:
-                                        if listing_title.endswith('...'):
-                                            listing_title = listing_title[:-3]
+                                if badge_div:
+                                    badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
+                                    if 'become a posh ambassador' in badge_text.lower():
+                                        if len(listing_title) > 40:
+                                            if listing_title.endswith('...'):
+                                                listing_title = listing_title[:-3]
 
-                                        response = requests.get(listing_url)
-                                        if response.status_code == 200:
-                                            soup = BeautifulSoup(response.content, 'html.parser')
-                                            description_element = soup.find(class_='listing__description')
+                                            response = requests.get(listing_url)
+                                            if response.status_code == 200:
+                                                soup = BeautifulSoup(response.content, 'html.parser')
+                                                description_element = soup.find(class_='listing__description')
 
-                                            if description_element:
-                                                description_text = description_element.get_text().strip()
+                                                if description_element:
+                                                    description_text = description_element.get_text().strip()
 
-                                                if description_text.startswith(listing_title):
-                                                    self.logger.info(f"Bad listing found: {listing_id}")
-                                                    bad_listings.append((listing_title, listing_id))
+                                                    if description_text.startswith(listing_title):
+                                                        self.logger.info(f"Bad listing found: {listing_id}")
+                                                        bad_listings.append((listing_title, listing_id))
+                                        else:
+                                            self.logger.warning(f"Listing title too short: {listing_url}")
                                     else:
-                                        self.logger.warning(f"Listing title too short: {listing_url}")
-                                else:
-                                    self.logger.info(f"Posh Ambassador found: {closet_url}")
-                                    posh_ambassadors.append(closet_url)
+                                        self.logger.info(f"Posh Ambassador found: {closet_url}")
+                                        posh_ambassadors.append(closet_url)
 
-                self.logger.info(f'Reviewed {items_reviewed}')
+                    self.logger.info(f'Reviewed {items_reviewed}')
 
-                log_dir = '/logs/images'
-                os.makedirs(log_dir, exist_ok=True)
-                image_location = f'{log_dir}/{brand}_{number_of_pages}_end.png'
-                self.web_driver.save_screenshot(image_location)
+                    log_dir = '/logs/images'
+                    os.makedirs(log_dir, exist_ok=True)
+                    image_location = f'{log_dir}/{brand}_{number_of_pages}_end.png'
+                    self.web_driver.save_screenshot(image_location)
 
-                self.logger.info(len(listed_items), image_location)
+                    self.logger.info(len(listed_items), image_location)
 
-                # Find and click the "Next" button
-                next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
-                if not next_button.get_attribute("disabled"):
-                    next_button.click()
-                else:
-                    break
+                    # Find and click the "Next" button
+                    next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
+                    if not next_button.get_attribute("disabled"):
+                        next_button.click()
+                    else:
+                        break
 
-                self.sleep(2)
+                    self.sleep(2)
 
-                number_of_pages += 1
+                    number_of_pages += 1
 
-            self.logger.info(f'Reviewed {items_reviewed} for {brand}')
+                self.logger.info(f'Reviewed {items_reviewed} for {brand}-{category}')
 
         return bad_listings
