@@ -1803,7 +1803,7 @@ class PublicPoshMarkClient(BaseClient):
                 time.sleep(1)
 
                 number_of_pages = 0
-                while number_of_pages < 10 or items_reviewed <= 200:
+                while number_of_pages < 10 and items_reviewed <= 200:
                     self.web_driver.execute_script("window.scrollBy(0, document.body.scrollHeight);")
                     self.sleep(3)
 
