@@ -1824,12 +1824,8 @@ class PublicPoshMarkClient(BaseClient):
                             if closet_response.status_code == 200:
                                 closet_soup = BeautifulSoup(closet_response.content, 'html.parser')
                                 badge_div = closet_soup.find('div', {'badgepresentation': '[object Object]'})
-                                badge_text = ''
 
-                                if badge_div:
-                                    badge_text = badge_div.find('div', {'class': 'all-caps fs--ns pa-badge__text'}).text.strip()
-
-                                if not badge_div or 'become a posh ambassador' in badge_text.lower():
+                                if not badge_div:
                                     if len(listing_title) > 40:
                                         if listing_title.endswith('...'):
                                             listing_title = listing_title[:-3]
