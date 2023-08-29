@@ -1800,24 +1800,6 @@ class PublicPoshMarkClient(BaseClient):
                 listed_items_container = self.web_driver.find_element(By.CLASS_NAME, 'tiles_container')
                 listed_items = listed_items_container.find_elements(By.CLASS_NAME, 'col-x12')
 
-                log_dir = '/logs/images'
-                os.makedirs(log_dir, exist_ok=True)
-                image_location = f'{log_dir}/{brand}_{number_of_scrolls}_end.png'
-                self.web_driver.save_screenshot(image_location)
-
-                self.logger.info(len(listed_items), image_location)
-
-                # Find and click the "Next" button
-                next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
-                if not next_button.get_attribute("disabled"):
-                    next_button.click()
-                else:
-                    break
-
-                self.sleep(2)
-
-                number_of_scrolls += 1
-
                 for listed_item in listed_items:
                     items_reviewed += 1
                     listing_id = listed_item.get_attribute('data-et-prop-listing_id')
@@ -1856,5 +1838,23 @@ class PublicPoshMarkClient(BaseClient):
                                     self.logger.info(f"Posh Ambassador found: {closet_url}")
                     else:
                         self.logger.warning(f"Listing title too short: {listing_url}")
+
+                log_dir = '/logs/images'
+                os.makedirs(log_dir, exist_ok=True)
+                image_location = f'{log_dir}/{brand}_{number_of_scrolls}_end.png'
+                self.web_driver.save_screenshot(image_location)
+
+                self.logger.info(len(listed_items), image_location)
+
+                # Find and click the "Next" button
+                next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
+                if not next_button.get_attribute("disabled"):
+                    next_button.click()
+                else:
+                    break
+
+                self.sleep(2)
+
+                number_of_scrolls += 1
 
         return bad_listings
