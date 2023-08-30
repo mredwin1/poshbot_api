@@ -1377,54 +1377,45 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.login()
 
-    def check_comments(self, listing_title):
+    def check_comments(self, listed_item_id, listed_item_title):
         """Checks all the comments for a given listing to ensure there are no bad comments, if so it reports them"""
         try:
-            self.logger.info(f'Checking the comments for the following item: {listing_title}')
+            self.logger.info(f'Checking the comments for the following item: {listed_item_title}')
 
-            self.go_to_closet()
-
-            bad_words = ('scam', 'scammer', 'fake', 'replica', 'reported', 'counterfeit', 'stolen', 'chinesecrap')
+            bad_words = ('scam', 'scammer', 'fake', 'replica', 'reported', 'counterfeit', 'stolen', 'chinesecrap', 'send me a photo', 'text me', 'please text', 'msg me', 'mssg me', 'payment')
             reported = False
 
-            listed_items = self.locate_all(By.CLASS_NAME, 'card--small')
-            for listed_item in listed_items:
-                title = listed_item.find_element(By.CLASS_NAME, 'tile__title')
-                if title.text == listing_title:
-                    listing_button = listed_item.find_element(By.CLASS_NAME, 'tile__covershot')
-                    listing_button.click()
+            self.web_driver.get(f'https://www.poshmark.com/listing/{listed_item_id}')
 
-                    self.sleep(3)
-                    if self.is_present(By.CLASS_NAME, 'comment-item__container'):
-                        regex = re.compile('[^a-zA-Z]+')
-                        comments = self.locate_all(By.CLASS_NAME, 'comment-item__container')
-                        for comment in comments:
-                            text = comment.find_element(By.CLASS_NAME, 'comment-item__text').text
-                            cleaned_comment = regex.sub('', text.lower())
+            self.sleep(2)
+            
+            if self.is_present(By.CLASS_NAME, 'comment-item__container'):
+                regex = re.compile('[^a-zA-Z]+')
+                comments = self.locate_all(By.CLASS_NAME, 'comment-item__container')
+                for comment in comments:
+                    text = comment.find_element(By.CLASS_NAME, 'comment-item__text').text
+                    cleaned_comment = regex.sub('', text.lower())
 
-                            if any([bad_word in cleaned_comment for bad_word in bad_words]):
-                                report_button = comment.find_element(By.CLASS_NAME, 'flag')
-                                report_button.click()
+                    if any([bad_word in cleaned_comment for bad_word in bad_words]):
+                        report_button = comment.find_element(By.CLASS_NAME, 'flag')
+                        report_button.click()
 
-                                self.sleep(1)
+                        self.sleep(1)
 
-                                primary_buttons = self.locate_all(By.CLASS_NAME, 'btn--primary')
-                                for button in primary_buttons:
-                                    if button.text == 'Submit':
-                                        button.click()
-                                        reported = True
-                                        self.logger.warning(f'Reported the following comment as spam: {text}')
-                                        break
-                        if not reported:
-                            self.logger.info(f'No comments with the following words: {", ".join(bad_words)}')
-                    else:
-                        self.logger.info(f'No comments on this listing yet.')
-                    break
+                        primary_buttons = self.locate_all(By.CLASS_NAME, 'btn--primary')
+                        for button in primary_buttons:
+                            if button.text == 'Submit':
+                                button.click()
+                                reported = True
+                                self.logger.warning(f'Reported the following comment as spam: {text}')
+                                break
+                if not reported:
+                    self.logger.info(f'No comments with the following words: {", ".join(bad_words)}')
+            else:
+                self.logger.info(f'No comments on this listing yet.')
 
-        except Exception:
-            self.logger.error(f'{traceback.format_exc()}')
-            if not self.check_logged_in():
-                self.login()
+        except Exception as e:
+            self.handle_error('Error while sharing item', 'share_item_error.png')
 
     def random_scroll(self, scroll_up=True):
         try:

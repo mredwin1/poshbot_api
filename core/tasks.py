@@ -479,6 +479,9 @@ class CampaignTask(Task):
                         if random.random() < .20 and shared:
                             client.check_offers(listed_item.listing_title)
 
+                        if random.random() < .50 and shared:
+                            client.check_comments(listed_item.listed_item_id, listed_item.listing_title)
+
                     return shared
                 else:
                     all_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user)
