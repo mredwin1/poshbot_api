@@ -12,6 +12,7 @@ from . import models
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.ListedItemReport)
 admin.site.register(models.PaymentEmailContent)
+admin.site.register(models.BadPhrase)
 
 
 @admin.action(description='Start selected campaigns')

@@ -23,7 +23,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer, PoshUser
+from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase
 
 
 class Captcha:
@@ -1382,13 +1382,13 @@ class PoshMarkClient(BaseClient):
         try:
             self.logger.info(f'Checking the comments for the following item: {listed_item_title}')
 
-            bad_words = ('scam', 'scammer', 'fake', 'replica', 'reported', 'counterfeit', 'stolen', 'chinesecrap', 'send me a photo', 'text me', 'please text', 'msg me', 'mssg me', 'payment')
+            bad_words = BadPhrase.objects.values_list('phrase', flat=True)
             reported = False
 
             self.web_driver.get(f'https://www.poshmark.com/listing/{listed_item_id}')
 
             self.sleep(2)
-            
+
             if self.is_present(By.CLASS_NAME, 'comment-item__container'):
                 regex = re.compile('[^a-zA-Z]+')
                 comments = self.locate_all(By.CLASS_NAME, 'comment-item__container')
