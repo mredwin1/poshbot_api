@@ -1448,7 +1448,7 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(1)
 
-            for x in range(random.randint(2, 5)):
+            for x in range(random.randint(3, 10)):
                 self.random_scroll()
                 self.sleep(1, 3)
 
