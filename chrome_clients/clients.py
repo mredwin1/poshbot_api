@@ -1852,7 +1852,7 @@ class PublicPoshMarkClient(BaseClient):
                                     else:
                                         self.logger.info(f'Posh Ambassadoe: {closet_url}')
                                         posh_ambassadors.append(closet_url)
-                        except  (NoSuchElementException, TimeoutException):
+                        except (NoSuchElementException, TimeoutException):
                             pass
 
                     self.logger.info(f'Reviewed {items_reviewed}')
@@ -1865,10 +1865,13 @@ class PublicPoshMarkClient(BaseClient):
                     self.logger.info(len(listed_items), image_location)
 
                     # Find and click the "Next" button
-                    next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
-                    if not next_button.get_attribute("disabled"):
-                        next_button.click()
-                    else:
+                    try:
+                        next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
+                        if not next_button.get_attribute("disabled"):
+                            next_button.click()
+                        else:
+                            break
+                    except (NoSuchElementException, TimeoutException):
                         break
 
                     self.sleep(2)
