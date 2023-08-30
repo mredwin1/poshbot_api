@@ -635,7 +635,22 @@ class PaymentEmailContent(models.Model):
 
 
 class BadPhrase(models.Model):
+    DESIGNER_REPLICA = 'Designer Replica'
+    NON_PM_TRANSACTION = 'Non-PM Transactions'
+    UNSUPPORTED_ITEMS = 'Unsupported Items'
+    SPAM = 'Spam'
+    HARASSMENT = 'Harassment'
+
+    REPORT_TYPE_CHOICES = [
+        (DESIGNER_REPLICA, DESIGNER_REPLICA),
+        (NON_PM_TRANSACTION, NON_PM_TRANSACTION),
+        (UNSUPPORTED_ITEMS, UNSUPPORTED_ITEMS),
+        (SPAM, SPAM),
+        (HARASSMENT, HARASSMENT),
+    ]
+
     phrase = models.CharField(max_length=255)
+    report_type = models.CharField(max_length=255, choices=REPORT_TYPE_CHOICES, default=SPAM)
 
     def __str__(self):
         return self.phrase

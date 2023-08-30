@@ -1382,12 +1382,14 @@ class PoshMarkClient(BaseClient):
         try:
             self.logger.info(f'Checking the comments for the following item: {listed_item_title}')
 
-            bad_words = BadPhrase.objects.values_list('phrase', flat=True)
+            bad_phrases = BadPhrase.objects.all()
             reported = False
 
             self.web_driver.get(f'https://www.poshmark.com/listing/{listed_item_id}')
 
             self.sleep(2)
+
+            closets_to_report = []
 
             if self.is_present(By.CLASS_NAME, 'comment-item__container'):
                 regex = re.compile('[^a-zA-Z]+')
@@ -1396,23 +1398,63 @@ class PoshMarkClient(BaseClient):
                     text = comment.find_element(By.CLASS_NAME, 'comment-item__text').text
                     cleaned_comment = regex.sub('', text.lower())
 
-                    if any([bad_word.replace(' ', '') in cleaned_comment for bad_word in bad_words]):
-                        report_button = comment.find_element(By.CLASS_NAME, 'flag')
-                        report_button.click()
+                    for bad_phrase in bad_phrases:
+                        if bad_phrase.phrase.replace(' ', '').lower() in cleaned_comment:
+                            report_button = comment.find_element(By.CLASS_NAME, 'flag')
+                            report_button.click()
 
-                        self.sleep(1)
+                            self.sleep(1)
 
-                        primary_buttons = self.locate_all(By.CLASS_NAME, 'btn--primary')
-                        for button in primary_buttons:
-                            if button.text == 'Submit':
-                                button.click()
-                                reported = True
-                                self.logger.warning(f'Reported the following comment as spam: {text}')
-                                break
+                            primary_buttons = self.locate_all(By.CLASS_NAME, 'btn--primary')
+                            for button in primary_buttons:
+                                if button.text == 'Submit':
+                                    button.click()
+                                    reported = True
+                                    self.logger.warning(
+                                        f'Reported the following comment as {bad_phrase.get_report_type_display()}: {text}')
+
+                                    closet_url = comment.find_element(By.TAG_NAME, 'a').get_attribute('href')
+                                    closets_to_report.append((closet_url, bad_phrase.report_type))
+
+                                    break
+                            break  # No need to check other bad phrases if one is found
                 if not reported:
-                    self.logger.info(f'No comments with the following words: {", ".join(bad_words)}')
+                    self.logger.info(
+                        f'No comments with the following words: {", ".join(str(phrase) for phrase in bad_phrases)}')
             else:
                 self.logger.info(f'No comments on this listing yet.')
+
+            for closet in closets_to_report:
+                report_type = dict(BadPhrase.REPORT_TYPE_CHOICES).get(closet[1])
+                self.logger.info(f'Reporting {closet[0].split("/")[-1]} for {report_type}')
+                self.web_driver.get(closet[0])
+
+                self.sleep(1)
+
+                # Find and click the ellipses dropdown
+                ellipses_dropdown = self.web_driver.find_element(By.CLASS_NAME, 'ellipses-dot')
+                ellipses_dropdown.click()
+
+                # Find the "Block User" option in the dropdown and click it
+                dropdown_menu = self.web_driver.find_element(By.CLASS_NAME, 'dropdown__menu--expanded')
+                block_user_option = dropdown_menu.find_element(By.XPATH, "//div[contains(text(), 'Block User')]")
+                block_user_option.click()
+
+                # Find the select element within the modal
+                select_element = self.web_driver.find_element(By.CLASS_NAME, 'block-user-modal__select')
+
+                # Click on the select element to expand the options
+                select_element.click()
+
+                # Find and click the appropriate option based on your choices
+                report_type_choice = dict(BadPhrase.REPORT_TYPE_CHOICES).get(closet[1])
+                option_xpath = f"//div[contains(text(), '{report_type_choice}')]"
+                option = self.web_driver.find_element(By.XPATH, option_xpath)
+                option.click()
+
+                # Find and click the "Submit" button within the modal
+                submit_button = self.web_driver.find_element(By.XPATH, "//button[contains(text(), 'Submit')]")
+                submit_button.click()
 
         except Exception as e:
             self.handle_error('Error while sharing item', 'share_item_error.png')
