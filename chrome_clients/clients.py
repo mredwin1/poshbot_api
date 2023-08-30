@@ -1847,13 +1847,6 @@ class PublicPoshMarkClient(BaseClient):
                         except (NoSuchElementException, TimeoutException):
                             pass
 
-                    log_dir = '/logs/images'
-                    os.makedirs(log_dir, exist_ok=True)
-                    image_location = f'{log_dir}/{brand}_{number_of_pages}_end.png'
-                    self.web_driver.save_screenshot(image_location)
-
-                    self.logger.info(len(listed_items), image_location)
-
                     # Find and click the "Next" button
                     try:
                         next_button = self.web_driver.find_element(By.XPATH, '//button[contains(text(), "Next")]')
