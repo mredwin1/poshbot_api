@@ -1794,7 +1794,7 @@ class PublicPoshMarkClient(BaseClient):
         bad_listings = []
         posh_ambassadors = []
         usernames = PoshUser.objects.values_list('username', flat=True)
-        for brand in brands:
+        for brand in random.sample(brands, 1):
             for category in categories:
                 items_reviewed = 0
                 self.logger.info(f'Searching for bad listings in the following brand: {brand}')
@@ -1841,21 +1841,11 @@ class PublicPoshMarkClient(BaseClient):
                                                     description_text = description_element.get_text().strip()
 
                                                     if description_text.startswith(listing_title):
-                                                        self.logger.info(f"Bad listing found: {listing_id}")
                                                         bad_listings.append((listing_title, listing_id))
-                                                    else:
-                                                        self.logger.info(f'Description does not start with title: {listing_url}')
-                                            else:
-                                                self.logger.error(response.status_code)
-                                        else:
-                                            self.logger.warning(f"Listing title too short: {listing_url}")
                                     else:
-                                        self.logger.info(f'Posh Ambassadoe: {closet_url}')
                                         posh_ambassadors.append(closet_url)
                         except (NoSuchElementException, TimeoutException):
                             pass
-
-                    self.logger.info(f'Reviewed {items_reviewed}')
 
                     log_dir = '/logs/images'
                     os.makedirs(log_dir, exist_ok=True)
@@ -1877,7 +1867,5 @@ class PublicPoshMarkClient(BaseClient):
                     self.sleep(2)
 
                     number_of_pages += 1
-
-                self.logger.info(f'Reviewed {items_reviewed} for {brand}-{category}')
 
         return bad_listings
