@@ -1894,4 +1894,6 @@ class PublicPoshMarkClient(BaseClient):
 
                     number_of_pages += 1
 
+                self.logger.info(f'Reviewed {items_reviewed} items')
+
         return bad_listings
