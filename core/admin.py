@@ -132,7 +132,7 @@ class UserAdmin(BaseUserAdmin):
         (
             None,
             {
-                'fields': ('username', 'password1', 'password2', 'email', 'first_name', 'last_name', 'phone_number'),
+                'fields': ('username', 'password', 'email', 'first_name', 'last_name', 'phone_number'),
             },
         ),
     )
