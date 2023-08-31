@@ -134,7 +134,12 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True)
 
     def send_text(self, message):
-        client = boto3.client('pinpoint')
+        client = boto3.client(
+            'pinpoint',
+            aws_access_key_id=settings.AWS_PINPOINT_ACCESS_KEY_ID,
+            aws_secret_access_key=settings.AWS_PINPOINT_SECRET_ACCESS_KEY,
+            region_name=settings.AWS_PINPOINT_REGION_NAME
+        )
 
         try:
             response = client.send_messages(
