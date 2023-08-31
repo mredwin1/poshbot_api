@@ -963,7 +963,7 @@ def check_sold_items():
                     email_sender = os.environ['EMAIL_ADDRESS']
                     email['From'] = email_sender
                     email['To'] = item.posh_user.user.email
-                    email['Subject'] = 'New Sale Available to Redeem'
+                    email['Subject'] = f'New Sale Available to Redeem for {item.posh_user.username}'
                     email.set_content(message)
 
                     context = ssl.create_default_context()
