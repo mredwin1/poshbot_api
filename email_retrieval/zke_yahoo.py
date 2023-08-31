@@ -88,5 +88,6 @@ def check_for_email(sender_email, email_address, password, subject_keyword, date
 
     except Exception as e:
         print("An error occurred:", str(e))
+        print(sender_email, email_address, password, subject_keyword, date_filter)
 
     return None

@@ -946,6 +946,8 @@ def check_sold_items():
             else:
                 logger.info("--------------------")
                 logger.info(f"No matching email found for item: {item.listing_title}")
+                logger.info(f"Email: {item.posh_user.email}")
+                logger.info(f"Password: {item.posh_user.password}")
                 logger.info("--------------------")
         else:
             logger.info("--------------------")
