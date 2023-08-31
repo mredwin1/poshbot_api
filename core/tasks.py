@@ -939,15 +939,15 @@ def check_sold_items():
             if matching_email:
                 logger.info("--------------------")
                 logger.info("Matching email found:")
-                logger.info("Subject:", matching_email.get("Subject"))
-                logger.info("Date:", matching_email.get("Date"))
-                logger.info("Item:", item.listing_title)
+                logger.info(f'Subject: {matching_email.get("Subject")}')
+                logger.info(f'Date: {matching_email.get("Date")}')
+                logger.info(f"Item: {item.listing_title}")
                 logger.info("--------------------")
             else:
                 logger.info("--------------------")
-                logger.info("No matching email found for item:", item.listing_title)
+                logger.info(f"No matching email found for item: {item.listing_title}")
                 logger.info("--------------------")
         else:
             logger.info("--------------------")
-            logger.info("Skipping item due to missing IMAP email password:", item.listing_title)
+            logger.info(f"Skipping item due to missing IMAP email password: {item.listing_title}")
             logger.info("--------------------")
