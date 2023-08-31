@@ -17,6 +17,11 @@ from pathlib import Path
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
+# General settings
+AWS_PINPOINT_REGION_NAME = os.environ['AWS_PINPOINT_REGION_NAME']
+AWS_PINPOINT_ACCESS_KEY_ID = os.environ['AWS_PINPOINT_ACCESS_KEY_ID']
+AWS_PINPOINT_SECRET_ACCESS_KEY = os.environ['AWS_PINPOINT_SECRET_ACCESS_KEY']
+
 # Application definition
 
 INSTALLED_APPS = [
