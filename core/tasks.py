@@ -946,15 +946,10 @@ def check_sold_items():
                 log_message = (
                     f"New listed item is redeemable:\n"
                     f"Item: {item.listing_title}\n"
+                    f"Date of Email: {date_received}\n"
                     f"Posh Username: {item.posh_user.username}\n"
                     f"Posh Password: {item.posh_user.password}\n"
-                    f"Date of Email: {date_received}\n"
-                    f"Date Sold: {date_sold}\n"
-                    f'-----------------------------------------------------'
+                    f"Email: {item.posh_user.email}\n"
+                    f"Email IMAP Password: {item.posh_user.email_imap_password}\n"
                 )
                 logger.info(log_message)
-
-        else:
-            logger.info("--------------------")
-            logger.info(f"Skipping item due to missing IMAP email password: {item.listing_title}")
-            logger.info("--------------------")
