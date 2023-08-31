@@ -917,7 +917,7 @@ def get_items_to_report():
 @shared_task
 def check_sold_items():
     logger = logging.getLogger(__name__)
-    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD)[:2]
+    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD)
 
     sender_email = "orders@poshmark.com"
 
