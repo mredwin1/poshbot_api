@@ -683,7 +683,7 @@ class BadPhrase(models.Model):
         (HARASSMENT, HARASSMENT),
     ]
 
-    phrase = models.CharField(max_length=255)
+    phrase = models.CharField(max_length=255, unique=True)
     report_type = models.CharField(max_length=255, choices=REPORT_TYPE_CHOICES, default=SPAM)
 
     def __str__(self):
