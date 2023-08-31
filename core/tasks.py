@@ -937,6 +937,7 @@ def check_sold_items():
             matching_email = zke_yahoo.check_for_email(sender_email, email_address, password, subject_keyword, sold_time)
 
             if matching_email:
+                date_format = '%m/%d/%Y %I:%M %p %Z'
                 date_received_str = matching_email.get("Date")
                 date_received = datetime.datetime.strptime(date_received_str, '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
 
