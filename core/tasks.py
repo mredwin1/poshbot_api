@@ -918,7 +918,7 @@ def get_items_to_report():
 @shared_task
 def check_sold_items():
     logger = logging.getLogger(__name__)
-    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD, posh_user__user__email='johnnyhustle41@gmail.com')
+    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD)
 
     sender_email = "orders@poshmark.com"
 
@@ -943,7 +943,6 @@ def check_sold_items():
                 date_received = datetime.datetime.strptime(date_received_str, '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(pytz.timezone('US/Eastern'))
 
                 message = (
-                    f"New listed item is redeemable:\n"
                     f"Item: {item.listing_title}\n"
                     f"Date of Email: {date_received.strftime(date_format)}\n"
                     f"Posh Username: {item.posh_user.username}\n"
