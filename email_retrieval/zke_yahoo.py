@@ -58,6 +58,8 @@ def check_for_email(sender_email, email_address, password, subject_keyword, date
         # Select the mailbox you want to search in (e.g., 'INBOX')
         mail.select("INBOX")
 
+        subject_keyword = subject_keyword.replace('"', '\\"')
+
         # Construct the search query based on filters
         search_query = f'FROM "{sender_email}" SUBJECT "{subject_keyword}"'
         if date_filter:
