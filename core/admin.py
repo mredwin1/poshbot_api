@@ -177,7 +177,7 @@ class PoshUserAdmin(admin.ModelAdmin):
     @admin.display(ordering='posh_user__username')
     def closet_url(self, posh_user: models.PoshUser):
         url = f'https://www.poshmark.com/closet/{posh_user.username}'
-        return f'<a href="{url}">{url}</a>'
+        return format_html(f'<a href="{url}">{url}</a>')
 
     fieldsets = (
         ('Important Information', {
@@ -354,7 +354,7 @@ class ListedItemAdmin(admin.ModelAdmin):
     def item_url(self, listed_item: models.ListedItem):
         if listed_item.listed_item_id:
             url = f'https://www.poshmark.com/listing/{listed_item.listed_item_id}'
-            return f'<a href="{url}">{url}</a>'
+            return format_html(f'<a href="{url}">{url}</a>')
 
     fieldsets = (
         ('Campaign Information', {
