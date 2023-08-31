@@ -918,7 +918,7 @@ def get_items_to_report():
 @shared_task
 def check_sold_items():
     logger = logging.getLogger(__name__)
-    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD, posh_user__user__email='johnnyhustle41@gmail.com')[:2]
+    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD, posh_user__user__email='johnnyhustle41@gmail.com')
 
     sender_email = "orders@poshmark.com"
 
@@ -953,11 +953,11 @@ def check_sold_items():
                 )
 
                 item.status = ListedItem.REDEEMABLE
-                item.datetime_redeemable = timezone.now()
+                item.datetime_redeemable = date_received
                 item.save()
 
+                logger.info(message)
                 if item.posh_user.user.email:
-                    logger.info(message)
                     # item.posh_user.user.send_text(message)
                     email = EmailMessage()
                     email_sender = os.environ['EMAIL_ADDRESS']
@@ -970,3 +970,6 @@ def check_sold_items():
                     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
                         smtp.login(email_sender, os.environ['EMAIL_PASSWORD'])
                         smtp.sendmail(email_sender, item.posh_user.user.email, email.as_string())
+                    logger.info('Email sent')
+                else:
+                    logger.info(f'Email not sent: {item.posh_user.user.email}')

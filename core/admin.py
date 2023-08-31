@@ -341,7 +341,7 @@ class ListedItemAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='posh_user__user')
     def associated_user(self, listed_item):
-        url = f"{reverse('admin:core_user_change', args=[listed_item.posh_user.id])}"
+        url = f"{reverse('admin:core_user_change', args=[listed_item.posh_user.user.id])}"
         return format_html('<a href="{}">{}</a>', url, listed_item.posh_user.user)
 
     fieldsets = (
