@@ -940,12 +940,12 @@ def check_sold_items():
             if matching_email:
                 date_format = '%m/%d/%Y %I:%M %p %Z'
                 date_received_str = matching_email.get("Date")
-                date_received = datetime.datetime.strptime(date_received_str, '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
+                date_received = datetime.datetime.strptime(date_received_str, '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(pytz.timezone('US/Eastern'))
 
                 message = (
                     f"New listed item is redeemable:\n"
                     f"Item: {item.listing_title}\n"
-                    f"Date of Email: {date_received}\n"
+                    f"Date of Email: {date_received.strftime(date_format)}\n"
                     f"Posh Username: {item.posh_user.username}\n"
                     f"Posh Password: {item.posh_user.password}\n"
                     f"Email: {item.posh_user.email}\n"
