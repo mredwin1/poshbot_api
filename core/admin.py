@@ -154,7 +154,7 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
     readonly_fields = ['date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration', 'is_active', 'date_disabled', 'device']
-    list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email']
+    list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email', 'closet_url']
     search_fields = ['username__istartswith', 'email__istartswith']
     list_filter = ['user', PoshUserStatusFilter]
     list_per_page = 20
@@ -173,6 +173,11 @@ class PoshUserAdmin(admin.ModelAdmin):
     def associated_user(self, posh_user):
         url = f"{reverse('admin:core_user_change', args=[posh_user.user.id])}"
         return format_html('<a href="{}">{}</a>', url, posh_user.user)
+
+    @admin.display(ordering='posh_user__username')
+    def closet_url(self, posh_user: models.PoshUser):
+        url = f'https://www.poshmark.com/closet/{posh_user.username}'
+        return f'<a href="{url}">{url}</a>'
 
     fieldsets = (
         ('Important Information', {
@@ -307,7 +312,8 @@ class CampaignAdmin(admin.ModelAdmin):
 class LogGroupAdmin(admin.ModelAdmin):
     list_display = ['created_date', 'campaign', 'posh_user', 'has_error']
     readonly_fields = ['campaign', 'posh_user', 'created_date', 'has_error']
-    list_filter = ['posh_user', 'campaign', 'created_date']
+    list_filter = ['campaign', 'created_date', 'has_error']
+    search_fields = ['posh_user__username__istartswith']
     inlines = [LogEntryInline]
 
     def get_queryset(self, request):
@@ -327,9 +333,9 @@ class LogGroupAdmin(admin.ModelAdmin):
 class ListedItemAdmin(admin.ModelAdmin):
     readonly_fields = ['time_to_list']
     autocomplete_fields = ['posh_user']
-    list_display = ['listing_title', 'status', 'associated_user', 'associated_posh_user', 'datetime_sold']
+    list_display = ['listing_title', 'status', 'item_url', 'associated_user', 'associated_posh_user', 'datetime_sold']
     search_fields = ['listing_title__istartswith', 'posh_user__username__istartswith']
-    list_filter = ['status', 'posh_user__user', 'posh_user']
+    list_filter = ['status', 'posh_user__user']
 
     def get_queryset(self, request):
         return super(ListedItemAdmin, self).get_queryset(request).select_related('posh_user')
@@ -343,6 +349,12 @@ class ListedItemAdmin(admin.ModelAdmin):
     def associated_user(self, listed_item):
         url = f"{reverse('admin:core_user_change', args=[listed_item.posh_user.user.id])}"
         return format_html('<a href="{}">{}</a>', url, listed_item.posh_user.user)
+
+    @admin.display(ordering='listed_item_id')
+    def item_url(self, listed_item: models.ListedItem):
+        if listed_item.listed_item_id:
+            url = f'https://www.poshmark.com/listing/{listed_item.listed_item_id}'
+            return f'<a href="{url}">{url}</a>'
 
     fieldsets = (
         ('Campaign Information', {
