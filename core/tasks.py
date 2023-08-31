@@ -941,7 +941,7 @@ def check_sold_items():
                 date_sold = item.datetime_sold.astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
 
                 date_received_str = matching_email.get("Date")
-                date_received = datetime.datetime.strptime(date_received_str, 'Fri, 25 Aug 2023 22:28:04 +0000 (UTC)').astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
+                date_received = datetime.datetime.strptime(date_received_str, '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
 
                 log_message = (
                     f"New listed item is redeemable:\n"
