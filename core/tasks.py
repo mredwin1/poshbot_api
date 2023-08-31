@@ -968,5 +968,5 @@ def check_sold_items():
                     context = ssl.create_default_context()
 
                     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
-                        smtp.login(email_sender, os.environ['EMAIL_PASSSWORD'])
+                        smtp.login(email_sender, os.environ['EMAIL_PASSWORD'])
                         smtp.sendmail(email_sender, item.posh_user.user.email, email.as_string())
