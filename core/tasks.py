@@ -948,8 +948,9 @@ def check_sold_items():
                     f"Item: {item.listing_title}\n"
                     f"Posh Username: {item.posh_user.username}\n"
                     f"Posh Password: {item.posh_user.password}\n"
-                    f"Date of Email: {date_sold}\n"
-                    f"Date Sold: {date_received}"
+                    f"Date of Email: {date_received}\n"
+                    f"Date Sold: {date_sold}"
+                    f'-----------------------------------------------------'
                 )
                 logger.info(log_message)
 
