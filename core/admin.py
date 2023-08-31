@@ -128,6 +128,14 @@ class DeviceAdmin(admin.ModelAdmin):
 
 @admin.register(models.User)
 class UserAdmin(BaseUserAdmin):
+    fieldsets = (
+        (
+            None,
+            {
+                'fields': ('username', 'password1', 'password2', 'email', 'first_name', 'last_name', 'phone_number'),
+            },
+        ),
+    )
     add_fieldsets = (
         (
             None,
