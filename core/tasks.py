@@ -932,7 +932,7 @@ def check_sold_items():
             password = posh_user.email_imap_password
 
             # Construct the subject keyword with dynamic values
-            subject_keyword = f'Congrats! Your earnings from "{listing_title}" for @{posh_user.username} have been deposited into your Poshmark account!'
+            subject_keyword = f'Your earnings from "{listing_title}"'
 
             matching_email = zke_yahoo.check_for_email(sender_email, email_address, password, subject_keyword, sold_time)
 
