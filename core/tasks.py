@@ -309,7 +309,7 @@ class CampaignTask(Task):
                     listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
 
                     start_time = time.time()
-                    item_listed = client.list_item(item_to_list.listing, listing_images)
+                    item_listed = client.list_item(item_to_list, listing_images)
                     end_time = time.time()
                     time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
 

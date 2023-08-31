@@ -343,10 +343,10 @@ class ListedItemAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Campaign Information', {
             'fields': (
-                ('posh_user', 'listing'),
+                ('posh_user', 'listing', 'earnings'),
                 ('listing_title', 'listed_item_id', 'status', 'time_to_list'),
                 ('datetime_listed', 'datetime_passed_review'),
-                ('datetime_removed', 'datetime_sold'),
+                ('datetime_removed', 'datetime_sold', 'datetime_redeemable'),
             )
         }),
     )

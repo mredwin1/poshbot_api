@@ -8,6 +8,7 @@ import traceback
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
 from bs4 import BeautifulSoup
+from decimal import Decimal
 from django.conf import settings
 from django.utils.text import slugify
 from ppadb.client import Client as AdbClient
@@ -17,7 +18,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import List
 
-from core.models import Campaign, Listing, ListingImage
+from core.models import Campaign, ListedItem, ListingImage
 
 APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
@@ -699,8 +700,9 @@ class PoshMarkClient(AppiumClient):
 
             return False
 
-    def list_item(self, listing: Listing, listing_images: List[ListingImage]):
+    def list_item(self, item_to_list: ListedItem, listing_images: List[ListingImage]):
         try:
+            listing = item_to_list.listing
             self.logger.info(f'Listing {listing.title} for {self.campaign.posh_user.username}')
             self.listed = False
             new_listing = False
@@ -1070,6 +1072,12 @@ class PoshMarkClient(AppiumClient):
                                 self.input_text(listing_price, str(listing.listing_price))
 
                                 added_listing_price = True
+
+                            earnings_str = self.locate(AppiumBy.ID, 'earnings_edit_text').text
+                            earnings = Decimal(earnings_str.replace('$', ''))
+
+                            item_to_list.earnings = earnings
+                            item_to_list.save()
 
                         next_button = self.locate(AppiumBy.ID, 'nextButton')
                         self.click(next_button)
