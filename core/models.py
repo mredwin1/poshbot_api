@@ -8,6 +8,7 @@ import requests
 import string
 import time
 
+from botocore.exceptions import ClientError
 from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
@@ -131,6 +132,28 @@ class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     email = models.EmailField(unique=True)
     phone_number = models.CharField(max_length=15, blank=True)
+
+    def send_text(self, message):
+        client = boto3.client('pinpoint')
+
+        try:
+            response = client.send_messages(
+                ApplicationId=os.environ['AWS_PINPOINT_PROJECT_ID'],
+                MessageRequest={
+                    'Addresses': {
+                        self.phone_number: {'ChannelType': 'SMS'}
+                    },
+                    'MessageConfiguration': {
+                        'SMSMessage': {
+                            'Body': message,
+                            'MessageType': 'TRANSACTIONAL'
+                        }
+                    }
+                }
+            )
+            return response['MessageResponse']['Result'][self.phone_number]['DeliveryStatus']
+        except ClientError as e:
+            return None
 
     def __str__(self):
         return self.username

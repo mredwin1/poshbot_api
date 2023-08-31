@@ -937,13 +937,10 @@ def check_sold_items():
             matching_email = zke_yahoo.check_for_email(sender_email, email_address, password, subject_keyword, sold_time)
 
             if matching_email:
-                date_format = '%m/%d/%Y %I:%M %p %Z'
-                date_sold = item.datetime_sold.astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
-
                 date_received_str = matching_email.get("Date")
                 date_received = datetime.datetime.strptime(date_received_str, '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
 
-                log_message = (
+                message = (
                     f"New listed item is redeemable:\n"
                     f"Item: {item.listing_title}\n"
                     f"Date of Email: {date_received}\n"
@@ -952,4 +949,6 @@ def check_sold_items():
                     f"Email: {item.posh_user.email}\n"
                     f"Email IMAP Password: {item.posh_user.email_imap_password}\n"
                 )
-                logger.info(log_message)
+
+                if item.posh_user.user.phone_number:
+                    item.posh_user.user.send_text(message)
