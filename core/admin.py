@@ -12,7 +12,6 @@ from . import models
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.ListedItemReport)
 admin.site.register(models.PaymentEmailContent)
-admin.site.register(models.BadPhrase)
 
 
 @admin.action(description='Start selected campaigns')
@@ -111,6 +110,11 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
             return queryset.filter(is_active=False)
 
         return queryset
+
+
+@admin.register(models.BadPhrase)
+class DeviceAdmin(admin.ModelAdmin):
+    list_display = ['phrase', 'report_type']
 
 
 @admin.register(models.Device)
