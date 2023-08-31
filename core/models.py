@@ -151,6 +151,9 @@ class User(AbstractUser):
                     }
                 }
             )
+
+            print(response)
+
             return response['MessageResponse']['Result'][self.phone_number]['DeliveryStatus']
         except ClientError as e:
             return None
