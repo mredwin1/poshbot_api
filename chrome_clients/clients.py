@@ -1437,7 +1437,7 @@ class PoshMarkClient(BaseClient):
 
                 # Find the "Block User" option in the dropdown and click it
                 dropdown_menu = self.web_driver.find_element(By.CLASS_NAME, 'dropdown__menu--expanded')
-                block_user_option = dropdown_menu.find_element(By.XPATH, "//div[contains(text(), 'Block User')]")
+                block_user_option = dropdown_menu.find_element(By.XPATH, "//div[contains(text(), 'Report User')]")
                 block_user_option.click()
 
                 # Find the select element within the modal
