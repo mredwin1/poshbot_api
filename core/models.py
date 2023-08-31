@@ -492,6 +492,7 @@ class ListedItem(models.Model):
     REMOVED = 'REMOVED'
     SHIPPED = 'SHIPPED'
     CANCELLED = 'CANCELLED'
+    REDEEMABLE = 'REDEEMABLE'
 
     STATUS_CHOICES = [
         (NOT_LISTED, NOT_LISTED),
@@ -502,7 +503,8 @@ class ListedItem(models.Model):
         (SOLD, SOLD),
         (REMOVED, REMOVED),
         (SHIPPED, SHIPPED),
-        (CANCELLED, CANCELLED)
+        (CANCELLED, CANCELLED),
+        (REDEEMABLE, REDEEMABLE)
     ]
 
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)

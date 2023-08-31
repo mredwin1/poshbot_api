@@ -19,6 +19,7 @@ from selenium.common.exceptions import WebDriverException
 
 from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
+from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
 from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport, PaymentEmailContent
 
@@ -911,3 +912,42 @@ def get_items_to_report():
         for listing in bad_listings:
             logger.info(listing[0])
             logger.info(f'https://poshmark.com/listing/{listing[1]}')
+
+
+@shared_task
+def check_sold_items():
+    logger = logging.getLogger(__name__)
+    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD)
+
+    sender_email = "orders@poshmark.com"
+
+    for item in sold_items:
+        listing_title = item.listing_title
+        posh_user = item.posh_user
+        sold_time = item.datetime_sold  # Assuming datetime_sold is the field storing the sold time
+
+        # Check if the PoshUser has the necessary IMAP email password
+        if posh_user.email and posh_user.email_imap_password:
+            email_address = posh_user.email
+            password = posh_user.email_imap_password
+
+            # Construct the subject keyword with dynamic values
+            subject_keyword = f'Congrats! Your earnings from "{listing_title}" for @{posh_user.username} have been deposited into your Poshmark account!'
+
+            matching_email = zke_yahoo.check_for_email(sender_email, email_address, password, subject_keyword, sold_time)
+
+            if matching_email:
+                logger.info("--------------------")
+                logger.info("Matching email found:")
+                logger.info("Subject:", matching_email.get("Subject"))
+                logger.info("Date:", matching_email.get("Date"))
+                logger.info("Item:", item)
+                logger.info("--------------------")
+            else:
+                logger.info("--------------------")
+                logger.info("No matching email found for item:", item)
+                logger.info("--------------------")
+        else:
+            logger.info("--------------------")
+            logger.info("Skipping item due to missing IMAP email password:", item)
+            logger.info("--------------------")
