@@ -5,6 +5,7 @@ import pytz
 import random
 import requests
 import smtplib
+import ssl
 import time
 import traceback
 
@@ -12,6 +13,7 @@ from celery import shared_task, Task
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from django.db.models import Q
 from django.utils import timezone
+from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from ppadb.client import Client as AdbClient
@@ -950,6 +952,21 @@ def check_sold_items():
                     f"Email IMAP Password: {item.posh_user.email_imap_password}\n"
                 )
 
-                if item.posh_user.user.phone_number:
+                item.status = ListedItem.REDEEMABLE
+                item.datetime_redeemable = timezone.now()
+                item.save()
+
+                if item.posh_user.user.email:
                     logger.info(message)
-                    item.posh_user.user.send_text(message)
+                    # item.posh_user.user.send_text(message)
+                    email = EmailMessage()
+                    email_sender = os.environ['EMAIL_ADDRESS']
+                    email['From'] = email_sender
+                    email['To'] = item.posh_user.user.email
+                    email['Subject'] = 'New Sale Available to Redeem'
+
+                    context = ssl.create_default_context()
+
+                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+                        smtp.login(email_sender, os.environ['EMAIL_PASSSWORD'])
+                        smtp.sendmail(email_sender, item.posh_user.user.email, email.as_string())

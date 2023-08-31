@@ -130,7 +130,7 @@ class Device(models.Model):
 
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    email = models.EmailField(unique=True)
+    email = models.EmailField()
     phone_number = models.CharField(max_length=15, blank=True)
 
     def send_text(self, message):
