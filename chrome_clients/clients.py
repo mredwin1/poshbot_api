@@ -1821,7 +1821,7 @@ class PublicPoshMarkClient(BaseClient):
             'Men-Bags-Wallets'
         ]
 
-        min_price = 100
+        min_price = 150
         max_price = 450
 
         bad_listings = []
