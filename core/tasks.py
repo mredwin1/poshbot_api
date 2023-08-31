@@ -937,18 +937,22 @@ def check_sold_items():
             matching_email = zke_yahoo.check_for_email(sender_email, email_address, password, subject_keyword, sold_time)
 
             if matching_email:
-                logger.info("--------------------")
-                logger.info("Matching email found:")
-                logger.info(f'Subject: {matching_email.get("Subject")}')
-                logger.info(f'Date: {matching_email.get("Date")}')
-                logger.info(f"Item: {item.listing_title}")
-                logger.info("--------------------")
-            else:
-                logger.info("--------------------")
-                logger.info(f"No matching email found for item: {item.listing_title}")
-                logger.info(f"Email: {item.posh_user.email}")
-                logger.info(f"Password: {item.posh_user.password}")
-                logger.info("--------------------")
+                date_format = '%m/%d/%Y %I:%M %p %Z'
+                date_sold = item.datetime_sold.astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
+
+                date_received_str = matching_email.get("Date")
+                date_received = datetime.datetime.strptime(date_received_str, 'Fri, 25 Aug 2023 22:28:04 +0000 (UTC)').astimezone(pytz.timezone('US/Eastern')).strftime(date_format)
+
+                log_message = (
+                    f"New listed item is redeemable:\n"
+                    f"Item: {item.listing_title}\n"
+                    f"Posh Username: {item.posh_user.username}\n"
+                    f"Posh Password: {item.posh_user.password}\n"
+                    f"Date of Email: {date_sold}\n"
+                    f"Date Sold: {date_received}"
+                )
+                logger.info(log_message)
+
         else:
             logger.info("--------------------")
             logger.info(f"Skipping item due to missing IMAP email password: {item.listing_title}")
