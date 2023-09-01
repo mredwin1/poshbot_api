@@ -1441,7 +1441,7 @@ class PoshMarkClient(BaseClient):
                 block_user_option.click()
 
                 # Find the select element within the modal
-                select_element = self.web_driver.find_element(By.CLASS_NAME, 'block-user-modal__select')
+                select_element = self.web_driver.find_element(By.CLASS_NAME, 'flag-modal__select')
 
                 # Click on the select element to expand the options
                 select_element.click()
