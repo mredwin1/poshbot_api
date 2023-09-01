@@ -243,7 +243,7 @@ class PoshUser(models.Model):
 
     @property
     def sold_listings(self):
-        sold_listings = ListedItem.objects.filter(posh_user=self, status=ListedItem.SOLD)
+        sold_listings = ListedItem.objects.filter(posh_user=self, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE))
 
         return sold_listings.count()
 
