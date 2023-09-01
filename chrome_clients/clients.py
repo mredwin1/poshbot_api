@@ -1588,7 +1588,7 @@ class PoshMarkClient(BaseClient):
                 second_dropdown.click()
 
                 # Locate and click on "Mistagged Condition"
-                mistagged_condition_option = modal.find_element(By.XPATH, "//li[@class='dropdown__menu__item']/div[text()='Mistagged Condition']")
+                mistagged_condition_option = modal.find_element(By.XPATH, "//li[@class='dropdown__menu__item']/div[contains(text(), 'Mistagged Condition')]")
                 mistagged_condition_option.click()
 
             screenshot = f'/log_images/report_{listing_id}_{report_type}.png'
