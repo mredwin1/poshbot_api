@@ -23,7 +23,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase
+from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport
 
 
 class Captcha:
@@ -1545,7 +1545,7 @@ class PoshMarkClient(BaseClient):
             if not self.check_logged_in():
                 self.login()
 
-    def report_listing(self, listing_id):
+    def report_listing(self, listing_id, report_type):
         """Will report a listing"""
         try:
             self.logger.info(f'Reporting the following item: {listing_id}')
@@ -1566,6 +1566,28 @@ class PoshMarkClient(BaseClient):
             report_button.click()
 
             self.sleep(.5)
+
+            modal = self.locate(By.CLASS_NAME, 'modal.simple-modal.modal--in')
+
+            dropdown = modal.find_element(By.CSS_SELECTOR, "div.flag-modal__select [data-test='dropdown']")
+            dropdown.click()
+
+            # Locate the option you want to select and click on it using text contains
+            option_to_select = modal.find_element(By.CSS_SELECTOR, f"li.dropdown__menu__item div:contains('{report_type}')")
+            option_to_select.click()
+
+            if report_type == ListedItemToReport.MISTAGGED_ITEM:
+                # Click on the second dropdown to open its options
+                second_dropdown = modal.find_element(By.XPATH, "//div[@data-test='select'][2]/div[@data-test='dropdown']")
+                second_dropdown.click()
+
+                # Locate and click on "Mistagged Condition"
+                mistagged_condition_option = modal.find_element(By.XPATH, "//li[contains(@class, 'dropdown__menu__item')]/div[text()='Mistagged Condition']")
+                mistagged_condition_option.click()
+
+            screenshot = f'/log_images/report_{listing_id}_{report_type}.png'
+            self.web_driver.save_screenshot(screenshot)
+            self.logger.info('Report ready', screenshot)
 
             submit_btn = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[3]/div[1]/div[2]/div/div[2]/div[3]/div/button[2]')
             submit_btn.click()

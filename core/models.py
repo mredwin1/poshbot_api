@@ -561,8 +561,26 @@ class ListedItem(models.Model):
 
 
 class ListedItemToReport(models.Model):
+    REPLICA = 'Replica'
+    MISTAGGED_ITEM = 'Mistagged Item'
+    TRANSACTION_OFF_POSHMARK = 'Transaction Off Poshmark'
+    UNSUPPORTED_ITEM = 'Unsupported Item'
+    SPAM = 'Spam'
+    OFFENSIVE_ITEM = 'Offensive Item'
+    HARASSMENT = 'Harassment'
+
+    REPORT_TYPE_CHOICES = [
+        (REPLICA, REPLICA),
+        (MISTAGGED_ITEM, MISTAGGED_ITEM),
+        (TRANSACTION_OFF_POSHMARK, TRANSACTION_OFF_POSHMARK),
+        (UNSUPPORTED_ITEM, UNSUPPORTED_ITEM),
+        (SPAM, SPAM),
+        (HARASSMENT, HARASSMENT),
+    ]
+
     listing_title = models.CharField(max_length=50)
     listed_item_id = models.CharField(max_length=255)
+    report_type = models.CharField(max_length=100, choices=REPORT_TYPE_CHOICES)
 
     def __str__(self):
         return f'{self.listing_title}'
