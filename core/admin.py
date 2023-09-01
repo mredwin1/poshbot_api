@@ -10,7 +10,6 @@ from . import models
 
 
 admin.site.register(models.ListedItemOffer)
-admin.site.register(models.ListedItemReport)
 admin.site.register(models.PaymentEmailContent)
 
 
@@ -112,8 +111,25 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
         return queryset
 
 
+@admin.register(models.ListedItemReport)
+class ListedItemReportAdmin(admin.ModelAdmin):
+    list_display = ['posh_user', 'listed_item_to_report', 'datetime_reported']
+
+
+@admin.register(models.ListedItemToReport)
+class ListedItemToReportAdmin(admin.ModelAdmin):
+    list_display = ['listing_title', 'report_type', 'item_url']
+    search_fields = ['listing_title']
+
+    @admin.display(ordering='listed_item_id')
+    def item_url(self, listed_item_to_report: models.ListedItemToReport):
+        if listed_item_to_report.listed_item_id:
+            url = f'https://www.poshmark.com/listing/{listed_item_to_report.listed_item_id}'
+            return format_html(f'<a target="_blank" href="{url}">{listed_item_to_report.listing_title}</a>')
+
+
 @admin.register(models.BadPhrase)
-class DeviceAdmin(admin.ModelAdmin):
+class BadPhraseAdmin(admin.ModelAdmin):
     list_display = ['phrase', 'report_type']
 
 
@@ -366,15 +382,3 @@ class ListedItemAdmin(admin.ModelAdmin):
             )
         }),
     )
-
-
-@admin.register(models.ListedItemToReport)
-class ListedItemToReportAdmin(admin.ModelAdmin):
-    list_display = ['listing_title', 'listed_item_link']
-    search_fields = ['listing_title']
-
-    @admin.display(ordering='listed_item_id')
-    def listed_item_link(self, listed_item: models.ListedItemToReport):
-        url = f'https://www.poshmark.com/listing/{listed_item.listed_item_id}'
-        return format_html('<a href="{}">{}</a>', url, listed_item.listed_item_id)
-
