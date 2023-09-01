@@ -1573,7 +1573,7 @@ class PoshMarkClient(BaseClient):
             dropdown.click()
 
             # Locate the option you want to select and click on it using text contains
-            option_to_select = modal.find_element(By.CSS_SELECTOR, f"li.dropdown__menu__item div:contains('{report_type}')")
+            option_to_select = modal.find_element(By.XPATH, f"//li[contains(@class, 'dropdown__menu__item')]/div[contains(text(), '{report_type}')]")
             option_to_select.click()
 
             if report_type == ListedItemToReport.MISTAGGED_ITEM:
