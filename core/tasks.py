@@ -417,14 +417,16 @@ class CampaignTask(Task):
                     if unreported_items:
                         unreported_item = random.choice(unreported_items)
 
-                        reported = client.report_listing(unreported_item.listed_item_id)
+                        reported = client.report_listing(unreported_item.listed_item_id, unreported_item.report_type)
 
                         if reported:
                             ListedItemReport.objects.create(posh_user=self.campaign.posh_user, listed_item_to_report=unreported_item)
-                            bundle_message = 'If you don’t stop flagging my accounts I will start flagging you back just as heavily.'
-                            client.send_private_bundle_message(unreported_item.listed_item_id, bundle_message)
 
-                            if random_number < .05:
+                            if unreported_item.send_bundle_message:
+                                bundle_message = 'If you don’t stop flagging my accounts I will start flagging you back just as heavily.'
+                                client.send_private_bundle_message(unreported_item.listed_item_id, bundle_message)
+
+                            if unreported_item.leave_comment and random_number < .05:
                                 comments = [
                                     "LOL, people still fall for this? Come on!",
                                     "Are you serious? This is like scamming 101.",
@@ -452,7 +454,8 @@ class CampaignTask(Task):
 
                                 client.comment_on_listing(unreported_item.listed_item_id, random.choice(comments))
                         elif reported is False:
-                            unreported_items.delete()
+                            # unreported_items.delete()
+                            pass
 
                 shareable_listed_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP).exclude(listed_item_id='')
 

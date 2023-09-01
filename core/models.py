@@ -581,6 +581,8 @@ class ListedItemToReport(models.Model):
     listing_title = models.CharField(max_length=50)
     listed_item_id = models.CharField(max_length=255)
     report_type = models.CharField(max_length=100, choices=REPORT_TYPE_CHOICES, default=MISTAGGED_ITEM)
+    leave_comment = models.BooleanField(default=False)
+    send_bundle_message = models.BooleanField(default=False)
 
     def __str__(self):
         return f'{self.listing_title}'
