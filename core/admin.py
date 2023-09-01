@@ -124,6 +124,7 @@ class ListedItemReportAdmin(admin.ModelAdmin):
     def report_type(self, obj):
         return obj.listed_item_to_report.report_type
 
+
 @admin.register(models.ListedItemToReport)
 class ListedItemToReportAdmin(admin.ModelAdmin):
     list_display = ['listing_title', 'report_type', 'item_url']
