@@ -1595,7 +1595,7 @@ class PoshMarkClient(BaseClient):
             self.web_driver.save_screenshot(screenshot)
             self.logger.info('Report ready', screenshot)
 
-            submit_btn = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[3]/div[1]/div[2]/div/div[2]/div[3]/div/button[2]')
+            submit_btn = self.locate(By.XPATH, '//button[contains(text(), "Submit")]')
             submit_btn.click()
 
             return True
