@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils.text import slugify
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, TimeoutException
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
@@ -1494,18 +1494,21 @@ class PoshMarkClient(BaseClient):
                 selection = random.choice(available_users)
                 follow_button = selection.find_element(By.TAG_NAME, 'button')
 
-                if follow_button.text.replace(' ', '') == 'Follow':
-                    selected_user = selection.find_element(By.CLASS_NAME, 'follow__action__follower ').text
-                    actions = ActionChains(self.web_driver)
-                    actions.move_to_element(follow_button).perform()
+                try:
+                    if follow_button.text.replace(' ', '') == 'Follow':
+                        selected_user = selection.find_element(By.CLASS_NAME, 'follow__action__follower ').text
+                        actions = ActionChains(self.web_driver)
+                        actions.move_to_element(follow_button).perform()
 
-                    self.logger.info(f'The following user was selected to be followed: {selected_user}')
+                        self.logger.info(f'The following user was selected to be followed: {selected_user}')
 
-                    self.sleep(1)
+                        self.sleep(1)
 
-                    follow_button.click()
+                        follow_button.click()
 
-                    self.logger.info(f'Followed {selected_user}')
+                        self.logger.info(f'Followed {selected_user}')
+                except ElementClickInterceptedException:
+                    pass
         except Exception:
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():
@@ -1528,18 +1531,21 @@ class PoshMarkClient(BaseClient):
             selected_users = random.sample(available_users, sample_size) if available_users else []
 
             for selected_user in selected_users:
-                username = selected_user.find_element(By.CLASS_NAME, 'follow__action__follower').text
-                follow_button = selected_user.find_element(By.CLASS_NAME, 'follow__action__button')
+                try:
+                    username = selected_user.find_element(By.CLASS_NAME, 'follow__action__follower').text
+                    follow_button = selected_user.find_element(By.CLASS_NAME, 'follow__action__button')
 
-                self.logger.info(f'The following user was selected to be followed: {username}')
+                    self.logger.info(f'The following user was selected to be followed: {username}')
 
-                self.web_driver.execute_script("return arguments[0].scrollIntoView(true);", follow_button)
+                    self.web_driver.execute_script("return arguments[0].scrollIntoView(true);", follow_button)
 
-                self.sleep(1)
+                    self.sleep(1)
 
-                follow_button.click()
+                    follow_button.click()
 
-                self.logger.info(f'Followed {username}')
+                    self.logger.info(f'Followed {username}')
+                except ElementClickInterceptedException:
+                    pass
         except Exception as e:
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():
