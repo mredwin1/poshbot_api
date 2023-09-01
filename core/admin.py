@@ -312,7 +312,7 @@ class CampaignAdmin(admin.ModelAdmin):
 class LogGroupAdmin(admin.ModelAdmin):
     list_display = ['created_date', 'campaign', 'posh_user', 'has_error']
     readonly_fields = ['campaign', 'posh_user', 'created_date', 'has_error']
-    list_filter = ['campaign', 'created_date', 'has_error']
+    list_filter = ['created_date', 'has_error']
     search_fields = ['posh_user__username__istartswith']
     inlines = [LogEntryInline]
 
