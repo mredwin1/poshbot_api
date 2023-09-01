@@ -193,7 +193,6 @@ class BaseClient:
                 duration = seconds
                 word = 'second' if seconds == 1 else 'seconds'
 
-            self.logger.info(f'Sleeping for about {round(duration, 2)} {word}')
             time.sleep(seconds)
 
     def save_cookies(self):
@@ -1461,15 +1460,11 @@ class PoshMarkClient(BaseClient):
 
     def random_scroll(self, scroll_up=True):
         try:
-            self.logger.info('Scrolling randomly')
-
             height = self.web_driver.execute_script("return document.body.scrollHeight")
             scroll_amount = self.web_driver.execute_script("return window.pageYOffset;")
             lower_limit = 0 - scroll_amount if scroll_up else 0
             upper_limit = height - scroll_amount
             scroll_chosen = random.randint(lower_limit, upper_limit)
-
-            self.logger.debug(f'Amount Scrolled Right Now: {scroll_amount} Scroll Amount Chosen: {scroll_chosen}')
 
             self.web_driver.execute_script(f"window.scrollBy(0,{scroll_chosen});")
         except Exception:
@@ -1529,6 +1524,7 @@ class PoshMarkClient(BaseClient):
 
             sample_size = random.randint(1, 5)
             available_users = self.locate_all(By.CLASS_NAME, 'feed-page')
+
             selected_users = random.sample(available_users, sample_size) if available_users else []
 
             for selected_user in selected_users:
@@ -1537,8 +1533,7 @@ class PoshMarkClient(BaseClient):
 
                 self.logger.info(f'The following user was selected to be followed: {username}')
 
-                actions = ActionChains(self.web_driver)
-                actions.move_to_element(follow_button).perform()
+                self.web_driver.execute_script("return arguments[0].scrollIntoView(true);", follow_button)
 
                 self.sleep(1)
 
