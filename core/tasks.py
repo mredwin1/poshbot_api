@@ -408,11 +408,16 @@ class CampaignTask(Task):
                 elif random_number < 0.4:
                     client.follow_random_user()
                 elif random_number < .7:
+                    # Get a list of listed item IDs the user has listed
+                    user_listed_item_ids = ListedItem.objects.filter(posh_user=self.campaign.posh_user).values_list('listed_item_id', flat=True)
+
                     # Get a list of reported item IDs by the given posh_user
                     reported_item_ids = ListedItemReport.objects.filter(posh_user=self.campaign.posh_user).values_list('listed_item_to_report__listed_item_id', flat=True)
 
+                    excluded_items = user_listed_item_ids + reported_item_ids
+
                     # Get a random unreported item by the given posh_user
-                    unreported_items = ListedItemToReport.objects.exclude(listed_item_id__in=reported_item_ids)
+                    unreported_items = ListedItemToReport.objects.exclude(listed_item_id__in=excluded_items)
 
                     if unreported_items:
                         unreported_item = random.choice(unreported_items)
