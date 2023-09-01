@@ -117,7 +117,7 @@ class ListedItemReportAdmin(admin.ModelAdmin):
 
     @admin.display(ordering='listed_item_to_report')
     def associated_listed_item_to_report(self, listed_item_report: models.ListedItemReport):
-        url = f"{reverse('admin:core_listed_item_to_report_changelist')}?{urlencode({'id': str(listed_item_report.listed_item_to_report.id)})}"
+        url = f"{reverse('admin:core_listeditemtoreport_changelist')}?{urlencode({'id': str(listed_item_report.listed_item_to_report.id)})}"
         return format_html('<a href="{}">{}</a>', url, listed_item_report.listed_item_to_report.listing_title)
 
     @admin.display(ordering='listed_item_to_report__report_type')
