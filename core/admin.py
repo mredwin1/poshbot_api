@@ -113,13 +113,16 @@ class PoshUserStatusFilter(admin.SimpleListFilter):
 
 @admin.register(models.ListedItemReport)
 class ListedItemReportAdmin(admin.ModelAdmin):
-    list_display = ['posh_user', 'associated_listed_item_to_report', 'listed_item_to_report__report_type', 'datetime_reported']
+    list_display = ['posh_user', 'associated_listed_item_to_report', 'report_type', 'datetime_reported']
 
     @admin.display(ordering='listed_item_to_report')
     def associated_listed_item_to_report(self, listed_item_to_report: models.ListedItemToReport):
         url = f"{reverse('admin:core_listed_item_to_report_changelist')}?{urlencode({'id': str(listed_item_to_report.id)})}"
         return format_html('<a href="{}">{}</a>', url, listed_item_to_report.listing_title)
 
+    @admin.display(ordering='listed_item_to_report__report_type')
+    def report_type(self, obj):
+        return obj.listed_item_to_report.report_type
 
 @admin.register(models.ListedItemToReport)
 class ListedItemToReportAdmin(admin.ModelAdmin):
