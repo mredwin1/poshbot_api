@@ -23,14 +23,7 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
         zke_yahoo.update_email_status([instance.email_id], 'free')
 
     if instance.app_package and instance.device and instance.clone_installed:
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
-        device = client.device(instance.device.serial)
-
-        device.uninstall(instance.app_package)
-
-        if instance.device.installed_clones > 0:
-            instance.device.installed_clones -= 1
-            instance.device.save(update_fields=['installed_clones'])
+        instance.device.uninstall_app(instance.app_package)
 
 
 @receiver(post_save, sender=PoshUser)

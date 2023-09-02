@@ -80,6 +80,18 @@ class Device(models.Model):
     mjpeg_server_port = models.SmallIntegerField(unique=True)
     installed_clones = models.SmallIntegerField(default=0)
 
+    def uninstall_app(self, app_package):
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        device = client.device(self.serial)
+
+        uninstalled = device.uninstall(app_package)
+
+        if self.installed_clones > 0:
+            self.installed_clones -= 1
+            self.save(update_fields=['installed_clones'])
+
+        return uninstalled
+
     def is_ready(self):
         if not self.is_active:
             return False
