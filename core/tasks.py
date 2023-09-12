@@ -37,7 +37,7 @@ class CampaignTask(Task):
         self.proxy = None
         self.proxy_id = None
         self.client_class = None
-        self.kwargs = None
+        self.kwargs = {}
 
     def get_random_delay(self, elapsed_time):
         delay = self.campaign.delay * 60
@@ -59,6 +59,11 @@ class CampaignTask(Task):
             time.sleep(8)
             self.logger.info('Releasing device')
             self.device.check_in()
+
+    def check_proxy_in(self):
+        if self.proxy and self.device.checked_out_by == self.campaign.id:
+            self.logger.info('Releasing proxy')
+            self.proxy.check_in()
 
     def init_campaign(self):
         response = {
@@ -96,19 +101,21 @@ class CampaignTask(Task):
             except Device.DoesNotExist:
                 self.proxy = Proxy.objects.get(id=self.proxy_id)
                 self.client_class = PoshMarkClient
-                self.kwargs = {
-                    'proxy': {
-                        'HOST': self.proxy.hostname,
-                        'PORT': self.proxy.port,
-                        'USER': self.proxy.username,
-                        'PASS': self.proxy.password
+                if self.proxy:
+                    self.kwargs = {
+                        'proxy': {
+                            'HOST': self.proxy.hostname,
+                            'PORT': self.proxy.port,
+                            'USER': self.proxy.username,
+                            'PASS': self.proxy.password
+                        }
                     }
-                }
 
         return response
 
     def finalize_campaign(self, success, campaign_delay, duration):
         self.check_device_in()
+        self.check_proxy_in()
 
         if not self.campaign.posh_user.is_active_in_posh:
             self.campaign.status = Campaign.STOPPING
