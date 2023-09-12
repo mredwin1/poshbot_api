@@ -749,7 +749,7 @@ class ManageCampaignsTask(Task):
             campaign.save(update_fields=['status', 'queue_status'])
 
             if proxy:
-                proxy.check_out()
+                proxy.check_out(campaign.id)
 
                 CampaignTask.delay(campaign.id, proxy_id=proxy.id)
 
