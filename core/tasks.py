@@ -102,13 +102,7 @@ class CampaignTask(Task):
                 try:
                     self.proxy = Proxy.objects.get(id=self.proxy_id)
                     self.kwargs = {
-                        'proxy': {
-                            'HOST': self.proxy.hostname,
-                            'PORT': self.proxy.port,
-                            'USER': self.proxy.username,
-                            'PASS': self.proxy.password,
-                            'TYPE': self.proxy.type,
-                        }
+                        'proxy': self.proxy
                     }
                 except Proxy.DoesNotExist:
                     pass

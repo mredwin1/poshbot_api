@@ -89,7 +89,7 @@ class Proxy(models.Model):
     type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=HTTP)
 
     @staticmethod
-    def _authenticate_with_cookies():
+    def authenticate_with_cookies():
         login_url = "https://portal.mobilehop.com/login"
         login_data = {
             'username': os.environ.get('PROXY_USERNAME', ''),
@@ -104,7 +104,7 @@ class Proxy(models.Model):
         return response.cookies
 
     def reset_ip(self):
-        cookies = self._authenticate_with_cookies()
+        cookies = self.authenticate_with_cookies()
 
         reset_url = f"https://portal.mobilehop.com/api/v2/proxies/reset/{self.license_id}"
         response = requests.get(reset_url, cookies=cookies)
@@ -120,7 +120,7 @@ class Proxy(models.Model):
     def change_location(self):
         locations = ['ORF', 'CLT', 'RIC', 'BWI', 'DCA']
         # Authenticate to get cookies
-        cookies = self._authenticate_with_cookies()
+        cookies = self.authenticate_with_cookies()
 
         # Check available locations
         availability_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/availability', cookies=cookies)

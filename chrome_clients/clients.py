@@ -24,7 +24,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem
+from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem, Proxy
 
 
 class Captcha:
@@ -89,7 +89,7 @@ class Captcha:
 
 
 class BaseClient:
-    def __init__(self, logger, proxy=None, cookies_filename='cookies'):
+    def __init__(self, logger, proxy: Proxy=None, cookies_filename='cookies'):
         user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
 
         self.cookies_path = '/bot_data/cookies'
@@ -109,14 +109,15 @@ class BaseClient:
         # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
         self.requests_session = requests.Session()
+        self.request_cookies = proxy.authenticate_with_cookies()
         self.cookies_filename = slugify(cookies_filename)
 
         os.makedirs('/log_images', exist_ok=True)
 
         if proxy:
             self.requests_session.proxies = {
-                'http': f"{proxy['TYPE']}://{proxy['HOST']}:{proxy['PORT']}",
-                'https': f"{proxy['TYPE']}://{proxy['HOST']}:{proxy['PORT']}",
+                'http': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
+                'https': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
             }
 
             manifest_json = """
@@ -169,7 +170,7 @@ class BaseClient:
                         {urls: ["<all_urls>"]},
                         ['blocking']
             );
-            """ % (proxy['HOST'], proxy['PORT'], proxy['USER'], proxy['PASS'])
+            """ % (proxy.hostname, proxy.port, proxy.username, proxy.password)
 
             plugin_file = 'proxy_auth_plugin.zip'
 
@@ -177,7 +178,7 @@ class BaseClient:
                 zp.writestr("manifest.json", manifest_json)
                 zp.writestr("background.js", background_js)
             # self.web_driver_options.add_extension(plugin_file)
-            self.web_driver_options.add_argument('--proxy-server=%s' % proxy['HOST'] + ":" + proxy['PORT'])
+            self.web_driver_options.add_argument('--proxy-server=%s' % proxy.hostname + ":" + proxy.port)
 
     def __enter__(self):
         self.open()
@@ -365,7 +366,7 @@ class BaseClient:
         # self.logger.info(self.web_driver.page_source, image=f'{folder}/{self.cookies_filename}.png')
         self.logger.info(self.web_driver.page_source)
 
-        response = self.requests_session.get('https://httpbin.org/ip')
+        response = self.requests_session.get('https://httpbin.org/ip', cookies=self.request_cookies)
 
         self.logger.info(response.text)
 
