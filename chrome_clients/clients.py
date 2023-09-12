@@ -358,11 +358,11 @@ class BaseClient:
 
         self.sleep(3)
 
-        self.logger.info(self.web_driver.page_source)
-
         folder = f'/log_images/ip_check'
         os.makedirs(folder, exist_ok=True)
         self.web_driver.save_screenshot(f'{folder}/{self.cookies_filename}.png')
+
+        self.logger.info(self.web_driver.page_source, image=f'{folder}/{self.cookies_filename}.png')
 
         response = self.requests_session.get('https://httpbin.org/ip')
 
