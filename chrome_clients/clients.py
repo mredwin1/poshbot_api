@@ -295,9 +295,11 @@ class BaseClient:
 
 
 class PoshMarkClient(BaseClient):
-    def __init__(self, campaign: Campaign, logger, proxy_hostname=None, proxy_port=None):
-        proxy_hostname = proxy_hostname if proxy_hostname else ''
-        proxy_port = proxy_port if proxy_port else ''
+    def __init__(self, campaign: Campaign, logger, **kwargs):
+        proxy_hostname = kwargs.get('proxy_hostname', '')
+        proxy_port = kwargs.get('proxy_port', '')
+        proxy_username = kwargs.get('proxy_hostname', '')
+        proxy_password = kwargs.get('proxy_port', '')
         super(PoshMarkClient, self).__init__(logger, proxy_hostname, proxy_port, campaign.posh_user.username)
 
         aws_session = boto3.Session()

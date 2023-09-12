@@ -18,7 +18,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import List
 
-from core.models import Campaign, ListedItem, ListingImage
+from core.models import Campaign, ListedItem, ListingImage, Device
 
 APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
@@ -254,7 +254,8 @@ class AppiumClient:
 
 
 class PoshMarkClient(AppiumClient):
-    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, campaign: Campaign, logger, app_package='com.poshmark.app'):
+    def __init__(self, campaign: Campaign, logger, **kwargs):
+        device: Device = kwargs.get('device', '')
         self.driver = None
         self.campaign = campaign
         self.logger = logger
@@ -272,6 +273,7 @@ class PoshMarkClient(AppiumClient):
                                          region_name=settings.AWS_S3_REGION_NAME)
         self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
+        app_package = campaign.posh_user.app_package if campaign.posh_user.app_package else 'com.poshmark.app'
         capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
@@ -282,7 +284,7 @@ class PoshMarkClient(AppiumClient):
             noReset=True,
         )
 
-        super(PoshMarkClient, self).__init__(device_serial, system_port, mjpeg_server_port, logger, capabilities)
+        super(PoshMarkClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
 
     def locate(self, by, locator, location_type=None, retry=0):
         """Locates the first elements with the given By"""
