@@ -8,6 +8,7 @@ import re
 import requests
 import time
 import traceback
+import zipfile
 
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -88,16 +89,8 @@ class Captcha:
 
 
 class BaseClient:
-    def __init__(self, logger, proxy_ip=None, proxy_port=None, cookies_filename='cookies'):
-        proxy = f'{proxy_ip}:{proxy_port}' if proxy_ip and proxy_port else ''
+    def __init__(self, logger, proxy=None, cookies_filename='cookies'):
         user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
-
-        # webdriver.DesiredCapabilities.CHROME['proxy'] = {
-        #     "httpProxy": proxy,
-        #     "ftpProxy": proxy,
-        #     "sslProxy": proxy,
-        #     "proxyType": ProxyType.MANUAL if proxy else ProxyType.SYSTEM
-        # }
 
         self.cookies_path = '/bot_data/cookies'
         self.logger = logger
@@ -115,9 +108,75 @@ class BaseClient:
         self.web_driver_options.add_argument("--disable-plugins-discovery")
         # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
+        self.requests_session = requests.Session()
         self.cookies_filename = slugify(cookies_filename)
 
         os.makedirs('/log_images', exist_ok=True)
+
+        if proxy:
+            self.requests_session.proxies = {
+                'http': f"socks5://{proxy['USER']}:{proxy['PASS']}@{proxy['HOST']}:{proxy['PORT']}",
+                'https': f"socks5://{proxy['USER']}:{proxy['PASS']}@{proxy['HOST']}:{proxy['PORT']}",
+            }
+
+            manifest_json = """
+            {
+                "version": "1.0.0",
+                "manifest_version": 2,
+                "name": "Chrome Proxy",
+                "permissions": [
+                    "proxy",
+                    "tabs",
+                    "unlimitedStorage",
+                    "storage",
+                    "<all_urls>",
+                    "webRequest",
+                    "webRequestBlocking"
+                ],
+                "background": {
+                    "scripts": ["background.js"]
+                },
+                "minimum_chrome_version":"22.0.0"
+            }
+            """
+
+            background_js = """
+            var config = {
+                    mode: "fixed_servers",
+                    rules: {
+                    singleProxy: {
+                        scheme: "http",
+                        host: "%s",
+                        port: parseInt(%s)
+                    },
+                    bypassList: ["localhost"]
+                    }
+                };
+
+            chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+            function callbackFn(details) {
+                return {
+                    authCredentials: {
+                        username: "%s",
+                        password: "%s"
+                    }
+                };
+            }
+
+            chrome.webRequest.onAuthRequired.addListener(
+                        callbackFn,
+                        {urls: ["<all_urls>"]},
+                        ['blocking']
+            );
+            """ % (proxy['HOST'], proxy['PORT'], proxy['USER'], proxy['PASS'])
+
+            plugin_file = 'proxy_auth_plugin.zip'
+
+            with zipfile.ZipFile(plugin_file, 'w') as zp:
+                zp.writestr("manifest.json", manifest_json)
+                zp.writestr("background.js", background_js)
+            self.web_driver_options.add_extension(plugin_file)
 
     def __enter__(self):
         self.open()
@@ -293,14 +352,24 @@ class BaseClient:
 
         self.logger.info('All tests complete')
 
+    def check_ip(self):
+        self.web_driver.get('https://httpbin.org/ip')
+
+        self.sleep(1)
+
+        self.logger.info(self.web_driver.page_source)
+
+        response = self.requests_session.get('https://httpbin.org/ip')
+
+        self.logger.info(response.text)
+
+        return True
+
 
 class PoshMarkClient(BaseClient):
     def __init__(self, campaign: Campaign, logger, **kwargs):
-        proxy_hostname = kwargs.get('proxy_hostname', '')
-        proxy_port = kwargs.get('proxy_port', '')
-        proxy_username = kwargs.get('proxy_hostname', '')
-        proxy_password = kwargs.get('proxy_port', '')
-        super(PoshMarkClient, self).__init__(logger, proxy_hostname, proxy_port, campaign.posh_user.username)
+        proxy = kwargs.get('proxy', {})
+        super(PoshMarkClient, self).__init__(logger, proxy=proxy, cookies_filename=campaign.posh_user.username)
 
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
@@ -309,10 +378,6 @@ class PoshMarkClient(BaseClient):
         self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
         self.posh_user = campaign.posh_user
         self.campaign = campaign
-        self.requests_proxy = {}
-
-        if proxy_hostname and proxy_port:
-            self.requests_proxy['https'] = f'http://{proxy_hostname}:{proxy_port}'
 
         logs_dir = f'/log_images/{slugify(self.campaign.title)}'
         os.makedirs(logs_dir, exist_ok=True)
@@ -660,11 +725,9 @@ class PoshMarkClient(BaseClient):
             self.sleep(7)
 
             attempts = 0
-            response = requests.get(f'https://poshmark.com/closet/{self.posh_user.username}',
-                                    proxies=self.requests_proxy, timeout=30)
+            response = self.requests_session.get(f'https://poshmark.com/closet/{self.posh_user.username}', timeout=30)
             while attempts < 8 and response.status_code != requests.codes.ok:
-                response = requests.get(f'https://poshmark.com/closet/{self.posh_user.username}',
-                                        proxies=self.requests_proxy, timeout=30)
+                response = self.requests_session.get(f'https://poshmark.com/closet/{self.posh_user.username}', timeout=30)
                 self.logger.warning(
                     f'Closet for {self.posh_user.username} is still not available - Trying again')
                 attempts += 1
