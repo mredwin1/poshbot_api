@@ -115,8 +115,8 @@ class BaseClient:
 
         if proxy:
             self.requests_session.proxies = {
-                'http': f"http://{proxy['HOST']}:{proxy['PORT']}",
-                'https': f"http://{proxy['HOST']}:{proxy['PORT']}",
+                'http': f"{proxy['TYPE']}://{proxy['HOST']}:{proxy['PORT']}",
+                'https': f"{proxy['TYPE']}://{proxy['HOST']}:{proxy['PORT']}",
             }
 
             manifest_json = """

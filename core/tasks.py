@@ -106,7 +106,8 @@ class CampaignTask(Task):
                             'HOST': self.proxy.hostname,
                             'PORT': self.proxy.port,
                             'USER': self.proxy.username,
-                            'PASS': self.proxy.password
+                            'PASS': self.proxy.password,
+                            'TYPE': self.proxy.type,
                         }
                     }
                 except Proxy.DoesNotExist:
@@ -156,21 +157,13 @@ class CampaignTask(Task):
 
         return app_launched
 
-    def reset_ip(self, reset_url):
-        response = requests.get(reset_url)
-        retries = 0
+    def reset_ip(self):
+        reset_success = self.proxy.reset_ip()
 
-        while response.status_code != requests.codes.ok and retries < 3:
-            self.logger.warning('IP reset failed, trying again')
-            response = requests.get(reset_url)
-            retries += 1
-            time.sleep(1)
-
-        if response.status_code == requests.codes.ok:
-            self.logger.info(response.text)
+        if reset_success:
             return True
 
-        self.logger.info(f'Could not reset IP after {retries} retries. Sending campaign to the end of the line')
+        self.logger.info(f'Could not reset IP. Sending campaign to the end of the line')
 
         self.campaign.status = Campaign.STARTING
         self.campaign.queue_status = 'Unknown'
@@ -675,10 +668,10 @@ class ManageCampaignsTask(Task):
             devices = devices.filter(id=needed_device.id)
         else:
             devices = devices.filter(installed_clones__lt=147)
-        in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
+        checked_out_proxies = Device.objects.filter(checked_out_by__isnull=False).values_list('proxy', flat=True)
 
         for device in devices:
-            if device.ip_reset_url not in in_use_ip_reset_urls and not device.checked_out_by:
+            if device.proxy_id not in checked_out_proxies and not device.checked_out_by:
                 if device.is_ready():
                     return device
 

@@ -66,6 +66,14 @@ def path_and_rename(instance, filename):
 
 
 class Proxy(models.Model):
+    HTTP = 'http'
+    SOCKS5 = 'socks5'
+
+    PROXY_TYPE_CHOICES = [
+        (HTTP, 'http'),
+        (SOCKS5, 'socks5')
+    ]
+
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     checked_out_by = models.UUIDField(blank=True, null=True)
 
@@ -78,6 +86,7 @@ class Proxy(models.Model):
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
     license_id = models.CharField(max_length=255)
+    type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=HTTP)
 
     @staticmethod
     def _start_session():
@@ -130,9 +139,10 @@ class Proxy(models.Model):
 class Device(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
+    proxy = models.ForeignKey(to=Proxy, on_delete=models.SET_NULL, null=True)
+
     checked_out_by = models.UUIDField(blank=True, null=True)
     serial = models.CharField(max_length=12, unique=True)
-    ip_reset_url = models.URLField()
 
     is_active = models.BooleanField(default=True)
 
