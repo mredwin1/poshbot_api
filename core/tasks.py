@@ -232,6 +232,13 @@ class CampaignTask(Task):
     def register(self, list_items):
         with self.client_class(self.campaign, self.logger, **self.kwargs) as client:
             response = client.check_ip()
+
+            self.proxy.reset_ip()
+
+            client.sleep(8)
+
+            response = client.check_ip()
+
         return response
         # ip_reset = self.reset_ip(self.device.ip_reset_url)
         #

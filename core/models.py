@@ -79,6 +79,35 @@ class Proxy(models.Model):
     password = models.CharField(max_length=255)
     license_id = models.CharField(max_length=255)
 
+    @staticmethod
+    def _start_session():
+        session = requests.Session()
+
+        login_url = "https://portal.mobilehop.com/login"
+        login_data = {
+            'username': os.environ.get('PROXY_USERNAME', ''),
+            'password': os.environ.get('PROXY_PASSWORD', '')
+        }
+
+        response = session.post(login_url, data=login_data)
+
+        if response.status_code != 200:
+            raise Exception(f"Authentication failed with status code {response.status_code}")
+
+        return session
+
+    def reset_ip(self):
+        session = self._start_session()
+
+        reset_url = f"https://portal.mobilehop.com/api/v2/proxies/reset/{self.license_id}"
+        response = session.get(reset_url)
+
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('result', 'IP reset successful')
+        else:
+            raise Exception(f"IP reset failed with status code {response.status_code}")
+
     def check_out(self, campaign_id: uuid4):
         """Check out the proxy for use by a posh user."""
         if self.checked_out_by:
