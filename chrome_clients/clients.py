@@ -365,7 +365,7 @@ class BaseClient:
         # self.logger.info(self.web_driver.page_source, image=f'{folder}/{self.cookies_filename}.png')
         self.logger.info(self.web_driver.page_source)
 
-        response = self.requests_session.get('https://httpbin.org/ip')
+        response = requests.get('https://httpbin.org/ip')
 
         self.logger.info(response.text)
 
