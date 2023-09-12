@@ -24,7 +24,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport
+from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem
 
 
 class Captcha:
@@ -945,10 +945,11 @@ class PoshMarkClient(BaseClient):
             self.handle_error('Error while updating profile', 'update_profile_error.png')
             return False
 
-    def list_item(self, listing, listing_images, list_item_retries=0):
+    def list_item(self, listed_item: ListedItem, listing_images, list_item_retries=0):
         """Will list an item on poshmark for the user"""
         try:
-            listing_title = listing.title
+            listing_title = listed_item.listing_title
+            listing = listed_item.listing
 
             self.logger.info(f'Attempt # {list_item_retries + 1} to list {listing_title} for {self.posh_user.username}')
 
