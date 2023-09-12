@@ -765,8 +765,8 @@ class ManageCampaignsTask(Task):
         now = timezone.now()
         campaigns = Campaign.objects.filter(Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]) & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))).order_by('next_runtime')
         queue_num = 1
-        check_for_device = False
-        check_for_proxy = False
+        check_for_device = True
+        check_for_proxy = True
 
         for campaign in campaigns:
             campaign_started = False
