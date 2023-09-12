@@ -695,6 +695,9 @@ class ManageCampaignsTask(Task):
         proxies = Proxy.objects.filter(is_active=True)
         in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list('id', flat=True)
 
+        self.logger.info(proxies)
+        self.logger.info(in_use_proxies)
+
         for proxy in proxies:
             if proxy.id not in in_use_proxies and not proxy.checked_out_by:
                 return proxy
@@ -777,7 +780,8 @@ class ManageCampaignsTask(Task):
             elif not self.use_device and campaign.posh_user and check_for_proxy and (need_to_list or not campaign.posh_user.is_registered):
                 available_proxy = self.get_available_proxy()
 
-            self.logger.info(available_proxy.license_id)
+            if available_proxy:
+                self.logger.info(available_proxy.license_id)
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
