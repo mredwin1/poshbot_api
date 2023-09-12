@@ -61,7 +61,7 @@ class CampaignTask(Task):
             self.device.check_in()
 
     def check_proxy_in(self):
-        if self.proxy and self.device.checked_out_by == self.campaign.id:
+        if self.proxy and self.proxy.checked_out_by == self.campaign.id:
             self.logger.info('Releasing proxy')
             self.proxy.check_in()
 
