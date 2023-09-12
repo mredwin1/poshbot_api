@@ -747,17 +747,17 @@ class ManageCampaignsTask(Task):
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
             campaign.save(update_fields=['status', 'queue_status'])
-            proxy_id = proxy.id if proxy else None
 
-            CampaignTask.delay(campaign.id, proxy_id=proxy_id)
+            if proxy:
+                proxy.check_out()
 
-            if self.use_device:
-                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
+                CampaignTask.delay(campaign.id, proxy_id=proxy.id)
+
+                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} using chrome and {proxy} proxy')
             else:
-                if proxy:
-                    self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} using chrome and {proxy} proxy')
-                else:
-                    self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} using chrome and no proxy')
+                CampaignTask.delay(campaign.id)
+
+                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} using chrome and no proxy')
 
             return True
 
