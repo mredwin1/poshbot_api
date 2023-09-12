@@ -65,6 +65,36 @@ def path_and_rename(instance, filename):
     return path
 
 
+class Proxy(models.Model):
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    checked_out_by = models.UUIDField(blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)
+
+    checkout_time = models.DateTimeField(null=True, blank=True)
+
+    hostname = models.CharField(max_length=255)
+    port = models.CharField(max_length=255)
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    license_id = models.CharField(max_length=255)
+
+    def check_out(self, campaign_id: uuid4):
+        """Check out the proxy for use by a posh user."""
+        if self.checked_out_by:
+            raise ValueError('Device is already in use')
+
+        self.checked_out_by = campaign_id
+        self.checkout_time = timezone.now()
+        self.save(update_fields=['checked_out_by', 'checkout_time'])
+
+    def check_in(self):
+        """Check in the proxy after use."""
+        self.checked_out_by = None
+        self.checkout_time = None
+        self.save(update_fields=['checked_out_by', 'checkout_time'])
+
+
 class Device(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 

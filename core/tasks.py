@@ -23,7 +23,7 @@ from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePosh
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport, PaymentEmailContent
+from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport, PaymentEmailContent, Proxy
 
 
 class CampaignTask(Task):
@@ -34,6 +34,8 @@ class CampaignTask(Task):
         self.logger = None
         self.device = None
         self.device_id = None
+        self.proxy = None
+        self.proxy_id = None
         self.client_class = None
         self.kwargs = None
 
@@ -80,7 +82,7 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user, {self.campaign.posh_user}, is inactive')
 
-        if response['status'] and self.device_id:
+        if response['status']:
             try:
                 self.device = Device.objects.get(id=self.device_id)
                 self.device.checkout_time = timezone.now()
@@ -92,13 +94,14 @@ class CampaignTask(Task):
                 }
 
             except Device.DoesNotExist:
+                self.proxy = Proxy.objects.get(id=self.proxy_id)
                 self.client_class = PoshMarkClient
                 self.kwargs = {
                     'proxy': {
-                        'HOST': os.environ['PROXY_HOST'],
-                        'PORT': os.environ['PROXY_PORT'],
-                        'USER': os.environ['PROXY_USER'],
-                        'PASS': os.environ['PROXY_PASS']
+                        'HOST': self.proxy.hostname,
+                        'PORT': self.proxy.port,
+                        'USER': self.proxy.username,
+                        'PASS': self.proxy.password
                     }
                 }
 
@@ -590,9 +593,10 @@ class CampaignTask(Task):
 
         self.logger.info('Campaign was sent to the end of the line and will start soon')
 
-    def run(self, campaign_id, logger_id=None, device_id=None, *args, **kwargs):
+    def run(self, campaign_id, logger_id=None, device_id=None, proxy_id=None, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
         self.device_id = device_id
+        self.proxy_id = proxy_id
         campaign_delay = None
 
         self.init_logger(logger_id)
@@ -677,7 +681,31 @@ class ManageCampaignsTask(Task):
                     self.logger.warning('Campaign does not exist. Checking in.')
                     device.check_in()
 
-    def start_campaign(self, campaign, device=None):
+    def get_available_proxy(self):
+        proxies = Proxy.objects.filter(is_active=True)
+        in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list('id', flat=True)
+
+        for proxy in proxies:
+            if proxy.id not in in_use_proxies and not proxy.checked_out_by:
+                return proxy
+
+            runtime = (timezone.now() - proxy.checkout_time).total_seconds() if proxy.checkout_time is not None else None
+            if runtime and proxy.checked_out_by and runtime > CampaignTask.time_limit:
+                try:
+                    campaign = Campaign.objects.get(id=proxy.checked_out_by)
+                    if campaign.status != Campaign.RUNNING:
+                        self.logger.warning('Campaign isn\'t running, checking in.')
+                        proxy.check_in()
+                    elif runtime > CampaignTask.time_limit * 2:
+                        self.logger.warning(f'Campaign has been running for {runtime} sec, checking in.')
+                        proxy.check_in()
+                        campaign.status = Campaign.STARTING
+                        campaign.save()
+                except Campaign.DoesNotExist:
+                    self.logger.warning('Campaign does not exist. Checking in.')
+                    proxy.check_in()
+
+    def start_campaign(self, campaign, device=None, proxy=None):
         if device:
             try:
                 device.check_out(campaign.id)
@@ -707,7 +735,7 @@ class ManageCampaignsTask(Task):
             campaign.queue_status = 'N/A'
             campaign.save(update_fields=['status', 'queue_status'])
 
-            CampaignTask.delay(campaign.id)
+            CampaignTask.delay(campaign.id, proxy_id=proxy)
 
             if self.use_device:
                 self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
@@ -721,17 +749,19 @@ class ManageCampaignsTask(Task):
         campaigns = Campaign.objects.filter(Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]) & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))).order_by('next_runtime')
         queue_num = 1
         check_for_device = False
-
-        self.logger.info(f'-----------------------{self.use_device}---------------')
+        check_for_proxy = False
 
         for campaign in campaigns:
             campaign_started = False
             available_device = None
+            available_proxy = None
             items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
             need_to_list = items_to_list.count() > 0
 
             if self.use_device and campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
                 available_device = self.get_available_device(campaign.posh_user.device)
+            elif not self.use_device and campaign.posh_user and check_for_proxy and (need_to_list or not campaign.posh_user.is_registered):
+                available_proxy = self.get_available_proxy()
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
@@ -740,11 +770,11 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
-                campaign_started = self.start_campaign(campaign, available_device)
-            elif campaign.status == Campaign.STARTING and (not self.use_device or (available_device or (not need_to_list and campaign.posh_user.is_registered))):
-                campaign_started = self.start_campaign(campaign, available_device)
+                campaign_started = self.start_campaign(campaign, available_device, available_proxy)
+            elif campaign.status == Campaign.STARTING and ((available_proxy or (not need_to_list and campaign.posh_user.is_registered)) or (available_device or (not need_to_list and campaign.posh_user.is_registered))):
+                campaign_started = self.start_campaign(campaign, available_device, available_proxy)
 
-            if (not campaign_started and campaign.status == Campaign.STARTING) or (self.use_device and (not available_device and campaign.status == Campaign.STARTING)):
+            if (not campaign_started and campaign.status == Campaign.STARTING) or ((not available_proxy and campaign.status == Campaign.STARTING) and (not available_device and campaign.status == Campaign.STARTING)):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
