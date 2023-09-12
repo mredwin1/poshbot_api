@@ -163,6 +163,8 @@ class CampaignTask(Task):
         else:
             reset_success = self.proxy.reset_ip()
 
+        time.sleep(3)
+
         if reset_success:
             return True
 
