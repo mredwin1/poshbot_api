@@ -673,7 +673,7 @@ class ManageCampaignsTask(Task):
                     device.check_in()
 
     def start_campaign(self, campaign, device=None):
-        if device and self.use_device:
+        if device:
             try:
                 device.check_out(campaign.id)
 
@@ -716,6 +716,8 @@ class ManageCampaignsTask(Task):
         campaigns = Campaign.objects.filter(Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]) & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))).order_by('next_runtime')
         queue_num = 1
         check_for_device = False
+
+        self.logger.info(f'-----------------------{self.use_device}---------------')
 
         for campaign in campaigns:
             campaign_started = False
