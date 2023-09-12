@@ -89,7 +89,7 @@ class Captcha:
 
 
 class BaseClient:
-    def __init__(self, logger, proxy: Proxy=None, cookies_filename='cookies'):
+    def __init__(self, logger, proxy: Proxy = None, cookies_filename='cookies'):
         user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
 
         self.cookies_path = '/bot_data/cookies'
