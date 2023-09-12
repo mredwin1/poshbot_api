@@ -641,6 +641,7 @@ class ManageCampaignsTask(Task):
         self.soft_time_limit = 240
         self.time_limit = 450
         self.logger = logging.getLogger(__name__)
+        self.use_device = bool(int(os.get('USE_DEVICE', '0')))
 
     def get_available_device(self, needed_device=None):
         devices = Device.objects.filter(is_active=True)
@@ -672,7 +673,7 @@ class ManageCampaignsTask(Task):
                     device.check_in()
 
     def start_campaign(self, campaign, device=None):
-        if device:
+        if device and self.use_device:
             try:
                 device.check_out(campaign.id)
 
@@ -702,7 +703,11 @@ class ManageCampaignsTask(Task):
             campaign.save(update_fields=['status', 'queue_status'])
 
             CampaignTask.delay(campaign.id)
-            self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
+
+            if self.use_device:
+                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
+            else:
+                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} using chrome')
 
             return True
 
@@ -710,7 +715,7 @@ class ManageCampaignsTask(Task):
         now = timezone.now()
         campaigns = Campaign.objects.filter(Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING]) & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))).order_by('next_runtime')
         queue_num = 1
-        check_for_device = True
+        check_for_device = False
 
         for campaign in campaigns:
             campaign_started = False
@@ -718,7 +723,7 @@ class ManageCampaignsTask(Task):
             items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
             need_to_list = items_to_list.count() > 0
 
-            if campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
+            if self.use_device and campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
                 available_device = self.get_available_device(campaign.posh_user.device)
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
@@ -729,10 +734,10 @@ class ManageCampaignsTask(Task):
                 campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
                 campaign_started = self.start_campaign(campaign, available_device)
-            elif campaign.status == Campaign.STARTING and (available_device or (not need_to_list and campaign.posh_user.is_registered)):
+            elif campaign.status == Campaign.STARTING and (not self.use_device or (available_device or (not need_to_list and campaign.posh_user.is_registered))):
                 campaign_started = self.start_campaign(campaign, available_device)
 
-            if (not campaign_started and campaign.status == Campaign.STARTING) or (not available_device and campaign.status == Campaign.STARTING):
+            if (not campaign_started and campaign.status == Campaign.STARTING) or (self.use_device and (not available_device and campaign.status == Campaign.STARTING)):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
