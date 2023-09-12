@@ -744,8 +744,9 @@ class ManageCampaignsTask(Task):
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
             campaign.save(update_fields=['status', 'queue_status'])
+            proxy_id = proxy.id if proxy else None
 
-            CampaignTask.delay(campaign.id, proxy_id=proxy.id)
+            CampaignTask.delay(campaign.id, proxy_id=proxy_id)
 
             if self.use_device:
                 self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
