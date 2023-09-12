@@ -360,7 +360,7 @@ class BaseClient:
 
         self.logger.info(self.web_driver.page_source)
 
-        filename = f'/log_images/{self.cookies_filename}.png'
+        filename = f'/log_images/ip_check/{self.cookies_filename}.png'
         os.makedirs(filename)
         self.web_driver.save_screenshot(filename)
 
