@@ -360,9 +360,9 @@ class BaseClient:
 
         self.logger.info(self.web_driver.page_source)
 
-        filename = f'/log_images/ip_check/{self.cookies_filename}.png'
+        filename = f'/log_images/ip_check'
         os.makedirs(filename)
-        self.web_driver.save_screenshot(filename)
+        self.web_driver.save_screenshot(f'{filename}/{self.cookies_filename}.png')
 
         response = self.requests_session.get('https://httpbin.org/ip')
 
