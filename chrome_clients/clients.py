@@ -356,7 +356,7 @@ class BaseClient:
     def check_ip(self):
         self.web_driver.get('https://httpbin.org/ip')
 
-        self.sleep(1)
+        self.sleep(3)
 
         self.logger.info(self.web_driver.page_source)
 
