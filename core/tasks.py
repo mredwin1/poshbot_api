@@ -586,7 +586,7 @@ class CampaignTask(Task):
             self.campaign.queue_status = 'Unknown'
             self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
-        if type(exc) is WebDriverException and self.device.checked_out_by == self.campaign.id:
+        if self.device and type(exc) is WebDriverException and self.device.checked_out_by == self.campaign.id:
             client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
             adb_device = client.device(serial=self.device.serial)
 
