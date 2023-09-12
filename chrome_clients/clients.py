@@ -115,8 +115,8 @@ class BaseClient:
 
         if proxy:
             self.requests_session.proxies = {
-                'http': f"socks5://{proxy['USER']}:{proxy['PASS']}@{proxy['HOST']}:{proxy['PORT']}",
-                'https': f"socks5://{proxy['USER']}:{proxy['PASS']}@{proxy['HOST']}:{proxy['PORT']}",
+                'http': f"socks5://{proxy['HOST']}:{proxy['PORT']}",
+                'https': f"socks5://{proxy['HOST']}:{proxy['PORT']}",
             }
 
             manifest_json = """
@@ -176,7 +176,8 @@ class BaseClient:
             with zipfile.ZipFile(plugin_file, 'w') as zp:
                 zp.writestr("manifest.json", manifest_json)
                 zp.writestr("background.js", background_js)
-            self.web_driver_options.add_extension(plugin_file)
+            # self.web_driver_options.add_extension(plugin_file)
+            self.web_driver_options.add_argument('--proxy-server=%s' % proxy['HOST'] + ":" + proxy['PORT'])
 
     def __enter__(self):
         self.open()
