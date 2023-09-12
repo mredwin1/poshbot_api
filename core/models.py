@@ -89,33 +89,70 @@ class Proxy(models.Model):
     type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=HTTP)
 
     @staticmethod
-    def _start_session():
-        session = requests.Session()
-
+    def _authenticate_with_cookies():
         login_url = "https://portal.mobilehop.com/login"
         login_data = {
             'username': os.environ.get('PROXY_USERNAME', ''),
             'password': os.environ.get('PROXY_PASSWORD', '')
         }
 
-        response = session.post(login_url, data=login_data)
+        response = requests.post(login_url, data=login_data)
 
         if response.status_code != 200:
             raise Exception(f"Authentication failed with status code {response.status_code}")
 
-        return session
+        return response.cookies
 
     def reset_ip(self):
-        session = self._start_session()
+        cookies = self._authenticate_with_cookies()
 
         reset_url = f"https://portal.mobilehop.com/api/v2/proxies/reset/{self.license_id}"
-        response = session.get(reset_url)
+        response = requests.get(reset_url, cookies=cookies)
 
         if response.status_code == 200:
             result = response.json()
             return result.get('result', 'IP reset successful')
+        elif response.status_code == 401:
+            raise Exception("Authentication failed. Please check your credentials.")
         else:
             raise Exception(f"IP reset failed with status code {response.status_code}")
+
+    def change_location(self):
+        locations = ['ORF', 'CLT', 'RIC', 'BWI', 'DCA']
+        # Authenticate to get cookies
+        cookies = self._authenticate_with_cookies()
+
+        # Check available locations
+        availability_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/availability', cookies=cookies)
+
+        if availability_response.status_code == 200:
+            data = availability_response.json()
+            available_locations = [location['id'] for location in data['result'] if location['available'] == 1 and location['id'] in locations]
+
+            selected_location = random.choice(available_locations)
+
+            # Disconnect from the current location
+            disconnect_url = f"https://portal.mobilehop.com/api/v2/proxies/disconnect/{self.license_id}"
+            response = requests.get(disconnect_url, cookies=cookies)
+
+            if response.status_code != 200:
+                raise Exception(
+                    f"Failed to disconnect from the current location with status code {response.status_code}")
+
+            # Connect to the new random location
+            connect_url = f"https://portal.mobilehop.com/api/v2/proxies/connect/{self.license_id}/{selected_location}"
+            response = requests.get(connect_url, cookies=cookies)
+
+            if response.status_code != 200:
+                raise Exception(f"Failed to connect to the new location with status code {response.status_code}")
+
+            whitelist_ip_url = f"https://portal.mobilehop.com/api/v2/proxies/ipwhitelist/{self.license_id}/{os.environ['SERVER_IP']}"
+            response = requests.get(whitelist_ip_url, cookies=cookies)
+
+            if response.status_code != 200:
+                raise Exception(f"Failed to set IP whitelist. Status code: {response.status_code}")
+
+            return f"Location changed to {selected_location} successfully"
 
     def check_out(self, campaign_id: uuid4):
         """Check out the proxy for use by a posh user."""
