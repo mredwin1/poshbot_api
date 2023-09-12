@@ -641,7 +641,7 @@ class ManageCampaignsTask(Task):
         self.soft_time_limit = 240
         self.time_limit = 450
         self.logger = logging.getLogger(__name__)
-        self.use_device = bool(int(os.get('USE_DEVICE', '0')))
+        self.use_device = bool(int(os.environ.get('USE_DEVICE', '0')))
 
     def get_available_device(self, needed_device=None):
         devices = Device.objects.filter(is_active=True)
