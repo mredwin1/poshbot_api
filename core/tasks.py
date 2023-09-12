@@ -99,9 +99,8 @@ class CampaignTask(Task):
                 }
 
             except Device.DoesNotExist:
-                self.proxy = Proxy.objects.get(id=self.proxy_id)
-                self.client_class = PoshMarkClient
-                if self.proxy:
+                try:
+                    self.proxy = Proxy.objects.get(id=self.proxy_id)
                     self.kwargs = {
                         'proxy': {
                             'HOST': self.proxy.hostname,
@@ -110,6 +109,10 @@ class CampaignTask(Task):
                             'PASS': self.proxy.password
                         }
                     }
+                except Proxy.DoesNotExist:
+                    pass
+
+                self.client_class = PoshMarkClient
 
         return response
 
