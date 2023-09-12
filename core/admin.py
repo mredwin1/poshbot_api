@@ -166,8 +166,8 @@ class ProxyAdmin(admin.ModelAdmin):
     readonly_fields = ['checked_out_by', 'checkout_time']
     actions = [check_proxies_in]
 
-    @admin.display(ordering='associated_proxy')
-    def associated_proxy(self, proxy):
+    @admin.display(ordering='associated_campaign')
+    def associated_campaign(self, proxy):
         campaign = models.Campaign.objects.get(id=proxy.checked_out_by)
         url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(campaign.id)})}"
         return format_html('<a href="{}">{}</a>', url, campaign.title)
