@@ -109,7 +109,6 @@ class BaseClient:
         # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
         self.requests_session = requests.Session()
-        self.request_cookies = proxy.authenticate_with_cookies()
         self.cookies_filename = slugify(cookies_filename)
 
         os.makedirs('/log_images', exist_ok=True)
@@ -366,7 +365,7 @@ class BaseClient:
         # self.logger.info(self.web_driver.page_source, image=f'{folder}/{self.cookies_filename}.png')
         self.logger.info(self.web_driver.page_source)
 
-        response = self.requests_session.get('https://httpbin.org/ip', cookies=self.request_cookies)
+        response = self.requests_session.get('https://httpbin.org/ip')
 
         self.logger.info(response.text)
 
