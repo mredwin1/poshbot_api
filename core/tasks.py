@@ -777,6 +777,8 @@ class ManageCampaignsTask(Task):
             elif not self.use_device and campaign.posh_user and check_for_proxy and (need_to_list or not campaign.posh_user.is_registered):
                 available_proxy = self.get_available_proxy()
 
+            self.logger.info(available_proxy.license_id)
+
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
                 campaign.queue_status = 'N/A'

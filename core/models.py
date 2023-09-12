@@ -94,6 +94,9 @@ class Proxy(models.Model):
         self.checkout_time = None
         self.save(update_fields=['checked_out_by', 'checkout_time'])
 
+    def __str__(self):
+        return self.license_id
+
 
 class Device(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)

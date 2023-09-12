@@ -11,7 +11,6 @@ from . import models
 
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.PaymentEmailContent)
-admin.site.register(models.Proxy)
 
 
 @admin.action(description='Start selected campaigns')
@@ -60,6 +59,11 @@ def enable_posh_users(modeladmin, request, queryset):
 
 @admin.action(description='Check device in')
 def check_devices_in(modeladmin, request, queryset):
+    queryset.update(checked_out_by=None, checkout_time=None)
+
+
+@admin.action(description='Check proxy in')
+def check_proxies_in(modeladmin, request, queryset):
     queryset.update(checked_out_by=None, checkout_time=None)
 
 
@@ -152,6 +156,19 @@ class DeviceAdmin(admin.ModelAdmin):
     @admin.display(ordering='associated_campaign')
     def associated_campaign(self, device):
         campaign = models.Campaign.objects.get(id=device.checked_out_by)
+        url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(campaign.id)})}"
+        return format_html('<a href="{}">{}</a>', url, campaign.title)
+
+
+@admin.register(models.Proxy)
+class ProxyAdmin(admin.ModelAdmin):
+    list_display = ['license_id', 'is_active', 'associated_campaign', 'checkout_time']
+    readonly_fields = ['checked_out_by', 'checkout_time']
+    actions = [check_proxies_in]
+
+    @admin.display(ordering='associated_proxy')
+    def associated_proxy(self, proxy):
+        campaign = models.Campaign.objects.get(id=proxy.checked_out_by)
         url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(campaign.id)})}"
         return format_html('<a href="{}">{}</a>', url, campaign.title)
 
