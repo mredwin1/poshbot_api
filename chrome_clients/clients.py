@@ -995,11 +995,11 @@ class PoshMarkClient(BaseClient):
                 os.makedirs(listing_folder, exist_ok=True)
 
                 listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
-                self.bucket.download_file(listing.cover_photo.name, f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')
+                self.bucket.download_file(listing.cover_photo.name, f'{listing_folder }/{listing_cover_photo_name}')
 
                 for listing_image in listing_images:
                     image_name = listing_image.image.name.split('/')[-1]
-                    self.bucket.download_file(listing_image.image.name, f'/{self.campaign.title}/{listing.title}/{image_name}')
+                    self.bucket.download_file(listing_image.image.name, f'{listing_folder }/{image_name}')
                     listing_image_names.append(image_name)
 
                 # Set category and sub category
@@ -1029,7 +1029,7 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Setting subcategory')
 
                 subcategory_menu = self.locate(By.CLASS_NAME, 'dropdown__menu--expanded')
-                subcategories = subcategory_menu.find_elements(By.TAG_NAME,'a')
+                subcategories = subcategory_menu.find_elements(By.TAG_NAME, 'a')
                 subcategory = listing_subcategory
                 for available_subcategory in subcategories:
                     if available_subcategory.text == subcategory:
