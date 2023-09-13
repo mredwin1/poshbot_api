@@ -833,6 +833,8 @@ class PoshMarkClient(BaseClient):
                 self.logger.info(f"Already at {posh_username}'s closet, refreshing.")
                 self.web_driver.refresh()
 
+            self.logger.debug(self.web_driver.current_url)
+
             show_all_listings_xpath = '//*[@id="content"]/div/div[2]/div/div/section/div[2]/div/div/button'
             if self.is_present(By.XPATH, show_all_listings_xpath):
                 show_all_listings = self.locate(By.XPATH, show_all_listings_xpath)
