@@ -177,7 +177,7 @@ class BaseClient:
                 zp.writestr("manifest.json", manifest_json)
                 zp.writestr("background.js", background_js)
             # self.web_driver_options.add_extension(plugin_file)
-            self.web_driver_options.add_argument(f'--proxy-server={proxy.hostname}')
+            self.web_driver_options.add_argument(f'--proxy-server={proxy.hostname}:{proxy.port}')
 
     def __enter__(self):
         self.open()

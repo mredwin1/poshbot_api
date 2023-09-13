@@ -225,7 +225,7 @@ class CampaignTask(Task):
             client.check_ip()
 
             self.reset_ip()
-            
+
             client.check_ip()
 
         # ip_reset = self.reset_ip()
