@@ -1006,10 +1006,17 @@ class PoshMarkClient(BaseClient):
                     self.bucket.download_file(listing_image.image.name, f'{listing_folder }/{image_name}')
                     listing_image_names.append(image_name)
 
+                category_xpath = '//*[@id="content"]/div/div[1]/div[2]/section[3]/div/div[2]/div[1]/div'
+                wait_attempts = 0
+
+                while wait_attempts < 5 and not self.is_present(By.XPATH, category_xpath):
+                    self.sleep(2)
+                    wait_attempts += 1
+
                 # Set category and sub category
                 self.logger.info('Setting category')
                 category_dropdown = self.locate(
-                    By.XPATH, '//*[@id="content"]/div/div[1]/div[2]/section[3]/div/div[2]/div[1]/div'
+                    By.XPATH, category_xpath
                 )
                 category_dropdown.click()
 
