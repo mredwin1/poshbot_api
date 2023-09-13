@@ -1090,7 +1090,7 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Uploading photos')
 
                 cover_photo_field = self.locate(By.ID, 'img-file-input')
-                cover_photo_field.send_keys(f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')
+                cover_photo_field.send_keys(f'{listing_folder}/{listing_cover_photo_name}')
                 element = self.locate(By.CLASS_NAME, 'listing-editor__promotion__count')
                 self.web_driver.execute_script("return arguments[0].scrollIntoView(true);", element)
                 self.web_driver.save_screenshot('cover_photo_upload.png')
