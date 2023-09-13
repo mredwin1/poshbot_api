@@ -275,7 +275,7 @@ class CampaignTask(Task):
         listed = not list_items
 
         if reset_ip:
-            ip_reset = self.reset_ip(self.device.ip_reset_url)
+            ip_reset = self.reset_ip()
 
         if ip_reset:
             if client:
@@ -337,9 +337,11 @@ class CampaignTask(Task):
 
     def list_items(self, reset_ip=True, client=None):
         ip_reset = not reset_ip
+        login_retries = 0
+        update_profile_retries = 0
 
         if reset_ip:
-            ip_reset = self.reset_ip(self.device.ip_reset_url)
+            ip_reset = self.reset_ip()
 
         if ip_reset:
             item_listed = False
@@ -373,6 +375,23 @@ class CampaignTask(Task):
 
                         if not app_launched:
                             return False
+                    elif not self.device:
+                        client.web_driver.get('https://poshmark.com')
+                        client.load_cookies()
+                        logged_in = client.check_logged_in()
+
+                        while not logged_in and login_retries < 3:
+                            logged_in = client.login(login_retries)
+                            login_retries += 1
+
+                        if logged_in:
+                            while not profile_updated and update_profile_retries < 3 and logged_in:
+                                profile_updated = client.update_profile(update_profile_retries)
+                                update_profile_retries += 1
+
+                                if profile_updated:
+                                    self.campaign.posh_user.profile_updated = True
+                                    self.campaign.posh_user.save(update_fields=['profile_updated'])
 
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
