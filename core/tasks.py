@@ -221,45 +221,52 @@ class CampaignTask(Task):
         return self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package
 
     def register(self, list_items):
-        ip_reset = self.reset_ip()
+        with self.client_class(self.campaign, self.logger, **self.kwargs) as client:
+            client.check_ip()
 
-        if ip_reset:
-            with self.client_class(self.campaign, self.logger, **self.kwargs) as client:
-                if self.device and client.driver.current_package != self.campaign.posh_user.app_package:
-                    app_launched = self.launch_app(client)
+            self.reset_ip()
+            
+            client.check_ip()
 
-                    if not app_launched:
-                        return False
-
-                start_time = time.time()
-                registered = client.register()
-                end_time = time.time()
-
-                if registered:
-                    time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
-
-                    self.campaign.posh_user.time_to_register = time_to_register
-                    self.logger.info(f'Time to register user: {time_to_register}')
-
-                self.campaign.posh_user.is_registered = registered
-                self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
-
-                if registered:
-                    finish_registration_and_list = self.finish_registration(list_items, False, client)
-
-                if self.device:
-                    client.driver.press_keycode(3)
-
-            if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
-                self.logger.info('Restarting campaign due to error')
-                self.campaign.status = Campaign.STARTING
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
-
-                return False
-
-            return True
+        # ip_reset = self.reset_ip()
+        #
+        # if ip_reset:
+        #     with self.client_class(self.campaign, self.logger, **self.kwargs) as client:
+        #         if self.device and client.driver.current_package != self.campaign.posh_user.app_package:
+        #             app_launched = self.launch_app(client)
+        #
+        #             if not app_launched:
+        #                 return False
+        #
+        #         start_time = time.time()
+        #         registered = client.register()
+        #         end_time = time.time()
+        #
+        #         if registered:
+        #             time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
+        #
+        #             self.campaign.posh_user.time_to_register = time_to_register
+        #             self.logger.info(f'Time to register user: {time_to_register}')
+        #
+        #         self.campaign.posh_user.is_registered = registered
+        #         self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
+        #
+        #         if registered:
+        #             finish_registration_and_list = self.finish_registration(list_items, False, client)
+        #
+        #         if self.device:
+        #             client.driver.press_keycode(3)
+        #
+        #     if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
+        #         self.logger.info('Restarting campaign due to error')
+        #         self.campaign.status = Campaign.STARTING
+        #         self.campaign.queue_status = 'Unknown'
+        #         self.campaign.next_runtime = timezone.now()
+        #         self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+        #
+        #         return False
+        #
+        #     return True
 
         return False
 
