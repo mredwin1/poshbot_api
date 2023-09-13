@@ -1219,6 +1219,8 @@ class PoshMarkClient(BaseClient):
 
         self.go_to_closet()
 
+        self.sleep(2)
+
         listings = self.locate_all(By.CLASS_NAME, 'col-x12')
 
         for listing in listings:
@@ -1227,6 +1229,8 @@ class PoshMarkClient(BaseClient):
 
             if title == listing_title and not ListedItem.objects.filter(listed_item_id=listed_item_id).exists():
                 return listed_item_id
+
+        return ''
 
     def check_offers(self, listing_title):
         try:
