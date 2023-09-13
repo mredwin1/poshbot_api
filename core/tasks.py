@@ -3,7 +3,6 @@ import logging
 import os
 import pytz
 import random
-import requests
 import smtplib
 import ssl
 import time

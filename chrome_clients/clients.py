@@ -20,6 +20,7 @@ from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.webdriver.common.by import By
 from selenium.webdriver.common.keys import Keys
+from selenium.webdriver.common.proxy import Proxy, ProxyType
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
@@ -111,9 +112,16 @@ class BaseClient:
         self.requests_session = requests.Session()
         self.cookies_filename = slugify(cookies_filename)
 
+        webdriver_proxy = Proxy()
+        webdriver_proxy.proxy_type = ProxyType.MANUAL if proxy else ProxyType.SYSTEM
+        capabilities = webdriver.DesiredCapabilities.CHROME
+
         os.makedirs('/log_images', exist_ok=True)
 
         if proxy:
+            webdriver_proxy.httpProxy = f'{proxy.hostname}:{proxy.port}'
+            webdriver_proxy.sslProxy = f'{proxy.hostname}:{proxy.port}'
+
             self.requests_session.proxies = {
                 'http': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
                 'https': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
@@ -177,7 +185,8 @@ class BaseClient:
                 zp.writestr("manifest.json", manifest_json)
                 zp.writestr("background.js", background_js)
             # self.web_driver_options.add_extension(plugin_file)
-            self.web_driver_options.add_argument('--proxy-server=%s' % proxy.hostname + ":" + proxy.port)
+
+        webdriver_proxy.add_to_capabilities(capabilities)
 
     def __enter__(self):
         self.open()
