@@ -740,7 +740,6 @@ class PoshMarkClient(BaseClient):
                 self.sleep(5)
 
             if response.status_code == requests.codes.ok:
-                self.finish_registration()
                 return True
             else:
                 error_code = self.check_for_errors()
@@ -748,7 +747,6 @@ class PoshMarkClient(BaseClient):
                     done_button = self.locate(By.XPATH, '//button[@type="submit"]')
                     done_button.click()
                     self.logger.info('Resubmitted form after entering captcha')
-                    self.finish_registration()
                     return True
                 elif error_code == 'ERROR_FORM_ERROR':
                     self.posh_user_inactive()
