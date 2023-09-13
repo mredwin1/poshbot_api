@@ -642,7 +642,7 @@ class CampaignTask(Task):
 
             if ((self.device and installed) or not self.device) and not self.campaign.posh_user.is_registered:
                 success = self.register(list_items=need_to_list)
-            elif ((self.device and installed) or not self.device) and not self.campaign.posh_user.finished_registration:
+            elif self.device and installed and not self.campaign.posh_user.finished_registration:
                 success = self.finish_registration(list_items=need_to_list, reset_ip=True)
             elif ((self.device and installed) or not self.device) and items_to_list:
                 success = self.list_items(self.device)
