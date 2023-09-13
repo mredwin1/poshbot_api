@@ -153,10 +153,10 @@ class CampaignTask(Task):
     def reset_ip(self):
         if random.random() < .2:
             reset_success = self.proxy.change_location()
+            time.sleep(20)
         else:
             reset_success = self.proxy.reset_ip()
-
-        time.sleep(3)
+            time.sleep(10)
 
         if reset_success:
             return True
