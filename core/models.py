@@ -154,7 +154,6 @@ class Proxy(models.Model):
                 raise Exception(f"Failed to set IP whitelist. Status code: {response.status_code}")
 
             self.hostname = proxy_data['ip']
-            self.port = proxy_data['port']
             self.username = proxy_data['username']
             self.password = proxy_data['password']
             self.save()
