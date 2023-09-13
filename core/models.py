@@ -118,7 +118,7 @@ class Proxy(models.Model):
             raise Exception(f"IP reset failed with status code {response.status_code}")
 
     def change_location(self):
-        locations = ['ORF', 'CLT', 'RIC', 'BWI', 'DCA']
+        locations = ['ORF', 'RIC', 'BWI', 'DCA']
         # Authenticate to get cookies
         cookies = self.authenticate_with_cookies()
 
