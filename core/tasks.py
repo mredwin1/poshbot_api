@@ -337,6 +337,10 @@ class CampaignTask(Task):
         if reset_ip:
             ip_reset = self.reset_ip()
 
+        if not self.device and not self.campaign.posh_user.finished_registration:
+            self.campaign.posh_user.finished_registration = True
+            self.campaign.posh_user.save()
+
         if ip_reset:
             item_listed = False
             items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
