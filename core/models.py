@@ -142,6 +142,7 @@ class Proxy(models.Model):
             # Connect to the new random location
             connect_url = f"https://portal.mobilehop.com/api/v2/proxies/connect/{self.license_id}/{selected_location}"
             response = requests.get(connect_url, cookies=cookies)
+            proxy_data = response.json()['result']
 
             if response.status_code != 200:
                 raise Exception(f"Failed to connect to the new location with status code {response.status_code}")
@@ -151,6 +152,12 @@ class Proxy(models.Model):
 
             if response.status_code != 200:
                 raise Exception(f"Failed to set IP whitelist. Status code: {response.status_code}")
+
+            self.hostname = proxy_data['ip']
+            self.port = proxy_data['port']
+            self.username = proxy_data['username']
+            self.password = proxy_data['password']
+            self.save()
 
             return f"Location changed to {selected_location} successfully"
 
