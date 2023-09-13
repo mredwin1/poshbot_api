@@ -1214,6 +1214,20 @@ class PoshMarkClient(BaseClient):
         except Exception as e:
             self.handle_error('Error while sharing item', 'share_item_error.png')
 
+    def get_listed_item_id(self, listing_title):
+        self.logger.info('Getting listing id')
+
+        self.go_to_closet()
+
+        listings = self.locate_all(By.CLASS_NAME, 'col-x12')
+
+        for listing in listings:
+            title = self.locate(By.CLASS_NAME, 'tile__title').text
+            listed_item_id = listing.get_attribute('data-et-prop-listing_id')
+
+            if title == listing_title and not ListedItem.objects.filter(listed_item_id=listed_item_id).exists():
+                return listed_item_id
+
     def check_offers(self, listing_title):
         try:
             if self.campaign.mode == Campaign.ADVANCED_SHARING:
