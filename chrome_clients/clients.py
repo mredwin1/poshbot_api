@@ -1068,6 +1068,8 @@ class PoshMarkClient(BaseClient):
                         button.click()
                         break
 
+                self.sleep(1)
+
                 custom_size_input = self.locate(By.ID, 'customSizeInput0')
                 save_button = self.locate(
                     By.XPATH,
