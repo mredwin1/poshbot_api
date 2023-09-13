@@ -353,7 +353,7 @@ class CampaignTask(Task):
                     if item_listed:
                         self.logger.info(f'Time to list item: {time_to_list}')
 
-                        listed_item_id = client.get_listed_item_id()
+                        listed_item_id = client.get_listed_item_id(item_to_list.listing_title)
 
                         self.logger.info(f'Listed item ID: {listed_item_id}')
 
@@ -398,7 +398,7 @@ class CampaignTask(Task):
                         if listed:
                             self.logger.info(f'Time to list item: {time_to_list}')
 
-                            listed_item_id = client.get_listed_item_id()
+                            listed_item_id = client.get_listed_item_id(item_to_list.listing_title)
 
                             self.logger.info(f'Listed item ID: {listed_item_id}')
 
