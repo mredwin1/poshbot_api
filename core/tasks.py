@@ -333,6 +333,7 @@ class CampaignTask(Task):
         ip_reset = not reset_ip
         login_retries = 0
         update_profile_retries = 0
+        profile_updated = self.campaign.posh_user.profile_updated
 
         if reset_ip:
             ip_reset = self.reset_ip()
