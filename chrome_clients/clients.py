@@ -385,11 +385,11 @@ class PoshMarkClient(BaseClient):
         self.posh_user = campaign.posh_user
         self.campaign = campaign
 
-        logs_dir = f'/log_images/{slugify(self.campaign.title)}'
-        os.makedirs(logs_dir, exist_ok=True)
+        self.logs_dir = f'/log_images/{slugify(self.campaign.title)}'
+        os.makedirs(self.logs_dir, exist_ok=True)
 
     def handle_error(self, error_message, filename):
-        image_path = f'/log_images/{slugify(self.campaign.title)}/{filename}'
+        image_path = f'{self.logs_dir}/{filename}'
         self.logger.debug(f'{traceback.format_exc()}')
         self.web_driver.save_screenshot(image_path)
         self.logger.error(error_message, image_path)
@@ -549,7 +549,7 @@ class PoshMarkClient(BaseClient):
                 return False
 
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/check_inactive_error.png'
+            image_path = f'{self.logs_dir}/check_inactive_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while checking if inactive')
@@ -615,7 +615,7 @@ class PoshMarkClient(BaseClient):
 
             return result
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/check_logged_in_error.png'
+            image_path = f'{self.logs_dir}/check_logged_in_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while checking if logged in')
@@ -762,7 +762,7 @@ class PoshMarkClient(BaseClient):
                     return False
 
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/register_error.png'
+            image_path = f'{self.logs_dir}/register_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while registering')
@@ -817,7 +817,7 @@ class PoshMarkClient(BaseClient):
 
             return True
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/login_error.png'
+            image_path = f'{self.logs_dir}/login_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while logging in')
@@ -974,7 +974,8 @@ class PoshMarkClient(BaseClient):
             self.logger.info(f'Current URL: {self.web_driver.current_url}')
 
             if self.is_present(By.XPATH, '//*[@id="app"]/main/div[1]/div/div[2]'):
-                image_path = f'/log_images/{self.campaign.title}/listing_error.png'
+
+                image_path = f'{self.logs_dir}/listing_error.png'
                 self.web_driver.save_screenshot(image_path)
                 self.logger.error('Error encountered when on the new listing page. Setting user inactive.', image_path)
                 self.posh_user_inactive()
