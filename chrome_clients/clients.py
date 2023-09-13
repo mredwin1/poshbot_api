@@ -1102,7 +1102,7 @@ class PoshMarkClient(BaseClient):
                 for image in listing_image_names:
                     upload_photos_field = self.locate(By.ID, 'img-file-input')
                     upload_photos_field.clear()
-                    upload_photos_field.send_keys(f'/{self.campaign.title}/{listing.title}/{image}')
+                    upload_photos_field.send_keys(f'{listing_folder}/{image}')
                     self.sleep(1)
 
                 self.logger.info('Photos uploaded')
