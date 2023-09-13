@@ -677,8 +677,12 @@ class PoshMarkClient(BaseClient):
             self.save_cookies()
 
             self.logger.info('Registration Complete')
+
+            return True
         except Exception:
             self.handle_error('Error while finishing registration', 'finish_registration.png')
+
+            return False
 
     def register(self, register_retries=0):
         """Will register a given user to poshmark"""
