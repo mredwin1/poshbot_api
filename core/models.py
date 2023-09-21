@@ -185,7 +185,7 @@ class Proxy(models.Model):
 class Device(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
-    proxy = models.ForeignKey(to=Proxy, on_delete=models.SET_NULL, null=True)
+    proxy = models.ForeignKey(to=Proxy, on_delete=models.SET_NULL, null=True, blank=True)
 
     checked_out_by = models.UUIDField(blank=True, null=True)
     serial = models.CharField(max_length=12, unique=True)
