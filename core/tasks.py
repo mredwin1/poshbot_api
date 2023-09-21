@@ -800,7 +800,7 @@ class ManageCampaignsTask(Task):
                 campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
-            elif campaign.status == Campaign.STARTING and (available_proxy and available_device or (not need_to_list and campaign.posh_user.is_registered)):
+            elif campaign.status == Campaign.STARTING and ((available_proxy and available_device) or (not need_to_list and campaign.posh_user.is_registered)):
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
 
             if (not campaign_started and campaign.status == Campaign.STARTING) or (not (available_proxy or available_proxy) and campaign.status == Campaign.STARTING):
