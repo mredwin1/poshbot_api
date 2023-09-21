@@ -36,6 +36,7 @@ class AppiumClient:
         capabilities['systemPort'] = system_port
         capabilities['mjpegServerPort'] = mjpeg_server_port
 
+        self.capabilities = capabilities
         self.capabilities_options = UiAutomator2Options().load_capabilities(capabilities)
 
     def __enter__(self):
