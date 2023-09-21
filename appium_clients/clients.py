@@ -46,8 +46,6 @@ class AppiumClient:
 
     def open(self):
         """Used to open the appium web driver session"""
-        self.logger.info(self.capabilities)
-
         self.driver = webdriver.Remote(APPIUM_SERVER_URL, self.capabilities)
 
     def close(self):

@@ -112,8 +112,6 @@ class CampaignTask(Task):
 
     def finalize_campaign(self, success, campaign_delay, duration):
         if self.device:
-            self.logger.error(self.device.serial)
-            self.logger.error(self.campaign)
             with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
                 client.save_backup()
         self.check_device_in()
@@ -647,6 +645,9 @@ class CampaignTask(Task):
             device_setup = None
 
             start_time = time.time()
+
+            self.logger.info(device_id)
+            self.logger.info(proxy_id)
 
             if self.device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or (self.campaign.posh_user.is_registered and AppData.objects.filter(posh_user=self.campaign.posh_user).exists())):
                 device_setup = self.setup_device()
