@@ -35,8 +35,6 @@ class CampaignTask(Task):
         self.device_id = None
         self.proxy = None
         self.proxy_id = None
-        self.client_class = None
-        self.kwargs = {}
 
     def get_random_delay(self, elapsed_time):
         delay = self.campaign.delay * 60
@@ -86,27 +84,17 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user, {self.campaign.posh_user}, is inactive')
 
+        if not self.campaign.posh_user.is_registered and not self.device:
+            response['status'] = False
+            response['errors'].append(f'Posh user is not registered but no device was given.')
+
+        if not self.campaign.posh_user.is_registered and not self.proxy:
+            response['status'] = False
+            response['errors'].append(f'Posh user is not registered but no proxy was given.')
+
         if response['status']:
-            try:
-                self.device = Device.objects.get(id=self.device_id)
-                self.device.checkout_time = timezone.now()
-                self.device.save()
-
-                self.client_class = MobilePoshMarkClient
-                self.kwargs = {
-                    'device': self.device
-                }
-
-            except Device.DoesNotExist:
-                try:
-                    self.proxy = Proxy.objects.get(id=self.proxy_id)
-                    self.kwargs = {
-                        'proxy': self.proxy
-                    }
-                except Proxy.DoesNotExist:
-                    pass
-
-                self.client_class = PoshMarkClient
+            self.device = Device.objects.get(id=self.device_id)
+            self.proxy = Proxy.objects.get(id=self.proxy_id)
 
         return response
 
@@ -232,13 +220,7 @@ class CampaignTask(Task):
         ip_reset = self.reset_ip()
 
         if ip_reset:
-            with self.client_class(self.campaign, self.logger, **self.kwargs) as client:
-                if self.device and client.driver.current_package != self.campaign.posh_user.app_package:
-                    app_launched = self.launch_app(client)
-
-                    if not app_launched:
-                        return False
-
+            with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
                 start_time = time.time()
                 registered = client.register()
                 end_time = time.time()
@@ -254,9 +236,6 @@ class CampaignTask(Task):
 
                 if registered:
                     finish_registration_and_list = self.finish_registration(list_items, False, client)
-
-                if self.device:
-                    client.driver.press_keycode(3)
 
             if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
                 self.logger.info('Restarting campaign due to error')
@@ -294,17 +273,8 @@ class CampaignTask(Task):
 
                 if registration_finished and list_items:
                     listed = self.list_items(False, client)
-
-                if self.device:
-                    client.driver.press_keycode(3)
             else:
-                with self.client_class(self.campaign, self.logger, **self.kwargs) as client:
-                    if self.device and client.driver.current_package != self.campaign.posh_user.app_package:
-                        app_launched = self.launch_app(client)
-
-                        if not app_launched:
-                            return False
-
+                with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
                     start_time = time.time()
                     registration_finished = client.finish_registration()
                     end_time = time.time()
@@ -320,9 +290,6 @@ class CampaignTask(Task):
 
                     if registration_finished and list_items:
                         listed = self.list_items(False, client)
-
-                    if self.device:
-                        client.driver.press_keycode(3)
 
             if not (registration_finished and listed) and self.campaign.status == Campaign.RUNNING:
                 self.logger.info('Did not list properly or finish registration. Restarting campaign')
@@ -375,30 +342,7 @@ class CampaignTask(Task):
                         item_to_list.datetime_listed = timezone.now()
                         item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
             else:
-                with self.client_class(self.campaign, self.logger, **self.kwargs) as client:
-                    if self.device and client.driver.current_package != self.campaign.posh_user.app_package:
-                        app_launched = self.launch_app(client)
-
-                        if not app_launched:
-                            return False
-                    elif not self.device:
-                        client.web_driver.get('https://poshmark.com')
-                        client.load_cookies()
-                        logged_in = client.check_logged_in()
-
-                        while not logged_in and login_retries < 3:
-                            logged_in = client.login(login_retries)
-                            login_retries += 1
-
-                        if logged_in:
-                            while not profile_updated and update_profile_retries < 3 and logged_in:
-                                profile_updated = client.update_profile(update_profile_retries)
-                                update_profile_retries += 1
-
-                                if profile_updated:
-                                    self.campaign.posh_user.profile_updated = True
-                                    self.campaign.posh_user.save(update_fields=['profile_updated'])
-
+                with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
                     for item_to_list in items_to_list:
                         listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
 
@@ -410,7 +354,7 @@ class CampaignTask(Task):
                         if listed:
                             self.logger.info(f'Time to list item: {time_to_list}')
 
-                            listed_item_id = client.get_listed_item_id(item_to_list.listing_title)
+                            listed_item_id = client.get_listed_item_id()
 
                             self.logger.info(f'Listed item ID: {listed_item_id}')
 
@@ -422,10 +366,6 @@ class CampaignTask(Task):
 
                             if not item_listed:
                                 item_listed = listed
-
-                    if self.device:
-                        client.driver.press_keycode(3)
-
             if not item_listed and self.campaign.status == Campaign.RUNNING:
                 self.logger.info('Did not list successfully. Restarting campaign.')
 
@@ -646,17 +586,14 @@ class CampaignTask(Task):
 
             start_time = time.time()
 
-            self.logger.info(device_id)
-            self.logger.info(proxy_id)
-
-            if self.device and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or (self.campaign.posh_user.is_registered and AppData.objects.filter(posh_user=self.campaign.posh_user).exists())):
+            if self.device and self.proxy and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or (self.campaign.posh_user.is_registered and AppData.objects.filter(posh_user=self.campaign.posh_user).exists())):
                 device_setup = self.setup_device()
 
-            if self.device and device_setup and not self.campaign.posh_user.is_registered:
+            if device_setup and not self.campaign.posh_user.is_registered:
                 success = self.register(list_items=need_to_list)
-            elif self.device and device_setup and not self.campaign.posh_user.finished_registration:
+            elif device_setup and not self.campaign.posh_user.finished_registration:
                 success = self.finish_registration(list_items=need_to_list, reset_ip=True)
-            elif self.device and device_setup and items_to_list:
+            elif device_setup and items_to_list:
                 success = self.list_items(self.device)
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                 success = self.share_and_more()

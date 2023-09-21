@@ -255,8 +255,7 @@ class AppiumClient:
 
 
 class PoshMarkClient(AppiumClient):
-    def __init__(self, campaign: Campaign, logger, **kwargs):
-        device: Device = kwargs.get('device', None)
+    def __init__(self, campaign: Campaign, logger, device: Device):
         self.driver = None
         self.campaign = campaign
         self.logger = logger
