@@ -4,9 +4,8 @@ from django.db.models.signals import post_delete, post_save
 from django.dispatch import receiver
 from django.utils import timezone
 from email_retrieval import zke_yahoo
-from ppadb.client import Client as AdbClient
 
-from core.models import PoshUser, Listing, ListingImage, LogEntry, ListedItem
+from core.models import PoshUser, Listing, ListingImage, LogEntry, ListedItem, AppData
 
 
 @receiver(post_delete, sender=PoshUser)
@@ -21,9 +20,6 @@ def posh_user_deleted(sender, instance, *args, **kwargs):
 
     if not instance.is_registered and instance.email_id:
         zke_yahoo.update_email_status([instance.email_id], 'free')
-
-    if instance.app_package and instance.device and instance.clone_installed:
-        instance.device.uninstall_app(instance.app_package)
 
 
 @receiver(post_save, sender=PoshUser)
@@ -57,3 +53,9 @@ def log_entry_deleted(sender, instance, *args, **kwargs):
 def listed_item_saved(sender, instance: ListedItem, *args, **kwargs):
     if not instance.listing and instance.status == ListedItem.NOT_LISTED:
         instance.delete()
+
+
+@receiver(post_delete, sender=AppData)
+def app_data_deleted(sender, instance: AppData, *args, **kwargs):
+    instance.backup_data.delete(save=False)
+    instance.xml_data.delete(save=False)

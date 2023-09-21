@@ -196,7 +196,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
-    readonly_fields = ['date_added', 'time_to_install_clone', 'time_to_register', 'time_to_finish_registration', 'is_active', 'date_disabled', 'device']
+    readonly_fields = ['date_added', 'time_to_setup_device', 'time_to_register', 'time_to_finish_registration', 'is_active', 'date_disabled']
     list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email', 'closet_url']
     search_fields = ['username__istartswith', 'email__istartswith']
     list_filter = ['user', PoshUserStatusFilter]
@@ -225,10 +225,9 @@ class PoshUserAdmin(admin.ModelAdmin):
     fieldsets = (
         ('Important Information', {
             'fields': (
-                ('is_active', 'is_active_in_posh', 'clone_installed', 'is_registered', 'finished_registration', 'profile_updated', 'send_support_email'),
-                ('time_to_install_clone', 'time_to_register', 'time_to_finish_registration'),
-                ('user', 'device', 'app_package'),
-                ('date_added', 'date_disabled'),
+                ('is_active', 'is_active_in_posh', 'is_registered', 'finished_registration', 'profile_updated', 'send_support_email'),
+                ('time_to_setup_device', 'time_to_register', 'time_to_finish_registration'),
+                ('user','date_added', 'date_disabled'),
                 ('username', 'password', 'email', 'email_password', 'email_imap_password'),
                 ('phone_number',)
             )
@@ -241,6 +240,14 @@ class PoshUserAdmin(admin.ModelAdmin):
                 ('house_number', 'road', 'city', 'state', 'postcode', 'lat', 'long'),
                 ('profile_picture', 'profile_picture_id'),
                 ('header_picture')
+            )
+        }),
+        ('Device Info', {
+            'classes': ('collapse',),
+            'fields': (
+                ('imei1', 'imei2', 'wifi_mac', 'wifi_ssid', 'wifi_bssid'),
+                ('bluetooth_id', 'sim_sub_id', 'sim_serial', 'android_id'),
+                ('mobile_number', 'hw_serial', 'ads_id', 'gsf', 'media_drm'),
             )
         }),
     )
