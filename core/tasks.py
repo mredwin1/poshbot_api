@@ -804,7 +804,7 @@ class ManageCampaignsTask(Task):
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
 
-                if check_for_device and not campaign.posh_user.device:
+                if check_for_device:
                     check_for_device = False
 
 
