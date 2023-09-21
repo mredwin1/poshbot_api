@@ -7,6 +7,7 @@ import traceback
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
+from appium.options.android import UiAutomator2Options
 from bs4 import BeautifulSoup
 from decimal import Decimal
 from django.conf import settings
@@ -34,7 +35,8 @@ class AppiumClient:
         capabilities['adbExecTimeout'] = 50000
         capabilities['systemPort'] = system_port
         capabilities['mjpegServerPort'] = mjpeg_server_port
-        self.capabilities = capabilities
+
+        self.capabilities_options = UiAutomator2Options().load_capabilities(capabilities)
 
     def __enter__(self):
         self.open()
@@ -46,9 +48,8 @@ class AppiumClient:
 
     def open(self):
         """Used to open the appium web driver session"""
-        self.logger.error(self.capabilities)
 
-        self.driver = webdriver.Remote(APPIUM_SERVER_URL, self.capabilities)
+        self.driver = webdriver.Remote(APPIUM_SERVER_URL, options=self.capabilities_options)
 
     def close(self):
         """Closes the appium driver session"""
