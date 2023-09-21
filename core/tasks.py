@@ -156,6 +156,9 @@ class CampaignTask(Task):
     def setup_device(self):
         start_time = time.time()
 
+        print(f'======================={self.device}=============================')
+        self.logger.error(self.device)
+
         with AndroidFakerClient(self.device, self.logger) as client:
             if self.campaign.posh_user.imei1:
                 faker_values = {
@@ -305,9 +308,6 @@ class CampaignTask(Task):
 
     def list_items(self, reset_ip=True, client=None):
         ip_reset = not reset_ip
-        login_retries = 0
-        update_profile_retries = 0
-        profile_updated = self.campaign.posh_user.profile_updated
 
         if reset_ip:
             ip_reset = self.reset_ip()
@@ -685,7 +685,7 @@ class ManageCampaignsTask(Task):
                 campaign.save(update_fields=['status', 'queue_status'])
 
                 CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
-                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial}')
+                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial} with {proxy.license_id} proxy')
 
                 return True
             except ValueError:

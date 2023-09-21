@@ -19,13 +19,13 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import List
 
-from core.models import Campaign, ListedItem, ListingImage, Device, Proxy, PoshUser, AppData
+from core.models import Campaign, ListedItem, ListingImage, Device, Proxy, PoshUser, AppData, LogGroup
 
 APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
 
 class AppiumClient:
-    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger, capabilities):
+    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger: LogGroup, capabilities: dict):
         self.driver = None
         self.logger = logger
         self.files_sent = []
