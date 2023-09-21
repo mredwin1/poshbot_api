@@ -84,15 +84,15 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user, {self.campaign.posh_user}, is inactive')
 
-        if not self.campaign.posh_user.is_registered and not self.device:
+        if not self.campaign.posh_user.is_registered and not self.device_id:
             response['status'] = False
             response['errors'].append(f'Posh user is not registered but no device was given.')
 
-        if not self.campaign.posh_user.is_registered and not self.proxy:
+        if not self.campaign.posh_user.is_registered and not self.proxy_id:
             response['status'] = False
             response['errors'].append(f'Posh user is not registered but no proxy was given.')
 
-        if response['status']:
+        if self.device_id and self.proxy_id and response['status']:
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
 
