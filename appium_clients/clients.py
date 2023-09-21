@@ -48,7 +48,7 @@ class AppiumClient:
         """Used to open the appium web driver session"""
         self.logger.error(self.capabilities)
 
-        self.driver = webdriver.Remote(APPIUM_SERVER_URL, self.capabilities)
+        self.driver = webdriver.Remote(APPIUM_SERVER_URL, desired_capabilities=self.capabilities)
 
     def close(self):
         """Closes the appium driver session"""
