@@ -112,6 +112,8 @@ class CampaignTask(Task):
 
     def finalize_campaign(self, success, campaign_delay, duration):
         if self.device:
+            self.logger.error(self.device.serial)
+            self.logger.error(self.campaign)
             with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
                 client.save_backup()
         self.check_device_in()
