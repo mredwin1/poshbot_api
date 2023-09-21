@@ -785,7 +785,7 @@ class ManageCampaignsTask(Task):
             need_to_list = items_to_list.count() > 0
 
             if campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
-                available_device = self.get_available_device(campaign.posh_user.device)
+                available_device = self.get_available_device()
                 available_proxy = self.get_available_proxy()
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
