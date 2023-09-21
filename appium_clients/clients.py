@@ -46,6 +46,8 @@ class AppiumClient:
 
     def open(self):
         """Used to open the appium web driver session"""
+        self.logger.info(self.capabilities)
+
         self.driver = webdriver.Remote(APPIUM_SERVER_URL, self.capabilities)
 
     def close(self):
@@ -1411,8 +1413,8 @@ class SwiftBackupClient(AppiumClient):
         capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            appPackage='com.android1500.androidfaker',
-            appActivity='.ui.activity.MainActivity',
+            appPackage='org.swiftapps.swiftbackup',
+            appActivity='.intro.IntroActivity',
             language='en',
             locale='US',
             noReset=True,
