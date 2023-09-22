@@ -1308,10 +1308,10 @@ class AndroidFakerClient(AppiumClient):
             value_box.clear()
             value_box.send_keys(value)
 
-            save_button = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/save')
-            save_button.click()
+        save_button = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/save')
+        save_button.click()
 
-            self.sleep(.5)
+        self.sleep(.5)
 
     def set_faker_values(self, faker_values):
         field_mappings = {
