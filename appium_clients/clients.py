@@ -380,6 +380,11 @@ class PoshMarkClient(AppiumClient):
                 self.click(ok_button)
 
             return True
+        elif self.is_present(AppiumBy.ID, 'com.poshmark.app:id/tooltip_close_button'):
+            self.logger.info('Tooltip found - Closing')
+            close_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/tooltip_close_button')
+            close_button.click()
+
 
         self.logger.info('No alerts found')
 
@@ -689,6 +694,8 @@ class PoshMarkClient(AppiumClient):
                     else:
                         self.logger.info('No handler for this title less screen')
                         self.logger.debug(self.driver.page_source)
+
+                        self.need_alert_check = True
 
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting to continue...')

@@ -92,6 +92,10 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user is not registered but no proxy was given.')
 
+        if self.campaign.posh_user.is_registered and not AppData.objects.filter(posh_user=self.campaign.posh_user).exists():
+            response['status'] = False
+            response['errors'].append(f'Posh user is registered but the app data is missing')
+
         if self.device_id and self.proxy_id and response['status']:
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
