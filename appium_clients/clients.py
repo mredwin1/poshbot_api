@@ -55,7 +55,8 @@ class AppiumClient:
     def close(self):
         """Closes the appium driver session"""
         if self.driver:
-            self.cleanup_files()
+            if self.files_sent:
+                self.cleanup_files()
 
             self.driver.terminate_app(self.capabilities['appPackage'])
             self.driver.quit()
@@ -1233,12 +1234,6 @@ class ProxyDroidClient(AppiumClient):
         )
         super(ProxyDroidClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
 
-    def close(self):
-        """Closes the appium driver session"""
-        if self.driver:
-            self.driver.quit()
-            self.logger.debug('Driver was quit')
-
     def set_proxy(self):
         self.swipe('down', 1000, 2000)
         values_to_check = {
@@ -1285,7 +1280,7 @@ class ProxyDroidClient(AppiumClient):
         proxy_switch = self.locate(AppiumBy.ID, 'android:id/switch_widget')
         proxy_switch.click()
 
-        self.sleep(5)
+        self.sleep(10)
 
 
 class AndroidFakerClient(AppiumClient):
