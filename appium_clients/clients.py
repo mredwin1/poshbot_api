@@ -58,7 +58,11 @@ class AppiumClient:
             if self.files_sent:
                 self.cleanup_files()
 
-            self.driver.terminate_app(self.capabilities['appPackage'])
+            if self.capabilities['appPackage'] != 'org.proxydroid':
+                self.driver.terminate_app(self.capabilities['appPackage'])
+            else:
+                self.driver.press_keycode(3)
+
             self.driver.quit()
             self.logger.debug('Driver was quit')
 
@@ -1280,7 +1284,7 @@ class ProxyDroidClient(AppiumClient):
         proxy_switch = self.locate(AppiumBy.ID, 'android:id/switch_widget')
         proxy_switch.click()
 
-        self.sleep(10)
+        self.sleep(15)
 
 
 class AndroidFakerClient(AppiumClient):

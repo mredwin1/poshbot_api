@@ -206,6 +206,11 @@ class CampaignTask(Task):
             self.logger.debug('Waiting for device to finish booting...')
             time.sleep(5)
 
+        ip_reset = self.reset_ip()
+
+        if not ip_reset:
+            return False
+
         with ProxyDroidClient(self.device, self.logger, self.proxy) as client:
             client.set_proxy()
 
@@ -222,119 +227,123 @@ class CampaignTask(Task):
         return True
 
     def register(self, list_items):
-        ip_reset = self.reset_ip()
+        with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
+            start_time = time.time()
+            registered = client.register()
+            end_time = time.time()
 
-        if ip_reset:
-            with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
-                start_time = time.time()
-                registered = client.register()
-                end_time = time.time()
+            if registered:
+                time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
 
-                if registered:
-                    time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
+                self.campaign.posh_user.time_to_register = time_to_register
+                self.logger.info(f'Time to register user: {time_to_register}')
 
-                    self.campaign.posh_user.time_to_register = time_to_register
-                    self.logger.info(f'Time to register user: {time_to_register}')
+            self.campaign.posh_user.is_registered = registered
+            self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
 
-                self.campaign.posh_user.is_registered = registered
-                self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
+            if registered:
+                finish_registration_and_list = self.finish_registration(list_items, client)
 
-                if registered:
-                    finish_registration_and_list = self.finish_registration(list_items, False, client)
+        if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
+            self.logger.info('Restarting campaign due to error')
+            self.campaign.status = Campaign.STARTING
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
 
-            if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
-                self.logger.info('Restarting campaign due to error')
-                self.campaign.status = Campaign.STARTING
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+            return False
 
-                return False
+        return True
 
-            return True
-
-        return False
-
-    def finish_registration(self, list_items=True, reset_ip=True, client=None):
-        ip_reset = not reset_ip
+    def finish_registration(self, list_items=True, client=None):
         listed = not list_items
 
-        if reset_ip:
-            ip_reset = self.reset_ip()
+        if client:
+            start_time = time.time()
+            registration_finished = client.finish_registration()
+            end_time = time.time()
 
-        if ip_reset:
-            if client:
+            if registration_finished:
+                time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+                self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
+                self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
+
+            self.campaign.posh_user.finished_registration = registration_finished
+            self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
+
+            if registration_finished and list_items:
+                listed = self.list_items(client)
+        else:
+            with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
                 start_time = time.time()
                 registration_finished = client.finish_registration()
                 end_time = time.time()
 
                 if registration_finished:
                     time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+
                     self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
-                    self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
+                    self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
 
                 self.campaign.posh_user.finished_registration = registration_finished
                 self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
 
                 if registration_finished and list_items:
-                    listed = self.list_items(False, client)
-            else:
-                with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
-                    start_time = time.time()
-                    registration_finished = client.finish_registration()
-                    end_time = time.time()
+                    listed = self.list_items(client)
 
-                    if registration_finished:
-                        time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+        if not (registration_finished and listed) and self.campaign.status == Campaign.RUNNING:
+            self.logger.info('Did not list properly or finish registration. Restarting campaign')
+            self.campaign.status = Campaign.STARTING
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+            return False
 
-                        self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
-                        self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
+        return True
 
-                    self.campaign.posh_user.finished_registration = registration_finished
-                    self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
-
-                    if registration_finished and list_items:
-                        listed = self.list_items(False, client)
-
-            if not (registration_finished and listed) and self.campaign.status == Campaign.RUNNING:
-                self.logger.info('Did not list properly or finish registration. Restarting campaign')
-                self.campaign.status = Campaign.STARTING
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
-                return False
-
-            return True
-
-        return False
-
-    def list_items(self, reset_ip=True, client=None):
-        ip_reset = not reset_ip
-
-        if reset_ip:
-            ip_reset = self.reset_ip()
-
+    def list_items(self, client=None):
         if not self.device and not self.campaign.posh_user.finished_registration:
             self.campaign.posh_user.finished_registration = True
             self.campaign.posh_user.save()
 
-        if ip_reset:
-            item_listed = False
-            items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
+        item_listed = False
+        items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
 
-            if client:
+        if client:
+            for item_to_list in items_to_list:
+                listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
+
+                start_time = time.time()
+                item_listed = client.list_item(item_to_list, listing_images)
+                end_time = time.time()
+                time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
+
+                if item_listed:
+                    self.logger.info(f'Time to list item: {time_to_list}')
+
+                    listed_item_id = client.get_listed_item_id(item_to_list.listing_title)
+
+                    self.logger.info(f'Listed item ID: {listed_item_id}')
+
+                    item_to_list.listed_item_id = listed_item_id
+                    item_to_list.time_to_list = time_to_list
+                    item_to_list.status = ListedItem.UNDER_REVIEW
+                    item_to_list.datetime_listed = timezone.now()
+                    item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
+        else:
+            with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
                 for item_to_list in items_to_list:
                     listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
 
                     start_time = time.time()
-                    item_listed = client.list_item(item_to_list, listing_images)
+                    listed = client.list_item(item_to_list, listing_images)
                     end_time = time.time()
                     time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
 
-                    if item_listed:
+                    if listed:
                         self.logger.info(f'Time to list item: {time_to_list}')
 
-                        listed_item_id = client.get_listed_item_id(item_to_list.listing_title)
+                        listed_item_id = client.get_listed_item_id()
 
                         self.logger.info(f'Listed item ID: {listed_item_id}')
 
@@ -343,46 +352,24 @@ class CampaignTask(Task):
                         item_to_list.status = ListedItem.UNDER_REVIEW
                         item_to_list.datetime_listed = timezone.now()
                         item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
-            else:
-                with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
-                    for item_to_list in items_to_list:
-                        listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
 
-                        start_time = time.time()
-                        listed = client.list_item(item_to_list, listing_images)
-                        end_time = time.time()
-                        time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
+                        if not item_listed:
+                            item_listed = listed
+        if not item_listed and self.campaign.status == Campaign.RUNNING:
+            self.logger.info('Did not list successfully. Restarting campaign.')
 
-                        if listed:
-                            self.logger.info(f'Time to list item: {time_to_list}')
+            self.campaign.status = Campaign.STARTING
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+        else:
+            all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
 
-                            listed_item_id = client.get_listed_item_id()
+            if all_items.count() == 0:
+                self.campaign.status = Campaign.PAUSED
+                self.campaign.save(update_fields=['status'])
 
-                            self.logger.info(f'Listed item ID: {listed_item_id}')
-
-                            item_to_list.listed_item_id = listed_item_id
-                            item_to_list.time_to_list = time_to_list
-                            item_to_list.status = ListedItem.UNDER_REVIEW
-                            item_to_list.datetime_listed = timezone.now()
-                            item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
-
-                            if not item_listed:
-                                item_listed = listed
-            if not item_listed and self.campaign.status == Campaign.RUNNING:
-                self.logger.info('Did not list successfully. Restarting campaign.')
-
-                self.campaign.status = Campaign.STARTING
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
-            else:
-                all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
-
-                if all_items.count() == 0:
-                    self.campaign.status = Campaign.PAUSED
-                    self.campaign.save(update_fields=['status'])
-
-            return item_listed
+        return item_listed
 
     def share_and_more(self):
         login_retries = 0
@@ -593,7 +580,7 @@ class CampaignTask(Task):
             if device_setup and not self.campaign.posh_user.is_registered:
                 success = self.register(list_items=need_to_list)
             elif device_setup and not self.campaign.posh_user.finished_registration:
-                success = self.finish_registration(list_items=need_to_list, reset_ip=True)
+                success = self.finish_registration(list_items=need_to_list)
             elif device_setup and items_to_list:
                 success = self.list_items(self.device)
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
