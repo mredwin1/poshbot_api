@@ -1218,7 +1218,7 @@ class ProxyDroidClient(AppiumClient):
             platformName='Android',
             automationName='uiautomator2',
             appPackage='org.proxydroid',
-            appActivity='.activity.MainActivity',
+            appActivity='org.proxydroid.ProxyDroid',
             language='en',
             locale='US',
             noReset=True,
