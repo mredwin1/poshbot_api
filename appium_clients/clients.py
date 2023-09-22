@@ -1479,7 +1479,7 @@ class SwiftBackupClient(AppiumClient):
 
         self.sleep(.5)
 
-        client = AdbClient(host='localhost', port=5037)
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
         device = client.device(self.capabilities.get('udid'))
 
         device.pull('/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.dat', f'{self.location}/com.poshmark.app.dat')
@@ -1528,7 +1528,7 @@ class SwiftBackupClient(AppiumClient):
     def load_backup(self):
         self._download_backup_files()
 
-        client = AdbClient(host='localhost', port=5037)
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
         device = client.device(self.capabilities.get('udid'))
 
         device.push(f'{self.location}/com.poshmark.app.dat', '/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.dat')
