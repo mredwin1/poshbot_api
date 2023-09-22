@@ -156,7 +156,6 @@ class CampaignTask(Task):
     def setup_device(self):
         start_time = time.time()
 
-        print(f'======================={self.device}=============================')
         self.logger.error(self.device)
 
         with AndroidFakerClient(self.device, self.logger) as client:
@@ -547,11 +546,10 @@ class CampaignTask(Task):
             self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
         if self.device and type(exc) is WebDriverException and self.device.checked_out_by == self.campaign.id:
-            client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
-            adb_device = client.device(serial=self.device.serial)
-
             self.logger.warning('Rebooting device')
-            adb_device.reboot()
+
+            self.device.reboot()
+
         elif type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
             self.logger.warning('Campaign ended because it exceeded the run time allowed')
 
