@@ -289,7 +289,7 @@ class PoshMarkClient(AppiumClient):
             appActivity='com.poshmark.ui.MainActivity',
             language='en',
             locale='US',
-            noReset=True,
+            noReset=True
         )
 
         super(PoshMarkClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
@@ -1436,6 +1436,32 @@ class SwiftBackupClient(AppiumClient):
         os.makedirs(self.location, exist_ok=True)
 
         super(SwiftBackupClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
+
+    def reset_data(self):
+        app_button = self.locate(AppiumBy.XPATH,
+                                 '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.RelativeLayout/android.widget.ScrollView/androidx.viewpager.widget.b/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[1]')
+        app_button.click()
+
+        search_icon = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/action_search')
+        search_icon.click()
+
+        search_bar = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/searchEditText')
+        search_bar.send_keys('poshmark')
+
+        app = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/container')
+        app.click()
+
+        self.sleep(.5)
+
+        iv_menu = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/iv_menu')
+        iv_menu.click()
+
+        reset_data = self.locate(AppiumBy.XPATH,
+                                 '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ScrollView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView[1]/android.widget.Button[3]')
+        reset_data.click()
+
+        yes_button = self.locate(AppiumBy.ID, 'android:id/button1')
+        yes_button.click()
 
     def _download_backup_files(self):
         aws_session = boto3.Session()

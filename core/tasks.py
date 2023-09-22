@@ -161,6 +161,9 @@ class CampaignTask(Task):
 
         self.logger.error(self.device)
 
+        with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
+            client.reset_data()
+
         with AndroidFakerClient(self.device, self.logger) as client:
             if self.campaign.posh_user.imei1:
                 faker_values = {
