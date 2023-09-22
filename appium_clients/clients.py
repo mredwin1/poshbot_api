@@ -52,6 +52,10 @@ class AppiumClient:
 
         self.driver = webdriver.Remote(APPIUM_SERVER_URL, options=self.capabilities_options)
 
+        while self.get_current_app_package() != self.capabilities['appPackage']:
+            self.driver.activate_app(self.capabilities['appPackage'])
+            self.sleep(5)
+
     def close(self):
         """Closes the appium driver session"""
         if self.driver:
