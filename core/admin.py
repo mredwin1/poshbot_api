@@ -11,6 +11,7 @@ from . import models
 
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.PaymentEmailContent)
+admin.site.register(models.AppData)
 
 
 @admin.action(description='Start selected campaigns')
