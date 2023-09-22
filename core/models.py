@@ -207,16 +207,12 @@ class Device(models.Model):
         try:
             client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
             adb_device = client.device(serial=self.serial)
-            retries = 0
-            ready = None
 
             if adb_device:
-                while ready is None and retries < 10:
-                    try:
-                        ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-                    except Exception:
-                        time.sleep(5)
-                    retries += 1
+                try:
+                    ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+                except Exception:
+                    return False
 
                 current_time_str = adb_device.shell('date').strip()
                 current_time = parse(current_time_str).replace(tzinfo=pytz.utc)

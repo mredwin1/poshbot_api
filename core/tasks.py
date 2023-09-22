@@ -15,7 +15,6 @@ from django.utils import timezone
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
 
 from appium_clients.clients import PoshMarkClient as MobilePoshMarkClient, ProxyDroidClient, AndroidFakerClient, SwiftBackupClient
@@ -205,7 +204,7 @@ class CampaignTask(Task):
 
         while not self.device.finished_boot():
             self.logger.debug('Waiting for device to finish booting...')
-            time.sleep(10)
+            time.sleep(5)
 
         with ProxyDroidClient(self.device, self.logger, self.proxy) as client:
             client.set_proxy()
