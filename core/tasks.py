@@ -223,6 +223,7 @@ class CampaignTask(Task):
         self.logger.info(f'Device Set up complete, time elapsed: {time_to_setup_device}')
 
         self.campaign.posh_user.time_to_setup_device = time_to_setup_device
+        self.campaign.posh_user.save()
 
         return True
 
