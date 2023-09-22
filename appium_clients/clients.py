@@ -1142,6 +1142,9 @@ class PoshMarkClient(AppiumClient):
                                 self.click(certify_ok)
 
                                 list_attempts = 0
+                            elif self.is_present(AppiumBy.ID, 'com.poshmark.app:id/close'):
+                                close_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/close')
+                                close_button.click()
                             else:
                                 self.logger.info('Item not listed yet')
                                 self.sleep(sleep_amount)
