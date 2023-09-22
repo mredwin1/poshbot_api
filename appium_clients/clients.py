@@ -1287,7 +1287,7 @@ class ProxyDroidClient(AppiumClient):
         proxy_switch = self.locate(AppiumBy.ID, 'android:id/switch_widget')
         proxy_switch.click()
 
-        self.sleep(15)
+        self.sleep(5)
 
 
 class AndroidFakerClient(AppiumClient):
