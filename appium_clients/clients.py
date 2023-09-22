@@ -57,7 +57,6 @@ class AppiumClient:
         if self.driver:
             self.cleanup_files()
 
-            self.driver.close_app()
             self.driver.quit()
             self.logger.debug('Driver was quit')
 
