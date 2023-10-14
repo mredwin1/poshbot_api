@@ -1149,6 +1149,8 @@ class PoshMarkClient(AppiumClient):
                             elif self.is_present(AppiumBy.ID, 'com.poshmark.app:id/close'):
                                 close_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/close')
                                 close_button.click()
+
+                                sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
                             else:
                                 self.logger.info('Item not listed yet')
                                 self.sleep(sleep_amount)
