@@ -563,6 +563,9 @@ class AppData(models.Model):
 
     type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=POSHMARK)
 
+    def __str__(self):
+        return f'Backup for {self.posh_user.username}'
+
 
 class Campaign(models.Model):
     RUNNING = 'RUNNING'
