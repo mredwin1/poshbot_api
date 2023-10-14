@@ -107,8 +107,8 @@ class CampaignTask(Task):
                 with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
                     client.save_backup()
         except WebDriverException:
-            pass
-        
+            self.logger.error('Some Web driver exception occured while doing backup')
+
         self.check_device_in()
         self.check_proxy_in()
 
