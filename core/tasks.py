@@ -17,7 +17,7 @@ from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from selenium.common.exceptions import WebDriverException
 
-from appium_clients.clients import PoshMarkClient as MobilePoshMarkClient, ProxyDroidClient, AndroidFakerClient, SwiftBackupClient
+from appium_clients.clients import PoshMarkClient as MobilePoshMarkClient, ProxyDroidClient, IDChangerClient, SwiftBackupClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
@@ -164,44 +164,11 @@ class CampaignTask(Task):
         with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
             client.reset_data()
 
-        with AndroidFakerClient(self.device, self.logger) as client:
-            if self.campaign.posh_user.imei1:
-                faker_values = {
-                    'imei1': self.campaign.posh_user.imei1,
-                    'imei2': self.campaign.posh_user.imei2,
-                    'wifi_mac': self.campaign.posh_user.wifi_mac,
-                    'wifi_ssid': self.campaign.posh_user.wifi_ssid,
-                    'wifi_bssid': self.campaign.posh_user.wifi_bssid,
-                    'bluetooth_id': self.campaign.posh_user.bluetooth_id,
-                    'sim_sub_id': self.campaign.posh_user.sim_sub_id,
-                    'sim_serial': self.campaign.posh_user.sim_serial,
-                    'android_id': self.campaign.posh_user.android_id,
-                    'mobile_number': self.campaign.posh_user.mobile_number,
-                    'hw_serial': self.campaign.posh_user.hw_serial,
-                    'ads_id': self.campaign.posh_user.ads_id,
-                    'gsf': self.campaign.posh_user.gsf,
-                    'media_drm': self.campaign.posh_user.media_drm,
-                }
-                client.set_faker_values(faker_values)
-            else:
-                faker_values = client.get_faker_values()
+        with IDChangerClient(self.device, self.logger) as client:
+            android_id = client.set_android_id(self.campaign.posh_user.android_id)
 
-                self.campaign.posh_user.imei1 = faker_values['imei1']
-                self.campaign.posh_user.imei2 = faker_values['imei2']
-                self.campaign.posh_user.wifi_mac = faker_values['wifi_mac']
-                self.campaign.posh_user.wifi_ssid = faker_values['wifi_ssid']
-                self.campaign.posh_user.wifi_bssid = faker_values['wifi_bssid']
-                self.campaign.posh_user.bluetooth_id = faker_values['bluetooth_id']
-                self.campaign.posh_user.sim_sub_id = faker_values['sim_sub_id']
-                self.campaign.posh_user.sim_serial = faker_values['sim_serial']
-                self.campaign.posh_user.android_id = faker_values['android_id']
-                self.campaign.posh_user.mobile_number = faker_values['mobile_number']
-                self.campaign.posh_user.hw_serial = faker_values['hw_serial']
-                self.campaign.posh_user.ads_id = faker_values['ads_id']
-                self.campaign.posh_user.gsf = faker_values['gsf']
-                self.campaign.posh_user.media_drm = faker_values['media_drm']
-
-                self.campaign.posh_user.save()
+            self.campaign.posh_user.android_id = android_id
+            self.campaign.posh_user.save()
 
         self.device.reboot()
 

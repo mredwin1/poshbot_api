@@ -1294,132 +1294,53 @@ class ProxyDroidClient(AppiumClient):
         self.sleep(5)
 
 
-class AndroidFakerClient(AppiumClient):
+class IDChangerClient(AppiumClient):
     def __init__(self, device: Device, logger):
         capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            appPackage='com.android1500.androidfaker',
-            appActivity='.ui.activity.MainActivity',
+            appPackage='dev.sdex.idv2',
+            appActivity='dev.sdex.idv2.MainActivity',
             language='en',
             locale='US',
             noReset=True,
         )
-        super(AndroidFakerClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
+        super(IDChangerClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
 
-    def enable_faker(self):
-        more_options = self.locate(AppiumBy.ACCESSIBILITY_ID, 'More options')
-        more_options.click()
+    def set_android_id(self, android_id: str = ''):
+        app_xpath = "//android.widget.TextView[contains(@text, 'com.poshmark.app')]"
 
-        fast_reboot = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ListView/android.widget.LinearLayout[1]/android.widget.LinearLayout')
-        fast_reboot.click()
+        while not self.is_present(AppiumBy.XPATH, app_xpath):
+            self.swipe('up', 1000)
 
-    def set_value(self, value):
-        value_box = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/edt_values')
+        poshmark = self.locate(AppiumBy.XPATH, app_xpath)
+        poshmark.click()
 
-        if value_box.text != value:
-            value_box.clear()
-            value_box.send_keys(value)
+        if android_id:
+            clear_field = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Clear the field')
+            clear_field.click()
 
-        save_button = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/save')
+            input_field = self.locate(AppiumBy.XPATH,
+                                      '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.widget.EditText')
+            input_field.send_keys(android_id)
+        else:
+            random_button = self.locate(AppiumBy.XPATH,
+                                        '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.view.View[1]/android.widget.Button')
+            random_button.click()
+
+            input_field = self.locate(AppiumBy.XPATH,
+                                      '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.widget.EditText')
+            android_id = input_field.text
+
+        self.sleep(.5)
+
+        save_button = self.locate(AppiumBy.XPATH,
+                                  '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.view.View[2]/android.widget.Button')
         save_button.click()
 
-        self.sleep(.5)
+        self.sleep(3)
 
-    def set_faker_values(self, faker_values):
-        field_mappings = {
-            'wifi_mac': 'com.android1500.androidfaker:id/edt_wifimac',
-            'wifi_ssid': 'com.android1500.androidfaker:id/edt_wifiSsid',
-            'wifi_bssid': 'com.android1500.androidfaker:id/edt_wifiBssid',
-            'bluetooth_id': 'com.android1500.androidfaker:id/edt_bt',
-            'sim_sub_id': 'com.android1500.androidfaker:id/edt_simSub',
-            'sim_serial': 'com.android1500.androidfaker:id/edt_simSerial',
-            'android_id': 'com.android1500.androidfaker:id/edt_id',
-            'mobile_number': 'com.android1500.androidfaker:id/edt_mobno',
-            'hw_serial': 'com.android1500.androidfaker:id/edt_hw',
-            'ads_id': 'com.android1500.androidfaker:id/edt_ads',
-            'gsf': 'com.android1500.androidfaker:id/edt_gsf',
-            'media_drm': 'com.android1500.androidfaker:id/edt_drm',
-        }
-
-        if not self.is_present(AppiumBy.ID, 'com.android1500.androidfaker:id/edt_imei'):
-            self.swipe('up', 4000, 6000)
-
-        edit_imei = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/edt_imei')
-        edit_imei.click()
-
-        imei1 = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/edt_imei_1')
-        imei1.clear()
-        imei1.send_keys(faker_values['imei1'])
-
-        imei2 = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/edt_imei_2')
-        imei2.clear()
-        imei2.send_keys(faker_values['imei2'])
-
-        save_imei = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/save_imei')
-        save_imei.click()
-
-        self.sleep(.5)
-
-        for name, value_id in field_mappings.items():
-            while not self.is_present(AppiumBy.ID, value_id):
-                self.swipe('up', 1000)
-
-            edit_button = self.locate(AppiumBy.ID, value_id)
-            edit_button.click()
-
-            self.set_value(faker_values[name])
-
-        self.enable_faker()
-
-    def get_faker_values(self):
-        field_mappings = {
-            'imei1': 'com.android1500.androidfaker:id/tvImei',
-            'imei2': 'com.android1500.androidfaker:id/tvImei2',
-            'wifi_mac': 'com.android1500.androidfaker:id/tvWifi',
-            'wifi_ssid': 'com.android1500.androidfaker:id/tvWifiSsid',
-            'wifi_bssid': 'com.android1500.androidfaker:id/tvbssid',
-            'bluetooth_id': 'com.android1500.androidfaker:id/tvBmac',
-            'sim_sub_id': 'com.android1500.androidfaker:id/tvSimSub',
-            'sim_serial': 'com.android1500.androidfaker:id/tvSimSerial',
-            'android_id': 'com.android1500.androidfaker:id/tvId',
-            'mobile_number': 'com.android1500.androidfaker:id/tvMobNo',
-            'hw_serial': 'com.android1500.androidfaker:id/tvHSerial',
-            'ads_id': 'com.android1500.androidfaker:id/tvADV',
-            'gsf': 'com.android1500.androidfaker:id/tvGSF',
-            'media_drm': 'com.android1500.androidfaker:id/tvDrm',
-        }
-        faker_values = {}
-
-        self.swipe('up', 4000, 6000)
-
-        sim_operator_toggle = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/switchSimOperator')
-
-        if sim_operator_toggle.get_attribute('checked') == 'true':
-            sim_operator_toggle.click()
-
-        self.swipe('down', 4000, 6000)
-
-        random_all_button = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/rnd_all')
-        random_all_button.click()
-
-        self.sleep(1)
-
-        for name, value_id in field_mappings.items():
-            while not self.is_present(AppiumBy.ID, value_id):
-                self.swipe('up', 1000)
-
-            needed_value = self.locate(AppiumBy.ID, value_id)
-            faker_values[name] = needed_value.text
-
-        sim_operator_toggle = self.locate(AppiumBy.ID, 'com.android1500.androidfaker:id/switchSimOperator')
-
-        if sim_operator_toggle.get_attribute('checked') == 'false':
-            sim_operator_toggle.click()
-
-        self.enable_faker()
-
-        return faker_values
+        return android_id
 
 
 class SwiftBackupClient(AppiumClient):
