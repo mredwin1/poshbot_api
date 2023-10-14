@@ -102,9 +102,13 @@ class CampaignTask(Task):
         return response
 
     def finalize_campaign(self, success, campaign_delay, duration):
-        if self.device and self.campaign.posh_user.is_registered:
-            with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
-                client.save_backup()
+        try:
+            if self.device and self.campaign.posh_user.is_registered:
+                with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
+                    client.save_backup()
+        except WebDriverException:
+            pass
+        
         self.check_device_in()
         self.check_proxy_in()
 
