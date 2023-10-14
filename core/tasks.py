@@ -174,6 +174,8 @@ class CampaignTask(Task):
             self.campaign.posh_user.android_id = android_id
             self.campaign.posh_user.save()
 
+        time.sleep(5)
+
         self.device.reboot()
 
         while not self.device.finished_boot():
