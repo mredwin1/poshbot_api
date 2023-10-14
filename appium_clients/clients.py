@@ -1408,6 +1408,7 @@ class SwiftBackupClient(AppiumClient):
         bucket.download_file(app_data.xml_data.name, f'{self.location}/com.poshmark.app.xml')
 
     def save_backup(self):
+        self.logger.info('Saving backup')
         app_button = self.locate(AppiumBy.XPATH,
                                  '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.RelativeLayout/android.widget.ScrollView/androidx.viewpager.widget.b/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[1]')
         app_button.click()
