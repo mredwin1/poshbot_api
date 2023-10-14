@@ -11,14 +11,13 @@ from appium.options.android import UiAutomator2Options
 from bs4 import BeautifulSoup
 from decimal import Decimal
 from django.conf import settings
-from django.core.files import File
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 from ppadb.client import Client as AdbClient
 from selenium.webdriver.common.action_chains import ActionChains
 from selenium.common.exceptions import NoSuchElementException, TimeoutException, StaleElementReferenceException
 from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
-from tempfile import NamedTemporaryFile
 from typing import List
 
 from core.models import Campaign, ListedItem, ListingImage, Device, Proxy, PoshUser, AppData, LogGroup
@@ -1438,40 +1437,23 @@ class SwiftBackupClient(AppiumClient):
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
         device = client.device(self.capabilities.get('udid'))
 
-        # Create temporary files to store downloaded data
-        with NamedTemporaryFile(delete=False, dir=settings.MEDIA_ROOT) as temp_data_file, NamedTemporaryFile(delete=False, dir=settings.MEDIA_ROOT) as temp_xml_file:
-            device.pull(
-                '/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.dat',
-                temp_data_file.name)
-            device.pull(
-                '/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.xml',
-                temp_xml_file.name)
+        data_file_location = f'{self.location}/com.poshmark.app.dat'
+        xml_file_location = f'{self.location}/com.poshmark.app.xml'
 
-            # Get the paths of the temporary files
-            temp_data_file_path = temp_data_file.name
-            temp_xml_file_path = temp_xml_file.name
+        device.pull('/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.dat', data_file_location)
+        device.pull('/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.xml', xml_file_location)
 
+        with open(data_file_location, 'rb') as data_file, open(xml_file_location, 'rb') as xml_file:
             if AppData.objects.filter(posh_user=self.posh_user).exists():
                 app_data = AppData.objects.filter(posh_user=self.posh_user).first()
-
-                # Save data from temporary files into Django storage
-                app_data.backup_data.save('com.poshmark.app.dat', File(open(temp_data_file_path, 'rb')))
-                app_data.xml_data.save('com.poshmark.app.xml', File(open(temp_xml_file_path, 'rb')))
-
-                app_data.save()
             else:
-                # Create a new AppData instance and save data from temporary files
-                with open(temp_data_file_path, 'rb') as data_file, open(temp_xml_file_path, 'rb') as xml_file:
-                    AppData.objects.create(
-                        posh_user=self.posh_user,
-                        backup_data=File(data_file),
-                        xml_data=File(xml_file),
-                        type=AppData.POSHMARK
-                    )
+                app_data = AppData(
+                    posh_user=self.posh_user,
+                    type=AppData.POSHMARK
+                )
 
-            # Delete temporary files
-            os.remove(temp_data_file_path)
-            os.remove(temp_xml_file_path)
+            app_data.backup_data.save('com.poshmark.app.dat', ContentFile(data_file.read()), save=False)
+            app_data.xml_data.save('com.poshmark.app.xml', ContentFile(xml_file.read()), save=True)
 
         # Delete backup
         more_info = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView[2]/android.widget.LinearLayout/android.view.ViewGroup/android.view.ViewGroup/android.widget.ImageView')
