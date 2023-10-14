@@ -677,7 +677,6 @@ class ManageCampaignsTask(Task):
         queue_num = 1
         check_for_device = True
 
-        logger = logging.getLogger(__name__)
         for campaign in campaigns:
             campaign_started = False
             available_device = None
@@ -685,14 +684,9 @@ class ManageCampaignsTask(Task):
             items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
             need_to_list = items_to_list.count() > 0
 
-            logger.info(campaign.posh_user)
-
             if campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
                 available_device = self.get_available_device()
                 available_proxy = self.get_available_proxy()
-
-            logger.info(available_device)
-            logger.info(available_proxy)
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED

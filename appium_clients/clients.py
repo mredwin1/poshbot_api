@@ -1436,6 +1436,8 @@ class SwiftBackupClient(AppiumClient):
         device.pull('/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.dat', f'{self.location}/com.poshmark.app.dat')
         device.pull('/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.xml', f'{self.location}/com.poshmark.app.xml')
 
+        self.logger.info(self.location)
+
         if AppData.objects.filter(posh_user=self.posh_user).exists():
             app_data: AppData = AppData.objects.filter(posh_user=self.posh_user).first()
 
