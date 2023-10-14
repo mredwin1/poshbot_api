@@ -101,9 +101,9 @@ class CampaignTask(Task):
 
         return response
 
-    def finalize_campaign(self, success, campaign_delay, duration):
+    def finalize_campaign(self, success, campaign_delay, duration, save_data: bool = True):
         try:
-            if self.device and self.campaign.posh_user.is_registered:
+            if save_data and self.device and self.campaign.posh_user.is_registered:
                 with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
                     client.save_backup()
         except WebDriverException:
@@ -574,6 +574,10 @@ class CampaignTask(Task):
             self.finalize_campaign(success, campaign_delay, duration)
         else:
             self.logger.info(f'Campaign could not be initiated due to the following issues {", ".join(campaign_init["errors"])}')
+            self.campaign.status = Campaign.STOPPING
+            self.campaign.save(update_fields=['status'])
+            self.finalize_campaign(False, campaign_delay, 0, False)
+
         self.logger.info('Campaign ended')
 
 
