@@ -1203,6 +1203,11 @@ class PoshMarkClient(AppiumClient):
                 my_closet = self.locate(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton')
                 self.click(my_closet)
 
+            self.sleep(2)
+
+            while self.is_present(AppiumBy.ID, 'com.poshmark.app:id/progressBar'):
+                self.sleep(2)
+
             first_share_button = self.locate(AppiumBy.XPATH, f"//*[@resource-id='{self.capabilities['appPackage']}:id/shareButton']")
             self.click(first_share_button)
 
