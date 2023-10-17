@@ -96,6 +96,7 @@ class CampaignTask(Task):
             response['errors'].append(f'Posh user is registered needs to list but the app data is missing')
 
         if self.device_id and self.proxy_id and response['status']:
+            self.logger.debug(f'Getting device and proxy for {self.campaign.posh_user}')
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
 
