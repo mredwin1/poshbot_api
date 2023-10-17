@@ -588,6 +588,9 @@ class CampaignTask(Task):
             self.campaign.status = Campaign.STOPPING
             self.campaign.save(update_fields=['status'])
 
+            self.check_device_in()
+            self.check_proxy_in()
+
         self.logger.info('Campaign ended')
 
 
