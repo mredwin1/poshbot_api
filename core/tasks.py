@@ -221,7 +221,7 @@ class CampaignTask(Task):
 
         if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
             self.logger.info('Restarting campaign due to error')
-            self.campaign.status = Campaign.STARTING
+            self.campaign.status = Campaign.IDLE
             self.campaign.queue_status = 'Unknown'
             self.campaign.next_runtime = timezone.now()
             self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
