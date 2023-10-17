@@ -578,7 +578,9 @@ class CampaignTask(Task):
             self.logger.info(f'Campaign could not be initiated due to the following issues {", ".join(campaign_init["errors"])}')
             self.campaign.status = Campaign.STOPPING
             self.campaign.save(update_fields=['status'])
-            self.finalize_campaign(False, campaign_delay, 0, False)
+
+            self.check_device_in()
+            self.check_proxy_in()
 
         self.logger.info('Campaign ended')
 
