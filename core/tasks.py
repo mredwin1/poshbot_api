@@ -51,6 +51,9 @@ class CampaignTask(Task):
                 return random_delay_in_seconds
 
     def check_device_in(self):
+        self.logger.info('---------------------------------------------tset')
+        self.logger.info(self.device)
+        self.logger.info(self.device.checked_out_by)
         if self.device and self.device.checked_out_by == self.campaign.id:
             time.sleep(8)
             self.logger.info('Releasing device')
