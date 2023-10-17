@@ -101,7 +101,7 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user is registered needs to list but the app data is missing')
 
-        if self.device_id and self.proxy_id and response['status']:
+        if self.device_id and self.proxy_id:
             self.logger.debug(f'Getting device and proxy for {self.campaign.posh_user}')
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
@@ -587,9 +587,6 @@ class CampaignTask(Task):
             self.logger.info(f'Campaign could not be initiated due to the following issues {", ".join(campaign_init["errors"])}')
             self.campaign.status = Campaign.STOPPING
             self.campaign.save(update_fields=['status'])
-
-            self.check_device_in()
-            self.check_proxy_in()
 
         self.logger.info('Campaign ended')
 
