@@ -53,7 +53,10 @@ class CampaignTask(Task):
     def check_device_in(self):
         self.logger.info('---------------------------------------------tset')
         self.logger.info(f'Device: {self.device}')
-        self.logger.info(f'Checked out by: {self.device.checked_out_by}')
+        if self.device:
+            self.logger.info(f'Checked out by: {self.device.checked_out_by}')
+        else:
+            self.logger.info(f'Not checked out. Current Campaing user: {self.campaign.posh_user.username}')
         if self.device and self.device.checked_out_by == self.campaign.id:
             time.sleep(8)
             self.logger.info('Releasing device')
