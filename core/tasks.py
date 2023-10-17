@@ -547,9 +547,9 @@ class CampaignTask(Task):
 
         self.init_logger(logger_id)
 
+        self.logger.info(f'CampaignID: {proxy_id}')
         self.logger.info(f'DeviceID: {device_id}')
         self.logger.info(f'ProxyID: {proxy_id}')
-        self.logger.info(device_id)
 
         campaign_init = self.init_campaign()
 
