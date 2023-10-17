@@ -127,7 +127,7 @@ class CampaignTask(Task):
             hours, remainder = divmod(campaign_delay, 3600)
             minutes, seconds = divmod(remainder, 60)
 
-            self.campaign.status = Campaign.IDLE
+            self.campaign.status = Campaign.STARTING
             self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=campaign_delay)
             self.campaign.save(update_fields=['status', 'next_runtime'])
             self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
