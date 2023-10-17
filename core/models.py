@@ -134,31 +134,32 @@ class Proxy(models.Model):
             data = availability_response.json()
             available_locations = [location['id'] for location in data['result'] if location['available'] == 1 and location['id'] in locations]
 
-            selected_location = random.choice(available_locations)
+            if available_locations:
+                selected_location = random.choice(available_locations)
 
-            # Disconnect from the current location
-            disconnect_url = f"https://portal.mobilehop.com/api/v2/proxies/disconnect/{self.license_id}"
-            response = requests.get(disconnect_url, cookies=cookies)
+                # Disconnect from the current location
+                disconnect_url = f"https://portal.mobilehop.com/api/v2/proxies/disconnect/{self.license_id}"
+                response = requests.get(disconnect_url, cookies=cookies)
 
-            if response.status_code != 200:
-                raise Exception(
-                    f"Failed to disconnect from the current location with status code {response.status_code}")
+                if response.status_code != 200:
+                    raise Exception(
+                        f"Failed to disconnect from the current location with status code {response.status_code}")
 
-            # Connect to the new random location
-            connect_url = f"https://portal.mobilehop.com/api/v2/proxies/connect/{self.license_id}/{selected_location}"
-            response = requests.get(connect_url, cookies=cookies)
-            # proxy_data = response.json()['result']
+                # Connect to the new random location
+                connect_url = f"https://portal.mobilehop.com/api/v2/proxies/connect/{self.license_id}/{selected_location}"
+                response = requests.get(connect_url, cookies=cookies)
+                # proxy_data = response.json()['result']
 
-            if response.status_code != 200:
-                raise Exception(f"Failed to connect to the new location with status code {response.status_code}")
+                if response.status_code != 200:
+                    raise Exception(f"Failed to connect to the new location with status code {response.status_code}")
 
-            # self.hostname = proxy_data['ip']
-            # self.port = proxy_data['port']
-            # self.username = proxy_data['username']
-            # self.password = proxy_data['password']
-            # self.save()
+                # self.hostname = proxy_data['ip']
+                # self.port = proxy_data['port']
+                # self.username = proxy_data['username']
+                # self.password = proxy_data['password']
+                # self.save()
 
-            return f"Location changed to {selected_location} successfully"
+                return f"Location changed to {selected_location} successfully"
 
     def check_out(self, campaign_id: uuid4):
         """Check out the proxy for use by a posh user."""

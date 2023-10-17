@@ -135,7 +135,10 @@ class CampaignTask(Task):
     def reset_ip(self):
         if random.random() < .2:
             reset_success = self.proxy.change_location()
-            time.sleep(20)
+            if reset_success:
+                time.sleep(20)
+            else:
+                reset_success = self.proxy.reset_ip()
         else:
             reset_success = self.proxy.reset_ip()
             time.sleep(10)
@@ -695,9 +698,6 @@ class ManageCampaignsTask(Task):
             if campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
                 available_device = self.get_available_device()
                 available_proxy = self.get_available_proxy()
-
-            self.logger.info(available_device)
-            self.logger.info(available_proxy)
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
