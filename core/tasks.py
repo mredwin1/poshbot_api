@@ -540,6 +540,9 @@ class CampaignTask(Task):
         self.logger.info('Campaign was sent to the end of the line and will start soon')
 
     def run(self, campaign_id, logger_id=None, device_id=None, proxy_id=None, *args, **kwargs):
+        self.logger.info(f'DeviceID: {device_id}')
+        self.logger.info(f'ProxyID: {proxy_id}')
+        self.logger.info(device_id)
         self.campaign = Campaign.objects.get(id=campaign_id)
         self.device_id = device_id
         self.proxy_id = proxy_id
@@ -650,7 +653,11 @@ class ManageCampaignsTask(Task):
                     proxy.check_in()
 
     def start_campaign(self, campaign, device=None, proxy=None):
+        self.logger.info(f'Device: {device}')
+        self.logger.info(f'Proxy: {proxy}')
+        self.logger.info(f'Posh User: {campaign.posh_user}')
         if device and proxy:
+            self.logger.info('Has device and proxy')
             try:
                 device.check_out(campaign.id)
                 try:
@@ -665,6 +672,8 @@ class ManageCampaignsTask(Task):
                 campaign.queue_status = 'N/A'
 
                 campaign.save(update_fields=['status', 'queue_status'])
+
+                self.logger.info('Sent to queue')
 
                 CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
                 self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial} with {proxy.license_id} proxy')
