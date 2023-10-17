@@ -540,15 +540,16 @@ class CampaignTask(Task):
         self.logger.info('Campaign was sent to the end of the line and will start soon')
 
     def run(self, campaign_id, logger_id=None, device_id=None, proxy_id=None, *args, **kwargs):
-        self.logger.info(f'DeviceID: {device_id}')
-        self.logger.info(f'ProxyID: {proxy_id}')
-        self.logger.info(device_id)
         self.campaign = Campaign.objects.get(id=campaign_id)
         self.device_id = device_id
         self.proxy_id = proxy_id
         campaign_delay = None
 
         self.init_logger(logger_id)
+
+        self.logger.info(f'DeviceID: {device_id}')
+        self.logger.info(f'ProxyID: {proxy_id}')
+        self.logger.info(device_id)
 
         campaign_init = self.init_campaign()
 
