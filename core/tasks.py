@@ -107,6 +107,7 @@ class CampaignTask(Task):
             if save_data and self.device and self.campaign.posh_user.is_registered:
                 with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
                     client.save_backup()
+                    client.sleep(5)
         except Exception:
             self.logger.error('Some Web driver exception occurred while doing backup')
 
@@ -519,10 +520,12 @@ class CampaignTask(Task):
 
             self.device.reboot()
 
+            self.finalize_campaign(False, None, 0, False)
+
         elif type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
             self.logger.warning('Campaign ended because it exceeded the run time allowed')
-
-        self.finalize_campaign(False, None, 0)
+        else:
+            self.finalize_campaign(False, None, 0)
 
         exc_type, exc_value, exc_traceback = einfo.exc_info
         self.logger.error(f'Campaign failed due to {exc_type}: {exc_value}')
