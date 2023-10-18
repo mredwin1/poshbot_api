@@ -194,6 +194,8 @@ class CampaignTask(Task):
 
         self.device.reboot()
 
+        time.sleep(5)
+
         while not self.device.finished_boot():
             self.logger.debug('Waiting (5sec) for device to finish booting...')
             time.sleep(5)
