@@ -550,8 +550,13 @@ class CampaignTask(Task):
 
     def run(self, campaign_id, logger_id=None, device_id=None, proxy_id=None, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
+        self.campaign = None
+        self.logger = None
+        self.device = None
         self.device_id = device_id
+        self.proxy = None
         self.proxy_id = proxy_id
+
         campaign_delay = None
 
         self.init_logger(logger_id)
