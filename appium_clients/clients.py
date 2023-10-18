@@ -1403,7 +1403,7 @@ class SwiftBackupClient(AppiumClient):
                                          region_name=settings.AWS_S3_REGION_NAME)
         bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
-        app_data: AppData = AppData.objects.filter(posh_user=self.posh_user)
+        app_data: AppData = AppData.objects.filter(posh_user=self.posh_user).first()
 
         bucket.download_file(app_data.backup_data.name, f'{self.location}/com.poshmark.app.dat')
         bucket.download_file(app_data.xml_data.name, f'{self.location}/com.poshmark.app.xml')
