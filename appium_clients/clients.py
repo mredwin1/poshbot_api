@@ -1370,6 +1370,7 @@ class SwiftBackupClient(AppiumClient):
         super(SwiftBackupClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
 
     def reset_data(self):
+        self.logger.info('Resetting poshmark app data')
         app_button = self.locate(AppiumBy.XPATH,
                                  '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.RelativeLayout/android.widget.ScrollView/androidx.viewpager.widget.b/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[1]')
         app_button.click()

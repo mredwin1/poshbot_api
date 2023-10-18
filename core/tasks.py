@@ -101,10 +101,15 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user is registered needs to list but the app data is missing')
 
+        self.logger.debug('------------At init campaign-----------')
+        self.logger.info(f'DeviceID: {self.device_id}')
+        self.logger.info(f'ProxyID: {self.proxy_id}')
         if self.device_id and self.proxy_id:
-            self.logger.debug(f'Getting device and proxy for {self.campaign.posh_user}')
+            self.logger.debug(f'Getting device and proxy for {self.campaign.posh_user}. Proxy ID: {self.proxy_id} Device ID: {self.device_id}')
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
+
+            self.logger.debug(f'Device: {self.device} Proxy: {self.proxy}')
 
         return response
 
@@ -177,18 +182,20 @@ class CampaignTask(Task):
         with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
             client.reset_data()
 
+            client.sleep(5)
+
         with IDChangerClient(self.device, self.logger) as client:
             android_id = client.set_android_id(self.campaign.posh_user.android_id)
 
             self.campaign.posh_user.android_id = android_id
             self.campaign.posh_user.save()
 
-        time.sleep(5)
+            client.sleep(5)
 
         self.device.reboot()
 
         while not self.device.finished_boot():
-            self.logger.debug('Waiting for device to finish booting...')
+            self.logger.debug('Waiting (5sec) for device to finish booting...')
             time.sleep(5)
 
         ip_reset = self.reset_ip()
@@ -546,10 +553,6 @@ class CampaignTask(Task):
         campaign_delay = None
 
         self.init_logger(logger_id)
-
-        self.logger.info(f'CampaignID: {proxy_id}')
-        self.logger.info(f'DeviceID: {device_id}')
-        self.logger.info(f'ProxyID: {proxy_id}')
 
         campaign_init = self.init_campaign()
 
