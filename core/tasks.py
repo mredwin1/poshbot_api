@@ -51,8 +51,6 @@ class CampaignTask(Task):
                 return random_delay_in_seconds
 
     def check_device_in(self):
-        self.logger.info('---------------------------------------------tset')
-        self.logger.info(f'Device: {self.device}')
         if self.device:
             self.logger.info(f'Checked out by: {self.device.checked_out_by}')
         else:
@@ -101,15 +99,9 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user is registered needs to list but the app data is missing')
 
-        self.logger.debug('------------At init campaign-----------')
-        self.logger.info(f'DeviceID: {self.device_id}')
-        self.logger.info(f'ProxyID: {self.proxy_id}')
         if self.device_id and self.proxy_id:
-            self.logger.debug(f'Getting device and proxy for {self.campaign.posh_user}. Proxy ID: {self.proxy_id} Device ID: {self.device_id}')
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
-
-            self.logger.debug(f'Device: {self.device} Proxy: {self.proxy}')
 
         return response
 
@@ -663,11 +655,7 @@ class ManageCampaignsTask(Task):
                     proxy.check_in()
 
     def start_campaign(self, campaign, device=None, proxy=None):
-        self.logger.info(f'Device: {device}')
-        self.logger.info(f'Proxy: {proxy}')
-        self.logger.info(f'Posh User: {campaign.posh_user}')
         if device and proxy:
-            self.logger.info('Has device and proxy')
             try:
                 device.check_out(campaign.id)
                 try:
@@ -682,8 +670,6 @@ class ManageCampaignsTask(Task):
                 campaign.queue_status = 'N/A'
 
                 campaign.save(update_fields=['status', 'queue_status'])
-
-                self.logger.info('Sent to queue')
 
                 CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
                 self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial} with {proxy.license_id} proxy')
