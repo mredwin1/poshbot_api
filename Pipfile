@@ -8,7 +8,7 @@ django = "~=4.0.3"
 django-debug-toolbar = "~=3.2.4"
 djangorestframework = "*"
 django-filter = "*"
-requests = "*"
+requests = {extras = ["socks"], version = "*"}
 djoser = "*"
 djangorestframework-simplejwt = "*"
 pillow = "~=9.5.0"

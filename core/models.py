@@ -25,6 +25,7 @@ from faker_providers import address_provider
 
 
 def path_and_rename(instance, filename):
+    original_filename = filename
     ext = filename.split('.')[-1]
     rand_str = ''.join(random.choices(string.ascii_uppercase + string.digits, k=4))
     filename = None
@@ -33,6 +34,10 @@ def path_and_rename(instance, filename):
     s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
                                      aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
                                      region_name=settings.AWS_S3_REGION_NAME)
+
+    if isinstance(instance, AppData):
+        filename = original_filename
+        path = os.path.join(instance.posh_user.user.username, 'log_images', instance.posh_user.username, filename)
 
     while not filename:
         if isinstance(instance, Listing):
@@ -65,12 +70,123 @@ def path_and_rename(instance, filename):
     return path
 
 
+class Proxy(models.Model):
+    HTTP = 'http'
+    SOCKS5 = 'socks5'
+
+    PROXY_TYPE_CHOICES = [
+        (HTTP, HTTP),
+        (SOCKS5, SOCKS5)
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    checked_out_by = models.UUIDField(blank=True, null=True)
+
+    is_active = models.BooleanField(default=True)
+
+    checkout_time = models.DateTimeField(null=True, blank=True)
+
+    hostname = models.CharField(max_length=255)
+    port = models.CharField(max_length=255)
+    username = models.CharField(max_length=255)
+    password = models.CharField(max_length=255)
+    license_id = models.CharField(max_length=255)
+    type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=HTTP)
+
+    @staticmethod
+    def authenticate_with_cookies():
+        login_url = "https://portal.mobilehop.com/login"
+        login_data = {
+            'username': os.environ.get('PROXY_USERNAME', ''),
+            'password': os.environ.get('PROXY_PASSWORD', '')
+        }
+
+        response = requests.post(login_url, data=login_data)
+
+        if response.status_code != 200:
+            raise Exception(f"Authentication failed with status code {response.status_code}")
+
+        return response.cookies
+
+    def reset_ip(self):
+        cookies = self.authenticate_with_cookies()
+
+        reset_url = f"https://portal.mobilehop.com/api/v2/proxies/reset/{self.license_id}"
+        response = requests.get(reset_url, cookies=cookies)
+
+        if response.status_code == 200:
+            result = response.json()
+            return result.get('result', 'IP reset successful')
+        elif response.status_code == 401:
+            raise Exception("Authentication failed. Please check your credentials.")
+        else:
+            raise Exception(f"IP reset failed with status code {response.status_code}")
+
+    def change_location(self):
+        locations = ['MIA', 'JAX']
+        # Authenticate to get cookies
+        cookies = self.authenticate_with_cookies()
+
+        # Check available locations
+        availability_response = requests.get('https://portal.mobilehop.com/api/v2/proxies/availability', cookies=cookies)
+
+        if availability_response.status_code == 200:
+            data = availability_response.json()
+            available_locations = [location['id'] for location in data['result'] if location['available'] == 1 and location['id'] in locations]
+
+            if available_locations:
+                selected_location = random.choice(available_locations)
+
+                # Disconnect from the current location
+                disconnect_url = f"https://portal.mobilehop.com/api/v2/proxies/disconnect/{self.license_id}"
+                response = requests.get(disconnect_url, cookies=cookies)
+
+                if response.status_code != 200:
+                    raise Exception(
+                        f"Failed to disconnect from the current location with status code {response.status_code}")
+
+                # Connect to the new random location
+                connect_url = f"https://portal.mobilehop.com/api/v2/proxies/connect/{self.license_id}/{selected_location}"
+                response = requests.get(connect_url, cookies=cookies)
+                # proxy_data = response.json()['result']
+
+                if response.status_code != 200:
+                    raise Exception(f"Failed to connect to the new location with status code {response.status_code}")
+
+                # self.hostname = proxy_data['ip']
+                # self.port = proxy_data['port']
+                # self.username = proxy_data['username']
+                # self.password = proxy_data['password']
+                # self.save()
+
+                return f"Location changed to {selected_location} successfully"
+
+    def check_out(self, campaign_id: uuid4):
+        """Check out the proxy for use by a posh user."""
+        if self.checked_out_by:
+            raise ValueError('Proxy is already in use')
+
+        self.checked_out_by = campaign_id
+        self.checkout_time = timezone.now()
+        self.save(update_fields=['checked_out_by', 'checkout_time'])
+
+    def check_in(self):
+        """Check in the proxy after use."""
+        self.checked_out_by = None
+        self.checkout_time = None
+        self.save(update_fields=['checked_out_by', 'checkout_time'])
+
+    def __str__(self):
+        return self.license_id
+
+
 class Device(models.Model):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
 
+    proxy = models.ForeignKey(to=Proxy, on_delete=models.SET_NULL, null=True, blank=True)
+
     checked_out_by = models.UUIDField(blank=True, null=True)
     serial = models.CharField(max_length=12, unique=True)
-    ip_reset_url = models.URLField()
 
     is_active = models.BooleanField(default=True)
 
@@ -78,21 +194,38 @@ class Device(models.Model):
 
     system_port = models.SmallIntegerField(unique=True)
     mjpeg_server_port = models.SmallIntegerField(unique=True)
-    installed_clones = models.SmallIntegerField(default=0)
 
-    def uninstall_app(self, app_package):
+    def reboot(self):
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
-        device = client.device(self.serial)
-        uninstalled = False
+        adb_device = client.device(serial=self.serial)
 
-        if device:
-            uninstalled = device.uninstall(app_package)
+        adb_device.reboot()
 
-            if self.installed_clones > 0:
-                self.installed_clones -= 1
-                self.save(update_fields=['installed_clones'])
+    def finished_boot(self):
+        try:
+            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+            adb_device = client.device(serial=self.serial)
 
-        return uninstalled
+            if adb_device:
+                try:
+                    ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
+                except Exception:
+                    return False
+
+                current_time_str = adb_device.shell('date').strip()
+                current_time = parse(current_time_str).replace(tzinfo=pytz.utc)
+                boot_time_str = adb_device.shell('uptime -s').strip()
+
+                boot_time = datetime.datetime.strptime(boot_time_str, '%Y-%m-%d %H:%M:%S').replace(
+                    tzinfo=current_time.tzinfo)
+
+                if ready and (current_time - boot_time).total_seconds() > 10:
+                    return True
+            return False
+        except RuntimeError as e:
+            logger = logging.getLogger(__name__)
+            logger.error(e, exc_info=True)
+            return False
 
     def is_ready(self):
         if not self.is_active:
@@ -101,27 +234,7 @@ class Device(models.Model):
         if self.checked_out_by:
             return False
 
-        logger = logging.getLogger(__name__)
-
-        try:
-            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
-            adb_device = client.device(serial=self.serial)
-
-            if adb_device:
-                ready = adb_device.shell('getprop sys.boot_completed').strip() == '1'
-                current_time_str = adb_device.shell('date').strip()
-                current_time = parse(current_time_str).replace(tzinfo=pytz.utc)
-                boot_time_str = adb_device.shell('uptime -s').strip()
-
-                boot_time = datetime.datetime.strptime(boot_time_str, '%Y-%m-%d %H:%M:%S').replace(tzinfo=current_time.tzinfo)
-
-                if ready and (current_time - boot_time).total_seconds() > 10:
-                    return True
-
-            return False
-        except RuntimeError as e:
-            logger.error(e, exc_info=True)
-            return False
+        return self.finished_boot()
 
     def check_out(self, campaign_id: uuid4):
         """Check out the device for use by a posh user."""
@@ -192,7 +305,6 @@ class PoshUser(models.Model):
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
-    device = models.ForeignKey(Device, on_delete=models.SET_NULL, null=True, default=None)
 
     username = models.CharField(max_length=15, unique=True, blank=True)
     password = models.CharField(max_length=20,
@@ -202,7 +314,6 @@ class PoshUser(models.Model):
     gender = models.CharField(max_length=2, choices=GENDER_CHOICES, blank=True)
     phone_number = models.CharField(max_length=20, default='', blank=True)
     profile_picture_id = models.CharField(max_length=200, blank=True)
-    app_package = models.CharField(max_length=100, blank=True)
     email_password = models.CharField(max_length=250, blank=True)
     email_imap_password = models.CharField(max_length=250, blank=True)
     house_number = models.CharField(max_length=50, blank=True)
@@ -210,6 +321,21 @@ class PoshUser(models.Model):
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=50, blank=True)
     postcode = models.CharField(max_length=20, blank=True)
+
+    imei1 = models.CharField(max_length=255, blank=True)
+    imei2 = models.CharField(max_length=255, blank=True)
+    wifi_mac = models.CharField(max_length=255, blank=True)
+    wifi_ssid = models.CharField(max_length=255, blank=True)
+    wifi_bssid = models.CharField(max_length=255, blank=True)
+    bluetooth_id = models.CharField(max_length=255, blank=True)
+    sim_sub_id = models.CharField(max_length=255, blank=True)
+    sim_serial = models.CharField(max_length=255, blank=True)
+    android_id = models.CharField(max_length=255, blank=True)
+    mobile_number = models.CharField(max_length=255, blank=True)
+    hw_serial = models.CharField(max_length=255, blank=True)
+    ads_id = models.CharField(max_length=255, blank=True)
+    gsf = models.CharField(max_length=255, blank=True)
+    media_drm = models.CharField(max_length=255, blank=True)
 
     profile_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
     header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
@@ -230,11 +356,10 @@ class PoshUser(models.Model):
     is_active_in_posh = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
     profile_updated = models.BooleanField(default=False)
-    clone_installed = models.BooleanField(default=False)
     finished_registration = models.BooleanField(default=False)
     send_support_email = models.BooleanField(default=False)
 
-    time_to_install_clone = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
+    time_to_setup_device = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
     time_to_register = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
     time_to_finish_registration = models.DurationField(default=datetime.timedelta(seconds=0), blank=True)
 
@@ -422,6 +547,25 @@ class PoshUser(models.Model):
 
     class Meta:
         ordering = ['username']
+
+
+class AppData(models.Model):
+    POSHMARK = 'POSHMARK'
+
+    PROXY_TYPE_CHOICES = [
+        (POSHMARK, POSHMARK),
+    ]
+
+    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
+    posh_user = models.ForeignKey(to=PoshUser, on_delete=models.CASCADE)
+
+    backup_data = models.FileField(upload_to=path_and_rename)
+    xml_data = models.FileField(upload_to=path_and_rename)
+
+    type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=POSHMARK)
+
+    def __str__(self):
+        return f'Backup for {self.posh_user.username}'
 
 
 class Campaign(models.Model):

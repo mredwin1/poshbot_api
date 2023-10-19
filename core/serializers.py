@@ -136,7 +136,6 @@ class ListingSerializer(serializers.ModelSerializer):
         listing.save()
 
         for name, file in files.items():
-            print(name, file)
             if name != 'cover_photo':
                 listing_image = ListingImage(
                     listing=listing,

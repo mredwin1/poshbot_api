@@ -3,7 +3,6 @@ import logging
 import os
 import pytz
 import random
-import requests
 import smtplib
 import ssl
 import time
@@ -16,14 +15,13 @@ from django.utils import timezone
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from ppadb.client import Client as AdbClient
 from selenium.common.exceptions import WebDriverException
 
-from appium_clients.clients import AppClonerClient, PoshMarkClient as MobilePoshMarkClient
+from appium_clients.clients import PoshMarkClient as MobilePoshMarkClient, ProxyDroidClient, IDChangerClient, SwiftBackupClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
-from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport, PaymentEmailContent
+from .models import Campaign, Listing, ListingImage, PoshUser, Device, LogGroup, ListedItem, ListedItemToReport, ListedItemReport, PaymentEmailContent, Proxy, AppData
 
 
 class CampaignTask(Task):
@@ -33,6 +31,9 @@ class CampaignTask(Task):
         self.campaign = None
         self.logger = None
         self.device = None
+        self.device_id = None
+        self.proxy = None
+        self.proxy_id = None
 
     def get_random_delay(self, elapsed_time):
         delay = self.campaign.delay * 60
@@ -50,10 +51,19 @@ class CampaignTask(Task):
                 return random_delay_in_seconds
 
     def check_device_in(self):
+        if self.device:
+            self.logger.info(f'Checked out by: {self.device.checked_out_by}')
+        else:
+            self.logger.info(f'Not checked out. Current Campaing user: {self.campaign.posh_user.username}')
         if self.device and self.device.checked_out_by == self.campaign.id:
             time.sleep(8)
             self.logger.info('Releasing device')
             self.device.check_in()
+
+    def check_proxy_in(self):
+        if self.proxy and self.proxy.checked_out_by == self.campaign.id:
+            self.logger.info('Releasing proxy')
+            self.proxy.check_in()
 
     def init_campaign(self):
         response = {
@@ -77,10 +87,35 @@ class CampaignTask(Task):
             response['status'] = False
             response['errors'].append(f'Posh user, {self.campaign.posh_user}, is inactive')
 
+        if not self.campaign.posh_user.is_registered and not self.device_id:
+            response['status'] = False
+            response['errors'].append(f'Posh user is not registered but no device was given.')
+
+        if not self.campaign.posh_user.is_registered and not self.proxy_id:
+            response['status'] = False
+            response['errors'].append(f'Posh user is not registered but no proxy was given.')
+
+        if ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED).exists() and self.campaign.posh_user.is_registered and not AppData.objects.filter(posh_user=self.campaign.posh_user).exists():
+            response['status'] = False
+            response['errors'].append(f'Posh user is registered needs to list but the app data is missing')
+
+        if self.device_id and self.proxy_id:
+            self.device = Device.objects.get(id=self.device_id)
+            self.proxy = Proxy.objects.get(id=self.proxy_id)
+
         return response
 
-    def finalize_campaign(self, success, campaign_delay, duration):
+    def finalize_campaign(self, success, campaign_delay, duration, save_data: bool = True):
+        try:
+            if save_data and self.device and self.campaign.posh_user.is_registered:
+                with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
+                    client.save_backup()
+                    client.sleep(5)
+        except Exception:
+            self.logger.error('Some Web driver exception occurred while doing backup')
+
         self.check_device_in()
+        self.check_proxy_in()
 
         if not self.campaign.posh_user.is_active_in_posh:
             self.campaign.status = Campaign.STOPPING
@@ -102,37 +137,22 @@ class CampaignTask(Task):
             self.campaign.save(update_fields=['status', 'next_runtime'])
             self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
 
-    def launch_app(self, client):
-        app_launched = False
-        retries = 0
+    def reset_ip(self):
+        if random.random() < .2:
+            reset_success = self.proxy.change_location()
+            if reset_success:
+                time.sleep(20)
+            else:
+                reset_success = self.proxy.reset_ip()
+        else:
+            reset_success = self.proxy.reset_ip()
+            time.sleep(10)
 
-        while not app_launched and retries < 2:
-            app_launched = client.launch_app(self.campaign.posh_user.username)
-            retries += 1
-
-        if not app_launched and not self.campaign.posh_user.is_registered:
-            self.campaign.posh_user.clone_installed = False
-            self.campaign.posh_user.save(update_fields=['clone_installed'])
-
-            return False
-
-        return app_launched
-
-    def reset_ip(self, reset_url):
-        response = requests.get(reset_url)
-        retries = 0
-
-        while response.status_code != requests.codes.ok and retries < 3:
-            self.logger.warning('IP reset failed, trying again')
-            response = requests.get(reset_url)
-            retries += 1
-            time.sleep(1)
-
-        if response.status_code == requests.codes.ok:
-            self.logger.info(response.text)
+        if reset_success:
+            self.logger.info(reset_success)
             return True
 
-        self.logger.info(f'Could not reset IP after {retries} retries. Sending campaign to the end of the line')
+        self.logger.info(f'Could not reset IP. Sending campaign to the end of the line')
 
         self.campaign.status = Campaign.STARTING
         self.campaign.queue_status = 'Unknown'
@@ -148,174 +168,166 @@ class CampaignTask(Task):
             self.logger = LogGroup(campaign=self.campaign, posh_user=self.campaign.posh_user, created_date=timezone.now())
             self.logger.save()
 
-    def install_clone(self, device):
-        with AppClonerClient(device.serial, device.system_port, device.mjpeg_server_port, self.logger, self.campaign.posh_user.username) as client:
-            if not self.campaign.posh_user.clone_installed:
-                start_time = time.time()
-                installed = client.add_clone()
-                end_time = time.time()
-                if installed:
-                    time_to_install = datetime.timedelta(seconds=round(end_time - start_time))
+    def setup_device(self):
+        start_time = time.time()
 
-                    self.logger.info(f'Time to install clone: {time_to_install}')
+        with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
+            client.reset_data()
 
-                    self.campaign.posh_user.clone_installed = installed
-                    self.campaign.posh_user.device = device
-                    self.campaign.posh_user.time_to_install_clone = time_to_install
-                    self.campaign.posh_user.save(update_fields=['clone_installed', 'device', 'time_to_install_clone'])
+            client.sleep(5)
 
-                    device.refresh_from_db(fields=['installed_clones'])
-                    device.installed_clones += 1
-                    device.save(update_fields=['installed_clones'])
+        with IDChangerClient(self.device, self.logger) as client:
+            android_id = client.set_android_id(self.campaign.posh_user.android_id)
 
-            if not self.campaign.posh_user.app_package:
-                app_launched = self.launch_app(client)
+            self.campaign.posh_user.android_id = android_id
+            self.campaign.posh_user.save()
 
-                if not app_launched:
-                    return False
+            client.sleep(5)
 
-                clone_app_package = client.driver.current_package
+        self.device.reboot()
 
-                while 'poshmark' not in clone_app_package:
-                    self.logger.info(f'App did not launch properly. Current app package {clone_app_package}')
-                    app_launched = self.launch_app(client)
+        time.sleep(5)
 
-                    if not app_launched:
-                        return False
+        while not self.device.finished_boot():
+            self.logger.debug('Waiting (5sec) for device to finish booting...')
+            time.sleep(5)
 
-                    time.sleep(.5)
-                    clone_app_package = client.driver.current_package
+        ip_reset = self.reset_ip()
 
-                self.campaign.posh_user.app_package = clone_app_package
-                self.campaign.posh_user.save(update_fields=['app_package'])
+        if not ip_reset:
+            return False
 
-        return self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package
+        with ProxyDroidClient(self.device, self.logger, self.proxy) as client:
+            client.set_proxy()
 
-    def register(self, list_items, device):
-        ip_reset = self.reset_ip(device.ip_reset_url)
+        if AppData.objects.filter(posh_user=self.campaign.posh_user).exists():
+            with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
+                client.load_backup()
 
-        if ip_reset:
-            with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                if client.driver.current_package != self.campaign.posh_user.app_package:
-                    app_launched = self.launch_app(client)
+        end_time = time.time()
+        time_to_setup_device = datetime.timedelta(seconds=round(end_time - start_time))
+        self.logger.info(f'Device Set up complete, time elapsed: {time_to_setup_device}')
 
-                    if not app_launched:
-                        return False
+        self.campaign.posh_user.time_to_setup_device = time_to_setup_device
+        self.campaign.posh_user.save()
 
-                start_time = time.time()
-                registered = client.register()
-                end_time = time.time()
+        return True
 
-                if registered:
-                    time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
+    def register(self, list_items):
+        with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
+            start_time = time.time()
+            registered = client.register()
+            end_time = time.time()
 
-                    self.campaign.posh_user.time_to_register = time_to_register
-                    self.logger.info(f'Time to register user: {time_to_register}')
+            if registered:
+                time_to_register = datetime.timedelta(seconds=round(end_time - start_time))
 
-                self.campaign.posh_user.is_registered = registered
-                self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
+                self.campaign.posh_user.time_to_register = time_to_register
+                self.logger.info(f'Time to register user: {time_to_register}')
 
-                if registered:
-                    finish_registration_and_list = self.finish_registration(device, list_items, False, client)
+            self.campaign.posh_user.is_registered = registered
+            self.campaign.posh_user.save(update_fields=['time_to_register', 'is_registered'])
 
-                client.driver.press_keycode(3)
+            if registered:
+                finish_registration_and_list = self.finish_registration(list_items, client)
 
-            if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
-                self.logger.info('Restarting campaign due to error')
-                self.campaign.status = Campaign.STARTING
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+        if not (registered and finish_registration_and_list) and self.campaign.status == Campaign.RUNNING:
+            self.logger.info('Restarting campaign due to error')
+            self.campaign.status = Campaign.IDLE
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
 
-                return False
+            return False
 
-            return True
+        return True
 
-        return False
-
-    def finish_registration(self, device, list_items=True, reset_ip=True, client=None):
-        ip_reset = not reset_ip
+    def finish_registration(self, list_items=True, client=None):
         listed = not list_items
 
-        if reset_ip:
-            ip_reset = self.reset_ip(device.ip_reset_url)
+        if client:
+            start_time = time.time()
+            registration_finished = client.finish_registration()
+            end_time = time.time()
 
-        if ip_reset:
-            if client:
+            if registration_finished:
+                time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+                self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
+                self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
+
+            self.campaign.posh_user.finished_registration = registration_finished
+            self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
+
+            if registration_finished and list_items:
+                listed = self.list_items(client)
+        else:
+            with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
                 start_time = time.time()
                 registration_finished = client.finish_registration()
                 end_time = time.time()
 
                 if registration_finished:
                     time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+
                     self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
-                    self.logger.info(f'Time to finish registration: {time_to_finish_registration} seconds')
+                    self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
 
                 self.campaign.posh_user.finished_registration = registration_finished
                 self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
 
                 if registration_finished and list_items:
-                    listed = self.list_items(device, False, client)
+                    listed = self.list_items(client)
 
-                client.driver.press_keycode(3)
-            else:
-                with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                    if client.driver.current_package != self.campaign.posh_user.app_package:
-                        app_launched = self.launch_app(client)
+        if not (registration_finished and listed) and self.campaign.status == Campaign.RUNNING:
+            self.logger.info('Did not list properly or finish registration. Restarting campaign')
+            self.campaign.status = Campaign.STARTING
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+            return False
 
-                        if not app_launched:
-                            return False
+        return True
 
-                    start_time = time.time()
-                    registration_finished = client.finish_registration()
-                    end_time = time.time()
+    def list_items(self, client=None):
+        if not self.device and not self.campaign.posh_user.finished_registration:
+            self.campaign.posh_user.finished_registration = True
+            self.campaign.posh_user.save()
 
-                    if registration_finished:
-                        time_to_finish_registration = datetime.timedelta(seconds=round(end_time - start_time))
+        item_listed = False
+        items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
 
-                        self.campaign.posh_user.time_to_finish_registration = time_to_finish_registration
-                        self.logger.info(f'Time to finish registration: {time_to_finish_registration}')
+        if client:
+            for item_to_list in items_to_list:
+                listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
 
-                    self.campaign.posh_user.finished_registration = registration_finished
-                    self.campaign.posh_user.save(update_fields=['time_to_finish_registration', 'finished_registration'])
+                start_time = time.time()
+                item_listed = client.list_item(item_to_list, listing_images)
+                end_time = time.time()
+                time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
 
-                    if registration_finished and list_items:
-                        listed = self.list_items(device, False, client)
+                if item_listed:
+                    self.logger.info(f'Time to list item: {time_to_list}')
 
-                    client.driver.press_keycode(3)
+                    listed_item_id = client.get_listed_item_id()
 
-            if not (registration_finished and listed) and self.campaign.status == Campaign.RUNNING:
-                self.logger.info('Did not list properly or finish registration. Restarting campaign')
-                self.campaign.status = Campaign.STARTING
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
-                return False
+                    self.logger.info(f'Listed item ID: {listed_item_id}')
 
-            return True
-
-        return False
-
-    def list_items(self, device, reset_ip=True, client=None):
-        ip_reset = not reset_ip
-
-        if reset_ip:
-            ip_reset = self.reset_ip(device.ip_reset_url)
-
-        if ip_reset:
-            item_listed = False
-            items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
-
-            if client:
+                    item_to_list.listed_item_id = listed_item_id
+                    item_to_list.time_to_list = time_to_list
+                    item_to_list.status = ListedItem.UNDER_REVIEW
+                    item_to_list.datetime_listed = timezone.now()
+                    item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
+        else:
+            with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
                 for item_to_list in items_to_list:
                     listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
 
                     start_time = time.time()
-                    item_listed = client.list_item(item_to_list, listing_images)
+                    listed = client.list_item(item_to_list, listing_images)
                     end_time = time.time()
                     time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
 
-                    if item_listed:
+                    if listed:
                         self.logger.info(f'Time to list item: {time_to_list}')
 
                         listed_item_id = client.get_listed_item_id()
@@ -327,55 +339,24 @@ class CampaignTask(Task):
                         item_to_list.status = ListedItem.UNDER_REVIEW
                         item_to_list.datetime_listed = timezone.now()
                         item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
-            else:
-                with MobilePoshMarkClient(device.serial, device.system_port, device.mjpeg_server_port, self.campaign, self.logger, self.campaign.posh_user.app_package) as client:
-                    if client.driver.current_package != self.campaign.posh_user.app_package:
-                        app_launched = self.launch_app(client)
 
-                        if not app_launched:
-                            return False
+                        if not item_listed:
+                            item_listed = listed
+        if not item_listed and self.campaign.status == Campaign.RUNNING:
+            self.logger.info('Did not list successfully. Restarting campaign.')
 
-                    for item_to_list in items_to_list:
-                        listing_images = ListingImage.objects.filter(listing=item_to_list.listing)
+            self.campaign.status = Campaign.STARTING
+            self.campaign.queue_status = 'Unknown'
+            self.campaign.next_runtime = timezone.now()
+            self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
+        else:
+            all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
 
-                        start_time = time.time()
-                        listed = client.list_item(item_to_list, listing_images)
-                        end_time = time.time()
-                        time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
+            if all_items.count() == 0:
+                self.campaign.status = Campaign.PAUSED
+                self.campaign.save(update_fields=['status'])
 
-                        if listed:
-                            self.logger.info(f'Time to list item: {time_to_list}')
-
-                            listed_item_id = client.get_listed_item_id()
-
-                            self.logger.info(f'Listed item ID: {listed_item_id}')
-
-                            item_to_list.listed_item_id = listed_item_id
-                            item_to_list.time_to_list = time_to_list
-                            item_to_list.status = ListedItem.UNDER_REVIEW
-                            item_to_list.datetime_listed = timezone.now()
-                            item_to_list.save(update_fields=['time_to_list', 'status', 'datetime_listed', 'listed_item_id'])
-
-                            if not item_listed:
-                                item_listed = listed
-
-                    client.driver.press_keycode(3)
-
-            if not item_listed and self.campaign.status == Campaign.RUNNING:
-                self.logger.info('Did not list successfully. Restarting campaign.')
-
-                self.campaign.status = Campaign.STARTING
-                self.campaign.queue_status = 'Unknown'
-                self.campaign.next_runtime = timezone.now()
-                self.campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
-            else:
-                all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
-
-                if all_items.count() == 0:
-                    self.campaign.status = Campaign.PAUSED
-                    self.campaign.save(update_fields=['status'])
-
-            return item_listed
+        return item_listed
 
     def share_and_more(self):
         login_retries = 0
@@ -541,16 +522,17 @@ class CampaignTask(Task):
             self.campaign.queue_status = 'Unknown'
             self.campaign.save(update_fields=['status', 'next_runtime', 'queue_status'])
 
-        if type(exc) is WebDriverException and self.device.checked_out_by == self.campaign.id:
-            client = AdbClient(host=os.environ.get('LOCAL_SERVER_IP'), port=5037)
-            adb_device = client.device(serial=self.device.serial)
-
+        if self.device and type(exc) is WebDriverException and self.device.checked_out_by == self.campaign.id:
             self.logger.warning('Rebooting device')
-            adb_device.reboot()
+
+            self.device.reboot()
+
+            self.finalize_campaign(False, None, 0, False)
+
         elif type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
             self.logger.warning('Campaign ended because it exceeded the run time allowed')
-
-        self.finalize_campaign(False, None, 0)
+        else:
+            self.finalize_campaign(False, None, 0)
 
         exc_type, exc_value, exc_traceback = einfo.exc_info
         self.logger.error(f'Campaign failed due to {exc_type}: {exc_value}')
@@ -558,8 +540,14 @@ class CampaignTask(Task):
 
         self.logger.info('Campaign was sent to the end of the line and will start soon')
 
-    def run(self, campaign_id, logger_id=None, device_id=None, attempt=1, *args, **kwargs):
+    def run(self, campaign_id, logger_id=None, device_id=None, proxy_id=None, *args, **kwargs):
         self.campaign = Campaign.objects.get(id=campaign_id)
+        self.logger = None
+        self.device = None
+        self.device_id = device_id
+        self.proxy = None
+        self.proxy_id = proxy_id
+
         campaign_delay = None
 
         self.init_logger(logger_id)
@@ -569,35 +557,25 @@ class CampaignTask(Task):
         if campaign_init['status']:
             self.logger.info(f'Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}')
 
-            try:
-                self.device = Device.objects.get(id=device_id)
-                self.device.checkout_time = timezone.now()
-                self.device.save()
-            except Device.DoesNotExist:
-                pass
-
             self.campaign.status = Campaign.RUNNING
             self.campaign.queue_status = 'N/A'
             self.campaign.save(update_fields=['status', 'queue_status'])
 
             items_to_list = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED)
             need_to_list = items_to_list.count() > 0
+            device_setup = None
 
             start_time = time.time()
 
-            if not (self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package) and self.device and self.campaign.mode == Campaign.ADVANCED_SHARING:
-                installed = self.install_clone(self.device)
-            elif self.campaign.posh_user.clone_installed and self.campaign.posh_user.app_package and self.device and self.campaign.mode == Campaign.ADVANCED_SHARING:
-                installed = True
-            else:
-                installed = False
+            if self.device and self.proxy and self.campaign.mode == Campaign.ADVANCED_SHARING and (not self.campaign.posh_user.is_registered or (self.campaign.posh_user.is_registered and AppData.objects.filter(posh_user=self.campaign.posh_user).exists())):
+                device_setup = self.setup_device()
 
-            if installed and not self.campaign.posh_user.is_registered:
-                success = self.register(device=self.device, list_items=need_to_list)
-            elif installed and not self.campaign.posh_user.finished_registration:
-                success = self.finish_registration(device=self.device, list_items=need_to_list, reset_ip=True)
-            elif installed and items_to_list:
-                success = self.list_items(self.device)
+            if device_setup and not self.campaign.posh_user.is_registered:
+                success = self.register(list_items=need_to_list)
+            elif device_setup and not self.campaign.posh_user.finished_registration:
+                success = self.finish_registration(list_items=need_to_list)
+            elif device_setup and items_to_list:
+                success = self.list_items()
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                 success = self.share_and_more()
             else:
@@ -612,6 +590,12 @@ class CampaignTask(Task):
             self.finalize_campaign(success, campaign_delay, duration)
         else:
             self.logger.info(f'Campaign could not be initiated due to the following issues {", ".join(campaign_init["errors"])}')
+            self.campaign.status = Campaign.STOPPING
+            self.campaign.save(update_fields=['status'])
+
+            self.check_device_in()
+            self.check_proxy_in()
+
         self.logger.info('Campaign ended')
 
 
@@ -621,16 +605,12 @@ class ManageCampaignsTask(Task):
         self.time_limit = 450
         self.logger = logging.getLogger(__name__)
 
-    def get_available_device(self, needed_device=None):
+    def get_available_device(self):
         devices = Device.objects.filter(is_active=True)
-        if needed_device:
-            devices = devices.filter(id=needed_device.id)
-        else:
-            devices = devices.filter(installed_clones__lt=147)
-        in_use_ip_reset_urls = Device.objects.filter(checked_out_by__isnull=False).values_list('ip_reset_url', flat=True)
+        checked_out_proxies = Device.objects.filter(checked_out_by__isnull=False).values_list('proxy', flat=True)
 
         for device in devices:
-            if device.ip_reset_url not in in_use_ip_reset_urls and not device.checked_out_by:
+            if device.proxy_id not in checked_out_proxies and not device.checked_out_by:
                 if device.is_ready():
                     return device
 
@@ -650,22 +630,53 @@ class ManageCampaignsTask(Task):
                     self.logger.warning('Campaign does not exist. Checking in.')
                     device.check_in()
 
-    def start_campaign(self, campaign, device=None):
-        if device:
+    def get_available_proxy(self):
+        proxies = Proxy.objects.filter(is_active=True)
+        in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list('id', flat=True)
+
+        for proxy in proxies:
+            if proxy.id not in in_use_proxies and not proxy.checked_out_by:
+                return proxy
+
+            runtime = (timezone.now() - proxy.checkout_time).total_seconds() if proxy.checkout_time is not None else None
+            if runtime and proxy.checked_out_by and runtime > CampaignTask.time_limit:
+                try:
+                    campaign = Campaign.objects.get(id=proxy.checked_out_by)
+                    if campaign.status != Campaign.RUNNING:
+                        self.logger.warning('Campaign isn\'t running, checking in.')
+                        proxy.check_in()
+                    elif runtime > CampaignTask.time_limit * 2:
+                        self.logger.warning(f'Campaign has been running for {runtime} sec, checking in.')
+                        proxy.check_in()
+                        campaign.status = Campaign.STARTING
+                        campaign.save()
+                except Campaign.DoesNotExist:
+                    self.logger.warning('Campaign does not exist. Checking in.')
+                    proxy.check_in()
+
+    def start_campaign(self, campaign, device=None, proxy=None):
+        if device and proxy:
             try:
                 device.check_out(campaign.id)
+                try:
+                    proxy.check_out(campaign.id)
+                except ValueError:
+                    self.logger.warning(f'Proxy: {proxy.id} is not ready')
+                    device.check_in()
+
+                    return False
 
                 campaign.status = Campaign.IN_QUEUE
                 campaign.queue_status = 'N/A'
 
                 campaign.save(update_fields=['status', 'queue_status'])
 
-                CampaignTask.delay(campaign.id, device_id=device.id)
-                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial}')
+                CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
+                self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial} with {proxy.license_id} proxy')
 
                 return True
             except ValueError:
-                self.logger.info(f'Device: {device.serial} is not ready')
+                self.logger.warning(f'Device: {device.serial} is not ready')
                 if campaign.status == Campaign.IDLE:
                     campaign.status = Campaign.IN_QUEUE
                     campaign.queue_status = 'N/A'
@@ -675,13 +686,16 @@ class ManageCampaignsTask(Task):
                     self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
 
                     return True
+
+                return False
         else:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
             campaign.save(update_fields=['status', 'queue_status'])
 
             CampaignTask.delay(campaign.id)
-            self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device')
+
+            self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device and no proxy')
 
             return True
 
@@ -694,11 +708,13 @@ class ManageCampaignsTask(Task):
         for campaign in campaigns:
             campaign_started = False
             available_device = None
+            available_proxy = None
             items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
             need_to_list = items_to_list.count() > 0
 
             if campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
-                available_device = self.get_available_device(campaign.posh_user.device)
+                available_device = self.get_available_device()
+                available_proxy = self.get_available_proxy()
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
@@ -707,16 +723,16 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
-                campaign_started = self.start_campaign(campaign, available_device)
-            elif campaign.status == Campaign.STARTING and (available_device or (not need_to_list and campaign.posh_user.is_registered)):
-                campaign_started = self.start_campaign(campaign, available_device)
+                campaign_started = self.start_campaign(campaign, available_device, available_proxy)
+            elif campaign.status == Campaign.STARTING and ((available_proxy and available_device) or (not need_to_list and campaign.posh_user.is_registered)):
+                campaign_started = self.start_campaign(campaign, available_device, available_proxy)
 
-            if (not campaign_started and campaign.status == Campaign.STARTING) or (not available_device and campaign.status == Campaign.STARTING):
+            if (not campaign_started and campaign.status == Campaign.STARTING) or (not (available_device or available_proxy) and campaign.status == Campaign.STARTING):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
 
-                if check_for_device and not campaign.posh_user.device:
+                if check_for_device:
                     check_for_device = False
 
 
@@ -838,7 +854,6 @@ def log_cleanup():
 
 @shared_task
 def posh_user_cleanup():
-    logger = logging.getLogger(__name__)
     day_ago = (timezone.now() - datetime.timedelta(days=1)).date()
     two_weeks_ago = (timezone.now() - datetime.timedelta(days=14)).date()
 
@@ -846,13 +861,6 @@ def posh_user_cleanup():
     posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
 
     for posh_user in posh_users:
-        if posh_user.app_package and posh_user.device and posh_user.clone_installed:
-            posh_user.device.uninstall_app(posh_user.app_package)
-
-            posh_user.clone_installed = False
-            posh_user.device = None
-            posh_user.save(update_fields=['clone_installed', 'device'])
-
         if posh_user.date_disabled < two_weeks_ago:
             posh_user.delete()
 

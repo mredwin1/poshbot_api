@@ -8,6 +8,7 @@ import re
 import requests
 import time
 import traceback
+import zipfile
 
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -23,7 +24,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport
+from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem, Proxy
 
 
 class Captcha:
@@ -88,16 +89,8 @@ class Captcha:
 
 
 class BaseClient:
-    def __init__(self, logger, proxy_ip=None, proxy_port=None, cookies_filename='cookies'):
-        proxy = f'{proxy_ip}:{proxy_port}' if proxy_ip and proxy_port else ''
+    def __init__(self, logger, proxy: Proxy = None, cookies_filename='cookies'):
         user_agent = 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36'
-
-        # webdriver.DesiredCapabilities.CHROME['proxy'] = {
-        #     "httpProxy": proxy,
-        #     "ftpProxy": proxy,
-        #     "sslProxy": proxy,
-        #     "proxyType": ProxyType.MANUAL if proxy else ProxyType.SYSTEM
-        # }
 
         self.cookies_path = '/bot_data/cookies'
         self.logger = logger
@@ -107,7 +100,7 @@ class BaseClient:
         self.web_driver_options.add_experimental_option('useAutomationExtension', False)
         self.web_driver_options.add_experimental_option('prefs', {"enable_do_not_track": True})
         self.web_driver_options.add_argument('--disable-extensions')
-        self.web_driver_options.add_argument('--headless')
+        self.web_driver_options.add_argument('--headless=new')
         self.web_driver_options.add_argument(f'user-agent={user_agent}')
         self.web_driver_options.add_argument('--incognito')
         self.web_driver_options.add_argument('--no-sandbox')
@@ -115,9 +108,76 @@ class BaseClient:
         self.web_driver_options.add_argument("--disable-plugins-discovery")
         # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
+        self.requests_session = requests.Session()
         self.cookies_filename = slugify(cookies_filename)
 
         os.makedirs('/log_images', exist_ok=True)
+
+        if proxy:
+            self.requests_session.proxies = {
+                'http': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
+                'https': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
+            }
+
+            manifest_json = """
+            {
+                "version": "1.0.0",
+                "manifest_version": 2,
+                "name": "Chrome Proxy",
+                "permissions": [
+                    "proxy",
+                    "tabs",
+                    "unlimitedStorage",
+                    "storage",
+                    "<all_urls>",
+                    "webRequest",
+                    "webRequestBlocking"
+                ],
+                "background": {
+                    "scripts": ["background.js"]
+                },
+                "minimum_chrome_version":"22.0.0"
+            }
+            """
+
+            background_js = """
+            var config = {
+                    mode: "fixed_servers",
+                    rules: {
+                    singleProxy: {
+                        scheme: "http",
+                        host: "%s",
+                        port: parseInt(%s)
+                    },
+                    bypassList: ["localhost"]
+                    }
+                };
+
+            chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
+
+            function callbackFn(details) {
+                return {
+                    authCredentials: {
+                        username: "%s",
+                        password: "%s"
+                    }
+                };
+            }
+
+            chrome.webRequest.onAuthRequired.addListener(
+                        callbackFn,
+                        {urls: ["<all_urls>"]},
+                        ['blocking']
+            );
+            """ % (proxy.hostname, proxy.port, proxy.username, proxy.password)
+
+            plugin_file = 'proxy_auth_plugin.zip'
+
+            with zipfile.ZipFile(plugin_file, 'w') as zp:
+                zp.writestr("manifest.json", manifest_json)
+                zp.writestr("background.js", background_js)
+            # self.web_driver_options.add_extension(plugin_file)
+            self.web_driver_options.add_argument(f'--proxy-server={proxy.hostname}:{proxy.port}')
 
     def __enter__(self):
         self.open()
@@ -293,12 +353,29 @@ class BaseClient:
 
         self.logger.info('All tests complete')
 
+    def check_ip(self):
+        self.web_driver.get('https://httpbin.org/ip')
+
+        self.sleep(3)
+
+        # folder = f'/log_images/ip_check'
+        # os.makedirs(folder, exist_ok=True)
+        # self.web_driver.save_screenshot(f'{folder}/{self.cookies_filename}.png')
+
+        # self.logger.info(self.web_driver.page_source, image=f'{folder}/{self.cookies_filename}.png')
+        self.logger.info(self.web_driver.page_source)
+
+        response = self.requests_session.get('https://httpbin.org/ip')
+
+        self.logger.info(response.text)
+
+        return True
+
 
 class PoshMarkClient(BaseClient):
-    def __init__(self, campaign: Campaign, logger, proxy_hostname=None, proxy_port=None):
-        proxy_hostname = proxy_hostname if proxy_hostname else ''
-        proxy_port = proxy_port if proxy_port else ''
-        super(PoshMarkClient, self).__init__(logger, proxy_hostname, proxy_port, campaign.posh_user.username)
+    def __init__(self, campaign: Campaign, logger, **kwargs):
+        proxy = kwargs.get('proxy', None)
+        super(PoshMarkClient, self).__init__(logger, proxy=proxy, cookies_filename=campaign.posh_user.username)
 
         aws_session = boto3.Session()
         s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
@@ -307,16 +384,12 @@ class PoshMarkClient(BaseClient):
         self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
         self.posh_user = campaign.posh_user
         self.campaign = campaign
-        self.requests_proxy = {}
 
-        if proxy_hostname and proxy_port:
-            self.requests_proxy['https'] = f'http://{proxy_hostname}:{proxy_port}'
-
-        logs_dir = f'/log_images/{slugify(self.campaign.title)}'
-        os.makedirs(logs_dir, exist_ok=True)
+        self.logs_dir = f'/log_images/{slugify(self.campaign.title)}'
+        os.makedirs(self.logs_dir, exist_ok=True)
 
     def handle_error(self, error_message, filename):
-        image_path = f'/log_images/{slugify(self.campaign.title)}/{filename}'
+        image_path = f'{self.logs_dir}/{filename}'
         self.logger.debug(f'{traceback.format_exc()}')
         self.web_driver.save_screenshot(image_path)
         self.logger.error(error_message, image_path)
@@ -476,7 +549,7 @@ class PoshMarkClient(BaseClient):
                 return False
 
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/check_inactive_error.png'
+            image_path = f'{self.logs_dir}/check_inactive_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while checking if inactive')
@@ -542,7 +615,7 @@ class PoshMarkClient(BaseClient):
 
             return result
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/check_logged_in_error.png'
+            image_path = f'{self.logs_dir}/check_logged_in_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while checking if logged in')
@@ -604,8 +677,12 @@ class PoshMarkClient(BaseClient):
             self.save_cookies()
 
             self.logger.info('Registration Complete')
+
+            return True
         except Exception:
             self.handle_error('Error while finishing registration', 'finish_registration.png')
+
+            return False
 
     def register(self, register_retries=0):
         """Will register a given user to poshmark"""
@@ -658,18 +735,15 @@ class PoshMarkClient(BaseClient):
             self.sleep(7)
 
             attempts = 0
-            response = requests.get(f'https://poshmark.com/closet/{self.posh_user.username}',
-                                    proxies=self.requests_proxy, timeout=30)
+            response = self.requests_session.get(f'https://poshmark.com/closet/{self.posh_user.username}', timeout=30)
             while attempts < 8 and response.status_code != requests.codes.ok:
-                response = requests.get(f'https://poshmark.com/closet/{self.posh_user.username}',
-                                        proxies=self.requests_proxy, timeout=30)
+                response = self.requests_session.get(f'https://poshmark.com/closet/{self.posh_user.username}', timeout=30)
                 self.logger.warning(
                     f'Closet for {self.posh_user.username} is still not available - Trying again')
                 attempts += 1
                 self.sleep(5)
 
             if response.status_code == requests.codes.ok:
-                self.finish_registration()
                 return True
             else:
                 error_code = self.check_for_errors()
@@ -677,7 +751,6 @@ class PoshMarkClient(BaseClient):
                     done_button = self.locate(By.XPATH, '//button[@type="submit"]')
                     done_button.click()
                     self.logger.info('Resubmitted form after entering captcha')
-                    self.finish_registration()
                     return True
                 elif error_code == 'ERROR_FORM_ERROR':
                     self.posh_user_inactive()
@@ -689,7 +762,7 @@ class PoshMarkClient(BaseClient):
                     return False
 
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/register_error.png'
+            image_path = f'{self.logs_dir}/register_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while registering')
@@ -744,7 +817,7 @@ class PoshMarkClient(BaseClient):
 
             return True
         except Exception:
-            image_path = f'/log_images/{self.campaign.title}/login_error.png'
+            image_path = f'{self.logs_dir}/login_error.png'
             self.logger.debug(f'{traceback.format_exc()}')
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while logging in')
@@ -761,6 +834,8 @@ class PoshMarkClient(BaseClient):
             else:
                 self.logger.info(f"Already at {posh_username}'s closet, refreshing.")
                 self.web_driver.refresh()
+
+            self.logger.debug(self.web_driver.current_url)
 
             show_all_listings_xpath = '//*[@id="content"]/div/div[2]/div/div/section/div[2]/div/div/button'
             if self.is_present(By.XPATH, show_all_listings_xpath):
@@ -879,10 +954,11 @@ class PoshMarkClient(BaseClient):
             self.handle_error('Error while updating profile', 'update_profile_error.png')
             return False
 
-    def list_item(self, listing, listing_images, list_item_retries=0):
+    def list_item(self, listed_item: ListedItem, listing_images, list_item_retries=0):
         """Will list an item on poshmark for the user"""
         try:
-            listing_title = listing.title
+            listing_title = listed_item.listing_title
+            listing = listed_item.listing
 
             self.logger.info(f'Attempt # {list_item_retries + 1} to list {listing_title} for {self.posh_user.username}')
 
@@ -898,7 +974,8 @@ class PoshMarkClient(BaseClient):
             self.logger.info(f'Current URL: {self.web_driver.current_url}')
 
             if self.is_present(By.XPATH, '//*[@id="app"]/main/div[1]/div/div[2]'):
-                image_path = f'/log_images/{self.campaign.title}/listing_error.png'
+
+                image_path = f'{self.logs_dir}/listing_error.png'
                 self.web_driver.save_screenshot(image_path)
                 self.logger.error('Error encountered when on the new listing page. Setting user inactive.', image_path)
                 self.posh_user_inactive()
@@ -923,17 +1000,24 @@ class PoshMarkClient(BaseClient):
                 os.makedirs(listing_folder, exist_ok=True)
 
                 listing_cover_photo_name = listing.cover_photo.name.split('/')[-1]
-                self.bucket.download_file(listing.cover_photo.name, f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')
+                self.bucket.download_file(listing.cover_photo.name, f'{listing_folder }/{listing_cover_photo_name}')
 
                 for listing_image in listing_images:
                     image_name = listing_image.image.name.split('/')[-1]
-                    self.bucket.download_file(listing_image.image.name, f'/{self.campaign.title}/{listing.title}/{image_name}')
+                    self.bucket.download_file(listing_image.image.name, f'{listing_folder }/{image_name}')
                     listing_image_names.append(image_name)
+
+                category_xpath = '//*[@id="content"]/div/div[1]/div[2]/section[3]/div/div[2]/div[1]/div'
+                wait_attempts = 0
+
+                while wait_attempts < 5 and not self.is_present(By.XPATH, category_xpath):
+                    self.sleep(2)
+                    wait_attempts += 1
 
                 # Set category and sub category
                 self.logger.info('Setting category')
                 category_dropdown = self.locate(
-                    By.XPATH, '//*[@id="content"]/div/div[1]/div[2]/section[3]/div/div[2]/div[1]/div'
+                    By.XPATH, category_xpath
                 )
                 category_dropdown.click()
 
@@ -957,7 +1041,7 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Setting subcategory')
 
                 subcategory_menu = self.locate(By.CLASS_NAME, 'dropdown__menu--expanded')
-                subcategories = subcategory_menu.find_elements(By.TAG_NAME,'a')
+                subcategories = subcategory_menu.find_elements(By.TAG_NAME, 'a')
                 subcategory = listing_subcategory
                 for available_subcategory in subcategories:
                     if available_subcategory.text == subcategory:
@@ -983,6 +1067,8 @@ class PoshMarkClient(BaseClient):
                     if button.text == 'Custom':
                         button.click()
                         break
+
+                self.sleep(1)
 
                 custom_size_input = self.locate(By.ID, 'customSizeInput0')
                 save_button = self.locate(
@@ -1014,7 +1100,7 @@ class PoshMarkClient(BaseClient):
                 self.logger.info('Uploading photos')
 
                 cover_photo_field = self.locate(By.ID, 'img-file-input')
-                cover_photo_field.send_keys(f'/{self.campaign.title}/{listing.title}/{listing_cover_photo_name}')
+                cover_photo_field.send_keys(f'{listing_folder}/{listing_cover_photo_name}')
                 element = self.locate(By.CLASS_NAME, 'listing-editor__promotion__count')
                 self.web_driver.execute_script("return arguments[0].scrollIntoView(true);", element)
                 self.web_driver.save_screenshot('cover_photo_upload.png')
@@ -1026,7 +1112,7 @@ class PoshMarkClient(BaseClient):
                 for image in listing_image_names:
                     upload_photos_field = self.locate(By.ID, 'img-file-input')
                     upload_photos_field.clear()
-                    upload_photos_field.send_keys(f'/{self.campaign.title}/{listing.title}/{image}')
+                    upload_photos_field.send_keys(f'{listing_folder}/{image}')
                     self.sleep(1)
 
                 self.logger.info('Photos uploaded')
@@ -1137,6 +1223,24 @@ class PoshMarkClient(BaseClient):
 
         except Exception as e:
             self.handle_error('Error while sharing item', 'share_item_error.png')
+
+    def get_listed_item_id(self, listing_title):
+        self.logger.info('Getting listing id')
+
+        self.go_to_closet()
+
+        self.sleep(2)
+
+        listings = self.locate_all(By.CLASS_NAME, 'col-x12')
+
+        for listing in listings:
+            title = self.locate(By.CLASS_NAME, 'tile__title').text
+            listed_item_id = listing.get_attribute('data-et-prop-listing_id')
+
+            if title == listing_title and not ListedItem.objects.filter(listed_item_id=listed_item_id).exists():
+                return listed_item_id
+
+        return ''
 
     def check_offers(self, listing_title):
         try:
@@ -1730,12 +1834,6 @@ class PoshMarkClient(BaseClient):
             self.logger.error(f'{traceback.format_exc()}')
             if not self.check_logged_in():
                 self.login()
-
-    def check_ip(self):
-        self.web_driver.get('https://www.ipchicken.com/')
-        ip = self.locate(By.XPATH, '/html/body/table[2]/tbody/tr/td[3]/p[2]/font/b').text
-
-        self.logger.info(f'IP: {ip}')
 
 
 class PublicPoshMarkClient(BaseClient):

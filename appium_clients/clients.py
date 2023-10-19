@@ -7,9 +7,11 @@ import traceback
 
 from appium import webdriver
 from appium.webdriver.common.appiumby import AppiumBy
+from appium.options.android import UiAutomator2Options
 from bs4 import BeautifulSoup
 from decimal import Decimal
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 from ppadb.client import Client as AdbClient
 from selenium.webdriver.common.action_chains import ActionChains
@@ -18,13 +20,13 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from typing import List
 
-from core.models import Campaign, ListedItem, ListingImage
+from core.models import Campaign, ListedItem, ListingImage, Device, Proxy, PoshUser, AppData, LogGroup
 
 APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
 
 
 class AppiumClient:
-    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger, capabilities):
+    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger: LogGroup, capabilities: dict):
         self.driver = None
         self.logger = logger
         self.files_sent = []
@@ -33,7 +35,9 @@ class AppiumClient:
         capabilities['adbExecTimeout'] = 50000
         capabilities['systemPort'] = system_port
         capabilities['mjpegServerPort'] = mjpeg_server_port
+
         self.capabilities = capabilities
+        self.capabilities_options = UiAutomator2Options().load_capabilities(capabilities)
 
     def __enter__(self):
         self.open()
@@ -45,14 +49,24 @@ class AppiumClient:
 
     def open(self):
         """Used to open the appium web driver session"""
-        self.driver = webdriver.Remote(APPIUM_SERVER_URL, self.capabilities)
+
+        self.driver = webdriver.Remote(APPIUM_SERVER_URL, options=self.capabilities_options)
+
+        while self.get_current_app_package() != self.capabilities['appPackage']:
+            self.driver.activate_app(self.capabilities['appPackage'])
+            self.sleep(5)
 
     def close(self):
         """Closes the appium driver session"""
         if self.driver:
-            self.cleanup_files()
+            if self.files_sent:
+                self.cleanup_files()
 
-            self.driver.close_app()
+            if self.capabilities['appPackage'] != 'org.proxydroid':
+                self.driver.terminate_app(self.capabilities['appPackage'])
+            else:
+                self.driver.press_keycode(3)
+
             self.driver.quit()
             self.logger.debug('Driver was quit')
 
@@ -254,7 +268,7 @@ class AppiumClient:
 
 
 class PoshMarkClient(AppiumClient):
-    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, campaign: Campaign, logger, app_package='com.poshmark.app'):
+    def __init__(self, campaign: Campaign, logger, device: Device):
         self.driver = None
         self.campaign = campaign
         self.logger = logger
@@ -275,14 +289,14 @@ class PoshMarkClient(AppiumClient):
         capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            appPackage=app_package,
+            appPackage='com.poshmark.app',
             appActivity='com.poshmark.ui.MainActivity',
             language='en',
             locale='US',
-            noReset=True,
+            noReset=True
         )
 
-        super(PoshMarkClient, self).__init__(device_serial, system_port, mjpeg_server_port, logger, capabilities)
+        super(PoshMarkClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
 
     def locate(self, by, locator, location_type=None, retry=0):
         """Locates the first elements with the given By"""
@@ -376,6 +390,11 @@ class PoshMarkClient(AppiumClient):
                 self.click(ok_button)
 
             return True
+        elif self.is_present(AppiumBy.ID, 'com.poshmark.app:id/tooltip_close_button'):
+            self.logger.info('Tooltip found - Closing')
+            close_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/tooltip_close_button')
+            close_button.click()
+
 
         self.logger.info('No alerts found')
 
@@ -685,6 +704,8 @@ class PoshMarkClient(AppiumClient):
                     else:
                         self.logger.info('No handler for this title less screen')
                         self.logger.debug(self.driver.page_source)
+
+                        self.need_alert_check = True
 
                 while self.is_present(AppiumBy.ID, 'progressBar') and not self.is_present(AppiumBy.ID, 'titleTextView'):
                     self.logger.info('Waiting to continue...')
@@ -1125,6 +1146,11 @@ class PoshMarkClient(AppiumClient):
                                 self.click(certify_ok)
 
                                 list_attempts = 0
+                            elif self.is_present(AppiumBy.ID, 'com.poshmark.app:id/close'):
+                                close_button = self.locate(AppiumBy.ID, 'com.poshmark.app:id/close')
+                                close_button.click()
+
+                                sell_button_present = self.is_present(AppiumBy.ID, 'sellTab')
                             else:
                                 self.logger.info('Item not listed yet')
                                 self.sleep(sleep_amount)
@@ -1177,6 +1203,11 @@ class PoshMarkClient(AppiumClient):
                 my_closet = self.locate(AppiumBy.ACCESSIBILITY_ID, 'myClosetMenuButton')
                 self.click(my_closet)
 
+            self.sleep(2)
+
+            while self.is_present(AppiumBy.ID, 'com.poshmark.app:id/progressBar'):
+                self.sleep(2)
+
             first_share_button = self.locate(AppiumBy.XPATH, f"//*[@resource-id='{self.capabilities['appPackage']}:id/shareButton']")
             self.click(first_share_button)
 
@@ -1206,199 +1237,283 @@ class PoshMarkClient(AppiumClient):
             return ''
 
 
-class AppClonerClient(AppiumClient):
-    def __init__(self, device_serial: str, system_port: int, mjpeg_server_port: int, logger, app_name=None):
-        self.driver = None
-        self.logger = logger
-        self.app_name = app_name
-        self.installed = False
+class ProxyDroidClient(AppiumClient):
+    def __init__(self, device: Device, logger, proxy: Proxy):
+        self.proxy = proxy
 
         capabilities = dict(
             platformName='Android',
             automationName='uiautomator2',
-            appPackage='com.applisto.appcloner',
-            appActivity='.activity.MainActivity',
+            appPackage='org.proxydroid',
+            appActivity='org.proxydroid.ProxyDroid',
             language='en',
             locale='US',
             noReset=True,
         )
-        super(AppClonerClient, self).__init__(device_serial, system_port, mjpeg_server_port, logger, capabilities)
+        super(ProxyDroidClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
 
-    def add_clone(self):
-        excluded_clone_numbers = [134, 135, 136, 137, 138, 139, 140, 163, 164, 165, 166, 167, 168, 169, 170, 171]
-        app_cloned = False
-        sorry_message = False
-        reset_to_beginning = True
-        try:
-            search_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Search apps')
-            search_button.click()
+    def set_proxy(self):
+        self.swipe('down', 1000, 2000)
+        values_to_check = {
+            'Host': self.proxy.hostname,
+            'Port': self.proxy.port,
+            'User': self.proxy.username,
+            'Password': self.proxy.password
+        }
+        values_checked = []
 
-            search_bar = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[1]/android.view.ViewGroup/androidx.appcompat.widget.LinearLayoutCompat[1]/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.AutoCompleteTextView')
-            search_bar.send_keys('poshmark')
+        proxy_switch = self.locate(AppiumBy.ID, 'android:id/switch_widget')
+        if proxy_switch.get_attribute('checked') == 'true':
+            proxy_switch.click()
 
-            self.sleep(.5)
+        while any(elem not in values_checked for elem in values_to_check.keys()):
+            containers = self.locate_all(AppiumBy.CLASS_NAME, 'android.widget.LinearLayout')
 
-            poshmark_app = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/android.widget.LinearLayout/androidx.viewpager.widget.ViewPager/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ListView/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.TextView')
-            poshmark_app.click()
-
-            self.sleep(.5)
-
-            while not app_cloned:
-                clone_number = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/android.widget.LinearLayout/androidx.viewpager.widget.ViewPager/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.ListView/android.widget.LinearLayout[1]/android.widget.RelativeLayout')
-                clone_number.click()
-
-                clone_number_input = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.EditText')
-                if reset_to_beginning:
-                    clone_number_input.clear()
-                    clone_number_input.send_keys('1')
-                    starting_number = 1
-                else:
-                    starting_number = int(clone_number_input.text)
-                    reset_to_beginning = False
-                current_number = None
-                ok_clicked = False
-
-                if sorry_message:
-                    excluded_clone_numbers.append(starting_number)
-                    sorry_message = False
-
-                while not ok_clicked:
-                    if current_number == starting_number:
-                        return False
-
-                    if self.is_present(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.TextView'):
-                        clone_message = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.TextView')
-                        clone_message_str = clone_message.text
-
-                        if 'need more clones?' in clone_message_str.lower():
-                            clone_number_input.clear()
-                            clone_number_input.send_keys('1')
-                        elif 'existing installed clone' in clone_message_str.lower():
-                            next_button = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout[1]/android.widget.ImageView[2]')
-                            next_button.click()
-                    else:
-                        if current_number in excluded_clone_numbers:
-                            next_button = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout[1]/android.widget.ImageView[2]')
-                            next_button.click()
-                        else:
-                            ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                            ok_button.click()
-                            ok_clicked = True
-
-                    if not ok_clicked:
-                        clone_number_input = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.EditText')
-                        current_number = int(clone_number_input.text)
-
-                clone_name = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.view.ViewGroup/android.widget.LinearLayout/androidx.viewpager.widget.ViewPager/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.view.ViewGroup/android.widget.ListView/android.widget.LinearLayout[2]/android.widget.RelativeLayout')
-                clone_name.click()
-
-                clone_name_input = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.ScrollView/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout[1]/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.EditText')
-                clone_name_input.clear()
-                clone_name_input.send_keys(self.app_name)
-
-                ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                ok_button.click()
-
-                clone_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Clone app')
-                clone_button.click()
-
-                while self.is_present(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.TextView'):
-                    title = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.LinearLayout/android.widget.LinearLayout/android.widget.TextView')
-                    try:
-                        if title.text == 'Cloning Poshmark':
-                            self.logger.info('Waiting for app to finish cloning...')
-                            self.sleep(8)
-                        elif title.text == 'App cloned':
-                            self.logger.info('App finished cloning')
-                            app_cloned = True
-                            install_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                            install_button.click()
-
-                        elif self.is_present(AppiumBy.ID, 'android:id/message'):
-                            message = self.locate(AppiumBy.ID, 'android:id/message')
-
-                            if 'sorry' in message.text.lower():
-                                excluded_clone_numbers.append(current_number)
-                                ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                                ok_button.click()
-                                sorry_message = True
-                        else:
-                            self.logger.debug('There is some message on the screen but no handler')
-                    except StaleElementReferenceException:
-                        pass
-
-            self.sleep(.5)
-
-            install_button = self.locate(AppiumBy.ID, 'android:id/button1')
-            install_button.click()
-
-            while self.is_present(AppiumBy.ID, 'com.android.packageinstaller:id/progress'):
-                self.logger.info('Waiting for app to finish installing...')
-                self.sleep(3)
-
-            self.logger.info('Installation completed')
-
-            self.installed = True
-
-            if self.is_present(AppiumBy.ID, 'android:id/button2'):
-                done_button = self.locate(AppiumBy.ID, 'android:id/button2')
-                done_button.click()
-
-            return self.installed
-        except (TimeoutException, StaleElementReferenceException, NoSuchElementException):
-            self.logger.error(traceback.format_exc())
-            self.logger.info(self.driver.page_source)
-
-            return False
-
-    def launch_clone(self):
-        try:
-            self.logger.info('Launching app')
-            clones_button = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.FrameLayout/android.view.View[2]')
-            clones_button.click()
-
-            while not self.is_present(AppiumBy.XPATH, f"//*[contains(@text, '{self.app_name}')]"):
-                self.swipe('up', 1300)
-
-            clone = self.locate(AppiumBy.XPATH, f"//*[contains(@text, '{self.app_name}')]")
-            clone.click()
-
-            self.sleep(.5)
-
-            launch_button = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[2]')
-            launch_button.click()
-        except TimeoutException:
-            self.logger.error(traceback.format_exc())
-            self.logger.info(self.driver.page_source)
-
-            return False
-
-    def delete_clone(self, app_names):
-        try:
-            self.logger.info('Launching app')
-            clones_button = self.locate(AppiumBy.XPATH,
-                                        '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.drawerlayout.widget.DrawerLayout/android.widget.LinearLayout/android.widget.LinearLayout[2]/android.widget.LinearLayout/android.widget.FrameLayout/android.view.View[2]')
-            clones_button.click()
-
-            for app_name in sorted(app_names):
+            for container in containers:
                 try:
-                    clone = self.locate(AppiumBy.XPATH, f"//*[contains(@text, '{app_name}')]")
-                    clone.click()
+                    title_element = container.find_element(AppiumBy.ID, 'android:id/title')
+                    summary_element = container.find_element(AppiumBy.ID, 'android:id/summary')
+                    current_title = title_element.text
 
-                    self.sleep(.5)
+                    if current_title in values_to_check.keys() and current_title not in values_checked and summary_element.text != \
+                            values_to_check[current_title]:
+                        title_element.click()
 
-                    uninstall_button = self.locate(AppiumBy.XPATH,
-                                                   '/hierarchy/android.widget.FrameLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[3]')
-                    uninstall_button.click()
+                        text_box = self.locate(AppiumBy.ID, 'android:id/edit')
+                        text_box.clear()
+                        text_box.send_keys(values_to_check[current_title])
 
-                    ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
-                    ok_button.click()
-                except TimeoutException:
-                    scroll_attempts = 0
-                    while not self.is_present(AppiumBy.XPATH, f"//*[contains(@text, '{app_name}')]") and scroll_attempts < 40:
-                        self.swipe('up', 1300)
-                        scroll_attempts += 1
+                        ok_button = self.locate(AppiumBy.ID, 'android:id/button1')
+                        ok_button.click()
 
-        except TimeoutException:
-            self.logger.error(traceback.format_exc())
-            self.logger.info(self.driver.page_source)
+                        self.sleep(1)
+
+                    values_checked.append(current_title)
+
+                except (TimeoutException, NoSuchElementException):
+                    pass
+            self.swipe('up', 1000)
+
+        self.swipe('down', 1500, 2000)
+        proxy_switch = self.locate(AppiumBy.ID, 'android:id/switch_widget')
+        proxy_switch.click()
+
+        self.sleep(5)
+
+
+class IDChangerClient(AppiumClient):
+    def __init__(self, device: Device, logger):
+        capabilities = dict(
+            platformName='Android',
+            automationName='uiautomator2',
+            appPackage='dev.sdex.idv2',
+            appActivity='dev.sdex.idv2.MainActivity',
+            language='en',
+            locale='US',
+            noReset=True,
+        )
+        super(IDChangerClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
+
+    def set_android_id(self, android_id: str = ''):
+        app_xpath = "//android.widget.TextView[contains(@text, 'com.poshmark.app')]"
+
+        while not self.is_present(AppiumBy.XPATH, app_xpath):
+            self.swipe('up', 1000)
+
+        poshmark = self.locate(AppiumBy.XPATH, app_xpath)
+        poshmark.click()
+
+        if android_id:
+            clear_field = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Clear the field')
+            clear_field.click()
+
+            input_field = self.locate(AppiumBy.XPATH,
+                                      '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.widget.EditText')
+            input_field.send_keys(android_id)
+        else:
+            random_button = self.locate(AppiumBy.XPATH,
+                                        '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.view.View[1]/android.widget.Button')
+            random_button.click()
+
+            input_field = self.locate(AppiumBy.XPATH,
+                                      '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.widget.EditText')
+            android_id = input_field.text
+
+        self.sleep(.5)
+
+        save_button = self.locate(AppiumBy.XPATH,
+                                  '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.view.ViewGroup/android.view.View/android.view.View/android.view.View/android.widget.ScrollView/android.view.View[2]/android.widget.Button')
+        save_button.click()
+
+        self.sleep(3)
+
+        return android_id
+
+
+class SwiftBackupClient(AppiumClient):
+    def __init__(self, device: Device, logger, posh_user: PoshUser):
+        capabilities = dict(
+            platformName='Android',
+            automationName='uiautomator2',
+            appPackage='org.swiftapps.swiftbackup',
+            appActivity='.intro.IntroActivity',
+            language='en',
+            locale='US',
+            noReset=True,
+        )
+
+        self.posh_user = posh_user
+
+        self.location = f'/backups/{posh_user.username}'
+        os.makedirs(self.location, exist_ok=True)
+
+        super(SwiftBackupClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
+
+    def reset_data(self):
+        self.logger.info('Resetting poshmark app data')
+        app_button = self.locate(AppiumBy.XPATH,
+                                 '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.RelativeLayout/android.widget.ScrollView/androidx.viewpager.widget.b/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[1]')
+        app_button.click()
+
+        search_icon = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/action_search')
+        search_icon.click()
+
+        search_bar = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/searchEditText')
+        search_bar.send_keys('poshmark')
+
+        app = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/container')
+        app.click()
+
+        self.sleep(.5)
+
+        iv_menu = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/iv_menu')
+        iv_menu.click()
+
+        reset_data = self.locate(AppiumBy.XPATH,
+                                 '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ScrollView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView[1]/android.widget.Button[3]')
+        reset_data.click()
+
+        yes_button = self.locate(AppiumBy.ID, 'android:id/button1')
+        yes_button.click()
+
+    def _download_backup_files(self):
+        aws_session = boto3.Session()
+        s3_client = aws_session.resource('s3', aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
+                                         aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
+                                         region_name=settings.AWS_S3_REGION_NAME)
+        bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
+
+        app_data: AppData = AppData.objects.filter(posh_user=self.posh_user).first()
+
+        bucket.download_file(app_data.backup_data.name, f'{self.location}/com.poshmark.app.dat')
+        bucket.download_file(app_data.xml_data.name, f'{self.location}/com.poshmark.app.xml')
+
+    def save_backup(self):
+        self.logger.info('Saving backup')
+        app_button = self.locate(AppiumBy.XPATH,
+                                 '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.RelativeLayout/android.widget.ScrollView/androidx.viewpager.widget.b/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[1]')
+        app_button.click()
+
+        search_icon = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/action_search')
+        search_icon.click()
+
+        search_bar = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/searchEditText')
+        search_bar.send_keys('poshmark')
+
+        app = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/container')
+        app.click()
+
+        self.sleep(.5)
+
+        # Create backup
+        data_button = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView[1]/android.view.ViewGroup/android.widget.FrameLayout/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView/androidx.cardview.widget.CardView[2]/android.view.ViewGroup')
+        data_button.click()
+
+        backup_to_device = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ListView/android.widget.LinearLayout[1]/android.widget.LinearLayout')
+        backup_to_device.click()
+
+        while not self.is_present(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/tv_progress_message') or self.locate(
+                AppiumBy.ID, 'org.swiftapps.swiftbackup:id/tv_progress_message').text != 'Done':
+            self.sleep(1)
+
+        done_button = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/btn_action')
+        done_button.click()
+
+        self.sleep(.5)
+
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        device = client.device(self.capabilities.get('udid'))
+
+        data_file_location = f'{self.location}/com.poshmark.app.dat'
+        xml_file_location = f'{self.location}/com.poshmark.app.xml'
+
+        device.pull('/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.dat', data_file_location)
+        device.pull('/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.xml', xml_file_location)
+
+        with open(data_file_location, 'rb') as data_file, open(xml_file_location, 'rb') as xml_file:
+            if AppData.objects.filter(posh_user=self.posh_user).exists():
+                app_data = AppData.objects.filter(posh_user=self.posh_user).first()
+            else:
+                app_data = AppData(
+                    posh_user=self.posh_user,
+                    type=AppData.POSHMARK
+                )
+
+            app_data.backup_data.save('com.poshmark.app.dat', ContentFile(data_file.read()), save=False)
+            app_data.xml_data.save('com.poshmark.app.xml', ContentFile(xml_file.read()), save=True)
+
+        # Delete backup
+        more_info = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView[2]/android.widget.LinearLayout/android.view.ViewGroup/android.view.ViewGroup/android.widget.ImageView')
+        more_info.click()
+
+        delete_backup = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ListView/android.widget.LinearLayout[2]/android.widget.LinearLayout')
+        delete_backup.click()
+
+        yes_button = self.locate(AppiumBy.ID, 'android:id/button1')
+        yes_button.click()
+
+        iv_menu = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/iv_menu')
+        iv_menu.click()
+
+        reset_data = self.locate(AppiumBy.XPATH, '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.FrameLayout/androidx.appcompat.widget.LinearLayoutCompat/android.widget.FrameLayout/android.widget.FrameLayout/android.widget.ScrollView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView[1]/android.widget.Button[3]')
+        reset_data.click()
+
+        yes_button = self.locate(AppiumBy.ID, 'android:id/button1')
+        yes_button.click()
+
+    def load_backup(self):
+        self._download_backup_files()
+
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        device = client.device(self.capabilities.get('udid'))
+
+        device.push(f'{self.location}/com.poshmark.app.dat', '/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.dat')
+        device.push(f'{self.location}/com.poshmark.app.xml', '/storage/emulated/0/SwiftBackup/accounts/8690a48a4fcc72f1/backups/apps/local/com.poshmark.app.xml')
+
+        app_button = self.locate(AppiumBy.XPATH,
+                                 '/hierarchy/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.LinearLayout/android.widget.FrameLayout/android.widget.RelativeLayout/android.widget.ScrollView/androidx.viewpager.widget.b/android.widget.ScrollView/android.widget.LinearLayout/androidx.cardview.widget.CardView/android.widget.LinearLayout/androidx.recyclerview.widget.RecyclerView/android.widget.LinearLayout[1]')
+        app_button.click()
+
+        search_icon = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/action_search')
+        search_icon.click()
+
+        search_bar = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/searchEditText')
+        search_bar.send_keys('poshmark')
+
+        app = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/container')
+        app.click()
+
+        self.sleep(.5)
+
+        # Restore backup
+        restore_button = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/btn_restore')
+        restore_button.click()
+
+        confirm_button = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/btn_action')
+        confirm_button.click()
+
+        while not self.is_present(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/tv_progress_message') or self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/tv_progress_message').text != 'Done':
+            self.sleep(1)
+
+        done_button = self.locate(AppiumBy.ID, 'org.swiftapps.swiftbackup:id/btn_action')
+        done_button.click()
