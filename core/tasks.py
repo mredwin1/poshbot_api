@@ -527,12 +527,17 @@ class CampaignTask(Task):
 
             self.device.reboot()
 
-            self.finalize_campaign(False, None, 0, False)
+            while not self.device.finished_boot():
+                self.logger.debug('Waiting (5sec) for device to finish booting...')
+                time.sleep(5)
 
         elif type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
             self.logger.warning('Campaign ended because it exceeded the run time allowed')
-        else:
+
+        if self.device:
             self.finalize_campaign(False, None, 0)
+        else:
+            self.finalize_campaign(False, None, 0, False)
 
         exc_type, exc_value, exc_traceback = einfo.exc_info
         self.logger.error(f'Campaign failed due to {exc_type}: {exc_value}')
