@@ -48,7 +48,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
     class Meta:
         model = PoshUser
         fields = [
-            'id', 'username', 'first_name', 'last_name', 'email', 'email_password', 'email_imap_password', 'password', 'phone_number', 'profile_picture',
+            'id', 'username', 'first_name', 'last_name', 'email', 'censored_email_password', 'censored_email_imap_password', 'censored_password', 'phone_number', 'profile_picture',
             'status', 'profile_url', 'sold_listings', 'last_sale_time'
         ]
         extra_kwargs = {
@@ -62,19 +62,19 @@ class PoshUserSerializer(serializers.ModelSerializer):
         return f'https://poshmark.com/closet/{posh_user.username}'
 
     @staticmethod
-    def password(posh_user: PoshUser):
+    def censored_password(posh_user: PoshUser):
         if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
             return posh_user.password
         return '***********'
 
     @staticmethod
-    def email_imap_password(posh_user: PoshUser):
+    def censored_email_imap_password(posh_user: PoshUser):
         if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
             return posh_user.email_imap_password
         return '***********'
 
     @staticmethod
-    def email_password(posh_user: PoshUser):
+    def censored_email_password(posh_user: PoshUser):
         if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
             return posh_user.email_password
         return '***********'
