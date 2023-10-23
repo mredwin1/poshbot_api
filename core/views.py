@@ -87,6 +87,10 @@ class PoshUserViewSet(CreateModelMixin, RetrieveModelMixin, UpdateModelMixin, De
         serializer = self.get_serializer(data=request.data, many=True)
         serializer.is_valid(raise_exception=True)
 
+        import logging
+        logger = logging.getLogger(__name__)
+        logger.info(serializer.validated_data)
+
         if not serializer.validated_data[0].get('email'):
             # Get the number of valid PoshUser instances
             num_valid_users = len(serializer.validated_data)
