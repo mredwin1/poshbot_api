@@ -49,7 +49,7 @@ class PoshUserSerializer(serializers.ModelSerializer):
         model = PoshUser
         fields = [
             'id', 'username', 'first_name', 'last_name', 'email', 'censored_email_password', 'censored_email_imap_password', 'censored_password', 'phone_number', 'profile_picture',
-            'status', 'profile_url', 'sold_listings', 'last_sale_time'
+            'status', 'profile_url', 'sold_listings', 'last_sale_time', 'is_registered'
         ]
         extra_kwargs = {
             'id': {'read_only': True},
