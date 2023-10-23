@@ -66,19 +66,19 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
+        if ListedItem.objects.filter(posh_user=posh_user, datetime_sold__isnull=False, datetime_redeemable__isnull=False).exists():
             return posh_user.password
         return '***********'
 
     @staticmethod
     def get_email_imap_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
+        if ListedItem.objects.filter(posh_user=posh_user, datetime_sold__isnull=False, datetime_redeemable__isnull=False).exists():
             return posh_user.email_imap_password
         return '***********'
 
     @staticmethod
     def get_email_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
+        if ListedItem.objects.filter(posh_user=posh_user, datetime_sold__isnull=False, datetime_redeemable__isnull=False).exists():
             return posh_user.email_password
         return '***********'
 
