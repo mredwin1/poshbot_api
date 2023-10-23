@@ -438,7 +438,21 @@ class PoshUser(models.Model):
         return username
 
     @staticmethod
-    def generate(fake, user, password, email, email_password='', email_imap_password='', email_id=None, excluded_names=None, excluded_profile_picture_ids=None):
+    def _generate_password(length=12):
+        # Define the characters to use in the password
+        characters = string.ascii_letters + string.digits
+        password = ''.join(random.choice(characters) for _ in range(length))
+
+        # Ensure that the password contains at least one digit
+        has_digit = False
+        while not has_digit:
+            password = ''.join(random.choice(characters) for _ in range(length))
+            has_digit = any(char.isdigit() for char in password)
+
+        return password
+
+    @staticmethod
+    def generate(fake, user, email, email_password='', email_imap_password='', email_id=None, excluded_names=None, excluded_profile_picture_ids=None):
         fake.add_provider(address_provider.AddressProvider)
         attempts = 0
         profile_picture_id = str(fake.random_int(min=1, max=1000))
@@ -483,6 +497,7 @@ class PoshUser(models.Model):
                 attempts += 1
 
         username = PoshUser._generate_username(fake, first_name, last_name, date_of_birth.year)
+        password = PoshUser._generate_password()
 
         posh_user = PoshUser.objects.create(
             user=user,

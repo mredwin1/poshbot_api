@@ -4,7 +4,7 @@ from email_retrieval import zke_yahoo
 from rest_framework import serializers
 from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework_simplejwt.serializers import TokenObtainPairSerializer as BaseTokenObtainPairSerializer
-from .models import PoshUser, Campaign, Listing, ListingImage, LogEntry, LogGroup
+from .models import PoshUser, Campaign, Listing, ListingImage, LogEntry, LogGroup, ListedItem
 
 
 class TokenObtainPairSerializer(BaseTokenObtainPairSerializer):
@@ -61,6 +61,24 @@ class PoshUserSerializer(serializers.ModelSerializer):
     def get_profile_url(posh_user: PoshUser):
         return f'https://poshmark.com/closet/{posh_user.username}'
 
+    @staticmethod
+    def password(posh_user: PoshUser):
+        if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
+            return posh_user.password
+        return '***********'
+
+    @staticmethod
+    def email_imap_password(posh_user: PoshUser):
+        if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
+            return posh_user.email_imap_password
+        return '***********'
+
+    @staticmethod
+    def email_password(posh_user: PoshUser):
+        if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
+            return posh_user.email_password
+        return '***********'
+
     def create(self, validated_data):
         used_full_names = self.context.get('used_full_names')
         used_profile_picture_ids = self.context.get('used_profile_picture_ids')
@@ -68,14 +86,13 @@ class PoshUserSerializer(serializers.ModelSerializer):
         user = self.context.get('user')
         path = self.context.get('path')
         if 'generate' in path:
-            password = validated_data.get('password')
             email = validated_data.get('email')
             email_password = validated_data.get('email_password', '')
             email_imap_password = validated_data.get('email_imap_password', '')
             email_id = validated_data.get('email_id', None)
 
             try:
-                posh_user = PoshUser.generate(faker_obj, user, password, email, email_password=email_password, email_imap_password=email_imap_password, email_id=email_id, excluded_names=used_full_names, excluded_profile_picture_ids=used_profile_picture_ids)
+                posh_user = PoshUser.generate(faker_obj, user, email, email_password=email_password, email_imap_password=email_imap_password, email_id=email_id, excluded_names=used_full_names, excluded_profile_picture_ids=used_profile_picture_ids)
 
                 if email_id:
                     zke_yahoo.update_email_status([email_id], 'used')
