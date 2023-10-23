@@ -56,25 +56,28 @@ class PoshUserSerializer(serializers.ModelSerializer):
         }
 
     profile_url = serializers.SerializerMethodField(method_name='get_profile_url')
+    censored_email_password = serializers.SerializerMethodField(method_name='get_email_password')
+    censored_email_imap_password = serializers.SerializerMethodField(method_name='get_email_imap_password')
+    censored_password = serializers.SerializerMethodField(method_name='get_password')
 
     @staticmethod
     def get_profile_url(posh_user: PoshUser):
         return f'https://poshmark.com/closet/{posh_user.username}'
 
     @staticmethod
-    def censored_password(posh_user: PoshUser):
+    def get_password(posh_user: PoshUser):
         if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
             return posh_user.password
         return '***********'
 
     @staticmethod
-    def censored_email_imap_password(posh_user: PoshUser):
+    def get_email_imap_password(posh_user: PoshUser):
         if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
             return posh_user.email_imap_password
         return '***********'
 
     @staticmethod
-    def censored_email_password(posh_user: PoshUser):
+    def get_email_password(posh_user: PoshUser):
         if ListedItem.objects.filter(posh_user=posh_user, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE)).exists():
             return posh_user.email_password
         return '***********'
