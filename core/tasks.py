@@ -796,7 +796,12 @@ def check_posh_users():
                                 except Listing.DoesNotExist:
                                     listing = None
 
-                                listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=posh_listed_item['title'], listed_item_id=posh_listed_item['id'])
+                                try:
+                                    listed_item_obj = ListedItem.objects.get(posh_user=posh_user, listing_title=posh_listed_item['title'], listed_item_id='')
+                                except ListedItem.DoesNotExist:
+                                    listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=posh_listed_item['title'], listed_item_id=posh_listed_item['id'])
+
+                                listed_item_obj.listed_item_id = posh_listed_item['id']
 
                                 if listed_item_type == 'reserved_listings':
                                     listed_item_obj.status = ListedItem.RESERVED
