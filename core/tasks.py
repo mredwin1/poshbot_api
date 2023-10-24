@@ -584,6 +584,7 @@ class CampaignTask(Task):
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                 success = self.share_and_more()
             else:
+                self.logger.info('Seems there is nothing to do')
                 success = False
 
             end_time = time.time()
