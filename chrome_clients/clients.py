@@ -1208,6 +1208,8 @@ class PoshMarkClient(BaseClient):
             to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
             to_followers_button.click()
 
+            self.sleep(2)
+
             screenshot = f'/log_images/share_{listed_item_title}.png'
             self.web_driver.save_screenshot(screenshot)
             self.logger.info('After clicking share to share', screenshot)
