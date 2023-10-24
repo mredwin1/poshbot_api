@@ -584,9 +584,6 @@ class CampaignTask(Task):
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (Campaign.ADVANCED_SHARING, Campaign.BASIC_SHARING):
                 success = self.share_and_more()
             else:
-                self.campaign.status = Campaign.STOPPING
-                self.campaign.save(update_fields=['status'])
-
                 success = False
 
             end_time = time.time()
