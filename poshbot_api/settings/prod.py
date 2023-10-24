@@ -19,7 +19,7 @@ CORS_ALLOWED_ORIGINS = [
     'https://www.turtleswags.com',
     'https://melondova.com',
     'https://www.melondova.com',
-    'http://localhost'
+    'http://localhost:3000'
 ]
 
 DATABASES = {
