@@ -1,4 +1,5 @@
 from django.core.files.base import ContentFile
+from django.db.models import Q
 from djoser.serializers import UserSerializer as BaseUserSerializer, UserCreateSerializer as BaseUserCreateSerializer
 from email_retrieval import zke_yahoo
 from rest_framework import serializers
@@ -66,19 +67,19 @@ class PoshUserSerializer(serializers.ModelSerializer):
 
     @staticmethod
     def get_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(posh_user=posh_user, datetime_sold__isnull=False, datetime_redeemable__isnull=False).exists():
+        if ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
             return posh_user.password
         return '***********'
 
     @staticmethod
     def get_email_imap_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(posh_user=posh_user, datetime_sold__isnull=False, datetime_redeemable__isnull=False).exists():
+        if ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
             return posh_user.email_imap_password
         return '***********'
 
     @staticmethod
     def get_email_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(posh_user=posh_user, datetime_sold__isnull=False, datetime_redeemable__isnull=False).exists():
+        if ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
             return posh_user.email_password
         return '***********'
 
