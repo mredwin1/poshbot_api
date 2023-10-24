@@ -1199,16 +1199,16 @@ class PoshMarkClient(BaseClient):
             share_button = self.locate(By.CLASS_NAME, 'social-action-bar__share')
             share_button.click()
 
-            screenshot = f'/log_images/share_{listed_item_title}.png'
-            self.web_driver.save_screenshot(screenshot)
-            self.logger.info('About to share', screenshot)
-
             self.sleep(1)
 
             to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
             to_followers_button.click()
 
             self.sleep(1)
+
+            screenshot = f'/log_images/share_{slugify(listed_item_title)}.png'
+            self.web_driver.save_screenshot(screenshot)
+            self.logger.info('After clicking share', screenshot)
 
             if self.is_present(By.CLASS_NAME, 'g-recaptcha-con'):
                 self.logger.info('Captcha found. Solving...')
@@ -1235,6 +1235,10 @@ class PoshMarkClient(BaseClient):
                     # Set the captcha response
                     self.web_driver.execute_script(f'grecaptcha.getResponse = () => "{captcha_response}"')
                     self.web_driver.execute_script('validateLoginCaptcha()')
+
+                    screenshot = f'/log_images/after_captcha_{slugify(listed_item_title)}.png'
+                    self.web_driver.save_screenshot(screenshot)
+                    self.logger.info('After solving captcha', screenshot)
 
                     share_button = self.locate(By.CLASS_NAME, 'social-action-bar__share')
                     share_button.click()
