@@ -1208,24 +1208,41 @@ class PoshMarkClient(BaseClient):
             to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
             to_followers_button.click()
 
-            self.sleep(2)
+            self.sleep(1)
 
-            screenshot = f'/log_images/share_{listed_item_title}.png'
-            self.web_driver.save_screenshot(screenshot)
-            self.logger.info('After clicking share to share', screenshot)
+            if self.is_present(By.CLASS_NAME, 'g-recaptcha-con'):
+                self.logger.info('Captcha found. Solving...')
+                captcha_iframe = self.locate(By.TAG_NAME, 'iframe', location_type='visibility')
+                captcha_src = captcha_iframe.get_attribute('src')
+                google_key = re.findall(r'(?<=k=)(.*?)(?=&)', captcha_src)[0]
 
-            # self.go_to_closet()
-            #
-            # self.sleep(2)
-            #
-            # share_button = self.locate(By.XPATH, f"//div[contains(@class, 'tiles_container')]//div[@data-et-prop-listing_id='{listed_item_id}' and contains(@class, 'social-action-bar__share')]")
-            #
-            # share_button.click()
-            #
-            # self.sleep(1)
-            #
-            # to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
-            # to_followers_button.click()
+                captcha_solver = Captcha(google_key, self.web_driver.current_url, self.logger)
+                captcha_response = captcha_solver.solve_captcha()
+                retries = 1
+
+                while captcha_response is None and retries != 5:
+                    self.logger.warning('Captcha not solved. Retrying captcha again...')
+                    captcha_response = captcha_solver.solve_captcha()
+                    retries += 1
+
+                if retries == 5 and captcha_response is None:
+                    self.logger.error(f'2Captcha could not solve the captcha after {retries} attempts')
+                elif captcha_response == -1:
+                    self.logger.error('Exiting after encountering an error with the captcha.')
+                else:
+                    word = 'attempt' if retries == 1 else 'attempts'
+                    self.logger.info(f'2Captcha successfully solved captcha after {retries} {word}')
+                    # Set the captcha response
+                    self.web_driver.execute_script(f'grecaptcha.getResponse = () => "{captcha_response}"')
+                    self.web_driver.execute_script('validateLoginCaptcha()')
+
+                    share_button = self.locate(By.CLASS_NAME, 'social-action-bar__share')
+                    share_button.click()
+
+                    self.sleep(1)
+
+                    to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
+                    to_followers_button.click()
 
             self.logger.info('Item Shared')
 
