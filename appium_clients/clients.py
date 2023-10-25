@@ -992,46 +992,46 @@ class PoshMarkClient(AppiumClient):
                             if size_input_found:
                                 added_size = False
                                 size_button = self.locate(AppiumBy.ID, 'size_edit_text')
-                                if 'required' in size_button.text.lower():
-                                    self.click(size_button)
 
-                                    if listing.size.lower() == 'os':
-                                        one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
-                                        self.click(one_size)
+                                self.click(size_button)
+
+                                if listing.size.lower() == 'os':
+                                    one_size = self.locate(AppiumBy.ACCESSIBILITY_ID, 'One Size')
+                                    self.click(one_size)
+                                    added_size = True
+                                    self.logger.info('Clicked one size')
+                                else:
+                                    if 'belt' not in listing.category.lower() + listing.subcategory.lower():
+                                        package_name = self.capabilities['appPackage']
+                                        selected_size_category = self.locate(AppiumBy.XPATH, f"//android.widget.TextView[@resource-id='{package_name}:id/size_tab_title_text' and @selected='true']")
+                                        while self.is_present(AppiumBy.XPATH, f"//android.widget.TextView[@resource-id='{package_name}:id/size_tab_title_text' and @selected='true']") and selected_size_category.text != 'CUSTOM':
+                                            self.logger.info(f'Looking for size in {selected_size_category.text} category')
+                                            size_found = self.scroll_until_found(AppiumBy.ACCESSIBILITY_ID, listing.size, max_scrolls=4)
+                                            if size_found:
+                                                size = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.size)
+                                                self.click(size)
+
+                                                added_size = True
+                                            else:
+                                                self.swipe('left', 250)
+                                                selected_size_category = self.locate(AppiumBy.XPATH, f"//android.widget.TextView[@resource-id='{package_name}:id/size_tab_title_text' and @selected='true']")
+
+                                    if not added_size:
+                                        custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
+                                        self.click(custom_size_button)
+
+                                        add_option = self.locate(AppiumBy.ID, 'container')
+                                        self.click(add_option)
+
+                                        custom_size_input = self.locate(AppiumBy.ID, 'messageText')
+                                        custom_size_input.send_keys(listing.size)
+
+                                        next_button = self.locate(AppiumBy.ID, 'nextButton')
+                                        self.click(next_button)
+
+                                        self.logger.info(f'Put in {listing.size} for the size')
+
                                         added_size = True
-                                        self.logger.info('Clicked one size')
-                                    else:
-                                        if 'belt' not in listing.category.lower() + listing.subcategory.lower():
-                                            package_name = self.capabilities['appPackage']
-                                            selected_size_category = self.locate(AppiumBy.XPATH, f"//android.widget.TextView[@resource-id='{package_name}:id/size_tab_title_text' and @selected='true']")
-                                            while self.is_present(AppiumBy.XPATH, f"//android.widget.TextView[@resource-id='{package_name}:id/size_tab_title_text' and @selected='true']") and selected_size_category.text != 'CUSTOM':
-                                                self.logger.info(f'Looking for size in {selected_size_category.text} category')
-                                                size_found = self.scroll_until_found(AppiumBy.ACCESSIBILITY_ID, listing.size, max_scrolls=4)
-                                                if size_found:
-                                                    size = self.locate(AppiumBy.ACCESSIBILITY_ID, listing.size)
-                                                    self.click(size)
-
-                                                    added_size = True
-                                                else:
-                                                    self.swipe('left', 250)
-                                                    selected_size_category = self.locate(AppiumBy.XPATH, f"//android.widget.TextView[@resource-id='{package_name}:id/size_tab_title_text' and @selected='true']")
-
-                                        if not added_size:
-                                            custom_size_button = self.locate(AppiumBy.ACCESSIBILITY_ID, 'Custom')
-                                            self.click(custom_size_button)
-
-                                            add_option = self.locate(AppiumBy.ID, 'container')
-                                            self.click(add_option)
-
-                                            custom_size_input = self.locate(AppiumBy.ID, 'messageText')
-                                            custom_size_input.send_keys(listing.size)
-
-                                            next_button = self.locate(AppiumBy.ID, 'nextButton')
-                                            self.click(next_button)
-
-                                            self.logger.info(f'Put in {listing.size} for the size')
-
-                                            added_size = True
 
                         while not self.is_present(AppiumBy.ID, 'titleTextView') or self.locate(AppiumBy.ID, 'titleTextView').text != 'Listing Details':
                             for _ in range(3):
