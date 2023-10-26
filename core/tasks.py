@@ -138,15 +138,17 @@ class CampaignTask(Task):
             self.logger.info(f'Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds')
 
     def reset_ip(self):
-        if random.random() < .2:
-            reset_success = self.proxy.change_location()
-            if reset_success:
-                time.sleep(20)
-            else:
-                reset_success = self.proxy.reset_ip()
-        else:
-            reset_success = self.proxy.reset_ip()
-            time.sleep(10)
+        # if random.random() < .2:
+        #     reset_success = self.proxy.change_location()
+        #     if reset_success:
+        #         time.sleep(20)
+        #     else:
+        #         reset_success = self.proxy.reset_ip()
+        # else:
+        #     reset_success = self.proxy.reset_ip()
+        #     time.sleep(10)
+        reset_success = self.proxy.reset_ip()
+        time.sleep(10)
 
         if reset_success:
             self.logger.info(reset_success)
