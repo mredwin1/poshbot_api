@@ -22,7 +22,7 @@ from ppadb.client import Client as AdbClient
 from uuid import uuid4
 
 from faker_providers import address_provider
-from tasks import send_email
+from core.tasks import send_email
 
 
 def path_and_rename(instance, filename):
