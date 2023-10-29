@@ -975,19 +975,26 @@ def check_sold_items():
 
                 logger.info(message)
                 if item.posh_user.user.email:
-                    # item.posh_user.user.send_text(message)
-                    email = EmailMessage()
-                    email_sender = os.environ['EMAIL_ADDRESS']
-                    email['From'] = email_sender
-                    email['To'] = item.posh_user.user.email
-                    email['Subject'] = f'New Sale Available to Redeem for {item.posh_user.username}'
-                    email.set_content(message)
+                    from_email = os.environ['EMAIL_ADDRESS']
+                    to_email = [item.posh_user.user.email]
+                    subject = f'New Sale Available to Redeem for {item.posh_user.username}'
+                    send_email.delay(from_email, to_email, subject, message)
 
-                    context = ssl.create_default_context()
-
-                    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
-                        smtp.login(email_sender, os.environ['EMAIL_PASSWORD'])
-                        smtp.sendmail(email_sender, item.posh_user.user.email, email.as_string())
-                    logger.info('Email sent')
+                    logger.info('Email sent to queue')
                 else:
                     logger.info(f'Email not sent: {item.posh_user.user.email}')
+
+
+@shared_task
+def send_email(from_email: str, to_email: list, subject: str, message: str):
+    email = EmailMessage()
+    email['From'] = from_email
+    email['To'] = to_email
+    email['Subject'] = subject
+    email.set_content(message)
+
+    context = ssl.create_default_context()
+
+    with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
+        smtp.login(from_email, os.environ['EMAIL_PASSWORD'])
+        smtp.sendmail(from_email, to_email, email.as_string())

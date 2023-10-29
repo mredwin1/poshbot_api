@@ -1431,6 +1431,7 @@ class PoshMarkClient(BaseClient):
                 offer_button = self.locate(
                     By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div/button'
                 )
+
                 offer_button.click()
 
                 offer_to_likers_button = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/div[2]/div/button')
@@ -1445,7 +1446,7 @@ class PoshMarkClient(BaseClient):
 
                 self.logger.info(f'Sending offers to likers for ${offer_amount}')
 
-                offer_input = self.locate(By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div[2]/div[1]/div[2]/div[2]/div/form/div[1]/input')
+                offer_input = self.locate(By.NAME, 'offer')
                 offer_input.send_keys(str(offer_amount))
 
                 self.sleep(2)

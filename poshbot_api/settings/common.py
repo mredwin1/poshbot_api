@@ -180,6 +180,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_TASK_ROUTES = {
     'core.tasks.CampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
     'core.tasks.ManageCampaignsTask': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+    'core.tasks.send_email': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.check_posh_users': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.send_support_emails': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.log_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},

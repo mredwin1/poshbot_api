@@ -22,6 +22,7 @@ from ppadb.client import Client as AdbClient
 from uuid import uuid4
 
 from faker_providers import address_provider
+from tasks import send_email
 
 
 def path_and_rename(instance, filename):
@@ -808,6 +809,11 @@ class LogGroup(models.Model):
 
     def error(self, message, image=None):
         if not self.has_error:
+            send_email.delay(
+                os.environ['EMAIL_ADDRESS'],
+                ['ecruz1113@gmail.com', 'johnnyhustle41@gmail.com'],
+                f'Error when running {self.posh_user.username}', message
+            )
             self.has_error = True
             self.save()
         self.log(message, LogEntry.ERROR, image)

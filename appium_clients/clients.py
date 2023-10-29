@@ -677,13 +677,17 @@ class PoshMarkClient(AppiumClient):
                     self.click(continue_button)
                 elif window_title and window_title.text in ('Follow Brands', 'Brands'):
                     self.logger.info('Selecting brands')
-                    if self.is_present(AppiumBy.ID, 'brandLogo'):
-                        brands = self.locate_all(AppiumBy.ID, 'brandLogo')[:9]
-                    else:
-                        brands = self.locate_all(AppiumBy.ID, 'suggestedBrandLogo3')[:9]
 
-                    for brand in random.choices(brands, k=random.randint(1, 6)):
-                        self.click(brand)
+                    try:
+                        if self.is_present(AppiumBy.ID, 'brandLogo'):
+                            brands = self.locate_all(AppiumBy.ID, 'brandLogo')[:9]
+                        else:
+                            brands = self.locate_all(AppiumBy.ID, 'suggestedBrandLogo3')[:9]
+
+                        for brand in random.choices(brands, k=random.randint(1, 6)):
+                            self.click(brand)
+                    except (TimeoutException, NoSuchElementException):
+                        self.logger.warning('No brands popped up, clicking continue')
 
                     if self.is_present(AppiumBy.ID, 'continueButton'):
                         continue_button = self.locate(AppiumBy.ID, 'continueButton')
