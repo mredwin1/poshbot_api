@@ -1,11 +1,12 @@
 import os
 
-from django.db.models.signals import post_delete, post_save
+from django.db.models.signals import post_delete, post_save, pre_save
 from django.dispatch import receiver
 from django.utils import timezone
 from email_retrieval import zke_yahoo
 
-from core.models import PoshUser, Listing, ListingImage, LogEntry, ListedItem, AppData
+from core.models import PoshUser, Listing, ListingImage, LogEntry, ListedItem, AppData, LogGroup
+from core.tasks import send_email
 
 
 @receiver(post_delete, sender=PoshUser)
@@ -59,3 +60,15 @@ def listed_item_saved(sender, instance: ListedItem, *args, **kwargs):
 def app_data_deleted(sender, instance: AppData, *args, **kwargs):
     instance.backup_data.delete(save=False)
     instance.xml_data.delete(save=False)
+
+
+@receiver(post_save, sender=LogGroup)
+def log_group_saved(sender, instance: LogGroup, *args, **kwargs):
+    if instance.has_error:
+        log_entry: LogEntry = instance.log_entries.fitler(level__gte=LogEntry.ERROR).first()
+        send_email.delay(
+            os.environ['EMAIL_ADDRESS'],
+            ['ecruz1113@gmail.com', 'johnnyhustle41@gmail.com'],
+            f'Error when running {instance.posh_user.username}',
+            log_entry.message
+        )
