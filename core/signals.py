@@ -65,7 +65,7 @@ def app_data_deleted(sender, instance: AppData, *args, **kwargs):
 @receiver(post_save, sender=LogGroup)
 def log_group_saved(sender, instance: LogGroup, *args, **kwargs):
     if instance.has_error:
-        log_entry: LogEntry = instance.log_entries.fitler(level__gte=LogEntry.ERROR).first()
+        log_entry: LogEntry = instance.log_entries.filter(level__gte=LogEntry.ERROR).first()
         send_email.delay(
             os.environ['EMAIL_ADDRESS'],
             ['ecruz1113@gmail.com', 'johnnyhustle41@gmail.com'],

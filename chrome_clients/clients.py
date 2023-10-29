@@ -1196,8 +1196,12 @@ class PoshMarkClient(BaseClient):
 
             self.web_driver.get(f'https://www.poshmark.com/listing/{listed_item_id}')
 
-            share_button = self.locate(By.CLASS_NAME, 'social-action-bar__share')
-            share_button.click()
+            try:
+                share_button = self.locate(By.CLASS_NAME, 'social-action-bar__share')
+                share_button.click()
+            except (TimeoutException, NoSuchElementException):
+                self.logger.warning('Share button not found')
+                return False
 
             self.sleep(1)
 
