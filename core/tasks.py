@@ -864,15 +864,12 @@ def log_cleanup():
 
 @shared_task
 def posh_user_cleanup():
-    day_ago = (timezone.now() - datetime.timedelta(days=1)).date()
-    two_weeks_ago = (timezone.now() - datetime.timedelta(days=14)).date()
+    month_ago = (timezone.now() - datetime.timedelta(days=30)).date()
 
     # Get all posh_users who have been inactive for at least a day
-    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=day_ago)
+    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=month_ago)
 
-    for posh_user in posh_users:
-        if posh_user.date_disabled < two_weeks_ago:
-            posh_user.delete()
+    posh_users.delete()
 
 
 @shared_task
