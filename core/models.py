@@ -201,6 +201,18 @@ class Device(models.Model):
 
         adb_device.reboot()
 
+    def reset_app_data(self, app_package):
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        adb_device = client.device(serial=self.serial)
+
+        adb_device.shell(f'pm clear {app_package}')
+
+    def change_android_id(self, email, app_package):
+        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        adb_device = client.device(serial=self.serial)
+
+        adb_device.shell(f'am start -n com.tobi.androidideditor/.ShellActivity -e package_id {app_package} -e email {email}')
+
     def finished_boot(self):
         try:
             client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
