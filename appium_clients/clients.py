@@ -203,9 +203,8 @@ class AppiumClient:
 
                     action.perform()
                 except Exception:
-                    self.logger.error(traceback.format_exc())
-                    self.logger.info(word)
-                    self.logger.info(char)
+                    self.logger.warning(f'Could not parse the following character "{char}" in the word "{word}"')
+                    self.logger.warning(traceback.format_exc())
 
         self.driver.back()
 
