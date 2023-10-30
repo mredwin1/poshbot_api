@@ -979,9 +979,9 @@ def check_sold_items():
                 else:
                     logger.info(f'Email not sent: {item.posh_user.user.email}')
 
-    sold_items = ListedItem.objects.filter(status=ListedItem.REDEEMABLE)
+    redeemable_items = ListedItem.objects.filter(status=ListedItem.REDEEMABLE)
 
-    for item in sold_items:
+    for item in redeemable_items:
         posh_user = item.posh_user
         redeemable_time = item.datetime_redeemed
 
