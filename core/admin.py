@@ -413,7 +413,7 @@ class ListedItemAdmin(admin.ModelAdmin):
                 ('posh_user', 'listing', 'earnings'),
                 ('listing_title', 'listed_item_id', 'status', 'time_to_list'),
                 ('datetime_listed', 'datetime_passed_review'),
-                ('datetime_removed', 'datetime_sold', 'datetime_redeemable'),
+                ('datetime_removed', 'datetime_sold', 'datetime_redeemable', 'datetime_redeemed'),
             )
         }),
     )
