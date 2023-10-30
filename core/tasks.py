@@ -173,31 +173,33 @@ class CampaignTask(Task):
     def setup_device(self):
         start_time = time.time()
 
-        self.device.reset_app_data('com.poshmark.app')
-
-        self.device.change_android_id(self.campaign.posh_user.email, 'com.poshmark.app')
-
-        time.sleep(3)
-
-        while not self.device.finished_boot():
-            self.logger.debug('Waiting (2sec) for device to finish booting...')
-            time.sleep(2)
-
-        # with IDChangerClient(self.device, self.logger) as client:
-        #     android_id = client.set_android_id(self.campaign.posh_user.android_id)
+        # self.device.reset_app_data('com.poshmark.app')
         #
-        #     self.campaign.posh_user.android_id = android_id
-        #     self.campaign.posh_user.save()
+        # self.logger.debug('Changing android id')
         #
-        #     client.sleep(5)
+        # self.device.change_android_id(self.campaign.posh_user.email, 'com.poshmark.app')
         #
-        # self.device.reboot()
-        #
-        # time.sleep(5)
+        # time.sleep(3)
         #
         # while not self.device.finished_boot():
-        #     self.logger.debug('Waiting (5sec) for device to finish booting...')
-        #     time.sleep(5)
+        #     self.logger.debug('Waiting (2sec) for device to finish booting...')
+        #     time.sleep(2)
+
+        with IDChangerClient(self.device, self.logger) as client:
+            android_id = client.set_android_id(self.campaign.posh_user.android_id)
+
+            self.campaign.posh_user.android_id = android_id
+            self.campaign.posh_user.save()
+
+            client.sleep(5)
+
+        self.device.reboot()
+
+        time.sleep(5)
+
+        while not self.device.finished_boot():
+            self.logger.debug('Waiting (5sec) for device to finish booting...')
+            time.sleep(5)
 
         ip_reset = self.reset_ip()
 
