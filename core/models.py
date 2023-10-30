@@ -698,6 +698,7 @@ class ListedItem(models.Model):
     SHIPPED = 'SHIPPED'
     CANCELLED = 'CANCELLED'
     REDEEMABLE = 'REDEEMABLE'
+    REDEEMED = 'REDEEMED'
 
     STATUS_CHOICES = [
         (NOT_LISTED, NOT_LISTED),
@@ -709,7 +710,8 @@ class ListedItem(models.Model):
         (REMOVED, REMOVED),
         (SHIPPED, SHIPPED),
         (CANCELLED, CANCELLED),
-        (REDEEMABLE, REDEEMABLE)
+        (REDEEMABLE, REDEEMABLE),
+        (REDEEMED, REDEEMED)
     ]
 
     posh_user = models.ForeignKey(PoshUser, on_delete=models.CASCADE)
@@ -722,6 +724,7 @@ class ListedItem(models.Model):
     datetime_removed = models.DateTimeField(null=True, blank=True)
     datetime_sold = models.DateTimeField(null=True, blank=True)
     datetime_redeemable = models.DateTimeField(null=True, blank=True)
+    datetime_redeemed = models.DateTimeField(null=True, blank=True)
 
     earnings = models.DecimalField(max_digits=10, decimal_places=2, default=0)
 

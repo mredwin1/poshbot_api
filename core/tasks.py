@@ -935,12 +935,10 @@ def check_sold_items():
     logger = logging.getLogger(__name__)
     sold_items = ListedItem.objects.filter(status=ListedItem.SOLD)
 
-    sender_email = "orders@poshmark.com"
-
     for item in sold_items:
         listing_title = item.listing_title
         posh_user = item.posh_user
-        sold_time = item.datetime_sold  # Assuming datetime_sold is the field storing the sold time
+        sold_time = item.datetime_sold
 
         # Check if the PoshUser has the necessary IMAP email password
         if posh_user.email and posh_user.email_imap_password:
@@ -950,7 +948,7 @@ def check_sold_items():
             # Construct the subject keyword with dynamic values
             subject_keyword = f'Your earnings from "{listing_title}"'
 
-            matching_email = zke_yahoo.check_for_email(sender_email, email_address, password, subject_keyword, sold_time)
+            matching_email = zke_yahoo.check_for_email('orders@poshmark.com', email_address, password, subject_keyword, sold_time)
 
             if matching_email:
                 date_format = '%m/%d/%Y %I:%M %p %Z'
@@ -980,6 +978,34 @@ def check_sold_items():
                     logger.info('Email sent to queue')
                 else:
                     logger.info(f'Email not sent: {item.posh_user.user.email}')
+
+    sold_items = ListedItem.objects.filter(status=ListedItem.REDEEMABLE)
+
+    for item in sold_items:
+        posh_user = item.posh_user
+        redeemable_time = item.datetime_redeemed
+
+        # Check if the PoshUser has the necessary IMAP email password
+        if posh_user.email and posh_user.email_imap_password:
+            email_address = posh_user.email
+            password = posh_user.email_imap_password
+
+            # Construct the subject keyword with dynamic values
+            subject_keyword = 'Your Instant Transfer request has been received'
+
+            matching_email = zke_yahoo.check_for_email('support@poshmark.com', email_address, password, subject_keyword, redeemable_time)
+
+            if matching_email:
+                date_received_str = matching_email.get("Date")
+                date_received = datetime.datetime.strptime(date_received_str,
+                                                           '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(
+                    pytz.timezone('US/Eastern'))
+
+                item.status = ListedItem.REDEEMED
+                item.datetime_redeemable = date_received
+                item.save()
+
+                logger.info(f'Updated {item} to REDEEMED')
 
 
 @shared_task
