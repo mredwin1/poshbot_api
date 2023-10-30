@@ -1002,7 +1002,7 @@ def check_sold_items():
                     pytz.timezone('US/Eastern'))
 
                 item.status = ListedItem.REDEEMED
-                item.datetime_redeemable = date_received
+                item.datetime_redeemed = date_received
                 item.save()
 
                 logger.info(f'Updated {item} to REDEEMED')
