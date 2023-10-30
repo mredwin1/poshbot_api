@@ -805,12 +805,15 @@ class LogGroup(models.Model):
 
     def critical(self, message, image=None):
         self.log(message, LogEntry.CRITICAL, image)
-
-    def error(self, message, image=None):
         if not self.has_error:
             self.has_error = True
             self.save()
+
+    def error(self, message, image=None):
         self.log(message, LogEntry.ERROR, image)
+        if not self.has_error:
+            self.has_error = True
+            self.save()
 
     def warning(self, message, image=None):
         self.log(message, LogEntry.WARNING, image)
