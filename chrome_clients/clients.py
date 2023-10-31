@@ -1357,7 +1357,8 @@ class PoshMarkClient(BaseClient):
                                                 button.click()
                                                 self.logger.info(f'Accepted offer at ${sender_offer}.')
                                                 self.sleep(5)
-                                                break
+
+                                                return True
                                     else:
                                         secondary_buttons = self.locate_all(By.CLASS_NAME, 'btn--tertiary')
 
@@ -1442,6 +1443,11 @@ class PoshMarkClient(BaseClient):
                 offer_to_likers_button.click()
 
                 self.sleep(1)
+
+                if self.is_present(By.XPATH, "//h4[contains(text(), 'Sorry, this listing has no Likers. Share it to get more likes!')]"):
+                    self.logger.info('Pop up came up: Sorry, this listing has no Likers. Share it to get more likes!')
+
+                    return False
 
                 offer_modal = self.locate(By.CLASS_NAME, 'offer-modal__bundle')
                 listing_price = int(offer_modal.find_element(By.CSS_SELECTOR, '.fw--med').text.strip('$'))

@@ -477,7 +477,15 @@ class CampaignTask(Task):
                                 self.logger.info(f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern")
 
                         if random.random() < .20 and shared:
-                            client.check_offers(listed_item.listing_title)
+                            offer_accepted = client.check_offers(listed_item.listing_title)
+
+                            if offer_accepted:
+                                listed_item.datetime_sold = timezone.now()
+                                listed_item.status = ListedItem.SOLD
+
+                                listed_item.save()
+
+                                continue
 
                         client.check_comments(listed_item.listed_item_id, listed_item.listing_title)
 
