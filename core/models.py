@@ -211,6 +211,10 @@ class Device(models.Model):
         client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
         adb_device = client.device(serial=self.serial)
 
+        # Unlock device
+        adb_device.shell(f'input keyevent 82')
+        adb_device.shell(f'input keyevent 82')
+
         adb_device.shell(f'am start -n com.tobi.androidideditor/.ShellActivity -e package_id {app_package} -e email {email}')
 
     def finished_boot(self):
