@@ -65,21 +65,21 @@ class PoshUserSerializer(serializers.ModelSerializer):
     def get_profile_url(posh_user: PoshUser):
         return f'https://poshmark.com/closet/{posh_user.username}'
 
-    @staticmethod
-    def get_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
+    def get_password(self, posh_user: PoshUser):
+        user = self.context.get('user')
+        if (user.username == 'david' and posh_user.is_registered) or ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
             return posh_user.password
         return '***********'
 
-    @staticmethod
-    def get_email_imap_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
+    def get_email_imap_password(self, posh_user: PoshUser):
+        user = self.context.get('user')
+        if (user.username == 'david' and posh_user.is_registered) or ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
             return posh_user.email_imap_password
         return '***********'
 
-    @staticmethod
-    def get_email_password(posh_user: PoshUser):
-        if ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
+    def get_email_password(self, posh_user: PoshUser):
+        user = self.context.get('user')
+        if (user.username == 'david' and posh_user.is_registered) or ListedItem.objects.filter(Q(posh_user=posh_user, datetime_sold__isnull=False) | Q(posh_user=posh_user, datetime_redeemable__isnull=False)).exists():
             return posh_user.email_password
         return '***********'
 
