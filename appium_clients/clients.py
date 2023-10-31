@@ -1256,6 +1256,7 @@ class ProxyDroidClient(AppiumClient):
         super(ProxyDroidClient, self).__init__(device.serial, device.system_port, device.mjpeg_server_port, logger, capabilities)
 
     def set_proxy(self):
+        self.logger.debug('Setting proxy')
         self.swipe('down', 1000, 2000)
         values_to_check = {
             'Host': self.proxy.hostname,
@@ -1301,7 +1302,9 @@ class ProxyDroidClient(AppiumClient):
         proxy_switch = self.locate(AppiumBy.ID, 'android:id/switch_widget')
         proxy_switch.click()
 
-        self.sleep(5)
+        self.sleep(8)
+
+        self.logger.info('Proxy set')
 
 
 class IDChangerClient(AppiumClient):
