@@ -102,6 +102,8 @@ class CampaignTask(Task):
         if self.device_id and self.proxy_id:
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
+        elif self.proxy_id:
+            self.proxy = Proxy.objects.get(id=self.proxy_id)
 
         return response
 
@@ -367,12 +369,17 @@ class CampaignTask(Task):
         return item_listed
 
     def share_and_more(self):
+        if self.proxy:
+            self.reset_ip()
+
         login_retries = 0
         update_profile_retries = 0
         profile_updated = self.campaign.posh_user.profile_updated
         listing_shared = None
         shared = None
-        with PoshMarkClient(self.campaign, self.logger) as client:
+        with PoshMarkClient(self.campaign, self.logger, proxy=self.proxy) as client:
+            if self.proxy:
+                client.check_ip()
             client.web_driver.get('https://poshmark.com')
             client.load_cookies()
             logged_in = client.check_logged_in()
@@ -648,8 +655,8 @@ class ManageCampaignsTask(Task):
                     self.logger.warning('Campaign does not exist. Checking in.')
                     device.check_in()
 
-    def get_available_proxy(self):
-        proxies = Proxy.objects.filter(is_active=True)
+    def get_available_proxy(self, sharing=False):
+        proxies = Proxy.objects.filter(is_active=True, sharing=sharing)
         in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list('id', flat=True)
 
         for proxy in proxies:
@@ -706,6 +713,16 @@ class ManageCampaignsTask(Task):
                     return True
 
                 return False
+        elif proxy:
+            campaign.status = Campaign.IN_QUEUE
+            campaign.queue_status = 'N/A'
+            campaign.save(update_fields=['status', 'queue_status'])
+
+            CampaignTask.delay(campaign.id, proxy_id=proxy.id)
+
+            self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device and {proxy.license_id} proxy')
+
+            return True
         else:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
@@ -733,6 +750,9 @@ class ManageCampaignsTask(Task):
             if campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
                 available_device = self.get_available_device()
                 available_proxy = self.get_available_proxy()
+
+            if campaign.posh_user and not need_to_list and campaign.posh_user.is_registered and campaign.posh_user.user.username in ['tobi', 'johnny']:
+                available_proxy = self.get_available_proxy(sharing=True)
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED

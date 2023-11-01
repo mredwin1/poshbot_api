@@ -114,69 +114,6 @@ class BaseClient:
         os.makedirs('/log_images', exist_ok=True)
 
         if proxy:
-            self.requests_session.proxies = {
-                'http': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
-                'https': f"{proxy.type}://{proxy.hostname}:{proxy.port}",
-            }
-
-            manifest_json = """
-            {
-                "version": "1.0.0",
-                "manifest_version": 2,
-                "name": "Chrome Proxy",
-                "permissions": [
-                    "proxy",
-                    "tabs",
-                    "unlimitedStorage",
-                    "storage",
-                    "<all_urls>",
-                    "webRequest",
-                    "webRequestBlocking"
-                ],
-                "background": {
-                    "scripts": ["background.js"]
-                },
-                "minimum_chrome_version":"22.0.0"
-            }
-            """
-
-            background_js = """
-            var config = {
-                    mode: "fixed_servers",
-                    rules: {
-                    singleProxy: {
-                        scheme: "http",
-                        host: "%s",
-                        port: parseInt(%s)
-                    },
-                    bypassList: ["localhost"]
-                    }
-                };
-
-            chrome.proxy.settings.set({value: config, scope: "regular"}, function() {});
-
-            function callbackFn(details) {
-                return {
-                    authCredentials: {
-                        username: "%s",
-                        password: "%s"
-                    }
-                };
-            }
-
-            chrome.webRequest.onAuthRequired.addListener(
-                        callbackFn,
-                        {urls: ["<all_urls>"]},
-                        ['blocking']
-            );
-            """ % (proxy.hostname, proxy.port, proxy.username, proxy.password)
-
-            plugin_file = 'proxy_auth_plugin.zip'
-
-            with zipfile.ZipFile(plugin_file, 'w') as zp:
-                zp.writestr("manifest.json", manifest_json)
-                zp.writestr("background.js", background_js)
-            # self.web_driver_options.add_extension(plugin_file)
             self.web_driver_options.add_argument(f'--proxy-server={proxy.hostname}:{proxy.port}')
 
     def __enter__(self):

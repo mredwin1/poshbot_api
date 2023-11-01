@@ -83,6 +83,7 @@ class Proxy(models.Model):
     checked_out_by = models.UUIDField(blank=True, null=True)
 
     is_active = models.BooleanField(default=True)
+    sharing = models.BooleanField(default=False)
 
     checkout_time = models.DateTimeField(null=True, blank=True)
 
