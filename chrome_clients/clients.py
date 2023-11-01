@@ -713,6 +713,9 @@ class PoshMarkClient(BaseClient):
     def login(self, login_retries=0):
         """Will go to the Posh Mark home page and log in using waits for realism"""
         try:
+            if self.check_logged_in():
+                return True
+
             self.logger.info(f'Login attempt # {login_retries + 1} for {self.posh_user.username}')
 
             self.web_driver.get('https://poshmark.com/login')
@@ -763,7 +766,7 @@ class PoshMarkClient(BaseClient):
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while logging in')
 
-            return self.check_logged_in()
+            return False
 
     def go_to_closet(self, username=None):
         """Ensures the current url for the web driver is at users poshmark closet"""

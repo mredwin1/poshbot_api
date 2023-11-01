@@ -383,7 +383,7 @@ class CampaignTask(Task):
         with PoshMarkClient(self.campaign, self.logger, proxy=self.proxy) as client:
             client.web_driver.get('https://poshmark.com')
             client.load_cookies()
-            logged_in = client.check_logged_in()
+            logged_in = None
 
             while not logged_in and login_retries < 3:
                 logged_in = client.login(login_retries)
