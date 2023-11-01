@@ -763,7 +763,7 @@ class PoshMarkClient(BaseClient):
             self.web_driver.save_screenshot(image_path)
             self.logger.error('Error while logging in')
 
-            return False
+            return self.check_logged_in()
 
     def go_to_closet(self, username=None):
         """Ensures the current url for the web driver is at users poshmark closet"""
