@@ -655,8 +655,8 @@ class ManageCampaignsTask(Task):
                     self.logger.warning('Campaign does not exist. Checking in.')
                     device.check_in()
 
-    def get_available_proxy(self, sharing=False):
-        proxies = Proxy.objects.filter(is_active=True, sharing=sharing)
+    def get_available_proxy(self, username='proxy'):
+        proxies = Proxy.objects.filter(is_active=True, username=username)
         in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list('id', flat=True)
 
         for proxy in proxies:
@@ -752,7 +752,7 @@ class ManageCampaignsTask(Task):
                 available_proxy = self.get_available_proxy()
 
             if campaign.posh_user and not need_to_list and campaign.posh_user.is_registered and campaign.posh_user.user.username in ['tobi', 'johnny']:
-                available_proxy = self.get_available_proxy(sharing=True)
+                available_proxy = self.get_available_proxy(username='sharing')
 
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
