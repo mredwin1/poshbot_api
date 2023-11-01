@@ -1434,7 +1434,7 @@ class PoshMarkClient(BaseClient):
                 self.sleep(1)
 
                 offer_button = self.locate(
-                    By.XPATH, '//*[@id="content"]/div/div/div[3]/div[2]/div[5]/div[2]/div/div/button'
+                    By.XPATH, "//button[@data-et-name='price_drop']"
                 )
 
                 offer_button.click()
