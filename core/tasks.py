@@ -714,6 +714,13 @@ class ManageCampaignsTask(Task):
 
                 return False
         elif proxy:
+            try:
+                proxy.check_out(campaign.id)
+            except ValueError:
+                self.logger.warning(f'Proxy: {proxy.id} is not ready')
+
+                return False
+
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
             campaign.save(update_fields=['status', 'queue_status'])
