@@ -629,6 +629,13 @@ class ManageCampaignsTask(Task):
         checked_out_proxies = Device.objects.filter(checked_out_by__isnull=False).values_list('proxy', flat=True)
 
         for device in devices:
+            self.logger.info('========================')
+            self.logger.info(device)
+            self.logger.info(device.proxy_id)
+            self.logger.info(checked_out_proxies)
+            self.logger.info(device.checked_out_by)
+            self.logger.info('========================')
+
             if device.proxy_id not in checked_out_proxies and not device.checked_out_by:
                 if device.is_ready():
                     return device
