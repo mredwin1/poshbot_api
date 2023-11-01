@@ -104,6 +104,9 @@ class CampaignTask(Task):
             self.proxy = Proxy.objects.get(id=self.proxy_id)
         elif self.proxy_id:
             self.proxy = Proxy.objects.get(id=self.proxy_id)
+            self.logger.info('Proxy added to this campaign')
+
+        self.logger.info(self.proxy_id)
 
         return response
 
