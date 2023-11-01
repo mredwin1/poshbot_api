@@ -489,13 +489,14 @@ class CampaignTask(Task):
                         if random.random() < .20 and shared:
                             offer_accepted = client.check_offers(listed_item.listing_title)
 
-                            if offer_accepted:
-                                listed_item.datetime_sold = timezone.now()
-                                listed_item.status = ListedItem.SOLD
-
-                                listed_item.save()
-
-                                continue
+                            # Cannot do this because it could be we accept an offer but it doesn't get sold because of the buyer
+                            # if offer_accepted:
+                            #     listed_item.datetime_sold = timezone.now()
+                            #     listed_item.status = ListedItem.SOLD
+                            #
+                            #     listed_item.save()
+                            #
+                            #     continue
 
                         client.check_comments(listed_item.listed_item_id, listed_item.listing_title)
 
