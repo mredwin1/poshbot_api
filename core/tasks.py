@@ -107,7 +107,7 @@ class CampaignTask(Task):
 
     def finalize_campaign(self, success, campaign_delay, duration, save_data: bool = True):
         try:
-            if save_data and self.device and self.campaign.posh_user.is_registered and not AppData.objects.filter(posh_user=self.campaign.posh_user).exists():
+            if save_data and self.device and self.campaign.posh_user.is_registered:
                 with SwiftBackupClient(self.device, self.logger, self.campaign.posh_user) as client:
                     client.save_backup()
                     client.sleep(5)
