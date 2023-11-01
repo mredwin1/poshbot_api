@@ -381,8 +381,6 @@ class CampaignTask(Task):
         listing_shared = None
         shared = None
         with PoshMarkClient(self.campaign, self.logger, proxy=self.proxy) as client:
-            if self.proxy:
-                client.check_ip()
             client.web_driver.get('https://poshmark.com')
             client.load_cookies()
             logged_in = client.check_logged_in()
