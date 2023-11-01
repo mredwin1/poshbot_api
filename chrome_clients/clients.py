@@ -114,6 +114,10 @@ class BaseClient:
         os.makedirs('/log_images', exist_ok=True)
 
         if proxy:
+            self.requests_session.proxies = {
+                'http': f'http://{proxy.hostname}:{proxy.port}',
+                'https': f'http://{proxy.hostname}:{proxy.port}'
+            }
             self.web_driver_options.add_argument(f'--proxy-server={proxy.hostname}:{proxy.port}')
 
     def __enter__(self):
