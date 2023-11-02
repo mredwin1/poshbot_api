@@ -1152,6 +1152,10 @@ class PoshMarkClient(BaseClient):
             to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
             to_followers_button.click()
 
+            flash_message = self.locate(By.ID, 'flash__message')
+            self.logger.info(f'Flash MEssage: {flash_message.text}')
+            success = flash_message.text == 'Shared Successfully'
+
             self.sleep(1)
 
             screenshot = f'/log_images/share_{slugify(listed_item_title)}.png'
@@ -1196,9 +1200,12 @@ class PoshMarkClient(BaseClient):
                     to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
                     to_followers_button.click()
 
+                    flash_message = self.locate(By.ID, 'flash__message')
+                    success = flash_message.text == 'Shared Successfully'
+
             self.logger.info('Item Shared')
 
-            return self.check_listing_timestamp(listed_item_id, listed_item_title)
+            return success
 
         except Exception as e:
             self.handle_error('Error while sharing item', 'share_item_error.png')
