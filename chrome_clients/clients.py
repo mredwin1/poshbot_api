@@ -1152,11 +1152,11 @@ class PoshMarkClient(BaseClient):
             to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
             to_followers_button.click()
 
+            self.sleep(.5)
+
             flash_message = self.locate(By.ID, 'flash__message')
             self.logger.info(f'Flash MEssage: {flash_message.text}')
             success = flash_message.text == 'Shared Successfully'
-
-            self.sleep(1)
 
             screenshot = f'/log_images/share_{slugify(listed_item_title)}.png'
             self.web_driver.save_screenshot(screenshot)

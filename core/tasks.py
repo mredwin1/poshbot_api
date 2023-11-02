@@ -534,10 +534,8 @@ class CampaignTask(Task):
                         return False
 
             else:
-                self.logger.info('Stopping campaign because user could not log in')
+                self.logger.info('Restarting campaign because user could not log in')
 
-                self.campaign.status = Campaign.STOPPING
-                self.campaign.save(update_fields=['status'])
                 return False
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
