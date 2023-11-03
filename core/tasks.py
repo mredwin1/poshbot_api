@@ -106,6 +106,7 @@ class CampaignTask(Task):
             self.proxy = Proxy.objects.get(id=self.proxy_id)
             self.logger.info('Proxy added to this campaign')
 
+            self.logger.info(f'Proxy ID: {self.proxy.license_id}')
         self.logger.info(f'Proxy ID: {self.proxy_id}')
 
         return response
@@ -768,7 +769,7 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and ((campaign.posh_user.user.username in ['tobi', 'johnny'] and available_proxy) or campaign.posh_user.user.username not in ['tobi', 'johnny']):
-                self.logger.info(f'Started as IDLE: {campaign.status} and runtime: {campaign.next_runtime} PROXY: {available_proxy} DEVICE: {available_device}')
+                self.logger.info(f'Started as IDLE: {campaign.status} and runtime: {campaign.next_runtime} PROXY: {available_proxy} DEVICE: {available_device} USERNAME: {campaign.posh_user.user.username}')
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
             elif campaign.status == Campaign.STARTING and ((available_proxy and available_device) or (not need_to_list and campaign.posh_user.is_registered and campaign.posh_user.user.username in ['tobi', 'johnny'])):
                 self.logger.info(f'Started as STARTING: {campaign.status} and runtime: {campaign.next_runtime} PROXY: {available_proxy} DEVICE: {available_device}')
