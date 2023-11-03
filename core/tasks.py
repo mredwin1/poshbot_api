@@ -771,7 +771,7 @@ class ManageCampaignsTask(Task):
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and ((campaign.posh_user.user.username in ['tobi', 'johnny'] and available_proxy) or campaign.posh_user.user.username not in ['tobi', 'johnny']):
                 self.logger.info(f'Started as IDLE: {campaign.status} and runtime: {campaign.next_runtime} PROXY: {available_proxy} DEVICE: {available_device} USERNAME: {campaign.posh_user.user.username}')
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
-            elif campaign.status == Campaign.STARTING and ((available_proxy and available_device) or (not need_to_list and campaign.posh_user.is_registered and campaign.posh_user.user.username in ['tobi', 'johnny'])):
+            elif campaign.status == Campaign.STARTING and ((available_proxy and available_device) or ((not need_to_list and campaign.posh_user.is_registered and campaign.posh_user.user.username not in ['tobi', 'johnny']) or (available_proxy and campaign.posh_user.user.username in ['tobi', 'johnny']))):
                 self.logger.info(f'Started as STARTING: {campaign.status} and runtime: {campaign.next_runtime} PROXY: {available_proxy} DEVICE: {available_device}')
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
 
