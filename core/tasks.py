@@ -778,7 +778,7 @@ class ManageCampaignsTask(Task):
             self.logger.info(need_to_list)
             self.logger.info(available_device)
             self.logger.info(available_proxy)
-            if (not campaign_started and campaign.status == Campaign.STARTING) or (not (available_device or available_proxy) and campaign.status == Campaign.STARTING) and (need_to_list and not campaign.posh_user.is_registered):
+            if ((not campaign_started and campaign.status == Campaign.STARTING) or (not (available_device or available_proxy) and campaign.status == Campaign.STARTING)) and (need_to_list and not campaign.posh_user.is_registered):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
