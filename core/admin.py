@@ -133,7 +133,7 @@ class ListedItemReportAdmin(admin.ModelAdmin):
 
 @admin.register(models.ListedItemToReport)
 class ListedItemToReportAdmin(admin.ModelAdmin):
-    list_display = ['listing_title', 'report_type', 'item_url', 'datetime_sold']
+    list_display = ['listing_title', 'report_type', 'item_url']
     search_fields = ['listing_title']
 
     @admin.display(ordering='listed_item_id')
@@ -389,7 +389,7 @@ class LogGroupAdmin(admin.ModelAdmin):
 class ListedItemAdmin(admin.ModelAdmin):
     readonly_fields = ['time_to_list']
     autocomplete_fields = ['posh_user']
-    list_display = ['listing_title', 'status', 'item_url', 'associated_user', 'associated_posh_user']
+    list_display = ['listing_title', 'status', 'item_url', 'associated_user', 'associated_posh_user', 'datetime_sold']
     search_fields = ['listing_title__istartswith', 'posh_user__username__istartswith']
     list_filter = ['status', 'posh_user__user']
 
