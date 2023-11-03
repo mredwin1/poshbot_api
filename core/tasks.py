@@ -752,8 +752,7 @@ class ManageCampaignsTask(Task):
             campaign_started = False
             available_device = None
             available_proxy = None
-            items_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED)
-            need_to_list = items_to_list.count() > 0
+            need_to_list = ListedItem.objects.filter(posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED).exists()
 
             if campaign.posh_user and check_for_device and (need_to_list or not campaign.posh_user.is_registered):
                 available_device = self.get_available_device()
