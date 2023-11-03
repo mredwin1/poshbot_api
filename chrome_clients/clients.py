@@ -1155,7 +1155,6 @@ class PoshMarkClient(BaseClient):
             self.sleep(.5)
 
             flash_message = self.locate(By.ID, 'flash__message')
-            self.logger.info(f'Flash MEssage: {flash_message.text}')
             success = flash_message.text == 'Shared Successfully'
 
             screenshot = f'/log_images/share_{slugify(listed_item_title)}.png'
