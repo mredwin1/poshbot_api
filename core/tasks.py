@@ -106,7 +106,7 @@ class CampaignTask(Task):
             self.proxy = Proxy.objects.get(id=self.proxy_id)
             self.logger.info('Proxy added to this campaign')
 
-            self.logger.info(f'Proxy ID: {self.proxy.license_id}')
+            self.logger.info(f'License ID: {self.proxy.license_id}')
         self.logger.info(f'Proxy ID: {self.proxy_id}')
 
         return response
@@ -775,9 +775,6 @@ class ManageCampaignsTask(Task):
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
 
 
-            self.logger.info(need_to_list)
-            self.logger.info(available_device)
-            self.logger.info(available_proxy)
             if ((not campaign_started and campaign.status == Campaign.STARTING) or (not (available_device or available_proxy) and campaign.status == Campaign.STARTING)) and (need_to_list and not campaign.posh_user.is_registered):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
