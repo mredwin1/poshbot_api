@@ -1185,8 +1185,8 @@ class PoshMarkClient(BaseClient):
                     word = 'attempt' if retries == 1 else 'attempts'
                     self.logger.info(f'2Captcha successfully solved captcha after {retries} {word}')
                     # Set the captcha response
-                    self.web_driver.execute_script(f'grecaptcha.getResponse = () => "{captcha_response}"')
-                    self.web_driver.execute_script('validateLoginCaptcha()')
+                    self.web_driver.execute_script(f"document.querySelector('#g-recaptcha-response').value = token")
+                    self.web_driver.execute_script(f"validateResponse('{captcha_response}')")
 
                     screenshot = f'/log_images/after_captcha_{slugify(listed_item_title)}.png'
                     self.web_driver.save_screenshot(screenshot)
