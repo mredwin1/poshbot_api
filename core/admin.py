@@ -133,7 +133,7 @@ class ListedItemReportAdmin(admin.ModelAdmin):
 
 @admin.register(models.ListedItemToReport)
 class ListedItemToReportAdmin(admin.ModelAdmin):
-    list_display = ['listing_title', 'report_type', 'item_url']
+    list_display = ['listing_title', 'report_type', 'item_url', 'datetime_sold']
     search_fields = ['listing_title']
 
     @admin.display(ordering='listed_item_id')
