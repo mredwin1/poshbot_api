@@ -13,7 +13,7 @@ class Command(BaseCommand):
     def add_arguments(self, parser):
         parser.add_argument(
             'start-date',
-            type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'),
+            type=str,
             help='Start date for filtering listed items (in the format YYYY-MM-DD)'
         )
 
@@ -50,16 +50,10 @@ class Command(BaseCommand):
 
         user_avg_durations = []
         excluded_statuses = (ListedItem.NOT_FOR_SALE, ListedItem.NOT_LISTED)
-        if options['include_up']:
-            time_to_be_removed_expression = ExpressionWrapper(
-                Coalesce(F('datetime_removed'), Now()) - F('datetime_listed'),
-                output_field=fields.DurationField()
-            )
-        else:
-            time_to_be_removed_expression = ExpressionWrapper(
-                F('datetime_removed') - F('datetime_listed'),
-                output_field=fields.DurationField()
-            )
+        time_to_be_removed_expression = ExpressionWrapper(
+            Coalesce(F('datetime_removed'), Now()) - F('datetime_listed'),
+            output_field=fields.DurationField()
+        )
 
         users = User.objects.all()
 
@@ -69,9 +63,9 @@ class Command(BaseCommand):
             if options['include-up']:
                 listed_items.exclude(datetime_listed__isnull=True)
 
-            if 'start-date' in options and options['start-date']:
-                start_date = options['start-date']
-                listed_items.filter(datetime_listed__gte=datetime.datetime(year=start_date.year, month=start_date.month, day=start_date.day))
+            if options['start-date']:
+                start_date_parts = options['start-date'].split()
+                listed_items.filter(datetime_listed__gte=datetime.datetime(year=start_date_parts[0], month=start_date_parts[1], day=start_date_parts[2]))
 
             listed_items = listed_items.annotate(time_to_be_removed=time_to_be_removed_expression)
 
