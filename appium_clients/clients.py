@@ -892,6 +892,9 @@ class PoshMarkClient(AppiumClient):
                             title_input = self.locate(AppiumBy.ID, 'title_edit_text')
                             self.input_text(title_input, listing.title)
 
+                            item_to_list.listing_title = title_input.text
+                            item_to_list.save()
+
                             added_title = True
 
                         if not added_description:
