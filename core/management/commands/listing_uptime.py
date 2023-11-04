@@ -12,14 +12,14 @@ class Command(BaseCommand):
 
     def add_arguments(self, parser):
         parser.add_argument(
-            '--include-up',
+            'include-up',
             type=bool,
             default=True,
             help='Include current items that are still UP'
         )
 
         parser.add_argument(
-            '--start-date',
+            'start-date',
             type=lambda s: datetime.datetime.strptime(s, '%Y-%m-%d'),
             help='Start date for filtering listed items (in the format YYYY-MM-DD)'
         )
@@ -67,10 +67,10 @@ class Command(BaseCommand):
         for user in users:
             listed_items = ListedItem.objects.filter(posh_user__user=user, datetime_listed__isnull=False).exclude(status__in=excluded_statuses)
 
-            if not options['include-up']:
+            if 'include-up' in options and not options['include-up']:
                 listed_items.exclude(datetime_listed__isnull=True)
 
-            if options['start-date']:
+            if 'start-date' in options and options['start-date']:
                 start_date = options['start-date']
                 listed_items.filter(datetime_listed__gte=datetime.datetime(year=start_date.year, month=start_date.month, day=start_date.day))
 
