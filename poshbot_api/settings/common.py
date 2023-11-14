@@ -167,8 +167,9 @@ LOGGING = {
 }
 
 CELERY_ENABLE_REMOTE_CONTROL = False
-CELERY_RESULT_BACKEND = None
-CELERY_IGNORE_RESULT = True
+os.makedirs('celery_results', exist_ok=True)
+CELERY_RESULT_BACKEND = 'file://celery_results'
+CELERY_IGNORE_RESULT = False
 CELERY_DEFAULT_QUEUE = 'maintenance'
 CELERY_BROKER_URL = f"sqs://{os.environ.get('AWS_SQS_ACCESS_KEY_ID')}:{os.environ.get('AWS_SQS_SECRET_ACCESS_KEY')}@"
 CELERY_BROKER_TRANSPORT_OPTIONS = {
