@@ -197,7 +197,7 @@ class UserAdmin(BaseUserAdmin):
 
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
-    readonly_fields = ['date_added', 'time_to_setup_device', 'time_to_register', 'time_to_finish_registration', 'is_active', 'date_disabled']
+    readonly_fields = ['date_added', 'time_to_setup_device', 'time_to_register', 'time_to_finish_registration', 'date_disabled']
     list_display = ['username', 'status', 'associated_user', 'associated_campaign', 'email', 'closet_url']
     search_fields = ['username__istartswith', 'email__istartswith']
     list_filter = ['user', PoshUserStatusFilter]
@@ -389,7 +389,7 @@ class LogGroupAdmin(admin.ModelAdmin):
 class ListedItemAdmin(admin.ModelAdmin):
     readonly_fields = ['time_to_list']
     autocomplete_fields = ['posh_user']
-    list_display = ['listing_title', 'status', 'item_url', 'associated_user', 'associated_posh_user', 'datetime_sold']
+    list_display = ['listing_title', 'status', 'item_url', 'associated_user', 'associated_posh_user', 'datetime_sold', 'datetime_redeemable', 'datetime_redeemed']
     search_fields = ['listing_title__istartswith', 'posh_user__username__istartswith']
     list_filter = ['status', 'posh_user__user']
 
