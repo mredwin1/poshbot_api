@@ -188,7 +188,8 @@ CELERY_TASK_ROUTES = {
     'core.tasks.posh_user_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'celery.backend_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.get_items_to_report': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.check_sold_items': {'queue': 'maintenance', 'routing_key': 'maintenance'}
+    'core.tasks.check_sold_items': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+    'core.tasks.test_task': {'queue': 'maintenance', 'routing_key': 'maintenance'}
 }
 
 CELERY_BEAT_SCHEDULE = {

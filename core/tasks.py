@@ -1038,3 +1038,9 @@ def send_email(from_email: str, to_email: list, subject: str, message: str):
     with smtplib.SMTP_SSL('smtp.gmail.com', 465, context=context) as smtp:
         smtp.login(from_email, os.environ['EMAIL_PASSWORD'])
         smtp.sendmail(from_email, to_email, email.as_string())
+
+
+@shared_task
+def test_task():
+    logger = logging.getLogger(__name__)
+    logger.info('TEst success')
