@@ -1007,22 +1007,33 @@ def check_sold_items():
             email_address = posh_user.email
             password = posh_user.email_imap_password
 
-            # Construct the subject keyword with dynamic values
-            subject_keyword = 'Your Instant Transfer request has been received'
+            possible_subjects = [
+                'Your Instant Transfer request has been received',
+                'Your request for direct deposit has been received'
+            ]
 
-            matching_email = zke_yahoo.check_for_email('support@poshmark.com', email_address, password, subject_keyword, redeemable_time)
+            for subject_keyword in possible_subjects:
+                matching_email = zke_yahoo.check_for_email(
+                    'support@poshmark.com',
+                    email_address,
+                    password,
+                    subject_keyword,
+                    redeemable_time
+                )
 
-            if matching_email:
-                date_received_str = matching_email.get("Date")
-                date_received = datetime.datetime.strptime(date_received_str,
-                                                           '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(
-                    pytz.timezone('US/Eastern'))
+                if matching_email:
+                    date_received_str = matching_email.get("Date")
+                    date_received = datetime.datetime.strptime(date_received_str,
+                                                               '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(
+                        pytz.timezone('US/Eastern'))
 
-                item.status = ListedItem.REDEEMED
-                item.datetime_redeemed = date_received
-                item.save()
+                    item.status = ListedItem.REDEEMED
+                    item.datetime_redeemed = date_received
+                    item.save()
 
-                logger.info(f'Updated {item} to REDEEMED')
+                    logger.info(f'Updated {item} to REDEEMED')
+
+                    break
 
 
 @shared_task
