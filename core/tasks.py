@@ -102,12 +102,6 @@ class CampaignTask(Task):
         if self.device_id and self.proxy_id:
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
-        elif self.proxy_id:
-            self.proxy = Proxy.objects.get(id=self.proxy_id)
-            self.logger.info('Proxy added to this campaign')
-
-            self.logger.info(f'License ID: {self.proxy.license_id}')
-        self.logger.info(f'Proxy ID: {self.proxy_id}')
 
         return response
 
@@ -377,15 +371,12 @@ class CampaignTask(Task):
         return item_listed
 
     def share_and_more(self):
-        if self.proxy:
-            self.reset_ip()
-
         login_retries = 0
         update_profile_retries = 0
         profile_updated = self.campaign.posh_user.profile_updated
         listing_shared = None
         shared = None
-        with PoshMarkClient(self.campaign, self.logger, proxy=self.proxy) as client:
+        with PoshMarkClient(self.campaign, self.logger) as client:
             client.web_driver.get('https://poshmark.com')
             client.load_cookies()
             logged_in = None
@@ -660,8 +651,8 @@ class ManageCampaignsTask(Task):
                     self.logger.warning('Campaign does not exist. Checking in.')
                     device.check_in()
 
-    def get_available_proxy(self, username='proxy'):
-        proxies = Proxy.objects.filter(is_active=True, username=username)
+    def get_available_proxy(self):
+        proxies = Proxy.objects.filter(is_active=True)
         in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list('id', flat=True)
 
         for proxy in proxies:
@@ -718,23 +709,6 @@ class ManageCampaignsTask(Task):
                     return True
 
                 return False
-        elif proxy:
-            try:
-                proxy.check_out(campaign.id)
-            except ValueError:
-                self.logger.warning(f'Proxy: {proxy.id} is not ready')
-
-                return False
-
-            campaign.status = Campaign.IN_QUEUE
-            campaign.queue_status = 'N/A'
-            campaign.save(update_fields=['status', 'queue_status'])
-
-            CampaignTask.delay(campaign.id, proxy_id=proxy.id)
-
-            self.logger.info(f'Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device and {proxy.license_id} proxy')
-
-            return True
         else:
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = 'N/A'
@@ -762,24 +736,18 @@ class ManageCampaignsTask(Task):
                 available_device = self.get_available_device()
                 available_proxy = self.get_available_proxy()
 
-            if campaign.posh_user and not need_to_list and campaign.posh_user.is_registered and campaign.posh_user.user.username in ['tobi', 'johnny']:
-                available_proxy = self.get_available_proxy(username='sharing')
-
             if campaign.status == Campaign.STOPPING or not campaign.posh_user or not campaign.posh_user.is_active or not campaign.posh_user.is_active_in_posh:
                 campaign.status = Campaign.STOPPED
                 campaign.queue_status = 'N/A'
                 campaign.next_runtime = None
 
                 campaign.save(update_fields=['status', 'queue_status', 'next_runtime'])
-            elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None and ((campaign.posh_user.user.username in ['tobi', 'johnny'] and available_proxy) or campaign.posh_user.user.username not in ['tobi', 'johnny']):
-                self.logger.info(f'Started as IDLE: {campaign.status} and runtime: {campaign.next_runtime} PROXY: {available_proxy} DEVICE: {available_device} USERNAME: {campaign.posh_user.user.username}')
+            elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
-            elif campaign.status == Campaign.STARTING and ((available_proxy and available_device) or ((not need_to_list and campaign.posh_user.is_registered and campaign.posh_user.user.username not in ['tobi', 'johnny']) or (available_proxy and campaign.posh_user.user.username in ['tobi', 'johnny']))):
-                self.logger.info(f'Started as STARTING: {campaign.status} and runtime: {campaign.next_runtime} PROXY: {available_proxy} DEVICE: {available_device}')
+            elif campaign.status == Campaign.STARTING and ((available_proxy and available_device) or (not need_to_list and campaign.posh_user.is_registered)):
                 campaign_started = self.start_campaign(campaign, available_device, available_proxy)
 
-
-            if ((not campaign_started and campaign.status == Campaign.STARTING) or (not (available_device or available_proxy) and campaign.status == Campaign.STARTING)) and (need_to_list and not campaign.posh_user.is_registered):
+            if (not campaign_started and campaign.status == Campaign.STARTING) or (not (available_device or available_proxy) and campaign.status == Campaign.STARTING):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=['queue_status'])
                 queue_num += 1
@@ -848,17 +816,19 @@ def check_posh_users():
                                 except ListedItem.DoesNotExist:
                                     listed_item_obj = ListedItem(posh_user=posh_user, listing=listing, listing_title=posh_listed_item['title'], listed_item_id=posh_listed_item['id'])
 
-                                listed_item_obj.listed_item_id = posh_listed_item['id']
+                                if not listed_item_obj.listed_item_id:
+                                    listed_item_obj.listed_item_id = posh_listed_item['id']
 
-                                if listed_item_type == 'reserved_listings':
-                                    listed_item_obj.status = ListedItem.RESERVED
-                                elif listed_item_type == 'sold_listings':
-                                    listed_item_obj.datetime_sold = timezone.now()
-                                    listed_item_obj.status = ListedItem.SOLD
-                                elif listed_item_type == 'not_for_sale_listings':
-                                    listed_item_obj.status = ListedItem.NOT_FOR_SALE
-                                else:
-                                    listed_item_obj.status = ListedItem.UP
+                                if ListedItem.status not in (ListedItem.REDEEMABLE, ListedItem.REDEEMED):
+                                    if listed_item_type == 'reserved_listings':
+                                        listed_item_obj.status = ListedItem.RESERVED
+                                    elif listed_item_type == 'sold_listings':
+                                        listed_item_obj.datetime_sold = timezone.now()
+                                        listed_item_obj.status = ListedItem.SOLD
+                                    elif listed_item_type == 'not_for_sale_listings':
+                                        listed_item_obj.status = ListedItem.NOT_FOR_SALE
+                                    else:
+                                        listed_item_obj.status = ListedItem.UP
 
                                 listed_item_obj.save()
                         except ListedItem.MultipleObjectsReturned:
