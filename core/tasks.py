@@ -904,10 +904,8 @@ class CheckPoshUsers(Task):
                         self.process_listed_item(listed_item, posh_listed_item)
 
                         # Remove the already processed item
-                        try:
-                            profile['listings'].remove(posh_listed_item)
-                        except ValueError:
-                            pass
+                        if posh_listed_item:
+                            profile['listings'] = [listing for listing in profile['listings'] if listing['id'] != posh_listed_item['id']]
 
                     # Process all the listings the bot currently knows about without ids
                     for listed_item in listed_items.filter(listed_item_id=''):
@@ -919,27 +917,27 @@ class CheckPoshUsers(Task):
                         self.process_listed_item(listed_item, posh_listed_item)
 
                         # Remove the already processed item
-                        try:
-                            profile['listings'].remove(posh_listed_item)
-                        except ValueError:
-                            pass
+                        if posh_listed_item:
+                            profile['listings'] = [listing for listing in profile['listings'] if listing['id'] != posh_listed_item['id']]
 
-                    for listed_item in profile.get('listings', []):
-                        print(f'Creating listing for {posh_user} - {listed_item["title"]}')
-                        try:
-                            listing = Listing.objects.get(title=listed_item['title'])
-                        except Listing.DoesNotExist:
-                            listing = None
-                        except Listing.MultipleObjectsReturned:
-                            listing = None
+                    print(profile['listings'])
 
-                        ListedItem.objects.create(
-                            posh_user=posh_user,
-                            listing=listing,
-                            listed_item_id=listed_item['id'],
-                            status=listed_item['status'],
-                            datetime_sold=timezone.now() if listed_item['status'] == ListedItem.SOLD else None
-                        )
+                    # for listed_item in profile.get('listings', []):
+                    #     print(f'Creating listing for {posh_user} - {listed_item["title"]}')
+                    #     try:
+                    #         listing = Listing.objects.get(title=listed_item['title'])
+                    #     except Listing.DoesNotExist:
+                    #         listing = None
+                    #     except Listing.MultipleObjectsReturned:
+                    #         listing = None
+                    #
+                    #     ListedItem.objects.create(
+                    #         posh_user=posh_user,
+                    #         listing=listing,
+                    #         listed_item_id=listed_item['id'],
+                    #         status=listed_item['status'],
+                    #         datetime_sold=timezone.now() if listed_item['status'] == ListedItem.SOLD else None
+                    #     )
 
                 else:
                     try:
