@@ -920,7 +920,7 @@ class CheckPoshUsers(Task):
                         if posh_listed_item:
                             profile['listings'] = [listing for listing in profile['listings'] if listing['id'] != posh_listed_item['id']]
 
-                    print(profile['listings'])
+                    print(f"{posh_user} {profile['listings']}")
 
                     # for listed_item in profile.get('listings', []):
                     #     print(f'Creating listing for {posh_user} - {listed_item["title"]}')
