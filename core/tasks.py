@@ -922,22 +922,23 @@ class CheckPoshUsers(Task):
 
                     print(f"{posh_user} {profile['listings']}")
 
-                    # for listed_item in profile.get('listings', []):
-                    #     print(f'Creating listing for {posh_user} - {listed_item["title"]}')
-                    #     try:
-                    #         listing = Listing.objects.get(title=listed_item['title'])
-                    #     except Listing.DoesNotExist:
-                    #         listing = None
-                    #     except Listing.MultipleObjectsReturned:
-                    #         listing = None
-                    #
-                    #     ListedItem.objects.create(
-                    #         posh_user=posh_user,
-                    #         listing=listing,
-                    #         listed_item_id=listed_item['id'],
-                    #         status=listed_item['status'],
-                    #         datetime_sold=timezone.now() if listed_item['status'] == ListedItem.SOLD else None
-                    #     )
+                    for listed_item in profile.get('listings', []):
+                        if not ListedItem.objects.filter(listed_item_id=listed_item['id']).exists():
+                            print(f'Creating listing for {posh_user} - {listed_item["title"]}')
+                            # try:
+                            #     listing = Listing.objects.get(title=listed_item['title'])
+                            # except Listing.DoesNotExist:
+                            #     listing = None
+                            # except Listing.MultipleObjectsReturned:
+                            #     listing = None
+                            #
+                            # ListedItem.objects.create(
+                            #     posh_user=posh_user,
+                            #     listing=listing,
+                            #     listed_item_id=listed_item['id'],
+                            #     status=listed_item['status'],
+                            #     datetime_sold=timezone.now() if listed_item['status'] == ListedItem.SOLD else None
+                            # )
 
                 else:
                     try:
