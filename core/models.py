@@ -394,13 +394,13 @@ class PoshUser(models.Model):
 
     @property
     def sold_listings(self):
-        sold_listings = ListedItem.objects.filter(posh_user=self, status__in=(ListedItem.SOLD, ListedItem.REDEEMABLE))
+        sold_listings = ListedItem.objects.filter(posh_user=self, datetime_sold__isnull=False)
 
         return sold_listings.count()
 
     @property
     def last_sale_time(self):
-        last_sale = ListedItem.objects.filter(posh_user=self, status=ListedItem.SOLD).order_by('-datetime_sold').first()
+        last_sale = ListedItem.objects.filter(posh_user=self, datetime_sold__isnull=False).order_by('-datetime_sold').first()
 
         if last_sale:
             return last_sale.datetime_sold.strftime('%Y-%m-%dT%H:%M:%S.%f%z')
