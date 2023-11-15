@@ -808,13 +808,13 @@ class CheckPoshUsers(Task):
         return listings
 
     @staticmethod
-    def process_listed_item(listed_item: Union[ListedItem, None], posh_listed_item: dict):
+    def process_listed_item(listed_item: ListedItem, posh_listed_item: Union[dict, None]):
         if not posh_listed_item and listed_item.status != ListedItem.UNDER_REVIEW:
             listed_item.status = ListedItem.REMOVED
             listed_item.datetime_removed = timezone.now()
 
             listed_item.save(update_fields=['status', 'datetime_removed'])
-        else:
+        elif posh_listed_item:
             if not listed_item.listed_item_id:
                 listed_item.listed_item_id = posh_listed_item['id']
                 listed_item.save(update_fields=['listed_item_id'])
