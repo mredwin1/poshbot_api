@@ -828,11 +828,6 @@ class CheckPoshUsers(Task):
                 listed_item.status = ListedItem.RESERVED
 
                 listed_item.save(update_fields=['status'])
-            elif posh_listed_item['status'] == ListedItem.UP and listed_item.datetime_passed_review is None:
-                listed_item.status = ListedItem.UP
-                listed_item.datetime_passed_review = timezone.now()
-
-                listed_item.save(update_fields=['status', 'datetime_passed_review'])
             elif posh_listed_item['status'] == ListedItem.UP and listed_item.status == ListedItem.RESERVED:
                 listed_item.status = ListedItem.UP
 
