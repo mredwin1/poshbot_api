@@ -1,5 +1,4 @@
 import datetime
-import json
 import logging
 import os
 import pytz
@@ -364,11 +363,7 @@ class CampaignTask(Task):
         else:
             all_items = ListedItem.objects.filter(posh_user=self.campaign.posh_user, status=ListedItem.UP)
 
-            if self.campaign.user.username == 'AGE':
-                self.campaign.status = Campaign.STOPPING
-                self.campaign.save(update_fields=['status'])
-
-            elif all_items.count() == 0:
+            if all_items.count() == 0:
                 self.campaign.status = Campaign.PAUSED
                 self.campaign.save(update_fields=['status'])
 
