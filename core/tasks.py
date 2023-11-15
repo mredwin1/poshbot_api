@@ -885,7 +885,7 @@ class CheckPoshUsers(Task):
             ListedItem.SHIPPED,
             ListedItem.CANCELLED
         )
-        posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True)
+        posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True, user__is_active=True)
 
         for posh_user in posh_users:
             profile = self.get_user_profile(posh_user)

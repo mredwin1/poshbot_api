@@ -180,7 +180,7 @@ class UserAdmin(BaseUserAdmin):
         (
             None,
             {
-                'fields': ('username', 'password', 'email', 'first_name', 'last_name', 'phone_number'),
+                'fields': ('is_active', 'username', 'password', 'email', 'first_name', 'last_name', 'phone_number'),
             },
         ),
     )
