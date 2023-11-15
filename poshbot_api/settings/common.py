@@ -181,6 +181,7 @@ CELERY_BROKER_TRANSPORT_OPTIONS = {
 CELERY_TASK_ROUTES = {
     'core.tasks.CampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
     'core.tasks.ManageCampaignsTask': {'queue': 'maintenance', 'routing_key': 'maintenance'},
+    'core.tasks.CheckPoshUsers': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.send_email': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.check_posh_users': {'queue': 'maintenance', 'routing_key': 'maintenance'},
     'core.tasks.send_support_emails': {'queue': 'maintenance', 'routing_key': 'maintenance'},
@@ -198,10 +199,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'core.tasks.ManageCampaignsTask',
         'schedule': timedelta(seconds=30),
     },
-    'check_posh_users': {
-        'task': 'core.tasks.check_posh_users',
-        'schedule': timedelta(minutes=25),
-    },
+    # 'check_posh_users': {
+    #     'task': 'core.tasks.CheckPoshUsers',
+    #     'schedule': timedelta(minutes=25),
+    # },
     'log_cleanup': {
         'task': 'core.tasks.log_cleanup',
         'schedule': timedelta(hours=1),

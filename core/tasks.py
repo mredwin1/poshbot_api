@@ -1,13 +1,16 @@
 import datetime
+import json
 import logging
 import os
 import pytz
 import random
+import requests
 import smtplib
 import ssl
 import time
 import traceback
 
+from bs4 import BeautifulSoup
 from celery import shared_task, Task
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from django.db.models import Q
@@ -16,6 +19,7 @@ from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from selenium.common.exceptions import WebDriverException
+from typing import Union
 
 from appium_clients.clients import PoshMarkClient as MobilePoshMarkClient, ProxyDroidClient, IDChangerClient, SwiftBackupClient
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
@@ -756,9 +760,207 @@ class ManageCampaignsTask(Task):
                     check_for_device = False
 
 
+class CheckPoshUsers(Task):
+    @staticmethod
+    def check_user_active(soup):
+        class_name = 'm--t--9'
+        text_content = 'No listings found.'
+        message_element = soup.find('div', {'class': class_name, 'style': 'display:;'})
+
+        if message_element and message_element.get_text(strip=True) == text_content:
+            listings_count_element = soup.find('span', {'data-test': 'closet_listings_count'})
+
+            listings_count = int(listings_count_element.get_text(strip=True))
+            if listings_count > 1:
+                return False
+
+        return True
+
+    @staticmethod
+    def get_user_listings(soup):
+        listings = []
+        listing_container_class = 'card--small'
+
+        listing_elements = soup.find_all('div', {'class': listing_container_class})
+
+        for listing_element in listing_elements:
+            title_element = listing_element.find('a', {'class': 'tile__title'})
+            status_element = listing_element.find('i', {'class': 'tile__inventory-tag'})
+            status = ListedItem.UP
+
+            if status_element:
+                posh_status = status_element.find('span', class_='inventory-tag__text').get_text(strip=True).lower()
+                posh_status = posh_status.replace(' ', '')
+
+                if posh_status == 'notforsale':
+                    status = ListedItem.NOT_FOR_SALE
+                elif posh_status == 'sold':
+                    status = ListedItem.SOLD
+                elif posh_status == 'reserved':
+                    status = ListedItem.RESERVED
+
+            listings.append({
+                'id': title_element['data-et-prop-listing_id'],
+                'title': title_element.get_text(strip=True),
+                'status': status
+            })
+
+        return listings
+
+    @staticmethod
+    def process_listed_item(listed_item: Union[ListedItem, None], posh_listed_item: dict):
+        if not posh_listed_item:
+            listed_item.status = ListedItem.REMOVED
+            listed_item.datetime_removed = timezone.now()
+
+            listed_item.save(update_fields=['status', 'datetime_removed'])
+        else:
+            if not listed_item.listed_item_id:
+                listed_item.listed_item_id = posh_listed_item['id']
+                listed_item.save(update_fields=['listed_item_id'])
+
+            if posh_listed_item['status'] == ListedItem.SOLD and listed_item.datetime_sold is None:
+                listed_item.datetime_sold = timezone.now()
+                listed_item.status = ListedItem.SOLD
+
+                listed_item.save(update_fields=['status', 'datetime_sold'])
+            elif posh_listed_item['status'] == ListedItem.RESERVED and listed_item.status != ListedItem.RESERVED:
+                listed_item.status = ListedItem.RESERVED
+
+                listed_item.save(update_fields=['status'])
+            elif posh_listed_item['status'] == ListedItem.UP and listed_item.datetime_passed_review is None:
+                listed_item.status = ListedItem.UP
+                listed_item.datetime_passed_review = timezone.now()
+
+                listed_item.save(update_fields=['status', 'datetime_passed_review'])
+            elif posh_listed_item['status'] == ListedItem.UP and listed_item.status == ListedItem.RESERVED:
+                listed_item.status = ListedItem.UP
+
+                listed_item.save(update_fields=['status'])
+            elif posh_listed_item['status'] == ListedItem.UP and listed_item.status == ListedItem.UNDER_REVIEW:
+                try:
+                    campaign = Campaign.objects.get(posh_user=listed_item.posh_user)
+
+                    if campaign.status == Campaign.PAUSED:
+                        campaign.status = Campaign.STARTING
+                        campaign.next_runtime = timezone.now()
+
+                        campaign.save(update_fields=['status', 'next_runtime'])
+                except Campaign.DoesNotExist:
+                    pass
+
+                listed_item.status = ListedItem.UP
+
+                if not listed_item.datetime_passed_review:
+                    listed_item.datetime_passed_review = timezone.now()
+
+                listed_item.save(update_fields=['status', 'datetime_passed_review'])
+            elif posh_listed_item['status'] == ListedItem.NOT_FOR_SALE and listed_item.status != ListedItem.NOT_FOR_SALE:
+                listed_item.status = ListedItem.NOT_FOR_SALE
+                listed_item.save(update_fields=['status'])
+
+    def get_user_profile(self, username: str) -> dict:
+        profile = {}
+        profile_url = f'https://poshmark.com/closet/{username}'
+        response = requests.get(profile_url)
+
+        if response.status_code == 200:
+            profile['username'] = username
+            soup = BeautifulSoup(response.content, 'html.parser')
+
+            is_active = self.check_user_active(soup)
+
+            profile['is_active'] = is_active
+
+            if is_active:
+                profile['listings'] = self.get_user_listings(soup)
+
+        return profile
+
+    def run(self):
+        excluded_statuses = (
+            ListedItem.REDEEMABLE,
+            ListedItem.REDEEMED,
+            ListedItem.REMOVED,
+            ListedItem.SHIPPED,
+            ListedItem.CANCELLED
+        )
+        posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True)
+
+        for posh_user in posh_users:
+            profile = self.get_user_profile(posh_user)
+
+            if profile:
+                listed_items = posh_user.listeditem_set.exclude(status__in=excluded_statuses)
+
+                if profile['is_active']:
+                    # Process all the listings the bot currently knows about with ids
+                    for listed_item in listed_items.exclude(listed_item_id=''):
+                        if profile['listings']:
+                            posh_listed_item = next((listing for listing in profile['listings'] if listing['id'] == listed_item.listed_item_id), None)
+                        else:
+                            posh_listed_item = None
+
+                        self.process_listed_item(listed_item, posh_listed_item)
+
+                        # Remove the already processed item
+                        try:
+                            profile['listings'].remove(posh_listed_item)
+                        except ValueError:
+                            pass
+
+                    # Process all the listings the bot currently knows about without ids
+                    for listed_item in listed_items.filter(listed_item_id=''):
+                        if profile['listings']:
+                            posh_listed_item = next((listing for listing in profile['listings'] if listing['title'] == listed_item.listing_title), None)
+                        else:
+                            posh_listed_item = None
+
+                        self.process_listed_item(listed_item, posh_listed_item)
+
+                        # Remove the already processed item
+                        try:
+                            profile['listings'].remove(posh_listed_item)
+                        except ValueError:
+                            pass
+
+                    for listed_item in profile.get('listings', []):
+                        try:
+                            listing = Listing.objects.get(title=listed_item['title'])
+                        except Listing.DoesNotExist:
+                            listing = None
+
+                        ListedItem.objects.create(
+                            posh_user=posh_user,
+                            listing=listing,
+                            listed_item_id=listed_item['id'],
+                            status=listed_item['status'],
+                            datetime_sold=timezone.now() if listed_item['status'] == ListedItem.SOLD else None
+                        )
+
+                else:
+                    try:
+                        campaign = Campaign.objects.get(posh_user=posh_user)
+                        campaign.status = Campaign.STOPPING
+
+                        campaign.save(update_fields=['status'])
+                    except Campaign.DoesNotExist:
+                        pass
+
+                    posh_user.is_active_in_posh = False
+                    posh_user.date_disabled = timezone.now().date()
+                    posh_user.save(update_fields=['is_active_in_posh', 'date_disabled'])
+
+                    for listed_item in listed_items:
+                        listed_item.status = ListedItem.REMOVED
+                        listed_item.datetime_removed = timezone.now()
+
+                        listed_item.save(update_fields=['status', 'datetime_removed'])
+
+
 CampaignTask = app.register_task(CampaignTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
-
+CheckPoshUsers = app.register_task(CheckPoshUsers())
 
 @shared_task
 def check_posh_users():
@@ -877,7 +1079,7 @@ def log_cleanup():
 
         for log in logs:
             log.delete()
-
+usernames = ['dreevesp558']
 
 @shared_task
 def posh_user_cleanup():
@@ -950,7 +1152,7 @@ def get_items_to_report():
 @shared_task
 def check_sold_items():
     logger = logging.getLogger(__name__)
-    sold_items = ListedItem.objects.filter(status=ListedItem.SOLD)
+    sold_items = ListedItem.objects.filter(datetime_sold__isnull=False)
 
     for item in sold_items:
         listing_title = item.listing_title
@@ -996,7 +1198,7 @@ def check_sold_items():
                 else:
                     logger.info(f'Email not sent: {item.posh_user.user.email}')
 
-    redeemable_items = ListedItem.objects.filter(status=ListedItem.REDEEMABLE)
+    redeemable_items = ListedItem.objects.filter(datetime_redeemable__isnull=False)
 
     for item in redeemable_items:
         posh_user = item.posh_user
