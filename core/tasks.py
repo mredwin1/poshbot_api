@@ -867,7 +867,8 @@ class CheckPoshUsers(Task):
         if response.status_code == 200:
             profile['username'] = username
             soup = BeautifulSoup(response.content, 'html.parser')
-
+            print(soup)
+            print()
             is_active = self.check_user_active(soup)
 
             profile['is_active'] = is_active
@@ -892,7 +893,7 @@ class CheckPoshUsers(Task):
 
         for posh_user in posh_users:
             profile = self.get_user_profile(posh_user)
-
+            print(profile)
             if profile:
                 listed_items = posh_user.listeditem_set.exclude(status__in=excluded_statuses)
 
