@@ -925,11 +925,12 @@ class CheckPoshUsers(Task):
                             pass
 
                     for listed_item in profile.get('listings', []):
+                        print(f'Creating listing for {posh_user} - {listed_item["title"]}')
                         try:
                             listing = Listing.objects.get(title=listed_item['title'])
                         except Listing.DoesNotExist:
                             listing = None
-                        except ListedItem.MultipleObjectsReturned:
+                        except Listing.MultipleObjectsReturned:
                             listing = None
 
                         ListedItem.objects.create(
