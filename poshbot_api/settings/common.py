@@ -199,10 +199,10 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'core.tasks.ManageCampaignsTask',
         'schedule': timedelta(seconds=30),
     },
-    # 'check_posh_users': {
-    #     'task': 'core.tasks.CheckPoshUsers',
-    #     'schedule': timedelta(minutes=25),
-    # },
+    'check_posh_users': {
+        'task': 'core.tasks.CheckPoshUsers',
+        'schedule': timedelta(minutes=20),
+    },
     'log_cleanup': {
         'task': 'core.tasks.log_cleanup',
         'schedule': timedelta(hours=1),
