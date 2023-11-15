@@ -877,7 +877,7 @@ class CheckPoshUsers(Task):
 
         return profile
 
-    def run(self):
+    def run(self, username: Union[str, None] = None):
         excluded_statuses = (
             ListedItem.REDEEMABLE,
             ListedItem.REDEEMED,
@@ -886,6 +886,9 @@ class CheckPoshUsers(Task):
             ListedItem.CANCELLED
         )
         posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True, user__is_active=True)
+
+        if username:
+            posh_users.filter(username=username)
 
         for posh_user in posh_users:
             profile = self.get_user_profile(posh_user)
@@ -937,7 +940,6 @@ class CheckPoshUsers(Task):
                                 status=listed_item['status'],
                                 datetime_sold=timezone.now() if listed_item['status'] == ListedItem.SOLD else None
                             )
-
                 else:
                     try:
                         campaign = Campaign.objects.get(posh_user=posh_user)
