@@ -929,6 +929,8 @@ class CheckPoshUsers(Task):
                             listing = Listing.objects.get(title=listed_item['title'])
                         except Listing.DoesNotExist:
                             listing = None
+                        except ListedItem.MultipleObjectsReturned:
+                            listing = None
 
                         ListedItem.objects.create(
                             posh_user=posh_user,
@@ -961,6 +963,7 @@ class CheckPoshUsers(Task):
 CampaignTask = app.register_task(CampaignTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
 CheckPoshUsers = app.register_task(CheckPoshUsers())
+
 
 @shared_task
 def check_posh_users():
@@ -1079,7 +1082,7 @@ def log_cleanup():
 
         for log in logs:
             log.delete()
-usernames = ['dreevesp558']
+
 
 @shared_task
 def posh_user_cleanup():
@@ -1152,7 +1155,7 @@ def get_items_to_report():
 @shared_task
 def check_sold_items():
     logger = logging.getLogger(__name__)
-    sold_items = ListedItem.objects.filter(datetime_sold__isnull=False)
+    sold_items = ListedItem.objects.filter(datetime_sold__isnull=False).exclude(Q(datetime_redeemable__isnull=False) | Q(datetime_redeemed_isnull=False))
 
     for item in sold_items:
         listing_title = item.listing_title
@@ -1198,7 +1201,7 @@ def check_sold_items():
                 else:
                     logger.info(f'Email not sent: {item.posh_user.user.email}')
 
-    redeemable_items = ListedItem.objects.filter(datetime_redeemable__isnull=False)
+    redeemable_items = ListedItem.objects.filter(datetime_redeemable__isnull=False).exclude(Q(datetime_redeemable__isnull=False) | Q(datetime_redeemed_isnull=False))
 
     for item in redeemable_items:
         posh_user = item.posh_user
