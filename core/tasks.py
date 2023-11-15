@@ -878,7 +878,7 @@ class CheckPoshUsers(Task):
 
         return profile
 
-    def run(self):
+    def run(self, username: Union[str, None] = None):
         excluded_statuses = (
             ListedItem.REDEEMABLE,
             ListedItem.REDEEMED,
@@ -888,7 +888,8 @@ class CheckPoshUsers(Task):
         )
         posh_users = PoshUser.objects.filter(is_active_in_posh=True, is_registered=True, user__is_active=True)
 
-        posh_users.filter(username='kwebstero2004')
+        if username:
+            posh_users = posh_users.filter(username=username)
 
         for posh_user in posh_users:
             profile = self.get_user_profile(posh_user)
