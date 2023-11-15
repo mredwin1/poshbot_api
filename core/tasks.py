@@ -809,7 +809,7 @@ class CheckPoshUsers(Task):
 
     @staticmethod
     def process_listed_item(listed_item: Union[ListedItem, None], posh_listed_item: dict):
-        if not posh_listed_item:
+        if not posh_listed_item and listed_item.status != ListedItem.UNDER_REVIEW:
             listed_item.status = ListedItem.REMOVED
             listed_item.datetime_removed = timezone.now()
 
