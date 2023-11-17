@@ -17,6 +17,7 @@ RUN apt-get update \
     && apt-get install -y libcurl4-openssl-dev libssl-dev \
     && apt-get clean \
     && rm -rf /var/lib/apt/lists/* \
+    && pip install pipenv \
     && pipenv install --system --deploy --skip-lock
 
 # Copy the chrome.deb file into the image
