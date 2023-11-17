@@ -1,21 +1,29 @@
 from .common import *
 
+DEBUG = False
+
 ALLOWED_HOSTS = [
-    'turtleswags.com'
+    'randomcol.com'
 ]
 
 CSRF_TRUSTED_ORIGINS = [
-    'https://melondova.com',
-    'https://turtleswags.com',
-    'https://www.melondova.com'
+    'https://randomcol.com',
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    'https://turtleswags.com',
-    'https://www.turtleswags.com',
-    'https://melondova.com',
-    'https://www.melondova.com'
+    'https://randomcol.com',
 ]
+
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.postgresql_psycopg2',
+        'NAME': os.environ['RDS_DB_NAME'],
+        'USER': os.environ['RDS_USERNAME'],
+        'PASSWORD': os.environ['RDS_PASSWORD'],
+        'HOST': os.environ['RDS_HOSTNAME'],
+        'PORT': os.environ['RDS_PORT'],
+    }
+}
 
 DEFAULT_FILE_STORAGE = 'storages.backends.s3boto3.S3Boto3Storage'
 
