@@ -20,7 +20,7 @@ RUN apt-get update \
     && pipenv install --system --deploy --skip-lock
 
 # Copy the chrome.deb file into the image
-COPY /poshbot_api/chrome_clients/chrome.deb /poshbot_api/chrome_clients/
+COPY ./chrome_clients/chrome.deb /poshbot_api/chrome_clients/
 
 # Install chrome
 RUN apt-get update \
