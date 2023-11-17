@@ -2,7 +2,6 @@ version: '3.7'
 
 services:
   poshbot:
-    image: ghcr.io/mredwin1/poshbot_api:latest
     build:
       context: .
       dockerfile: Dockerfile
@@ -65,7 +64,9 @@ services:
       - "/var/run/docker.sock:/var/run/docker.sock:ro"
       - "/letsencrypt/acme.json:/acme.json"
   celery_maintenance:
-    image: ghcr.io/mredwin1/poshbot_api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     init: true
     container_name: celery_maintenance_poshbot_api
     restart: always
@@ -79,7 +80,9 @@ services:
     volumes:
       - /dev/shm:/dev/shm
   celery_beat:
-    image: ghcr.io/mredwin1/poshbot_api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     init: true
     container_name: celery_beat_poshbot_api
     restart: always
@@ -92,7 +95,9 @@ services:
     volumes:
       - /dev/shm:/dev/shm
   celery_concurrency:
-    image: ghcr.io/mredwin1/poshbot_api:latest
+    build:
+      context: .
+      dockerfile: Dockerfile
     init: true
     container_name: celery_concurrency_poshbot_api
     restart: always
