@@ -15,9 +15,9 @@ COPY Pipfile* ./
 # Install dependencies for pycurl then install modules using pipenv
 RUN apt update \
     && apt install -y libcurl4-openssl-dev libssl-dev \
+    && apt install -y python3-pip \
     && apt clean \
     && rm -rf /var/lib/apt/lists/* \
-    && apt install -y python3-pip \
     && pip install pipenv \
     && pipenv install --system --deploy --skip-lock
 
