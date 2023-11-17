@@ -13,10 +13,11 @@ ENV PIP_NO_CACHE_DIR=false \
 COPY Pipfile* ./
 
 # Install dependencies for pycurl then install modules using pipenv
-RUN apt-get update \
-    && apt-get install -y libcurl4-openssl-dev libssl-dev \
-    && apt-get clean \
+RUN apt update \
+    && apt install -y libcurl4-openssl-dev libssl-dev \
+    && apt clean \
     && rm -rf /var/lib/apt/lists/* \
+    && apt install -y python3-pip \
     && pip install pipenv \
     && pipenv install --system --deploy --skip-lock
 
@@ -24,8 +25,8 @@ RUN apt-get update \
 COPY ./chrome_clients/chrome.deb /poshbot_api/chrome_clients/
 
 # Install chrome
-RUN apt-get update \
-    && apt-get install -y /poshbot_api/chrome_clients/chrome.deb
+RUN apt update \
+    && apt install -y /poshbot_api/chrome_clients/chrome.deb
 
 # Copy the project files into working directory
 COPY . .
