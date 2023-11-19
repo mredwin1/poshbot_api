@@ -1081,7 +1081,7 @@ def check_listed_items():
                 else:
                     logger.info(f'Email not sent: {item.posh_user.user.email}')
 
-    redeemable_items = ListedItem.objects.filter(datetime_redeemable__isnull=False).exclude(datetime_redeemed__isnull=False)
+    redeemable_items = ListedItem.objects.filter(datetime_redeemable__isnull=False, datetime_redeemed__isnull=True)
 
     for item in redeemable_items:
         posh_user = item.posh_user
@@ -1120,7 +1120,7 @@ def check_listed_items():
 
                     break
 
-    under_review_items = ListedItem.objects.filter(datetime_listed__isnull=False).exclude(datetime_passed_review__isnull=False)
+    under_review_items = ListedItem.objects.filter(datetime_listed__isnull=False, datetime_passed_review__isnull=True)
 
     for item in under_review_items:
         posh_user = item.posh_user

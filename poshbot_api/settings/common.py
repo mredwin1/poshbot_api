@@ -215,8 +215,8 @@ CELERY_BEAT_SCHEDULE = {
         'task': 'core.tasks.send_support_emails',
         'schedule': timedelta(days=4),
     },
-    'check_sold_items': {
-        'task': 'core.tasks.check_listed_items',
-        'schedule': timedelta(minutes=5),
-    },
+    # 'check_sold_items': {
+    #     'task': 'core.tasks.check_listed_items',
+    #     'schedule': timedelta(minutes=5),
+    # },
 }
