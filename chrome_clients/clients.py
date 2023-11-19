@@ -1510,6 +1510,7 @@ class PoshMarkClient(BaseClient):
 
                                     closet_url = comment.find_element(By.TAG_NAME, 'a').get_attribute('href')
                                     closets_to_report.append((closet_url, bad_phrase.report_type))
+                                    self.sleep(2)
 
                                     break
                             break  # No need to check other bad phrases if one is found
@@ -1552,7 +1553,7 @@ class PoshMarkClient(BaseClient):
                 submit_button.click()
 
         except Exception as e:
-            self.handle_error('Error while sharing item', 'share_item_error.png')
+            self.handle_error('Error while checking comments', 'checking_comments_error.png')
 
     def random_scroll(self, scroll_up=True):
         try:
