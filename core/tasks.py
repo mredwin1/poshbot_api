@@ -1124,7 +1124,10 @@ def check_listed_items():
 
     for item in under_review_items:
         posh_user = item.posh_user
-        campaign = item.posh_user.campaign
+        try:
+            campaign = item.posh_user.campaign
+        except Campaign.DoesNotExist:
+            campaign = None
         datetime_listed = item.datetime_listed
 
         # Check if the PoshUser has the necessary IMAP email password
