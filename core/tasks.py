@@ -1120,7 +1120,7 @@ def check_listed_items():
 
                     break
 
-    under_review_items = ListedItem.objects.filter(datetime_listed__isnull=False, datetime_passed_review__isnull=True)
+    under_review_items = ListedItem.objects.filter(datetime_listed__isnull=False, datetime_passed_review__isnull=True, datetime_removed__isnull=True)
 
     for item in under_review_items:
         posh_user = item.posh_user
