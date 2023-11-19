@@ -8,7 +8,6 @@ import re
 import requests
 import time
 import traceback
-import zipfile
 
 from bs4 import BeautifulSoup
 from django.conf import settings
@@ -24,7 +23,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem, Proxy
+from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem, Proxy, Listing
 
 
 class Captcha:
@@ -1230,7 +1229,10 @@ class PoshMarkClient(BaseClient):
     def check_offers(self, listing_title):
         try:
             if self.campaign.mode == Campaign.ADVANCED_SHARING:
-                lowest_price = self.campaign.listings.get(title=listing_title).lowest_price
+                try:
+                    lowest_price = self.campaign.listings.get(title=listing_title).lowest_price
+                except Listing.DoesNotExist:
+                    lowest_price = self.campaign.lowest_price
             else:
                 lowest_price = self.campaign.lowest_price
 
