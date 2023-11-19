@@ -1159,8 +1159,6 @@ def check_listed_items():
                     campaign.status = Campaign.STOPPING
                     campaign.save()
 
-                break
-
 
 @shared_task
 def send_email(from_email: str, to_email: list, subject: str, message: str):
