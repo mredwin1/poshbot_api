@@ -1070,7 +1070,7 @@ def check_listed_items():
                 item.datetime_redeemable = date_received
                 item.save()
 
-                logger.info(message)
+                logger.info(f'{posh_user} - Updated {item} to REDEEMABLE')
                 if item.posh_user.user.email:
                     from_email = os.environ['EMAIL_ADDRESS']
                     to_email = [item.posh_user.user.email]
@@ -1116,7 +1116,7 @@ def check_listed_items():
                     item.datetime_redeemed = date_received
                     item.save()
 
-                    logger.info(f'Updated {item} to REDEEMED')
+                    logger.info(f'{posh_user} - Updated {item} to REDEEMED')
 
                     break
 
@@ -1153,7 +1153,7 @@ def check_listed_items():
                 item.datetime_removed = date_received
                 item.save()
 
-                logger.info(f'Updated {item} to removed')
+                logger.info(f'{posh_user} - Updated {item} to REMOVED')
 
                 if campaign and campaign.status == Campaign.PAUSED and not campaign.listings.filter(status__in=(ListedItem.UP, ListedItem.UNDER_REVIEW, ListedItem.RESERVED)).exists():
                     campaign.status = Campaign.STOPPING
