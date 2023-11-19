@@ -1155,7 +1155,7 @@ def check_listed_items():
 
                 logger.info(f'{posh_user} - Updated {item} to REMOVED')
 
-                if campaign and campaign.status == Campaign.PAUSED and not campaign.listings.filter(status__in=(ListedItem.UP, ListedItem.UNDER_REVIEW, ListedItem.RESERVED)).exists():
+                if campaign and campaign.status == Campaign.PAUSED and not campaign.posh_user.listeditem_set.filter(status__in=(ListedItem.UP, ListedItem.UNDER_REVIEW, ListedItem.RESERVED)).exists():
                     campaign.status = Campaign.STOPPING
                     campaign.save()
 
