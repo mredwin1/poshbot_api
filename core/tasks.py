@@ -1150,7 +1150,7 @@ def check_listed_items():
                     pytz.timezone('US/Eastern'))
 
                 item.status = ListedItem.REMOVED
-                item.datetime_redeemed = date_received
+                item.datetime_removed = date_received
                 item.save()
 
                 logger.info(f'Updated {item} to removed')
