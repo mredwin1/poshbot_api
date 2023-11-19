@@ -1033,7 +1033,7 @@ def get_items_to_report():
 
 
 @shared_task
-def check_sold_items():
+def check_listed_items():
     logger = logging.getLogger(__name__)
     sold_items = ListedItem.objects.filter(datetime_sold__isnull=False).exclude(Q(datetime_redeemable__isnull=False) | Q(datetime_redeemed__isnull=False))
 
@@ -1081,7 +1081,7 @@ def check_sold_items():
                 else:
                     logger.info(f'Email not sent: {item.posh_user.user.email}')
 
-    redeemable_items = ListedItem.objects.filter(datetime_redeemable__isnull=False).exclude(atetime_redeemed__isnull=False)
+    redeemable_items = ListedItem.objects.filter(datetime_redeemable__isnull=False).exclude(datetime_redeemed__isnull=False)
 
     for item in redeemable_items:
         posh_user = item.posh_user
@@ -1119,6 +1119,44 @@ def check_sold_items():
                     logger.info(f'Updated {item} to REDEEMED')
 
                     break
+
+    under_review_items = ListedItem.objects.filter(datetime_listed__isnull=False).exclude(datetime_passed_review__isnull=False)
+
+    for item in under_review_items:
+        posh_user = item.posh_user
+        campaign = item.posh_user.campaign
+        datetime_listed = item.datetime_listed
+
+        # Check if the PoshUser has the necessary IMAP email password
+        if posh_user.email and posh_user.email_imap_password:
+            email_address = posh_user.email
+            password = posh_user.email_imap_password
+
+            matching_email = zke_yahoo.check_for_email(
+                'support@poshmark.com',
+                email_address,
+                password,
+                f'Your Poshmark listing "{item.listing_title}" has been removed due to Counterfeit item(s)',
+                datetime_listed
+            )
+
+            if matching_email:
+                date_received_str = matching_email.get("Date")
+                date_received = datetime.datetime.strptime(date_received_str,
+                                                           '%a, %d %b %Y %H:%M:%S %z (%Z)').astimezone(
+                    pytz.timezone('US/Eastern'))
+
+                item.status = ListedItem.REMOVED
+                item.datetime_redeemed = date_received
+                item.save()
+
+                logger.info(f'Updated {item} to removed')
+
+                if campaign and campaign.status == Campaign.PAUSED and not campaign.listings.filter(status__in=(ListedItem.UP, ListedItem.UNDER_REVIEW, ListedItem.RESERVED)).exists():
+                    campaign.status = Campaign.STOPPING
+                    campaign.save()
+
+                break
 
 
 @shared_task
