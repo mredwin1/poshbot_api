@@ -1148,7 +1148,7 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(1)
 
-            to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link')
+            to_followers_button = self.locate(By.CLASS_NAME, 'internal-share__link', 'clickable')
             to_followers_button.click()
 
             self.sleep(.5)
