@@ -523,6 +523,7 @@ class ListedItemAdmin(admin.ModelAdmin):
         "associated_user",
         "associated_posh_user",
         "datetime_sold",
+        "datetime_shipped",
         "datetime_redeemable",
         "datetime_redeemed",
     ]
