@@ -20,19 +20,19 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 
 INSTALLED_APPS = [
-    'django.contrib.admin',
-    'django.contrib.sessions',
-    'django.contrib.auth',
-    'django.contrib.contenttypes',
-    'django.contrib.messages',
-    'django.contrib.staticfiles',
-    'rest_framework',
-    'debug_toolbar',
-    'django_filters',
-    'storages',
-    'djoser',
-    'corsheaders',
-    'core'
+    "django.contrib.admin",
+    "django.contrib.sessions",
+    "django.contrib.auth",
+    "django.contrib.contenttypes",
+    "django.contrib.messages",
+    "django.contrib.staticfiles",
+    "rest_framework",
+    "debug_toolbar",
+    "django_filters",
+    "storages",
+    "djoser",
+    "corsheaders",
+    "core",
 ]
 
 INTERNAL_IPS = [
@@ -40,53 +40,53 @@ INTERNAL_IPS = [
 ]
 
 MIDDLEWARE = [
-    'corsheaders.middleware.CorsMiddleware',
-    'debug_toolbar.middleware.DebugToolbarMiddleware',
+    "corsheaders.middleware.CorsMiddleware",
+    "debug_toolbar.middleware.DebugToolbarMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
-    'django.middleware.security.SecurityMiddleware',
-    'django.contrib.sessions.middleware.SessionMiddleware',
-    'django.middleware.common.CommonMiddleware',
-    'django.middleware.csrf.CsrfViewMiddleware',
-    'django.contrib.auth.middleware.AuthenticationMiddleware',
-    'django.contrib.messages.middleware.MessageMiddleware',
-    'django.middleware.clickjacking.XFrameOptionsMiddleware',
+    "django.middleware.security.SecurityMiddleware",
+    "django.contrib.sessions.middleware.SessionMiddleware",
+    "django.middleware.common.CommonMiddleware",
+    "django.middleware.csrf.CsrfViewMiddleware",
+    "django.contrib.auth.middleware.AuthenticationMiddleware",
+    "django.contrib.messages.middleware.MessageMiddleware",
+    "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
 
-ROOT_URLCONF = 'poshbot_api.urls'
+ROOT_URLCONF = "poshbot_api.urls"
 
 TEMPLATES = [
     {
-        'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [],
-        'APP_DIRS': True,
-        'OPTIONS': {
-            'context_processors': [
-                'django.template.context_processors.debug',
-                'django.template.context_processors.request',
-                'django.contrib.auth.context_processors.auth',
-                'django.contrib.messages.context_processors.messages',
+        "BACKEND": "django.template.backends.django.DjangoTemplates",
+        "DIRS": [],
+        "APP_DIRS": True,
+        "OPTIONS": {
+            "context_processors": [
+                "django.template.context_processors.debug",
+                "django.template.context_processors.request",
+                "django.contrib.auth.context_processors.auth",
+                "django.contrib.messages.context_processors.messages",
             ],
         },
     },
 ]
 
-WSGI_APPLICATION = 'poshbot_api.wsgi.application'
+WSGI_APPLICATION = "poshbot_api.wsgi.application"
 
 # Password validation
 # https://docs.djangoproject.com/en/4.0/ref/settings/#auth-password-validators
 
 AUTH_PASSWORD_VALIDATORS = [
     {
-        'NAME': 'django.contrib.auth.password_validation.UserAttributeSimilarityValidator',
+        "NAME": "django.contrib.auth.password_validation.UserAttributeSimilarityValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.MinimumLengthValidator',
+        "NAME": "django.contrib.auth.password_validation.MinimumLengthValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.CommonPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.CommonPasswordValidator",
     },
     {
-        'NAME': 'django.contrib.auth.password_validation.NumericPasswordValidator',
+        "NAME": "django.contrib.auth.password_validation.NumericPasswordValidator",
     },
 ]
 
@@ -94,9 +94,9 @@ AUTH_PASSWORD_VALIDATORS = [
 # Internationalization
 # https://docs.djangoproject.com/en/4.0/topics/i18n/
 
-LANGUAGE_CODE = 'en-us'
+LANGUAGE_CODE = "en-us"
 
-TIME_ZONE = 'UTC'
+TIME_ZONE = "UTC"
 
 USE_I18N = True
 
@@ -106,45 +106,42 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/4.0/howto/static-files/
 
-STATIC_URL = 'static/'
-STATIC_ROOT = os.path.join(BASE_DIR, 'static')
+STATIC_URL = "static/"
+STATIC_ROOT = os.path.join(BASE_DIR, "static")
 
-MEDIA_URL = 'media/'
-MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
+MEDIA_URL = "media/"
+MEDIA_ROOT = os.path.join(BASE_DIR, "media")
 
-DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
+DEFAULT_AUTO_FIELD = "django.db.models.BigAutoField"
 
-AUTH_USER_MODEL = 'core.User'
+AUTH_USER_MODEL = "core.User"
 
 REST_FRAMEWORK = {
-    'DEFAULT_AUTHENTICATION_CLASSES': (
-        'rest_framework_simplejwt.authentication.JWTAuthentication',
+    "DEFAULT_AUTHENTICATION_CLASSES": (
+        "rest_framework_simplejwt.authentication.JWTAuthentication",
     ),
-    'DEFAULT_RENDERER_CLASSES': [
-        'rest_framework.renderers.JSONRenderer',
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
     ],
-    'DEFAULT_PAGINATION_CLASS': 'rest_framework.pagination.LimitOffsetPagination',
-    'PAGE_SIZE': 1000
+    "DEFAULT_PAGINATION_CLASS": "rest_framework.pagination.LimitOffsetPagination",
+    "PAGE_SIZE": 1000,
 }
 
-SIMPLE_JWT = {
-    'AUTH_HEADER_TYPES': ('JWT',),
-    'ACCESS_TOKEN_LIFETIME': timedelta(days=1)
-}
+SIMPLE_JWT = {"AUTH_HEADER_TYPES": ("JWT",), "ACCESS_TOKEN_LIFETIME": timedelta(days=1)}
 
 DJOSER = {
-    'SERIALIZERS': {
-        'user_create': 'core.serializers.UserCreateSerializer',
-        'current_user': 'core.serializers.UserCreateSerializer',
+    "SERIALIZERS": {
+        "user_create": "core.serializers.UserCreateSerializer",
+        "current_user": "core.serializers.UserCreateSerializer",
     }
 }
 
 LOGGING = {
-    'version': 1,
-    'disable_existing_loggers': False,
-    'handlers': {
-        'console': {
-            'class': 'logging.StreamHandler',
+    "version": 1,
+    "disable_existing_loggers": False,
+    "handlers": {
+        "console": {
+            "class": "logging.StreamHandler",
         },
         # 'file': {
         #     'class': 'logging.FileHandler',
@@ -152,71 +149,95 @@ LOGGING = {
         #     'formatter': 'verbose'
         # },
     },
-    'loggers': {
-        '': {
-            'handlers': ['console'],
-            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+    "loggers": {
+        "": {
+            "handlers": ["console"],
+            "level": os.environ.get("DJANGO_LOG_LEVEL", "INFO"),
         }
     },
-    'formatters': {
-        'verbose': {
-            'format': '{asctime} ({levelname}) - {name} - {message}',
-            'style': '{'
+    "formatters": {
+        "verbose": {
+            "format": "{asctime} ({levelname}) - {name} - {message}",
+            "style": "{",
         }
-    }
+    },
 }
 
 CELERY_ENABLE_REMOTE_CONTROL = False
-os.makedirs('celery_results', exist_ok=True)
-CELERY_RESULT_BACKEND = 'file://celery_results'
+os.makedirs("celery_results", exist_ok=True)
+CELERY_RESULT_BACKEND = "file://celery_results"
 CELERY_IGNORE_RESULT = False
-CELERY_DEFAULT_QUEUE = 'maintenance'
+CELERY_DEFAULT_QUEUE = "maintenance"
 CELERY_BROKER_URL = f"sqs://{os.environ.get('AWS_SQS_ACCESS_KEY_ID')}:{os.environ.get('AWS_SQS_SECRET_ACCESS_KEY')}@"
 CELERY_BROKER_TRANSPORT_OPTIONS = {
-    'region': '',
-    'visibility_timeout': 7200,
-    'polling_interval': 1
+    "region": "",
+    "visibility_timeout": 7200,
+    "polling_interval": 1,
 }
 
 CELERY_TASK_ROUTES = {
-    'core.tasks.CampaignTask': {'queue': 'campaign_concurrency', 'routing_key': 'campaign_concurrency'},
-    'core.tasks.ManageCampaignsTask': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.CheckPoshUsers': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.send_email': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.check_posh_users': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.send_support_emails': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.log_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'imagekit.cachefiles.backends._generate_file': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.posh_user_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'celery.backend_cleanup': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.get_items_to_report': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.check_listed_items': {'queue': 'maintenance', 'routing_key': 'maintenance'},
-    'core.tasks.test_task': {'queue': 'maintenance', 'routing_key': 'maintenance'}
+    "core.tasks.CampaignTask": {
+        "queue": "campaign_concurrency",
+        "routing_key": "campaign_concurrency",
+    },
+    "core.tasks.ManageCampaignsTask": {
+        "queue": "maintenance",
+        "routing_key": "maintenance",
+    },
+    "core.tasks.CheckPoshUsers": {"queue": "maintenance", "routing_key": "maintenance"},
+    "core.tasks.send_email": {"queue": "maintenance", "routing_key": "maintenance"},
+    "core.tasks.check_posh_users": {
+        "queue": "maintenance",
+        "routing_key": "maintenance",
+    },
+    "core.tasks.send_support_emails": {
+        "queue": "maintenance",
+        "routing_key": "maintenance",
+    },
+    "core.tasks.log_cleanup": {"queue": "maintenance", "routing_key": "maintenance"},
+    "imagekit.cachefiles.backends._generate_file": {
+        "queue": "maintenance",
+        "routing_key": "maintenance",
+    },
+    "core.tasks.posh_user_cleanup": {
+        "queue": "maintenance",
+        "routing_key": "maintenance",
+    },
+    "celery.backend_cleanup": {"queue": "maintenance", "routing_key": "maintenance"},
+    "core.tasks.get_items_to_report": {
+        "queue": "maintenance",
+        "routing_key": "maintenance",
+    },
+    "core.tasks.check_listed_items": {
+        "queue": "maintenance",
+        "routing_key": "maintenance",
+    },
+    "core.tasks.test_task": {"queue": "maintenance", "routing_key": "maintenance"},
 }
 
 CELERY_BEAT_SCHEDULE = {
-    'manage_campaigns': {
-        'task': 'core.tasks.ManageCampaignsTask',
-        'schedule': timedelta(seconds=30),
+    "manage_campaigns": {
+        "task": "core.tasks.ManageCampaignsTask",
+        "schedule": timedelta(seconds=30),
     },
-    'check_posh_users': {
-        'task': 'core.tasks.CheckPoshUsers',
-        'schedule': timedelta(minutes=20),
+    "check_posh_users": {
+        "task": "core.tasks.CheckPoshUsers",
+        "schedule": timedelta(minutes=20),
     },
-    'log_cleanup': {
-        'task': 'core.tasks.log_cleanup',
-        'schedule': timedelta(hours=1),
+    "log_cleanup": {
+        "task": "core.tasks.log_cleanup",
+        "schedule": timedelta(hours=1),
     },
-    'posh_user_cleanup': {
-        'task': 'core.tasks.posh_user_cleanup',
-        'schedule': timedelta(hours=4),
+    "posh_user_cleanup": {
+        "task": "core.tasks.posh_user_cleanup",
+        "schedule": timedelta(hours=4),
     },
-    'send_support_emails': {
-        'task': 'core.tasks.send_support_emails',
-        'schedule': timedelta(days=4),
+    "send_support_emails": {
+        "task": "core.tasks.send_support_emails",
+        "schedule": timedelta(days=4),
     },
-    'check_listed_items': {
-        'task': 'core.tasks.check_listed_items',
-        'schedule': timedelta(minutes=5),
-    },
+    # 'check_listed_items': {
+    #     'task': 'core.tasks.check_listed_items',
+    #     'schedule': timedelta(minutes=5),
+    # },
 }
