@@ -4,15 +4,26 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0049_alter_campaign_queue_status'),
+        ("core", "0049_alter_campaign_queue_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='campaign',
-            name='status',
-            field=models.CharField(choices=[('RUNNING', 'RUNNING'), ('IDLE', 'IDLE'), ('STOPPED', 'STOPPED'), ('STARTING', 'STARTING'), ('STOPPING', 'STOPPING'), ('PAUSED', 'PAUSED'), ('IN QUEUE', 'IN QUEUE')], default='STOPPED', max_length=15),
+            model_name="campaign",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("RUNNING", "RUNNING"),
+                    ("IDLE", "IDLE"),
+                    ("STOPPED", "STOPPED"),
+                    ("STARTING", "STARTING"),
+                    ("STOPPING", "STOPPING"),
+                    ("PAUSED", "PAUSED"),
+                    ("IN QUEUE", "IN QUEUE"),
+                ],
+                default="STOPPED",
+                max_length=15,
+            ),
         ),
     ]

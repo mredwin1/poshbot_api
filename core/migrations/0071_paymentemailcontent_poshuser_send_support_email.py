@@ -4,23 +4,30 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0070_loggroup_has_error'),
+        ("core", "0070_loggroup_has_error"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='PaymentEmailContent',
+            name="PaymentEmailContent",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('subject', models.CharField(max_length=255)),
-                ('body', models.TextField()),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("subject", models.CharField(max_length=255)),
+                ("body", models.TextField()),
             ],
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='send_support_email',
+            model_name="poshuser",
+            name="send_support_email",
             field=models.BooleanField(default=False),
         ),
     ]

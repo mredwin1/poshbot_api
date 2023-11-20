@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0038_delete_deletedclone'),
+        ("core", "0038_delete_deletedclone"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='clone_created',
+            model_name="poshuser",
+            name="clone_created",
             field=models.BooleanField(default=False),
         ),
     ]

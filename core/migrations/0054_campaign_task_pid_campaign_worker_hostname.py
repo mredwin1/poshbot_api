@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0053_device_installed_clones_device_mjpeg_server_port_and_more'),
+        ("core", "0053_device_installed_clones_device_mjpeg_server_port_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='task_pid',
+            model_name="campaign",
+            name="task_pid",
             field=models.SmallIntegerField(default=250),
         ),
         migrations.AddField(
-            model_name='campaign',
-            name='worker_hostname',
-            field=models.CharField(default='N/A', max_length=15),
+            model_name="campaign",
+            name="worker_hostname",
+            field=models.CharField(default="N/A", max_length=15),
         ),
     ]

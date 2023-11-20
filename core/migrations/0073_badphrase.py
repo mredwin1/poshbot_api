@@ -4,17 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0072_poshuser_date_last_support_email'),
+        ("core", "0072_poshuser_date_last_support_email"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='BadPhrase',
+            name="BadPhrase",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('phrase', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("phrase", models.CharField(max_length=255)),
             ],
         ),
     ]

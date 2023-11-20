@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0017_poshuser_email_id'),
+        ("core", "0017_poshuser_email_id"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='proxyconnection',
-            name='proxy_license_uuid',
+            model_name="proxyconnection",
+            name="proxy_license_uuid",
             field=models.CharField(max_length=255),
         ),
     ]

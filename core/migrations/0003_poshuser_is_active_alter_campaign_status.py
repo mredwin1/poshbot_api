@@ -4,20 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0002_campaign_delay'),
+        ("core", "0002_campaign_delay"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='is_active',
+            model_name="poshuser",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
         migrations.AlterField(
-            model_name='campaign',
-            name='status',
-            field=models.CharField(choices=[('1', 'RUNNING'), ('2', 'IDLE'), ('3', 'STOPPED')], default='3', max_length=15),
+            model_name="campaign",
+            name="status",
+            field=models.CharField(
+                choices=[("1", "RUNNING"), ("2", "IDLE"), ("3", "STOPPED")],
+                default="3",
+                max_length=15,
+            ),
         ),
     ]

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0040_rename_clone_created_poshuser_clone_installed'),
+        ("core", "0040_rename_clone_created_poshuser_clone_installed"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='finished_registration',
+            model_name="poshuser",
+            name="finished_registration",
             field=models.BooleanField(default=False),
         ),
     ]

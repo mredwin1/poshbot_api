@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0043_alter_loggroup_options'),
+        ("core", "0043_alter_loggroup_options"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='listing',
-            name='brand',
+            model_name="listing",
+            name="brand",
             field=models.CharField(blank=True, max_length=30),
         ),
     ]

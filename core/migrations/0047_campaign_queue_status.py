@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0046_listeditem_time_and_more'),
+        ("core", "0046_listeditem_time_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='queue_status',
-            field=models.CharField(default='UNKNOWN', max_length=15),
+            model_name="campaign",
+            name="queue_status",
+            field=models.CharField(default="UNKNOWN", max_length=15),
         ),
     ]

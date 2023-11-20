@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0063_poshuser_email_id_poshuser_email_password'),
+        ("core", "0063_poshuser_email_id_poshuser_email_password"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='email_imap_password',
+            model_name="poshuser",
+            name="email_imap_password",
             field=models.CharField(blank=True, max_length=250),
         ),
     ]

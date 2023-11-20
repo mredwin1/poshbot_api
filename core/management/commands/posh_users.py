@@ -1,12 +1,12 @@
 import logging
-import datetime
 
 from django.core.management.base import BaseCommand
 
 from core.models import PoshUser, User
 
+
 class Command(BaseCommand):
-    help = 'A command to return analytics'
+    help = "A command to return analytics"
 
     def handle(self, *args, **options):
         logger = logging.getLogger(__name__)
@@ -19,6 +19,6 @@ class Command(BaseCommand):
             active_posh_users = posh_users.filter(is_active_in_posh=True)
             inactive_posh_users = posh_users.filter(is_active_in_posh=False)
 
-            logger.info(f'Number of Registered Posh Users for {user}')
-            logger.info(f'Active: {active_posh_users.count()}')
-            logger.info(f'Inactive: {inactive_posh_users.count()}\n')
+            logger.info(f"Number of Registered Posh Users for {user}")
+            logger.info(f"Active: {active_posh_users.count()}")
+            logger.info(f"Inactive: {inactive_posh_users.count()}\n")

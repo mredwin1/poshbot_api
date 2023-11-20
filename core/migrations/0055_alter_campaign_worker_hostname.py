@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0054_campaign_task_pid_campaign_worker_hostname'),
+        ("core", "0054_campaign_task_pid_campaign_worker_hostname"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='campaign',
-            name='worker_hostname',
-            field=models.CharField(default='N/A', max_length=255),
+            model_name="campaign",
+            name="worker_hostname",
+            field=models.CharField(default="N/A", max_length=255),
         ),
     ]

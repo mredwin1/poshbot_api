@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0071_paymentemailcontent_poshuser_send_support_email'),
+        ("core", "0071_paymentemailcontent_poshuser_send_support_email"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='date_last_support_email',
+            model_name="poshuser",
+            name="date_last_support_email",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

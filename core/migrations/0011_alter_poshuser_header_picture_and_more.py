@@ -4,20 +4,21 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0010_alter_offer_datetime_sent'),
+        ("core", "0010_alter_offer_datetime_sent"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='poshuser',
-            name='header_picture',
-            field=models.ImageField(blank=True, null=True, upload_to='header_pictures'),
+            model_name="poshuser",
+            name="header_picture",
+            field=models.ImageField(blank=True, null=True, upload_to="header_pictures"),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='profile_picture',
-            field=models.ImageField(blank=True, null=True, upload_to='profile_pictures'),
+            model_name="poshuser",
+            name="profile_picture",
+            field=models.ImageField(
+                blank=True, null=True, upload_to="profile_pictures"
+            ),
         ),
     ]

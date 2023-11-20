@@ -32,8 +32,9 @@ faker = "*"
 selenium-stealth = "*"
 mysql-connector-python = "*"
 beautifulsoup4 = "*"
+black = "*"
 
 [dev-packages]
 
 [requires]
-python_version = "3.8"
+python_version = "3.10"

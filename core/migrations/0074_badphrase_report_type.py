@@ -4,15 +4,24 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0073_badphrase'),
+        ("core", "0073_badphrase"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='badphrase',
-            name='report_type',
-            field=models.CharField(choices=[('Designer Replica', 0), ('Non-PM Transactions', 1), ('Unsupported Items', 2), ('Spam', 3), ('Harassment', 4)], default=3, max_length=255),
+            model_name="badphrase",
+            name="report_type",
+            field=models.CharField(
+                choices=[
+                    ("Designer Replica", 0),
+                    ("Non-PM Transactions", 1),
+                    ("Unsupported Items", 2),
+                    ("Spam", 3),
+                    ("Harassment", 4),
+                ],
+                default=3,
+                max_length=255,
+            ),
         ),
     ]

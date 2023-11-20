@@ -4,15 +4,23 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0023_alter_loggroup_created_date'),
+        ("core", "0023_alter_loggroup_created_date"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='campaign',
-            name='status',
-            field=models.CharField(choices=[('1', 'RUNNING'), ('2', 'IDLE'), ('3', 'STOPPED'), ('4', 'STARTING')], default='3', max_length=15),
+            model_name="campaign",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("1", "RUNNING"),
+                    ("2", "IDLE"),
+                    ("3", "STOPPED"),
+                    ("4", "STARTING"),
+                ],
+                default="3",
+                max_length=15,
+            ),
         ),
     ]

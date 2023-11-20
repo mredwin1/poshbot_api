@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0022_alter_loggroup_created_date'),
+        ("core", "0022_alter_loggroup_created_date"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='loggroup',
-            name='created_date',
+            model_name="loggroup",
+            name="created_date",
             field=models.DateTimeField(auto_now_add=True),
         ),
     ]

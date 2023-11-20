@@ -4,15 +4,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0050_alter_campaign_status'),
+        ("core", "0050_alter_campaign_status"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='poshuser',
-            old_name='is_active',
-            new_name='is_active_in_posh',
+            model_name="poshuser",
+            old_name="is_active",
+            new_name="is_active_in_posh",
         ),
     ]

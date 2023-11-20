@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0060_remove_poshuser_email_id_remove_poshuser_sales'),
+        ("core", "0060_remove_poshuser_email_id_remove_poshuser_sales"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='zipcode',
+            model_name="poshuser",
+            name="zipcode",
             field=models.IntegerField(blank=True, default=32810),
             preserve_default=False,
         ),

@@ -4,14 +4,13 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0042_alter_loggroup_options'),
+        ("core", "0042_alter_loggroup_options"),
     ]
 
     operations = [
         migrations.AlterModelOptions(
-            name='loggroup',
-            options={'ordering': ['-created_date']},
+            name="loggroup",
+            options={"ordering": ["-created_date"]},
         ),
     ]
