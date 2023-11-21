@@ -1144,7 +1144,7 @@ class CheckPoshUsers(Task):
             ListedItem.REMOVED,
             ListedItem.SHIPPED,
             ListedItem.CANCELLED,
-            ListedItem.NOT_LISTED
+            ListedItem.NOT_LISTED,
         )
         posh_users = PoshUser.objects.filter(
             is_active_in_posh=True, is_registered=True, user__is_active=True
