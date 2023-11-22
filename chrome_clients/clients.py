@@ -1,10 +1,13 @@
 import datetime
 import os
 import pickle
+import pytz
 import random
 import re
+import requests
 import time
 import traceback
+import zipfile
 
 import boto3
 import pytz
@@ -13,11 +16,7 @@ from bs4 import BeautifulSoup
 from django.conf import settings
 from django.utils.text import slugify
 from selenium import webdriver
-from selenium.common.exceptions import (
-    NoSuchElementException,
-    TimeoutException,
-    ElementClickInterceptedException,
-)
+from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
@@ -27,15 +26,7 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import (
-    Campaign,
-    ListedItemOffer,
-    PoshUser,
-    BadPhrase,
-    ListedItemToReport,
-    ListedItem,
-    Proxy,
-)
+from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem, Proxy, Listing
 
 
 class Captcha:
@@ -1314,7 +1305,7 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(1)
 
-            to_followers_button = self.locate(By.CLASS_NAME, "internal-share__link")
+            to_followers_button = self.locate(By.CLASS_NAME, "internal-share__link", "clickable")
             to_followers_button.click()
 
             self.sleep(0.5)
@@ -1360,11 +1351,9 @@ class PoshMarkClient(BaseClient):
                     )
                     # Set the captcha response
                     self.web_driver.execute_script(
-                        f"document.querySelector('#g-recaptcha-response').value = token"
+                        f"document.querySelector('#g-recaptcha-response').value = '{captcha_response}'"
                     )
-                    self.web_driver.execute_script(
-                        f"validateResponse('{captcha_response}')"
-                    )
+                    self.web_driver.execute_script(f"validateResponse()")
 
                     screenshot = (
                         f"/log_images/after_captcha_{slugify(listed_item_title)}.png"
@@ -1420,9 +1409,10 @@ class PoshMarkClient(BaseClient):
     def check_offers(self, listing_title):
         try:
             if self.campaign.mode == Campaign.ADVANCED_SHARING:
-                lowest_price = self.campaign.listings.get(
-                    title=listing_title
-                ).lowest_price
+                try:
+                    lowest_price = self.campaign.listings.get(title=listing_title).lowest_price
+                except Listing.DoesNotExist:
+                    lowest_price = self.campaign.lowest_price
             else:
                 lowest_price = self.campaign.lowest_price
 
@@ -1811,12 +1801,9 @@ class PoshMarkClient(BaseClient):
                                         f"Reported the following comment as {bad_phrase.get_report_type_display()}: {text}"
                                     )
 
-                                    closet_url = comment.find_element(
-                                        By.TAG_NAME, "a"
-                                    ).get_attribute("href")
-                                    closets_to_report.append(
-                                        (closet_url, bad_phrase.report_type)
-                                    )
+                                    closet_url = comment.find_element(By.TAG_NAME, 'a').get_attribute('href')
+                                    closets_to_report.append((closet_url, bad_phrase.report_type))
+                                    self.sleep(2)
 
                                     break
                             break  # No need to check other bad phrases if one is found
@@ -1872,7 +1859,7 @@ class PoshMarkClient(BaseClient):
                 submit_button.click()
 
         except Exception as e:
-            self.handle_error("Error while sharing item", "share_item_error.png")
+            self.handle_error('Error while checking comments', 'checking_comments_error.png')
 
     def random_scroll(self, scroll_up=True):
         try:

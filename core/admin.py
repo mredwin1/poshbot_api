@@ -9,6 +9,7 @@ from django.utils.html import format_html, urlencode
 
 from . import models
 
+
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.PaymentEmailContent)
 admin.site.register(models.AppData)
@@ -523,6 +524,7 @@ class ListedItemAdmin(admin.ModelAdmin):
         "associated_user",
         "associated_posh_user",
         "datetime_sold",
+        "datetime_shipped",
         "datetime_redeemable",
         "datetime_redeemed",
     ]
@@ -569,6 +571,7 @@ class ListedItemAdmin(admin.ModelAdmin):
                     (
                         "datetime_removed",
                         "datetime_sold",
+                        "datetime_shipped",
                         "datetime_redeemable",
                         "datetime_redeemed",
                     ),

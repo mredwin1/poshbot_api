@@ -1,24 +1,25 @@
 import datetime
 import logging
 import os
+import pytz
 import random
+import requests
 import smtplib
 import ssl
 import time
 import traceback
-from email.message import EmailMessage
-from email.mime.multipart import MIMEMultipart
-from email.mime.text import MIMEText
-from typing import Union
 
-import pytz
-import requests
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
+from decimal import Decimal
 from django.db.models import Q
 from django.utils import timezone
+from email.message import EmailMessage
+from email.mime.multipart import MIMEMultipart
+from email.mime.text import MIMEText
 from selenium.common.exceptions import WebDriverException
+from typing import Union
 
 from appium_clients.clients import (
     PoshMarkClient as MobilePoshMarkClient,
@@ -1143,6 +1144,7 @@ class CheckPoshUsers(Task):
             ListedItem.REMOVED,
             ListedItem.SHIPPED,
             ListedItem.CANCELLED,
+            ListedItem.NOT_LISTED,
         )
         posh_users = PoshUser.objects.filter(
             is_active_in_posh=True, is_registered=True, user__is_active=True
@@ -1345,13 +1347,78 @@ def get_items_to_report():
 
 
 @shared_task
-def check_sold_items():
+def check_listed_items(username: str = ""):
     logger = logging.getLogger(__name__)
-    sold_items = ListedItem.objects.filter(datetime_sold__isnull=False).exclude(
-        Q(datetime_redeemable__isnull=False) | Q(datetime_redeemed__isnull=False)
+    sold_items = ListedItem.objects.filter(
+        datetime_sold__isnull=False, datetime_shipped__isnull=True
     )
 
+    if username:
+        sold_items = sold_items.filter(posh_user__username=username)
+
     for item in sold_items:
+        listing_title = item.listing_title
+        posh_user = item.posh_user
+        sold_time = item.datetime_sold
+
+        # Check if the PoshUser has the necessary IMAP email password
+        if posh_user.email and posh_user.email_imap_password:
+            email_address = posh_user.email
+            password = posh_user.email_imap_password
+
+            # Construct the subject keyword with dynamic values
+            subject_keyword = f'Here is your shipping label for "{listing_title}"'
+
+            matching_email = zke_yahoo.check_for_email(
+                "orders@poshmark.com",
+                email_address,
+                password,
+                subject_keyword,
+                sold_time,
+            )
+
+            if matching_email:
+                for part in matching_email.walk():
+                    if part.get_content_type() == "text/html":
+                        body = part.get_payload(decode=True)
+                        if isinstance(body, bytes):
+                            body = body.decode("utf-8")
+                            soup = BeautifulSoup(body, "html.parser")
+
+                            earnings_td = soup.find(
+                                "td", string="Your Earnings (minus fee)"
+                            )
+                            if earnings_td:
+                                # Get the next sibling <td> element which contains the earnings amount
+                                earnings_amount_td = earnings_td.find_next(
+                                    "td", style="text-align:right;"
+                                )
+                                if earnings_amount_td:
+                                    earnings_amount = earnings_amount_td.get_text(
+                                        strip=True
+                                    )
+                                    item.earnings = Decimal(earnings_amount.strip("$"))
+
+                date_received_str = matching_email.get("Date")
+                date_received = datetime.datetime.strptime(
+                    date_received_str, "%a, %d %b %Y %H:%M:%S %z (%Z)"
+                )
+                item.status = ListedItem.SHIPPED
+                item.datetime_shipped = date_received.astimezone(
+                    pytz.timezone("US/Eastern")
+                )
+                item.save()
+
+                logger.info(f"{posh_user} - Updated {item} to SHIPPED")
+
+    shipped_items = ListedItem.objects.filter(
+        datetime_shipped__isnull=False, datetime_redeemable__isnull=True
+    )
+
+    if username:
+        shipped_items = shipped_items.filter(posh_user__username=username)
+
+    for item in shipped_items:
         listing_title = item.listing_title
         posh_user = item.posh_user
         sold_time = item.datetime_sold
@@ -1392,7 +1459,7 @@ def check_sold_items():
                 item.datetime_redeemable = date_received
                 item.save()
 
-                logger.info(message)
+                logger.info(f"{posh_user} - Updated {item} to REDEEMABLE")
                 if item.posh_user.user.email:
                     from_email = os.environ["EMAIL_ADDRESS"]
                     to_email = [item.posh_user.user.email]
@@ -1406,8 +1473,11 @@ def check_sold_items():
                     logger.info(f"Email not sent: {item.posh_user.user.email}")
 
     redeemable_items = ListedItem.objects.filter(
-        datetime_redeemable__isnull=False
-    ).exclude(Q(datetime_redeemable__isnull=False) | Q(datetime_redeemed__isnull=False))
+        datetime_redeemable__isnull=False, datetime_redeemed__isnull=True
+    )
+
+    if username:
+        redeemable_items = redeemable_items.filter(posh_user__username=username)
 
     for item in redeemable_items:
         posh_user = item.posh_user
@@ -1442,9 +1512,65 @@ def check_sold_items():
                     item.datetime_redeemed = date_received
                     item.save()
 
-                    logger.info(f"Updated {item} to REDEEMED")
+                    logger.info(f"{posh_user} - Updated {item} to REDEEMED")
 
                     break
+
+    under_review_items = ListedItem.objects.filter(
+        datetime_listed__isnull=False,
+        datetime_passed_review__isnull=True,
+        datetime_removed__isnull=True,
+    )
+
+    if username:
+        under_review_items = under_review_items.filter(posh_user__username=username)
+
+    for item in under_review_items:
+        posh_user = item.posh_user
+        try:
+            campaign = item.posh_user.campaign
+        except Campaign.DoesNotExist:
+            campaign = None
+        datetime_listed = item.datetime_listed
+
+        # Check if the PoshUser has the necessary IMAP email password
+        if posh_user.email and posh_user.email_imap_password:
+            email_address = posh_user.email
+            password = posh_user.email_imap_password
+
+            matching_email = zke_yahoo.check_for_email(
+                "support@poshmark.com",
+                email_address,
+                password,
+                f'Your Poshmark listing "{item.listing_title}" has been removed due to Counterfeit item(s)',
+                datetime_listed,
+            )
+
+            if matching_email:
+                date_received_str = matching_email.get("Date")
+                date_received = datetime.datetime.strptime(
+                    date_received_str, "%a, %d %b %Y %H:%M:%S %z (%Z)"
+                ).astimezone(pytz.timezone("US/Eastern"))
+
+                item.status = ListedItem.REMOVED
+                item.datetime_removed = date_received
+                item.save()
+
+                logger.info(f"{posh_user} - Updated {item} to REMOVED")
+
+                if (
+                    campaign
+                    and campaign.status == Campaign.PAUSED
+                    and not campaign.posh_user.listeditem_set.filter(
+                        status__in=(
+                            ListedItem.UP,
+                            ListedItem.UNDER_REVIEW,
+                            ListedItem.RESERVED,
+                        )
+                    ).exists()
+                ):
+                    campaign.status = Campaign.STOPPING
+                    campaign.save()
 
 
 @shared_task
