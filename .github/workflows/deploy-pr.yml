@@ -35,7 +35,8 @@ jobs:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/poshbot-api:pr-$BRANCH_NAME
+          tags: |
+            ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ env.BRANCH_NAME }}
         env:
           DOCKER_USERNAME: ${{ github.actor }}
           DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
