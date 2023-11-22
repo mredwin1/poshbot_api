@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0003_poshuser_is_active_alter_campaign_status'),
+        ("core", "0003_poshuser_is_active_alter_campaign_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='campaign',
-            name='mode',
-            field=models.CharField(choices=[('0', 'Advanced Sharing'), ('0', 'Basic Sharing')], default='0', max_length=10),
+            model_name="campaign",
+            name="mode",
+            field=models.CharField(
+                choices=[("0", "Advanced Sharing"), ("0", "Basic Sharing")],
+                default="0",
+                max_length=10,
+            ),
         ),
     ]

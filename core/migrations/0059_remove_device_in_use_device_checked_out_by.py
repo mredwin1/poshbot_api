@@ -4,19 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0058_remove_campaign_sigkill_sent_and_more'),
+        ("core", "0058_remove_campaign_sigkill_sent_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='device',
-            name='in_use',
+            model_name="device",
+            name="in_use",
         ),
         migrations.AddField(
-            model_name='device',
-            name='checked_out_by',
+            model_name="device",
+            name="checked_out_by",
             field=models.UUIDField(blank=True, null=True),
         ),
     ]

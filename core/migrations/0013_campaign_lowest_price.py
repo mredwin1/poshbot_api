@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0012_alter_poshuser_date_of_birth'),
+        ("core", "0012_alter_poshuser_date_of_birth"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='lowest_price',
+            model_name="campaign",
+            name="lowest_price",
             field=models.SmallIntegerField(default=250),
         ),
     ]

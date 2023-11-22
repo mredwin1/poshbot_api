@@ -4,24 +4,23 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0019_alter_poshuser_header_picture_and_more'),
+        ("core", "0019_alter_poshuser_header_picture_and_more"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='loggroup',
-            name='campaign',
+            model_name="loggroup",
+            name="campaign",
         ),
         migrations.RemoveField(
-            model_name='loggroup',
-            name='posh_user',
+            model_name="loggroup",
+            name="posh_user",
         ),
         migrations.DeleteModel(
-            name='LogEntry',
+            name="LogEntry",
         ),
         migrations.DeleteModel(
-            name='LogGroup',
+            name="LogGroup",
         ),
     ]

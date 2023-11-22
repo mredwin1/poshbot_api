@@ -1,8 +1,9 @@
-import os
 import json
+import os
+
 from faker.providers import BaseProvider
 
-SOURCE_DIR = 'output_address_files'
+SOURCE_DIR = "output_address_files"
 
 
 def delete_address_from_source(address_dict):
@@ -35,7 +36,9 @@ class AddressProvider(BaseProvider):
 
     def address(self, postcode=None):
         if postcode:
-            matching_addresses = [a for a in self.addresses if a['postcode'] == postcode]
+            matching_addresses = [
+                a for a in self.addresses if a["postcode"] == postcode
+            ]
             if matching_addresses:
                 return self.random_element(matching_addresses)
         return self.random_element(self.addresses)

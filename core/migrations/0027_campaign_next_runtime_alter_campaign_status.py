@@ -4,20 +4,28 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0026_alter_logentry_log_group'),
+        ("core", "0026_alter_logentry_log_group"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='next_runtime',
+            model_name="campaign",
+            name="next_runtime",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='campaign',
-            name='status',
-            field=models.CharField(choices=[('RUNNING', 'RUNNING'), ('IDLE', 'IDLE'), ('STOPPED', 'STOPPED'), ('STARTING', 'STARTING')], default='STOPPED', max_length=15),
+            model_name="campaign",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("RUNNING", "RUNNING"),
+                    ("IDLE", "IDLE"),
+                    ("STOPPED", "STOPPED"),
+                    ("STARTING", "STARTING"),
+                ],
+                default="STOPPED",
+                max_length=15,
+            ),
         ),
     ]

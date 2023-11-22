@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0062_remove_poshuser_zipcode'),
+        ("core", "0062_remove_poshuser_zipcode"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='email_id',
+            model_name="poshuser",
+            name="email_id",
             field=models.IntegerField(blank=True, null=True),
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='email_password',
+            model_name="poshuser",
+            name="email_password",
             field=models.CharField(blank=True, max_length=250),
         ),
     ]

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0056_campaign_sigkill_sent'),
+        ("core", "0056_campaign_sigkill_sent"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='campaign',
-            name='task_pid',
+            model_name="campaign",
+            name="task_pid",
             field=models.IntegerField(),
         ),
     ]

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0055_alter_campaign_worker_hostname'),
+        ("core", "0055_alter_campaign_worker_hostname"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='campaign',
-            name='sigkill_sent',
+            model_name="campaign",
+            name="sigkill_sent",
             field=models.BooleanField(default=False),
         ),
     ]

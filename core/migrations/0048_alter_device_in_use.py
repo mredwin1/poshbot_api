@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0047_campaign_queue_status'),
+        ("core", "0047_campaign_queue_status"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='device',
-            name='in_use',
+            model_name="device",
+            name="in_use",
             field=models.CharField(blank=True, max_length=15),
         ),
     ]

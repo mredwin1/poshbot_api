@@ -4,50 +4,63 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0066_listeditemoffer_alter_listeditem_status_delete_offer_and_more'),
+        ("core", "0066_listeditemoffer_alter_listeditem_status_delete_offer_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='city',
+            model_name="poshuser",
+            name="city",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='house_number',
+            model_name="poshuser",
+            name="house_number",
             field=models.CharField(blank=True, max_length=50),
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='lat',
+            model_name="poshuser",
+            name="lat",
             field=models.DecimalField(decimal_places=6, default=0, max_digits=9),
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='long',
+            model_name="poshuser",
+            name="long",
             field=models.DecimalField(decimal_places=6, default=0, max_digits=9),
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='postcode',
+            model_name="poshuser",
+            name="postcode",
             field=models.CharField(blank=True, max_length=20),
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='road',
+            model_name="poshuser",
+            name="road",
             field=models.CharField(blank=True, max_length=100),
         ),
         migrations.AddField(
-            model_name='poshuser',
-            name='state',
+            model_name="poshuser",
+            name="state",
             field=models.CharField(blank=True, max_length=50),
         ),
         migrations.AlterField(
-            model_name='listeditem',
-            name='status',
-            field=models.CharField(choices=[('NOT LISTED', 'NOT LISTED'), ('NOT FOR SALE', 'NOT FOR SALE'), ('UP', 'UP'), ('UNDER REVIEW', 'UNDER REVIEW'), ('RESERVED', 'RESERVED'), ('SOLD', 'SOLD'), ('REMOVED', 'REMOVED'), ('SHIPPED', 'SHIPPED'), ('CANCELLED', 'CANCELLED')], default='NOT LISTED', max_length=255),
+            model_name="listeditem",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("NOT LISTED", "NOT LISTED"),
+                    ("NOT FOR SALE", "NOT FOR SALE"),
+                    ("UP", "UP"),
+                    ("UNDER REVIEW", "UNDER REVIEW"),
+                    ("RESERVED", "RESERVED"),
+                    ("SOLD", "SOLD"),
+                    ("REMOVED", "REMOVED"),
+                    ("SHIPPED", "SHIPPED"),
+                    ("CANCELLED", "CANCELLED"),
+                ],
+                default="NOT LISTED",
+                max_length=255,
+            ),
         ),
     ]

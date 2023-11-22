@@ -3,9 +3,10 @@ from django.contrib.auth.admin import UserAdmin as BaseUserAdmin
 from django.db.models import IntegerField, Case, When, Value
 from django.db.models.aggregates import Count
 from django.db.models.functions import Cast
+from django.urls import reverse
 from django.utils import timezone
 from django.utils.html import format_html, urlencode
-from django.urls import reverse
+
 from . import models
 
 

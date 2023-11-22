@@ -4,22 +4,21 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0057_alter_campaign_task_pid'),
+        ("core", "0057_alter_campaign_task_pid"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='campaign',
-            name='sigkill_sent',
+            model_name="campaign",
+            name="sigkill_sent",
         ),
         migrations.RemoveField(
-            model_name='campaign',
-            name='task_pid',
+            model_name="campaign",
+            name="task_pid",
         ),
         migrations.RemoveField(
-            model_name='campaign',
-            name='worker_hostname',
+            model_name="campaign",
+            name="worker_hostname",
         ),
     ]

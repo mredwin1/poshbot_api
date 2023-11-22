@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0069_listeditemtoreport_and_more'),
+        ("core", "0069_listeditemtoreport_and_more"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='loggroup',
-            name='has_error',
+            model_name="loggroup",
+            name="has_error",
             field=models.BooleanField(default=False),
         ),
     ]

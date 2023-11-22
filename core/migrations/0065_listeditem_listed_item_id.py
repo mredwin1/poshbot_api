@@ -4,16 +4,15 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0064_poshuser_email_imap_password'),
+        ("core", "0064_poshuser_email_imap_password"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='listeditem',
-            name='listed_item_id',
-            field=models.CharField(default='', max_length=255),
+            model_name="listeditem",
+            name="listed_item_id",
+            field=models.CharField(default="", max_length=255),
             preserve_default=False,
         ),
     ]

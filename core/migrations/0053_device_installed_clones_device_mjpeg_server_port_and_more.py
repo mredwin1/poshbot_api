@@ -4,26 +4,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0052_poshuser_date_disabled_poshuser_is_active'),
+        ("core", "0052_poshuser_date_disabled_poshuser_is_active"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='device',
-            name='installed_clones',
+            model_name="device",
+            name="installed_clones",
             field=models.SmallIntegerField(default=0),
         ),
         migrations.AddField(
-            model_name='device',
-            name='mjpeg_server_port',
+            model_name="device",
+            name="mjpeg_server_port",
             field=models.SmallIntegerField(default=7810, unique=True),
             preserve_default=False,
         ),
         migrations.AddField(
-            model_name='device',
-            name='system_port',
+            model_name="device",
+            name="system_port",
             field=models.SmallIntegerField(default=6790, unique=True),
             preserve_default=False,
         ),

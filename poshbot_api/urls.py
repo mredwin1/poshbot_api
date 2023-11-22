@@ -18,15 +18,15 @@ from django.conf.urls.static import static
 from django.contrib import admin
 from django.urls import path, include
 
-admin.site.site_header = 'PoshBot Admin'
-admin.site.index_title = 'Admin Panel'
-admin.site.site_url = 'https://melondova.com'
+admin.site.site_header = "PoshBot Admin"
+admin.site.index_title = "Admin Panel"
+admin.site.site_url = "https://melondova.com"
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
-    path('__debug__/', include('debug_toolbar.urls')),
-    path('auth/', include('djoser.urls')),
-    path('', include('core.urls')),
+    path("admin/", admin.site.urls),
+    path("__debug__/", include("debug_toolbar.urls")),
+    path("auth/", include("djoser.urls")),
+    path("", include("core.urls")),
 ]
 
 if settings.DEBUG:

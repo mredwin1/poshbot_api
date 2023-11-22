@@ -6,8 +6,9 @@ from django.db.models import Avg
 
 from core.models import PoshUser, ListedItem
 
+
 class Command(BaseCommand):
-    help = 'A command to return analytics'
+    help = "A command to return analytics"
 
     def handle(self, *args, **options):
         logger = logging.getLogger(__name__)
@@ -23,12 +24,14 @@ class Command(BaseCommand):
         )
 
         posh_user_averages = posh_users.aggregate(
-            avg_time_to_install_clone=Avg('time_to_install_clone'),
-            avg_time_to_register=Avg('time_to_register'),
-            avg_time_to_finish_registration=Avg('time_to_finish_registration')
+            avg_time_to_install_clone=Avg("time_to_install_clone"),
+            avg_time_to_register=Avg("time_to_register"),
+            avg_time_to_finish_registration=Avg("time_to_finish_registration"),
         )
 
-        listed_item_averages = listed_items.aggregate(avg_time_to_list=Avg('time_to_list'))
+        listed_item_averages = listed_items.aggregate(
+            avg_time_to_list=Avg("time_to_list")
+        )
 
         logger.info(posh_user_averages)
         logger.info(listed_item_averages)

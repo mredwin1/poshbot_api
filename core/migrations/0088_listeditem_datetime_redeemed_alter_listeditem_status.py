@@ -4,20 +4,35 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0087_alter_device_proxy'),
+        ("core", "0087_alter_device_proxy"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='listeditem',
-            name='datetime_redeemed',
+            model_name="listeditem",
+            name="datetime_redeemed",
             field=models.DateTimeField(blank=True, null=True),
         ),
         migrations.AlterField(
-            model_name='listeditem',
-            name='status',
-            field=models.CharField(choices=[('NOT LISTED', 'NOT LISTED'), ('NOT FOR SALE', 'NOT FOR SALE'), ('UP', 'UP'), ('UNDER REVIEW', 'UNDER REVIEW'), ('RESERVED', 'RESERVED'), ('SOLD', 'SOLD'), ('REMOVED', 'REMOVED'), ('SHIPPED', 'SHIPPED'), ('CANCELLED', 'CANCELLED'), ('REDEEMABLE', 'REDEEMABLE'), ('REDEEMED', 'REDEEMED')], default='NOT LISTED', max_length=255),
+            model_name="listeditem",
+            name="status",
+            field=models.CharField(
+                choices=[
+                    ("NOT LISTED", "NOT LISTED"),
+                    ("NOT FOR SALE", "NOT FOR SALE"),
+                    ("UP", "UP"),
+                    ("UNDER REVIEW", "UNDER REVIEW"),
+                    ("RESERVED", "RESERVED"),
+                    ("SOLD", "SOLD"),
+                    ("REMOVED", "REMOVED"),
+                    ("SHIPPED", "SHIPPED"),
+                    ("CANCELLED", "CANCELLED"),
+                    ("REDEEMABLE", "REDEEMABLE"),
+                    ("REDEEMED", "REDEEMED"),
+                ],
+                default="NOT LISTED",
+                max_length=255,
+            ),
         ),
     ]

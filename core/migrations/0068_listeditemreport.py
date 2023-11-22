@@ -4,18 +4,25 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0067_poshuser_city_poshuser_house_number_poshuser_lat_and_more'),
+        ("core", "0067_poshuser_city_poshuser_house_number_poshuser_lat_and_more"),
     ]
 
     operations = [
         migrations.CreateModel(
-            name='ListedItemReport',
+            name="ListedItemReport",
             fields=[
-                ('id', models.BigAutoField(auto_created=True, primary_key=True, serialize=False, verbose_name='ID')),
-                ('listing_title', models.CharField(max_length=50)),
-                ('listed_item_id', models.CharField(max_length=255)),
+                (
+                    "id",
+                    models.BigAutoField(
+                        auto_created=True,
+                        primary_key=True,
+                        serialize=False,
+                        verbose_name="ID",
+                    ),
+                ),
+                ("listing_title", models.CharField(max_length=50)),
+                ("listed_item_id", models.CharField(max_length=255)),
             ],
         ),
     ]

@@ -1,16 +1,35 @@
-FROM ghcr.io/mredwin1/chrome:latest
+FROM ubuntu:22.04
+
+# Allow service to handle stops gracefully
+STOPSIGNAL SIGQUIT
+
+# Set pip to have cleaner logs and no saved cache
+ENV PIP_NO_CACHE_DIR=false \
+    PIPENV_HIDE_EMOJIS=1 \
+    PIPENV_NOSPIN=1 \
+    DEBIAN_FRONTEND=noninteractive
+
+# Copy only the Pipfile and Pipfile.lock first
+COPY Pipfile* ./
+
+# Install dependencies for pycurl then install modules using pipenv
+RUN apt update \
+    && apt install -y libcurl4-openssl-dev libssl-dev \
+    && apt install -y python3-pip \
+    && apt clean \
+    && rm -rf /var/lib/apt/lists/* \
+    && pip install pipenv \
+    && pipenv install --system --deploy
+
+# Copy the chrome.deb file into the image
+COPY ./chrome_clients/chrome.deb /poshbot_api/chrome_clients/
+
+# Install chrome
+RUN apt update \
+    && apt install -y /poshbot_api/chrome_clients/chrome.deb
 
 # Copy the project files into working directory
 COPY . .
-
-# Fix missing packages
-RUN apt-get update --fix-missing
-
-# Install dependencies for pycurl
-RUN apt install -y libcurl4-openssl-dev libssl-dev
-
-# Install the dependencies
-RUN pipenv install --system --deploy --skip-lock
 
 # Run web server through custom manager
 ENTRYPOINT ["python3", "manage.py"]

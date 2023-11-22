@@ -4,50 +4,51 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0005_alter_campaign_mode'),
+        ("core", "0005_alter_campaign_mode"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='poshuser',
-            name='date_of_birth',
+            model_name="poshuser",
+            name="date_of_birth",
             field=models.DateField(null=True),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='email',
+            model_name="poshuser",
+            name="email",
             field=models.EmailField(blank=True, max_length=254, unique=True),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='first_name',
+            model_name="poshuser",
+            name="first_name",
             field=models.CharField(blank=True, max_length=30),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='gender',
-            field=models.CharField(blank=True, choices=[('M', 'Male'), ('F', 'Female')], max_length=2),
+            model_name="poshuser",
+            name="gender",
+            field=models.CharField(
+                blank=True, choices=[("M", "Male"), ("F", "Female")], max_length=2
+            ),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='header_picture',
-            field=models.ImageField(null=True, upload_to='header_pictures'),
+            model_name="poshuser",
+            name="header_picture",
+            field=models.ImageField(null=True, upload_to="header_pictures"),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='last_name',
+            model_name="poshuser",
+            name="last_name",
             field=models.CharField(blank=True, max_length=30),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='profile_picture',
-            field=models.ImageField(null=True, upload_to='profile_pictures'),
+            model_name="poshuser",
+            name="profile_picture",
+            field=models.ImageField(null=True, upload_to="profile_pictures"),
         ),
         migrations.AlterField(
-            model_name='poshuser',
-            name='profile_picture_id',
+            model_name="poshuser",
+            name="profile_picture_id",
             field=models.CharField(blank=True, max_length=200),
         ),
     ]

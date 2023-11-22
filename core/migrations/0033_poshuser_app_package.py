@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0032_alter_device_checkout_time'),
+        ("core", "0032_alter_device_checkout_time"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='poshuser',
-            name='app_package',
+            model_name="poshuser",
+            name="app_package",
             field=models.CharField(blank=True, max_length=100),
         ),
     ]

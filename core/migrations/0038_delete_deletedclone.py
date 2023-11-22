@@ -4,13 +4,12 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0037_listeditem_listing_title_alter_listeditem_listing'),
+        ("core", "0037_listeditem_listing_title_alter_listeditem_listing"),
     ]
 
     operations = [
         migrations.DeleteModel(
-            name='DeletedClone',
+            name="DeletedClone",
         ),
     ]

@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0031_device_checkout_time_device_is_active'),
+        ("core", "0031_device_checkout_time_device_is_active"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='device',
-            name='checkout_time',
+            model_name="device",
+            name="checkout_time",
             field=models.DateTimeField(blank=True, null=True),
         ),
     ]

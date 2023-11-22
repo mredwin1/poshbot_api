@@ -4,15 +4,14 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0011_alter_poshuser_header_picture_and_more'),
+        ("core", "0011_alter_poshuser_header_picture_and_more"),
     ]
 
     operations = [
         migrations.AlterField(
-            model_name='poshuser',
-            name='date_of_birth',
+            model_name="poshuser",
+            name="date_of_birth",
             field=models.DateField(blank=True, null=True),
         ),
     ]

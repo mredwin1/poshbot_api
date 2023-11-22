@@ -4,20 +4,19 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0030_device_in_use'),
+        ("core", "0030_device_in_use"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='device',
-            name='checkout_time',
+            model_name="device",
+            name="checkout_time",
             field=models.DateTimeField(null=True),
         ),
         migrations.AddField(
-            model_name='device',
-            name='is_active',
+            model_name="device",
+            name="is_active",
             field=models.BooleanField(default=True),
         ),
     ]

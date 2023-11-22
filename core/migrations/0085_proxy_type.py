@@ -4,15 +4,18 @@ from django.db import migrations, models
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0084_remove_device_ip_reset_url_device_proxy'),
+        ("core", "0084_remove_device_ip_reset_url_device_proxy"),
     ]
 
     operations = [
         migrations.AddField(
-            model_name='proxy',
-            name='type',
-            field=models.CharField(choices=[('http', 'http'), ('socks5', 'socks5')], default='http', max_length=10),
+            model_name="proxy",
+            name="type",
+            field=models.CharField(
+                choices=[("http", "http"), ("socks5", "socks5")],
+                default="http",
+                max_length=10,
+            ),
         ),
     ]

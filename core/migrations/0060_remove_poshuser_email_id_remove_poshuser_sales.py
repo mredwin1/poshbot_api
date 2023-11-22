@@ -4,18 +4,17 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0059_remove_device_in_use_device_checked_out_by'),
+        ("core", "0059_remove_device_in_use_device_checked_out_by"),
     ]
 
     operations = [
         migrations.RemoveField(
-            model_name='poshuser',
-            name='email_id',
+            model_name="poshuser",
+            name="email_id",
         ),
         migrations.RemoveField(
-            model_name='poshuser',
-            name='sales',
+            model_name="poshuser",
+            name="sales",
         ),
     ]

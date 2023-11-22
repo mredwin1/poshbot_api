@@ -4,15 +4,14 @@ from django.db import migrations
 
 
 class Migration(migrations.Migration):
-
     dependencies = [
-        ('core', '0039_poshuser_clone_created'),
+        ("core", "0039_poshuser_clone_created"),
     ]
 
     operations = [
         migrations.RenameField(
-            model_name='poshuser',
-            old_name='clone_created',
-            new_name='clone_installed',
+            model_name="poshuser",
+            old_name="clone_created",
+            new_name="clone_installed",
         ),
     ]

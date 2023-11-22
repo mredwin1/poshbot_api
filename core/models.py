@@ -1,13 +1,14 @@
-import boto3
 import datetime
 import logging
 import os
-import pytz
 import random
-import requests
 import string
 import time
+from uuid import uuid4
 
+import boto3
+import pytz
+import requests
 from botocore.exceptions import ClientError
 from dateutil.parser import parse
 from django.conf import settings
@@ -19,7 +20,6 @@ from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
 from ppadb.client import Client as AdbClient
-from uuid import uuid4
 
 from faker_providers import address_provider
 

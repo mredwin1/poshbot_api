@@ -13,7 +13,7 @@ from bs4 import BeautifulSoup
 from celery import shared_task, Task
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from decimal import Decimal
-from django.db.models import Q, QuerySet
+from django.db.models import Q
 from django.utils import timezone
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
