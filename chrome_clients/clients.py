@@ -1,22 +1,24 @@
 import datetime
 import os
 import pickle
-import pytz
 import random
 import re
-import requests
 import time
 import traceback
-import zipfile
 
 import boto3
 import pytz
 import requests
 from bs4 import BeautifulSoup
 from django.conf import settings
+from django.core.files.base import ContentFile
 from django.utils.text import slugify
 from selenium import webdriver
-from selenium.common.exceptions import NoSuchElementException, TimeoutException, ElementClickInterceptedException
+from selenium.common.exceptions import (
+    NoSuchElementException,
+    TimeoutException,
+    ElementClickInterceptedException,
+)
 from selenium.webdriver.chrome.options import Options
 from selenium.webdriver.chrome.service import Service
 from selenium.webdriver.common.action_chains import ActionChains
@@ -26,7 +28,16 @@ from selenium.webdriver.support import expected_conditions
 from selenium.webdriver.support.ui import WebDriverWait
 from selenium_stealth import stealth
 
-from core.models import Campaign, ListedItemOffer, PoshUser, BadPhrase, ListedItemToReport, ListedItem, Proxy, Listing
+from core.models import (
+    Campaign,
+    ListedItemOffer,
+    PoshUser,
+    BadPhrase,
+    ListedItemToReport,
+    ListedItem,
+    Proxy,
+    Listing,
+)
 
 
 class Captcha:
@@ -93,7 +104,7 @@ class Captcha:
 
 
 class BaseClient:
-    def __init__(self, logger, proxy: Proxy = None, cookies_filename="cookies"):
+    def __init__(self, logger, proxy: Proxy = None):
         user_agent = "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/89.0.4389.114 Safari/537.36"
 
         self.cookies_path = "/bot_data/cookies"
@@ -117,7 +128,6 @@ class BaseClient:
         # self.web_driver_options.add_argument('--disable-blink-features=AutomationControlled')
 
         self.requests_session = requests.Session()
-        self.cookies_filename = slugify(cookies_filename)
 
         os.makedirs("/log_images", exist_ok=True)
 
@@ -221,41 +231,6 @@ class BaseClient:
 
             time.sleep(seconds)
 
-    def save_cookies(self):
-        self.logger.info("Saving cookies")
-
-        os.makedirs(self.cookies_path, exist_ok=True)
-
-        with open(f"{self.cookies_path}/{self.cookies_filename}.pkl", "wb") as file:
-            pickle.dump(self.web_driver.get_cookies(), file)
-        self.logger.info("Cookies successfully saved")
-
-    def load_cookies(self):
-        self.logger.info("Loading Cookies")
-        filename = f"{self.cookies_path}/{self.cookies_filename}.pkl"
-
-        try:
-            if os.path.exists(filename):
-                if os.path.getsize(filename) > 0:
-                    with open(filename, "rb") as cookies:
-                        for cookie in pickle.load(cookies):
-                            self.web_driver.add_cookie(cookie)
-                        self.web_driver.refresh()
-                        self.sleep(2)
-                        self.logger.info("Cookies loaded successfully")
-                        return True
-            else:
-                self.logger.warning("No cookies found to load")
-                return False
-        except Exception:
-            self.logger.debug(traceback.format_exc())
-            if os.path.exists(filename):
-                os.remove(filename)
-                self.logger.warning("Problem with cookie file: File Deleted")
-            else:
-                self.logger.warning("Cookies not loaded: Cookie file not found")
-            return False
-
     def bot_check(self):
         self.logger.info("Starting first bot test")
         self.web_driver.get("https://bot.sannysoft.com")
@@ -346,9 +321,7 @@ class BaseClient:
 class PoshMarkClient(BaseClient):
     def __init__(self, campaign: Campaign, logger, **kwargs):
         proxy = kwargs.get("proxy", None)
-        super(PoshMarkClient, self).__init__(
-            logger, proxy=proxy, cookies_filename=campaign.posh_user.username
-        )
+        super(PoshMarkClient, self).__init__(logger, proxy=proxy)
 
         aws_session = boto3.Session()
         s3_client = aws_session.resource(
@@ -363,6 +336,53 @@ class PoshMarkClient(BaseClient):
 
         self.logs_dir = f"/log_images/{slugify(self.campaign.title)}"
         os.makedirs(self.logs_dir, exist_ok=True)
+
+    def save_cookies(self):
+        self.logger.info("Saving cookies")
+
+        # Convert cookies to bytes using pickle
+        cookies_bytes = pickle.dumps(self.web_driver.get_cookies())
+
+        # Create a ContentFile from the bytes
+        content_file = ContentFile(cookies_bytes)
+
+        # Set the file name for the ContentFile
+        content_file.name = "cookies.pkl"
+
+        # Save the ContentFile to the FileField
+        self.campaign.posh_user.save(content_file.name, content_file)
+
+        self.logger.info("Cookies successfully saved")
+
+    def load_cookies(self):
+        self.logger.info("Loading Cookies")
+
+        try:
+            # Check if there are cookies stored in the model field
+            if self.campaign.posh_user and self.campaign.posh_user.cookies:
+                cookies_bytes = self.campaign.posh_user.cookies.read()
+
+                if cookies_bytes:
+                    cookies_list = pickle.loads(cookies_bytes)
+
+                    for cookie in cookies_list:
+                        self.web_driver.add_cookie(cookie)
+
+                    self.web_driver.refresh()
+                    self.sleep(2)
+                    self.logger.info("Cookies loaded successfully")
+                    return True
+                else:
+                    self.logger.warning("Empty cookies found in the model field")
+                    return False
+            else:
+                self.logger.warning("No cookies found in the model field to load")
+                return False
+
+        except Exception:
+            self.logger.debug(traceback.format_exc())
+            self.logger.warning("Error loading cookies from the model field")
+            return False
 
     def handle_error(self, error_message, filename):
         image_path = f"{self.logs_dir}/{filename}"
@@ -1305,7 +1325,9 @@ class PoshMarkClient(BaseClient):
 
             self.sleep(1)
 
-            to_followers_button = self.locate(By.CLASS_NAME, "internal-share__link", "clickable")
+            to_followers_button = self.locate(
+                By.CLASS_NAME, "internal-share__link", "clickable"
+            )
             to_followers_button.click()
 
             self.sleep(0.5)
@@ -1410,7 +1432,9 @@ class PoshMarkClient(BaseClient):
         try:
             if self.campaign.mode == Campaign.ADVANCED_SHARING:
                 try:
-                    lowest_price = self.campaign.listings.get(title=listing_title).lowest_price
+                    lowest_price = self.campaign.listings.get(
+                        title=listing_title
+                    ).lowest_price
                 except Listing.DoesNotExist:
                     lowest_price = self.campaign.lowest_price
             else:
@@ -1801,8 +1825,12 @@ class PoshMarkClient(BaseClient):
                                         f"Reported the following comment as {bad_phrase.get_report_type_display()}: {text}"
                                     )
 
-                                    closet_url = comment.find_element(By.TAG_NAME, 'a').get_attribute('href')
-                                    closets_to_report.append((closet_url, bad_phrase.report_type))
+                                    closet_url = comment.find_element(
+                                        By.TAG_NAME, "a"
+                                    ).get_attribute("href")
+                                    closets_to_report.append(
+                                        (closet_url, bad_phrase.report_type)
+                                    )
                                     self.sleep(2)
 
                                     break
@@ -1859,7 +1887,9 @@ class PoshMarkClient(BaseClient):
                 submit_button.click()
 
         except Exception as e:
-            self.handle_error('Error while checking comments', 'checking_comments_error.png')
+            self.handle_error(
+                "Error while checking comments", "checking_comments_error.png"
+            )
 
     def random_scroll(self, scroll_up=True):
         try:

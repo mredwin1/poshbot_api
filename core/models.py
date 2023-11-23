@@ -63,8 +63,14 @@ def path_and_rename(instance, filename):
             )
 
         elif isinstance(instance, PoshUser):
-            filename = f"image_{rand_str}.{ext}"
-            path = os.path.join(instance.user.username, "posh_user_images", filename)
+            if ext == "pkl":
+                filename = f"cookies.{ext}"
+                path = os.path.join(instance.user.username, filename)
+            else:
+                filename = f"image_{rand_str}.{ext}"
+                path = os.path.join(
+                    instance.user.username, "posh_user_images", filename
+                )
 
         elif isinstance(instance, LogEntry):
             filename = f"image_{rand_str}.{ext}"
@@ -384,6 +390,7 @@ class PoshUser(models.Model):
         upload_to=path_and_rename, null=True, blank=True
     )
     header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
+    cookies = models.FileField(upload_to=path_and_rename, null=True, blank=True)
 
     email = models.EmailField(blank=True)
 
