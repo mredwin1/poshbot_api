@@ -359,7 +359,7 @@ class PoshMarkClient(BaseClient):
                 cookies_json = self.campaign.posh_user.cookies.read()
 
                 if cookies_json:
-                    cookies_list = json.loads(cookies_json)
+                    cookies_list = json.loads(cookies_json, encoding='latin-1')
 
                     for cookie in cookies_list:
                         self.web_driver.add_cookie(cookie)
