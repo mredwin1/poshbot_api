@@ -350,7 +350,7 @@ class PoshMarkClient(BaseClient):
         content_file.name = "cookies.pkl"
 
         # Save the ContentFile to the FileField
-        self.campaign.posh_user.save(content_file.name, content_file)
+        self.campaign.posh_user.cookies.save(content_file.name, content_file)
 
         self.logger.info("Cookies successfully saved")
 
