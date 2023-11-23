@@ -1,0 +1,38 @@
+AWSTemplateFormatVersion: '2010-09-09'
+Description: 'CloudFormation template for poshbot-api releases'
+
+Parameters:
+  Environment:
+    Type: String
+    Description: The environment the stack will be deploying to
+  MasterUsername:
+    Type: String
+    Description: 'The master username for the database'
+    Default: 'admin'
+  MasterUserPassword:
+    Type: String
+    NoEcho: true
+    Description: 'The master user password for the database'
+
+Resources:
+  Database:
+    Type: 'AWS::RDS::DBInstance'
+    Properties:
+      Engine: 'postgres'
+      DBInstanceIdentifier: !Ref DBInstanceIdentifier
+      MasterUsername: !Ref MasterUsername
+      MasterUserPassword: !Ref MasterUserPassword
+      AllocatedStorage: 4
+      DBInstanceClass: 'db.t2.micro'
+      VPCSecurityGroups:
+        - !GetAtt MyDBSecurityGroup.GroupId
+      AvailabilityZone: 'us-east-1a'
+  DatabaseSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupDescription: 'Security group for RDS database'
+      SecurityGroupIngress:
+        - CidrIp: '0.0.0.0/0'
+          FromPort: '5432'
+          ToPort: '5432'
+          IpProtocol: 'tcp'
