@@ -101,7 +101,23 @@ services:
     init: true
     container_name: celery_concurrency_poshbot_api
     restart: always
-    entrypoint: celery -A poshbot_api worker --concurrency=8 -Q campaign_concurrency -l INFO
+    entrypoint: celery -A poshbot_api worker --concurrency=5 -Q campaign_concurrency -l INFO
+    stop_grace_period: "20m"
+    stop_signal: SIGTERM
+    env_file:
+      - .env
+    networks:
+      - internal
+    volumes:
+      - /dev/shm:/dev/shm
+  celery_concurrency2:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    init: true
+    container_name: celery_concurrency_poshbot_api2
+    restart: always
+    entrypoint: celery -A poshbot_api worker --concurrency=5 -Q campaign_concurrency -l INFO
     stop_grace_period: "20m"
     stop_signal: SIGTERM
     env_file:
