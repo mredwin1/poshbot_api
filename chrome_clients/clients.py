@@ -343,14 +343,10 @@ class PoshMarkClient(BaseClient):
         # Convert cookies to bytes using pickle
         cookies_bytes = pickle.dumps(self.web_driver.get_cookies())
 
-        # Create a ContentFile from the bytes
-        content_file = ContentFile(cookies_bytes)
-
-        # Set the file name for the ContentFile
-        content_file.name = "cookies.pkl"
-
         # Save the ContentFile to the FileField
-        self.campaign.posh_user.cookies.save(content_file.name, content_file)
+        self.campaign.posh_user.cookies.save(
+            "cookies.pkl", ContentFile(cookies_bytes), save=True
+        )
 
         self.logger.info("Cookies successfully saved")
 
