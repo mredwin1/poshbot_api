@@ -1,6 +1,6 @@
 import datetime
 import os
-import pickle
+import json
 import random
 import re
 import time
@@ -340,12 +340,12 @@ class PoshMarkClient(BaseClient):
     def save_cookies(self):
         self.logger.info("Saving cookies")
 
-        # Convert cookies to bytes using pickle
-        cookies_bytes = pickle.dumps(self.web_driver.get_cookies())
+        # Convert cookies to JSON
+        cookies_json = json.dumps(self.web_driver.get_cookies())
 
-        # Save the ContentFile to the FileField
+        # Save the JSON to the FileField
         self.campaign.posh_user.cookies.save(
-            "cookies.pkl", ContentFile(cookies_bytes), save=True
+            "cookies.json", ContentFile(cookies_json.encode()), save=True
         )
 
         self.logger.info("Cookies successfully saved")
@@ -356,10 +356,10 @@ class PoshMarkClient(BaseClient):
         try:
             # Check if there are cookies stored in the model field
             if self.campaign.posh_user and self.campaign.posh_user.cookies:
-                cookies_bytes = self.campaign.posh_user.cookies.read()
+                cookies_json = self.campaign.posh_user.cookies.read()
 
-                if cookies_bytes:
-                    cookies_list = pickle.loads(cookies_bytes)
+                if cookies_json:
+                    cookies_list = json.loads(cookies_json)
 
                     for cookie in cookies_list:
                         self.web_driver.add_cookie(cookie)
