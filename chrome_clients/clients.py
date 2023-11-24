@@ -1655,7 +1655,9 @@ class PoshMarkClient(BaseClient):
             ).order_by("datetime_sent")
             first_offer = offers.first()
 
-            if not first_offer and self.is_present(By.XPATH, "//button[@data-et-name='price_drop']"):
+            if not first_offer and self.is_present(
+                By.XPATH, "//button[@data-et-name='price_drop']"
+            ):
                 self.web_driver.get(
                     f"https://poshmark.com/listing/{listed_item.listed_item_id}"
                 )
