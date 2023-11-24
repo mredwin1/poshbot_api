@@ -1,38 +1,62 @@
 AWSTemplateFormatVersion: '2010-09-09'
-Description: 'CloudFormation template for poshbot-api releases'
+Description: 'CloudFormation template for releases'
 
 Parameters:
+  ApplicationName:
+    Type: String
+    Description: 'The name of the application'
   Environment:
     Type: String
-    Description: The environment the stack will be deploying to
-  MasterUsername:
+    Description: 'The environment the stack will be deploying to'
+  Version:
     Type: String
-    Description: 'The master username for the database'
-    Default: 'admin'
-  MasterUserPassword:
+    Description: 'The version of the application'
+  ApplicationUsername:
+    Type: String
+    Description: 'The master username for the application'
+    Default: 'masteradmin'
+  ApplicationUserPassword:
     Type: String
     NoEcho: true
-    Description: 'The master user password for the database'
+    Description: 'The master user password for the application'
 
 Resources:
   Database:
     Type: 'AWS::RDS::DBInstance'
     Properties:
       Engine: 'postgres'
-      DBInstanceIdentifier: !Ref DBInstanceIdentifier
-      MasterUsername: !Ref MasterUsername
-      MasterUserPassword: !Ref MasterUserPassword
-      AllocatedStorage: 4
-      DBInstanceClass: 'db.t2.micro'
+      DBInstanceIdentifier: !Sub '${ApplicationName}-db-${Environment}'
+      MasterUsername: !Ref ApplicationUsername
+      MasterUserPassword: !Ref ApplicationUserPassword
+      AllocatedStorage: 400
+      MaxAllocatedStorage: 1000
+      StorageType: gp3
+      Iops: 12000
+      DBInstanceClass: 'db.t3.micro'
       VPCSecurityGroups:
-        - !GetAtt MyDBSecurityGroup.GroupId
+        - !GetAtt DatabaseSecurityGroup.GroupId
       AvailabilityZone: 'us-east-1a'
+      Tags:
+        - Key: 'Application'
+          Value: !Ref ApplicationName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Version'
+          Value: !Ref Version
+
   DatabaseSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
-      GroupDescription: 'Security group for RDS database'
+      GroupDescription: !Sub 'Security group for RDS ${ApplicationName}-db-${Environment}'
       SecurityGroupIngress:
         - CidrIp: '0.0.0.0/0'
           FromPort: '5432'
           ToPort: '5432'
           IpProtocol: 'tcp'
+      Tags:
+        - Key: 'Application'
+          Value: !Ref ApplicationName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Version'
+          Value: !Ref Version
