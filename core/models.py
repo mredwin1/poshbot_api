@@ -63,7 +63,7 @@ def path_and_rename(instance, filename):
             )
 
         elif isinstance(instance, PoshUser):
-            if ext == "json":
+            if ext == "pkl":
                 filename = f"cookies.{ext}"
                 path = os.path.join(instance.user.username, filename)
             else:

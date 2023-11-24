@@ -57,6 +57,7 @@ def stop_campaigns(modeladmin, request, queryset):
         campaign.next_runtime = None
         campaign.save()
 
+
 @admin.action(description="Disable posh user")
 def disable_posh_users(modeladmin, request, queryset):
     queryset.update(is_active=False, date_disabled=timezone.now())
