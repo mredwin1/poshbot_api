@@ -65,7 +65,9 @@ def path_and_rename(instance, filename):
         elif isinstance(instance, PoshUser):
             if ext == "pkl":
                 filename = f"cookies.{ext}"
-                path = os.path.join(instance.user.username, filename)
+                path = os.path.join(
+                    instance.user.username, "cookies", instance.username, filename
+                )
             else:
                 filename = f"image_{rand_str}.{ext}"
                 path = os.path.join(
@@ -82,14 +84,15 @@ def path_and_rename(instance, filename):
                 filename,
             )
 
-        try:
-            s3_client.Object(settings.AWS_STORAGE_BUCKET_NAME, path).load()
-            filename = None
-            rand_str = "".join(
-                random.choices(string.ascii_uppercase + string.digits, k=4)
-            )
-        except Exception:
-            pass
+        if ext != "pkl":
+            try:
+                s3_client.Object(settings.AWS_STORAGE_BUCKET_NAME, path).load()
+                filename = None
+                rand_str = "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=4)
+                )
+            except Exception:
+                pass
 
     return path
 
