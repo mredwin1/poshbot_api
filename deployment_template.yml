@@ -30,6 +30,7 @@ Resources:
       MasterUserPassword: !Ref ApplicationUserPassword
       AllocatedStorage: 400
       MaxAllocatedStorage: 1000
+      DBName: !Ref ApplicationName
       StorageType: gp3
       Iops: 12000
       DBInstanceClass: 'db.t3.micro'
