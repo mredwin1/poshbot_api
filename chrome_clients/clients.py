@@ -1655,7 +1655,7 @@ class PoshMarkClient(BaseClient):
             ).order_by("datetime_sent")
             first_offer = offers.first()
 
-            if not first_offer:
+            if not first_offer and self.is_present(By.XPATH, "//button[@data-et-name='price_drop']"):
                 self.web_driver.get(
                     f"https://poshmark.com/listing/{listed_item.listed_item_id}"
                 )
@@ -1740,12 +1740,15 @@ class PoshMarkClient(BaseClient):
 
                 return True
             else:
-                self.logger.info(
-                    "Not sending another offer the following offer was sent today: "
-                )
-                self.logger.info(
-                    f"Datetime Sent - {first_offer.datetime_sent} Offer Amount - {first_offer.amount}"
-                )
+                if first_offer:
+                    self.logger.info(
+                        "Not sending another offer the following offer was sent today: "
+                    )
+                    self.logger.info(
+                        f"Datetime Sent - {first_offer.datetime_sent} Offer Amount - {first_offer.amount}"
+                    )
+                else:
+                    self.logger.info("No send offer to likers button.")
 
         except Exception as e:
             self.handle_error(
