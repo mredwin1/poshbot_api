@@ -13,6 +13,7 @@ from bs4 import BeautifulSoup
 from celery import shared_task, Task
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from decimal import Decimal
+from django.conf import settings
 from django.db.models import Q
 from django.utils import timezone
 from email.message import EmailMessage
@@ -1461,12 +1462,13 @@ def check_listed_items(username: str = ""):
 
                 logger.info(f"{posh_user} - Updated {item} to REDEEMABLE")
                 if item.posh_user.user.email:
-                    from_email = os.environ["EMAIL_ADDRESS"]
+                    from_email = settings.EMAIL_CREDENTIALS["username"]
+                    password = settings.EMAIL_CREDENTIALS["password"]
                     to_email = [item.posh_user.user.email]
                     subject = (
                         f"New Sale Available to Redeem for {item.posh_user.username}"
                     )
-                    send_email.delay(from_email, to_email, subject, message)
+                    send_email.delay(from_email, password, to_email, subject, message)
 
                     logger.info("Email sent to queue")
                 else:
@@ -1574,7 +1576,9 @@ def check_listed_items(username: str = ""):
 
 
 @shared_task
-def send_email(from_email: str, to_email: list, subject: str, message: str):
+def send_email(
+    from_email: str, password: str, to_email: list, subject: str, message: str
+):
     email = EmailMessage()
     email["From"] = from_email
     email["To"] = to_email
@@ -1584,7 +1588,7 @@ def send_email(from_email: str, to_email: list, subject: str, message: str):
     context = ssl.create_default_context()
 
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
-        smtp.login(from_email, os.environ["EMAIL_PASSWORD"])
+        smtp.login(from_email, password)
         smtp.sendmail(from_email, to_email, email.as_string())
 
 

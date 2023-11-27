@@ -1,79 +1,68 @@
 from .common import *
 
-ALLOWED_HOSTS = ["turtleswags.com"]
+ALLOWED_HOSTS = [f"api.{os.environ['DOMAIN']}", os.environ["DOMAIN"]]
 
-CSRF_TRUSTED_ORIGINS = [
-    "https://melondova.com",
-    "https://turtleswags.com",
-    "https://www.melondova.com",
-]
+CSRF_TRUSTED_ORIGINS = [f"https://{os.environ['DOMAIN']}"]
 
-CORS_ALLOWED_ORIGINS = [
-    "https://turtleswags.com",
-    "https://www.turtleswags.com",
-    "https://melondova.com",
-    "https://www.melondova.com",
-]
+CORS_ALLOWED_ORIGINS = [f"https://{os.environ['DOMAIN']}"]
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
 AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
-AWS_S3_REGION_NAME = os.environ["AWS_S3_REGION_NAME"]
 
-AWS_S3_ACCESS_KEY_ID = os.environ["AWS_S3_ACCESS_KEY_ID"]
-AWS_S3_SECRET_ACCESS_KEY = os.environ["AWS_S3_SECRET_ACCESS_KEY"]
-
-# Pinpoint settings
-AWS_PINPOINT_REGION_NAME = os.environ["AWS_PINPOINT_REGION_NAME"]
-AWS_PINPOINT_ACCESS_KEY_ID = os.environ["AWS_PINPOINT_ACCESS_KEY_ID"]
-AWS_PINPOINT_SECRET_ACCESS_KEY = os.environ["AWS_PINPOINT_SECRET_ACCESS_KEY"]
-
-CELERY_DEFAULT_QUEUE = "maintenance"
-CELERY_BROKER_URL = f"sqs://{os.environ.get('AWS_SQS_ACCESS_KEY_ID')}:{os.environ.get('AWS_SQS_SECRET_ACCESS_KEY')}@"
-CELERY_BROKER_TRANSPORT_OPTIONS = {
-    "region": "",
-    "visibility_timeout": 7200,
-    "polling_interval": 1,
-}
+CELERY_CREATE_MISSING_QUEUES = False
+CELERY_DEFAULT_QUEUE = os.environ["MAINTENANCE_QUEUE"]
+CELERY_BROKER_URL = f"sqs://"
 
 CELERY_TASK_ROUTES = {
     "core.tasks.CampaignTask": {
-        "queue": "campaign_concurrency",
-        "routing_key": "campaign_concurrency",
+        "queue": os.environ["GENERAL_QUEUE"],
+        "routing_key": os.environ["GENERAL_QUEUE"],
     },
     "core.tasks.ManageCampaignsTask": {
-        "queue": "maintenance",
-        "routing_key": "maintenance",
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
-    "core.tasks.CheckPoshUsers": {"queue": "maintenance", "routing_key": "maintenance"},
-    "core.tasks.send_email": {"queue": "maintenance", "routing_key": "maintenance"},
+    "core.tasks.CheckPoshUsers": {
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
+    },
+    "core.tasks.send_email": {
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
+    },
     "core.tasks.check_posh_users": {
-        "queue": "maintenance",
-        "routing_key": "maintenance",
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
     "core.tasks.send_support_emails": {
-        "queue": "maintenance",
-        "routing_key": "maintenance",
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
-    "core.tasks.log_cleanup": {"queue": "maintenance", "routing_key": "maintenance"},
+    "core.tasks.log_cleanup": {
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
+    },
     "imagekit.cachefiles.backends._generate_file": {
-        "queue": "maintenance",
-        "routing_key": "maintenance",
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
     "core.tasks.posh_user_cleanup": {
-        "queue": "maintenance",
-        "routing_key": "maintenance",
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
-    "celery.backend_cleanup": {"queue": "maintenance", "routing_key": "maintenance"},
+    "celery.backend_cleanup": {
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
+    },
     "core.tasks.get_items_to_report": {
-        "queue": "maintenance",
-        "routing_key": "maintenance",
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
-    "core.tasks.check_sold_items": {
-        "queue": "maintenance",
-        "routing_key": "maintenance",
+    "core.tasks.check_listed_items": {
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
-    "core.tasks.test_task": {"queue": "maintenance", "routing_key": "maintenance"},
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -97,8 +86,8 @@ CELERY_BEAT_SCHEDULE = {
         "task": "core.tasks.send_support_emails",
         "schedule": timedelta(days=4),
     },
-    "check_sold_items": {
-        "task": "core.tasks.check_sold_items",
+    "check_listed_items": {
+        "task": "core.tasks.check_listed_items",
         "schedule": timedelta(minutes=5),
     },
 }

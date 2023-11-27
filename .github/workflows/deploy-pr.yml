@@ -29,17 +29,21 @@ jobs:
       - name: Set branch name as environment variable
         run: echo "BRANCH_NAME=$(git branch --show-current)" >> $GITHUB_ENV
 
+      - name: Login to GitHub Container Registry
+        uses: docker/login-action@v3
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
       - name: Build and Push Docker image
         uses: docker/build-push-action@v2
         with:
           context: .
           file: Dockerfile
           push: true
-          tags: ghcr.io/${{ github.repository }}/poshbot-api:pr-$BRANCH_NAME
-        env:
-          DOCKER_USERNAME: ${{ github.actor }}
-          DOCKER_PASSWORD: ${{ secrets.GITHUB_TOKEN }}
-          DOCKER_REGISTRY: ghcr.io
+          tags: |
+            ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ env.BRANCH_NAME }}
 
       - name: Deploy
         run: |

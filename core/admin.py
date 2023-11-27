@@ -52,7 +52,10 @@ def start_campaigns(modeladmin, request, queryset):
 
 @admin.action(description="Stop selected campaigns")
 def stop_campaigns(modeladmin, request, queryset):
-    queryset.update(status=models.Campaign.STOPPING, next_runtime=None)
+    for campaign in queryset:
+        campaign.status = models.Campaign.STOPPING
+        campaign.next_runtime = None
+        campaign.save()
 
 
 @admin.action(description="Disable posh user")

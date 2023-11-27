@@ -63,8 +63,16 @@ def path_and_rename(instance, filename):
             )
 
         elif isinstance(instance, PoshUser):
-            filename = f"image_{rand_str}.{ext}"
-            path = os.path.join(instance.user.username, "posh_user_images", filename)
+            if ext == "pkl":
+                filename = f"cookies.{ext}"
+                path = os.path.join(
+                    instance.user.username, "cookies", instance.username, filename
+                )
+            else:
+                filename = f"image_{rand_str}.{ext}"
+                path = os.path.join(
+                    instance.user.username, "posh_user_images", filename
+                )
 
         elif isinstance(instance, LogEntry):
             filename = f"image_{rand_str}.{ext}"
@@ -76,14 +84,15 @@ def path_and_rename(instance, filename):
                 filename,
             )
 
-        try:
-            s3_client.Object(settings.AWS_STORAGE_BUCKET_NAME, path).load()
-            filename = None
-            rand_str = "".join(
-                random.choices(string.ascii_uppercase + string.digits, k=4)
-            )
-        except Exception:
-            pass
+        if ext != "pkl":
+            try:
+                s3_client.Object(settings.AWS_STORAGE_BUCKET_NAME, path).load()
+                filename = None
+                rand_str = "".join(
+                    random.choices(string.ascii_uppercase + string.digits, k=4)
+                )
+            except Exception:
+                pass
 
     return path
 
@@ -112,8 +121,8 @@ class Proxy(models.Model):
     def authenticate_with_cookies():
         login_url = "https://portal.mobilehop.com/login"
         login_data = {
-            "username": os.environ.get("PROXY_USERNAME", ""),
-            "password": os.environ.get("PROXY_PASSWORD", ""),
+            "username": settings.MOBILE_HOP_CREDENTIALS["username"],
+            "password": settings.MOBILE_HOP_CREDENTIALS["password"],
         }
 
         response = requests.post(login_url, data=login_data)
@@ -226,19 +235,19 @@ class Device(models.Model):
     mjpeg_server_port = models.SmallIntegerField(unique=True)
 
     def reboot(self):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         adb_device = client.device(serial=self.serial)
 
         adb_device.reboot()
 
     def reset_app_data(self, app_package):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         adb_device = client.device(serial=self.serial)
 
         adb_device.shell(f"pm clear {app_package}")
 
     def change_android_id(self, email, app_package):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         adb_device = client.device(serial=self.serial)
 
         adb_device.shell(
@@ -247,7 +256,7 @@ class Device(models.Model):
 
     def finished_boot(self):
         try:
-            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+            client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
             adb_device = client.device(serial=self.serial)
 
             if adb_device:
@@ -384,6 +393,7 @@ class PoshUser(models.Model):
         upload_to=path_and_rename, null=True, blank=True
     )
     header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
+    cookies = models.FileField(upload_to=path_and_rename, null=True, blank=True)
 
     email = models.EmailField(blank=True)
 

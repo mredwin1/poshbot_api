@@ -9,16 +9,27 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
+import json
+
+import boto3
 import os
 
 from datetime import timedelta
 from pathlib import Path
 
+
+def retrieve_secret(secret_name: str):
+    secrets_manager_client = boto3.client("secretsmanager")
+
+    response = secrets_manager_client.get_secret_value(SecretId=secret_name)
+
+    return response
+
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent.parent
 
 # Application definition
-
 DEBUG = False
 
 SECRET_KEY = os.environ.get("SECRET_KEY")
@@ -165,14 +176,20 @@ LOGGING = {
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
-        "NAME": os.environ["RDS_DB_NAME"],
-        "USER": os.environ["RDS_USERNAME"],
-        "PASSWORD": os.environ["RDS_PASSWORD"],
-        "HOST": os.environ["RDS_HOSTNAME"],
-        "PORT": os.environ["RDS_PORT"],
+        "NAME": os.environ["DB_NAME"],
+        "USER": os.environ["DB_USERNAME"],
+        "PASSWORD": os.environ["DB_PASSWORD"],
+        "HOST": os.environ["DB_HOSTNAME"],
+        "PORT": os.environ["DD_PORT"],
     }
 }
 
 CELERY_ENABLE_REMOTE_CONTROL = False
 CELERY_RESULT_BACKEND = None
 CELERY_IGNORE_RESULT = True
+
+CAPTCHA_API_KEY = retrieve_secret("2CAPTCHA_API_KEY")
+APPIUM_SERVER_IP = retrieve_secret("APPIUM_SERVER_IP")
+ZKE_YAHOO_CREDENTIALS = json.loads(retrieve_secret("ZKE_YAHOO_CREDENTIALS"))
+MOBILE_HOP_CREDENTIALS = json.loads(retrieve_secret("MOBILE_HOP_CREDENTIALS"))
+EMAIL_CREDENTIALS = json.loads(retrieve_secret("EMAIL_CREDENTIALS"))
