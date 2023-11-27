@@ -35,7 +35,7 @@ from core.models import (
     LogGroup,
 )
 
-APPIUM_SERVER_URL = f'http://{os.environ.get("LOCAL_SERVER_IP")}:4723'
+APPIUM_SERVER_URL = f"http://{settings.APPIUM_SERVER_IP}:4723"
 
 
 class AppiumClient:
@@ -301,7 +301,7 @@ class AppiumClient:
         return True
 
     def get_current_app_package(self):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         device = client.device(self.capabilities.get("udid"))
 
         windows = device.shell("dumpsys window")
@@ -323,7 +323,7 @@ class AppiumClient:
 
     def cleanup_files(self):
         self.logger.debug("Cleaning up files")
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         adb_device = client.device(serial=self.capabilities["udid"])
         for file_path in self.files_sent:
             adb_device.shell(f"rm {file_path}")
@@ -1924,7 +1924,7 @@ class SwiftBackupClient(AppiumClient):
 
         self.sleep(0.5)
 
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         device = client.device(self.capabilities.get("udid"))
 
         data_file_location = f"{self.location}/com.poshmark.app.dat"
@@ -1985,7 +1985,7 @@ class SwiftBackupClient(AppiumClient):
     def load_backup(self):
         self._download_backup_files()
 
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         device = client.device(self.capabilities.get("udid"))
 
         device.push(

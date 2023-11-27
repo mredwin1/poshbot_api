@@ -46,7 +46,7 @@ class Captcha:
         self.google_key = google_key
         self.page_url = page_url
         self.logger = logger
-        self.captcha_api_key = os.environ["CAPTCHA_API_KEY"]
+        self.captcha_api_key = settings.CAPTCHA_API_KEY
 
     def send_captcha(self):
         url = "https://2captcha.com/in.php"

@@ -121,8 +121,8 @@ class Proxy(models.Model):
     def authenticate_with_cookies():
         login_url = "https://portal.mobilehop.com/login"
         login_data = {
-            "username": os.environ.get("PROXY_USERNAME", ""),
-            "password": os.environ.get("PROXY_PASSWORD", ""),
+            "username": settings.MOBILE_HOP_CREDENTIALS["username"],
+            "password": settings.MOBILE_HOP_CREDENTIALS["password"],
         }
 
         response = requests.post(login_url, data=login_data)
@@ -235,19 +235,19 @@ class Device(models.Model):
     mjpeg_server_port = models.SmallIntegerField(unique=True)
 
     def reboot(self):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         adb_device = client.device(serial=self.serial)
 
         adb_device.reboot()
 
     def reset_app_data(self, app_package):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         adb_device = client.device(serial=self.serial)
 
         adb_device.shell(f"pm clear {app_package}")
 
     def change_android_id(self, email, app_package):
-        client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
         adb_device = client.device(serial=self.serial)
 
         adb_device.shell(
@@ -256,7 +256,7 @@ class Device(models.Model):
 
     def finished_boot(self):
         try:
-            client = AdbClient(host=os.environ.get("LOCAL_SERVER_IP"), port=5037)
+            client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
             adb_device = client.device(serial=self.serial)
 
             if adb_device:

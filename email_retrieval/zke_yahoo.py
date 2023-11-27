@@ -1,17 +1,18 @@
 import email
 import imaplib
-import os
 
 import mysql.connector
+
+from django.conf import settings
 
 
 def _connect_to_db():
     db = mysql.connector.connect(
-        host=os.environ["ZKE_YAHOO_HOST"],
-        port=os.environ["ZKE_YAHOO_PORT"],
-        user=os.environ["ZKE_YAHOO_USER"],
-        password=os.environ["ZKE_YAHOO_PASSWORD"],
-        database=os.environ["ZKE_YAHOO_DATABASE"],
+        host=settings.ZKE_YAHOO_CREDENTIALS["host"],
+        port=settings.ZKE_YAHOO_CREDENTIALS["port"],
+        user=settings.ZKE_YAHOO_CREDENTIALS["username"],
+        password=settings.ZKE_YAHOO_CREDENTIALS["password"],
+        database=settings.ZKE_YAHOO_CREDENTIALS["dbname"],
     )
 
     if db.is_connected():
