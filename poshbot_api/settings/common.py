@@ -9,8 +9,6 @@ https://docs.djangoproject.com/en/4.0/topics/settings/
 For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
-import json
-
 import boto3
 import os
 
@@ -190,6 +188,6 @@ CELERY_IGNORE_RESULT = True
 
 CAPTCHA_API_KEY = retrieve_secret("2CAPTCHA_API_KEY")
 APPIUM_SERVER_IP = retrieve_secret("APPIUM_SERVER_IP")
-ZKE_YAHOO_CREDENTIALS = json.loads(retrieve_secret("ZKE_YAHOO_CREDENTIALS"))
-MOBILE_HOP_CREDENTIALS = json.loads(retrieve_secret("MOBILE_HOP_CREDENTIALS"))
-EMAIL_CREDENTIALS = json.loads(retrieve_secret("EMAIL_CREDENTIALS"))
+ZKE_YAHOO_CREDENTIALS = retrieve_secret("ZKE_YAHOO_CREDENTIALS")
+MOBILE_HOP_CREDENTIALS = retrieve_secret("MOBILE_HOP_CREDENTIALS")
+EMAIL_CREDENTIALS = retrieve_secret("EMAIL_CREDENTIALS")
