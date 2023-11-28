@@ -174,8 +174,8 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 1024
-      Memory: 2048
+      Cpu: 256
+      Memory: 512
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
@@ -330,13 +330,11 @@ Resources:
   APITargetGroup:
     Type: AWS::ElasticLoadBalancingV2::TargetGroup
     Properties:
-      HealthCheckPath: '/admin'
+      HealthCheckPath: '/health'
       Name: !Sub '${ApplicationName}-target-group-${Environment}'
       Port: 80
       Protocol: HTTP
       TargetType: ip
-      Matcher:
-        - HttpCode: "200, 302"
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
       Tags:
