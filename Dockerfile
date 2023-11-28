@@ -30,7 +30,3 @@ RUN apt update \
 
 # Copy the project files into working directory
 COPY . .
-
-# Run web server through custom manager
-ENTRYPOINT ["python3", "manage.py"]
-CMD ["start"]
