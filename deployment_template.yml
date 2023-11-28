@@ -109,6 +109,11 @@ Resources:
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
       GroupDescription: 'Security group for communication with ECS'
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !GetAtt ELBSecurityGroup.GroupId
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
@@ -127,6 +132,11 @@ Resources:
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
       GroupDescription: 'Security group for public communication with elb'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
       SecurityGroupIngress:
         - CidrIp: 0.0.0.0/0
           IpProtocol: tcp
@@ -325,6 +335,8 @@ Resources:
       Port: 80
       Protocol: HTTP
       TargetType: ip
+      Matcher:
+        - HttpCode: "200, 302"
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
       Tags:
