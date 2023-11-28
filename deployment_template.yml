@@ -174,8 +174,8 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 256
-      Memory: 512
+      Cpu: 512
+      Memory: 1024
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
@@ -257,6 +257,33 @@ Resources:
           Value: !Ref Environment
         - Key: 'Version'
           Value: !Ref Version
+
+  APIScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 4
+      MinCapacity: 1
+      ResourceId: !Sub
+        - 'service/${ECSClusterName}/${APIServiceName}'
+        - ECSClusterName: !Ref ECSCluster
+          APIServiceName: !GetAtt APIService.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  APIScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub ${ApplicationName}-api-scaling-policy-${Environment}
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref APIScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ALBRequestCountPerTarget
+          ResourceLabel: !Sub
+            - '${LoadBalancerName}/${TargetGroupName}'
+            - LoadBalancerName: !GetAtt APIELB.LoadBalancerFullName
+              TargetGroupName: !GetAtt APITargetGroup.TargetGroupFullName
+        TargetValue: 20
 
   S3Bucket:
     Type: AWS::S3::Bucket
