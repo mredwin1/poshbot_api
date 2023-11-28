@@ -89,6 +89,11 @@ Resources:
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
       GroupDescription: !Sub 'Security group for communication with RDS'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !GetAtt ECSSecurityGroup.GroupId
       Tags:
         - Key: 'Application'
           Value: !Ref ApplicationName
@@ -104,6 +109,9 @@ Resources:
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
       GroupDescription: 'Security group for communication with ECS'
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
       Tags:
         - Key: 'Application'
           Value: !Ref ApplicationName
@@ -156,18 +164,23 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 256
-      Memory: 512
+      Cpu: 1024
+      Memory: 2048
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
       ContainerDefinitions:
         - Name: api-container
           Image: !Ref DockerImage
+          EntryPoint:
+            - 'python3'
+            - 'manage.py'
+            - 'start'
           RepositoryCredentials:
             CredentialsParameter: !Ref GHRIOSecretArn
           PortMappings:
             - ContainerPort: 80
+              AppProtocol: http
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -207,12 +220,18 @@ Resources:
 
   APIService:
     Type: AWS::ECS::Service
+    DependsOn: HTTPSListener
     Properties:
       ServiceName: !Sub ${ApplicationName}-api-service-${Environment}
+      EnableExecuteCommand: true
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref APITaskDefinition
       DesiredCount: 1
       LaunchType: FARGATE
+      LoadBalancers:
+        - TargetGroupArn: !Ref APITargetGroup
+          ContainerName: api-container
+          ContainerPort: 80
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets: !Split
@@ -288,15 +307,33 @@ Resources:
     Type: AWS::ElasticLoadBalancingV2::Listener
     Properties:
       DefaultActions:
-        - Type: fixed-response
-          FixedResponseConfig:
-            ContentType: 'text/plain'
-            StatusCode: '200'
+        - Type: forward
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref APITargetGroup
       LoadBalancerArn: !Ref APIELB
       Port: 443
       Protocol: HTTPS
       Certificates:
         - CertificateArn: !Ref SSLCertificate
+
+  APITargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckPath: '/admin'
+      Name: !Sub '${ApplicationName}-target-group-${Environment}'
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      VpcId: !ImportValue
+        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      Tags:
+        - Key: 'Application'
+          Value: !Ref ApplicationName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Version'
+          Value: !Ref Version
 
   SSLCertificate:
     Type: AWS::CertificateManager::Certificate
@@ -361,6 +398,8 @@ Resources:
             Principal:
               Service: ecs-tasks.amazonaws.com
             Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
       Policies:
         - PolicyName: S3Access
           PolicyDocument:
