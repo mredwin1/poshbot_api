@@ -53,6 +53,7 @@ INTERNAL_IPS = [
 ]
 
 MIDDLEWARE = [
+    "poshbot_api.middleware.HealthCheckMiddleware",
     "corsheaders.middleware.CorsMiddleware",
     "debug_toolbar.middleware.DebugToolbarMiddleware",
     "whitenoise.middleware.WhiteNoiseMiddleware",
