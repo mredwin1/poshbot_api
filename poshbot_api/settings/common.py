@@ -180,7 +180,7 @@ DATABASES = {
         "USER": os.environ["DB_USERNAME"],
         "PASSWORD": os.environ["DB_PASSWORD"],
         "HOST": os.environ["DB_HOSTNAME"],
-        "PORT": os.environ["DD_PORT"],
+        "PORT": os.environ["DB_PORT"],
     }
 }
 
