@@ -2,9 +2,15 @@ from .common import *
 
 ALLOWED_HOSTS = [f"api.{os.environ['DOMAIN']}", os.environ["DOMAIN"]]
 
-CSRF_TRUSTED_ORIGINS = [f"https://{os.environ['DOMAIN']}"]
+CSRF_TRUSTED_ORIGINS = [
+    f"https://api.{os.environ['DOMAIN']}",
+    f"https://{os.environ['DOMAIN']}",
+]
 
-CORS_ALLOWED_ORIGINS = [f"https://{os.environ['DOMAIN']}"]
+CORS_ALLOWED_ORIGINS = [
+    f"https://api.{os.environ['DOMAIN']}",
+    f"https://{os.environ['DOMAIN']}",
+]
 
 DEFAULT_FILE_STORAGE = "storages.backends.s3boto3.S3Boto3Storage"
 
@@ -13,6 +19,7 @@ AWS_STORAGE_BUCKET_NAME = os.environ["AWS_STORAGE_BUCKET_NAME"]
 CELERY_CREATE_MISSING_QUEUES = False
 CELERY_DEFAULT_QUEUE = os.environ["MAINTENANCE_QUEUE"]
 CELERY_BROKER_URL = f"sqs://"
+CELERY_BROKER_CONNECTION_RETRY_ON_START_UP = True
 
 CELERY_TASK_ROUTES = {
     "core.tasks.CampaignTask": {
