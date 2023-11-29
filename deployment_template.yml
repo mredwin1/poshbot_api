@@ -93,7 +93,7 @@ Resources:
         - IpProtocol: tcp
           FromPort: 5432
           ToPort: 5432
-          SourceSecurityGroupId: !GetAtt ECSSecurityGroup.GroupId
+          SourceSecurityGroupId: !GetAtt APISecurityGroup.GroupId
       Tags:
         - Key: 'Application'
           Value: !Ref ApplicationName
@@ -102,13 +102,13 @@ Resources:
         - Key: 'Version'
           Value: !Ref Version
 
-  ECSSecurityGroup:
+  APISecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
       GroupName: !Sub '${ApplicationName}-ecs-${Environment}'
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-      GroupDescription: 'Security group for communication with ECS'
+      GroupDescription: 'Security group for communication with ECS api containers'
       SecurityGroupIngress:
         - IpProtocol: -1
           FromPort: 80
@@ -249,7 +249,7 @@ Resources:
             - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
           SecurityGroups:
             - !GetAtt DatabaseSecurityGroup.GroupId
-            - !GetAtt ECSSecurityGroup.GroupId
+            - !GetAtt APISecurityGroup.GroupId
       Tags:
         - Key: 'Application'
           Value: !Ref ApplicationName
@@ -281,9 +281,94 @@ Resources:
           PredefinedMetricType: ALBRequestCountPerTarget
           ResourceLabel: !Sub
             - '${LoadBalancerName}/${TargetGroupName}'
-            - LoadBalancerName: !GetAtt APIELB.LoadBalancerFullName
+            - LoadBalancerName: !GetAtt APILoadBalancer.LoadBalancerFullName
               TargetGroupName: !GetAtt APITargetGroup.TargetGroupFullName
         TargetValue: 20
+
+  BeatTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub ${ApplicationName}-beat-task-definition-${Environment}
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Cpu: 256
+      Memory: 512
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: beat-container
+          Image: !Ref DockerImage
+          EntryPoint:
+            - 'celery'
+            - '-A'
+            - 'poshbot_api'
+            - 'beat'
+            - '-l'
+            - 'INFO'
+          RepositoryCredentials:
+            CredentialsParameter: !Ref GHRIOSecretArn
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: beat-container
+          Environment:
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: 'poshbot_api.settings.prod'
+            - Name: SECRET_KEY
+              Value: !Ref DjangoSecretKey
+            - Name: DB_NAME
+              Value: 'postgres'
+            - Name: DB_USERNAME
+              Value: !Ref ApplicationUsername
+            - Name: DB_PASSWORD
+              Value: !Ref ApplicationUserPassword
+            - Name: DB_HOSTNAME
+              Value: !GetAtt Database.Endpoint.Address
+            - Name: DB_PORT
+              Value: !GetAtt Database.Endpoint.Port
+            - Name: AWS_STORAGE_BUCKET_NAME
+              Value: !Ref S3Bucket
+            - Name: DOMAIN
+              Value: !Ref Domain
+            - Name: MAINTENANCE_QUEUE
+              Value: !GetAtt MaintenanceQueue.QueueName
+            - Name: GENERAL_QUEUE
+              Value: !GetAtt GeneralQueue.QueueName
+      Tags:
+        - Key: 'Application'
+          Value: !Ref ApplicationName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Version'
+          Value: !Ref Version
+
+  BeatService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub ${ApplicationName}-beat-service-${Environment}
+      EnableExecuteCommand: true
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref BeatTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+          SecurityGroups:
+            - !GetAtt DatabaseSecurityGroup.GroupId
+      Tags:
+        - Key: 'Application'
+          Value: !Ref ApplicationName
+        - Key: 'Environment'
+          Value: !Ref Environment
+        - Key: 'Version'
+          Value: !Ref Version
 
   S3Bucket:
     Type: AWS::S3::Bucket
@@ -305,15 +390,15 @@ Resources:
       Name: !Sub 'api.${Domain}'
       Type: A
       AliasTarget:
-        HostedZoneId: !GetAtt APIELB.CanonicalHostedZoneID
-        DNSName: !GetAtt APIELB.DNSName
+        HostedZoneId: !GetAtt APILoadBalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt APILoadBalancer.DNSName
 
-  APIELB:
+  APILoadBalancer:
     Type: AWS::ElasticLoadBalancingV2::LoadBalancer
     Properties:
       Name: !Sub '${ApplicationName}-elb-${Environment}'
       SecurityGroups:
-        - !GetAtt ECSSecurityGroup.GroupId
+        - !GetAtt APISecurityGroup.GroupId
         - !GetAtt ELBSecurityGroup.GroupId
       Scheme: internet-facing
       Subnets: !Split
@@ -336,7 +421,7 @@ Resources:
             Protocol: HTTPS
             Port: '443'
             StatusCode: 'HTTP_301'
-      LoadBalancerArn: !Ref APIELB
+      LoadBalancerArn: !Ref APILoadBalancer
       Port: 80
       Protocol: HTTP
 
@@ -348,7 +433,7 @@ Resources:
           ForwardConfig:
             TargetGroups:
               - TargetGroupArn: !Ref APITargetGroup
-      LoadBalancerArn: !Ref APIELB
+      LoadBalancerArn: !Ref APILoadBalancer
       Port: 443
       Protocol: HTTPS
       Certificates:
@@ -463,9 +548,9 @@ Resources:
                   - "sqs:SendMessage"
                   - "sqs:ReceiveMessage"
                   - "sqs:DeleteMessage"
-                Resource:
-                  - !GetAtt MaintenanceQueue.Arn
-                  - !GetAtt GeneralQueue.Arn
+                  - "sqs:ListQueues"
+                  - "sqs:GetQueueAttributes"
+                Resource: '*'
       Tags:
         - Key: 'Application'
           Value: !Ref ApplicationName
