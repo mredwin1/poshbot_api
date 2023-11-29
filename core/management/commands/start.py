@@ -34,11 +34,11 @@ class Command(BaseCommand):
             logging.error("Migrations could not be run, exiting.")
             sys.exit("Migrations unsuccessful")
 
-        superusername = os.environ.get("SUPER_USERNAME")
-        if superusername:
-            if not User.objects.filter(username=superusername).exists():
+        super_username = os.environ.get("SUPER_USERNAME")
+        if super_username:
+            if not User.objects.filter(username=super_username).exists():
                 User.objects.create_superuser(
-                    username=superusername,
+                    username=super_username,
                     password=os.environ["SUPER_PASSWORD"],
                 )
                 logging.info("Superuser created.")
