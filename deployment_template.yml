@@ -555,7 +555,7 @@ Resources:
       EnableExecuteCommand: true
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref GeneralTaskDefinition
-      DesiredCount: 1
+      DesiredCount: 0
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
