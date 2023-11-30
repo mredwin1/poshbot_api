@@ -31,12 +31,7 @@ def path_and_rename(instance, filename):
     filename = None
     path = None
     aws_session = boto3.Session()
-    s3_client = aws_session.resource(
-        "s3",
-        aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_S3_REGION_NAME,
-    )
+    s3_client = aws_session.resource("s3")
 
     if isinstance(instance, AppData):
         filename = original_filename
