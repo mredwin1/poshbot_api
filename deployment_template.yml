@@ -410,6 +410,7 @@ Resources:
       ContainerDefinitions:
         - Name: maintenance-container
           Image: !Ref DockerImage
+          StopTimeout: 120
           EntryPoint:
             - 'celery'
             - '-A'
@@ -499,6 +500,7 @@ Resources:
       ContainerDefinitions:
         - Name: general-container
           Image: !Ref DockerImage
+          StopTimeout: 120
           EntryPoint:
             - 'celery'
             - '-A'
