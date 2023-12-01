@@ -310,7 +310,7 @@ Resources:
             - '${LoadBalancerName}/${TargetGroupName}'
             - LoadBalancerName: !GetAtt APILoadBalancer.LoadBalancerFullName
               TargetGroupName: !GetAtt APITargetGroup.TargetGroupFullName
-        TargetValue: 20
+        TargetValue: 50
 
   BeatTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -631,6 +631,25 @@ Resources:
           - MetricIntervalLowerBound: 100
             ScalingAdjustment: 4
 
+  GeneralScalingAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmName: !Sub ${ApplicationName}-general-scaling-alarm-${Environment}
+      ComparisonOperator: 'GreaterThanOrEqualToThreshold'
+      EvaluationPeriods: 1
+      MetricName: 'ApproximateNumberOfMessagesVisible'
+      Namespace: 'AWS/SQS'
+      Period: 60
+      Threshold: 1
+      Statistic: 'Sum'
+      AlarmDescription: !Sub 'Alarm used for scaling ${ApplicationName}-general-service-${Environment}'
+      AlarmActions:
+        - !Ref GeneralScaleUpPolicy
+        - !Ref GeneralScaleDownPolicy
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt GeneralQueue.QueueName
+
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -792,7 +811,11 @@ Resources:
               - Effect: Allow
                 Action:
                   - "s3:*"
-                Resource: !GetAtt S3Bucket.Arn
+                Resource:
+                  - !GetAtt S3Bucket.Arn
+                  - !Sub
+                    - '${BucketArn}/*'
+                    - BucketArn: !GetAtt S3Bucket.Arn
         - PolicyName: SecretsManagerAccess
           PolicyDocument:
             Version: "2012-10-17"
