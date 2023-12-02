@@ -172,12 +172,13 @@ LOGGING = {
     },
 }
 
+database_credentials = retrieve_secret(os.environ["DB_SECRET"])
 DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": os.environ["DB_NAME"],
-        "USER": "admin",
-        "PASSWORD": retrieve_secret(os.environ["DB_SECRET"]),
+        "USER": database_credentials["username"],
+        "PASSWORD": database_credentials["password"],
         "HOST": os.environ["DB_HOSTNAME"],
         "PORT": os.environ["DB_PORT"],
     }
