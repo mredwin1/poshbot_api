@@ -8,6 +8,7 @@ from django.core.management.base import BaseCommand
 from django.db.utils import OperationalError
 
 from core.models import User
+from poshbot_api.settings.common import retrieve_secret
 
 
 class Command(BaseCommand):
@@ -34,16 +35,15 @@ class Command(BaseCommand):
             logging.error("Migrations could not be run, exiting.")
             sys.exit("Migrations unsuccessful")
 
-        super_username = os.environ.get("SUPER_USERNAME")
-        if super_username:
-            if not User.objects.filter(username=super_username).exists():
-                User.objects.create_superuser(
-                    username=super_username,
-                    password=os.environ["SUPER_PASSWORD"],
-                )
-                logging.info("Superuser created.")
-            else:
-                logging.info("Superuser already created, skipping that step.")
+        super_username = "admin"
+        if not User.objects.filter(username=super_username).exists():
+            User.objects.create_superuser(
+                username=super_username,
+                password=retrieve_secret(os.environ["MasterUserPassword"]),
+            )
+            logging.info("Superuser created.")
+        else:
+            logging.info("Superuser already created, skipping that step.")
 
         logging.info("Running collectstatic...")
         call_command("collectstatic", interactive=False, clear=True)

@@ -16,10 +16,10 @@ from datetime import timedelta
 from pathlib import Path
 
 
-def retrieve_secret(secret_name: str):
+def retrieve_secret(secret_arn: str):
     secrets_manager_client = boto3.client("secretsmanager")
 
-    response = secrets_manager_client.get_secret_value(SecretId=secret_name)
+    response = secrets_manager_client.get_secret_value(SecretId=secret_arn)
 
     return response
 
@@ -30,7 +30,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 DEBUG = False
 
-SECRET_KEY = os.environ.get("SECRET_KEY")
+SECRET_KEY = retrieve_secret(os.environ["SECRET_KEY"])
 
 INSTALLED_APPS = [
     "django.contrib.admin",
@@ -176,8 +176,8 @@ DATABASES = {
     "default": {
         "ENGINE": "django.db.backends.postgresql_psycopg2",
         "NAME": os.environ["DB_NAME"],
-        "USER": os.environ["DB_USERNAME"],
-        "PASSWORD": os.environ["DB_PASSWORD"],
+        "USER": "admin",
+        "PASSWORD": retrieve_secret(os.environ["DB_SECRET"]),
         "HOST": os.environ["DB_HOSTNAME"],
         "PORT": os.environ["DB_PORT"],
     }
@@ -188,8 +188,8 @@ CELERY_RESULT_BACKEND = None
 CELERY_IGNORE_RESULT = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 
-CAPTCHA_API_KEY = retrieve_secret("2CAPTCHA_API_KEY")
-APPIUM_SERVER_IP = retrieve_secret("APPIUM_SERVER_IP")
-ZKE_YAHOO_CREDENTIALS = retrieve_secret("ZKE_YAHOO_CREDENTIALS")
-MOBILE_HOP_CREDENTIALS = retrieve_secret("MOBILE_HOP_CREDENTIALS")
-EMAIL_CREDENTIALS = retrieve_secret("EMAIL_CREDENTIALS")
+CAPTCHA_API_KEY = retrieve_secret(os.environ["CAPTCHA_SECRET"])
+APPIUM_SERVER_IP = retrieve_secret(os.environ["APPIUM_SECRET"])
+ZKE_YAHOO_CREDENTIALS = retrieve_secret(os.environ["ZKE_SECRET"])
+MOBILE_HOP_CREDENTIALS = retrieve_secret(os.environ["MOBILE_HOP_SECRET"])
+EMAIL_CREDENTIALS = retrieve_secret(os.environ["EMAIL_SECRET"])
