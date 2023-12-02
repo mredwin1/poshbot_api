@@ -253,10 +253,11 @@ Resources:
         - !Ref PrivateSubnetTwo
 
   # The hosted zone for the application
-#  HostedZone:
-#    Type: AWS::Route53::HostedZone
-#    Properties:
-#      Name: !Ref Domain
+  HostedZone:
+    Type: AWS::Route53::HostedZone
+    DeletionPolicy: Delete
+    Properties:
+      Name: !Ref Domain
 
   # Global secrets used by the application
   PackageRegistryCredentials:
@@ -345,6 +346,11 @@ Outputs:
     Value: !Ref ApplicationName
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", ApplicationDomain ] ]
+  ApplicationHostedZone:
+    Description: The id of the hosted zone for the application
+    Value: !Ref HostedZone
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", ApplicationHostedZone ] ]
   PackageRegistrySecret:
     Description: The ARN for the package registry credentials secret
     Value: !Ref PackageRegistryCredentials
