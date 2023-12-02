@@ -5,21 +5,12 @@ Parameters:
   GlobalResourcesStackName:
     Type: String
     Description: 'The stack name used when deploying the global resources template'
-  ApplicationName:
-    Type: String
-    Description: 'The name of the application'
   Environment:
     Type: String
     Description: 'The environment the stack will be deploying to'
   Version:
     Type: String
     Description: 'The version of the application'
-  HostedZoneId:
-    Type: String
-    Description: 'The hosted zone id where the domain lives'
-  Domain:
-    Type: String
-    Description: 'The domain for the application eg. example.com'
   GHRIOSecretArn:
     Type: String
     NoEcho: true
@@ -27,694 +18,945 @@ Parameters:
   DockerImage:
     Type: String
     Description: 'The image to use for the containers'
-  ApplicationUsername:
-    Type: String
-    Description: 'The master username for the application'
-    Default: 'masteradmin'
-  ApplicationUserPassword:
-    Type: String
-    NoEcho: true
-    Description: 'The master user password for the application'
-  DjangoSecretKey:
-    Type: String
-    NoEcho: true
-    Description: 'The django secret key'
 
 Conditions:
   IsProd: !Equals [ !Ref Environment, 'prod' ]
 
 Resources:
-  Database:
-    Type: 'AWS::RDS::DBInstance'
-    Properties:
-      Engine: 'postgres'
-      DBInstanceIdentifier: !Sub '${ApplicationName}-db-${Environment}'
-      MasterUsername: !Ref ApplicationUsername
-      MasterUserPassword: !Ref ApplicationUserPassword
-      AllocatedStorage: 400
-      MaxAllocatedStorage: 1000
-      DBName: !Ref ApplicationName
-      DBSubnetGroupName: !Ref DBSubnetGroup
-      StorageType: gp3
-      Iops: 12000
-      DBInstanceClass: 'db.t3.micro'
-      VPCSecurityGroups:
-        - !GetAtt DatabaseSecurityGroup.GroupId
-      AvailabilityZone: 'us-east-1a'
-
-  DBSubnetGroup:
-    Type: AWS::RDS::DBSubnetGroup
-    Properties:
-      DBSubnetGroupDescription: 'Subnet group for application db'
-      DBSubnetGroupName: !Sub '${ApplicationName}-db-group-${Environment}'
-      SubnetIds: !Split
-        - ","
-        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-
-  DatabaseSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupName: !Sub '${ApplicationName}-RDS-${Environment}'
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-      GroupDescription: !Sub 'Security group for communication with RDS'
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !GetAtt APISecurityGroup.GroupId
-        - IpProtocol: tcp
-          FromPort: 5432
-          ToPort: 5432
-          SourceSecurityGroupId: !GetAtt ECSServiceSecurityGroup.GroupId
-
-  APISecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupName: !Sub '${ApplicationName}-ecs-${Environment}'
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-      GroupDescription: 'Security group for communication with ECS api containers'
-      SecurityGroupIngress:
-        - IpProtocol: -1
-          FromPort: 80
-          ToPort: 80
-          SourceSecurityGroupId: !GetAtt ELBSecurityGroup.GroupId
-
-  ELBSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupName: !Sub '${ApplicationName}-elb-${Environment}'
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-      GroupDescription: 'Security group for public communication with elb'
-      SecurityGroupEgress:
-        - CidrIp: 0.0.0.0/0
-          IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-      SecurityGroupIngress:
-        - CidrIp: 0.0.0.0/0
-          IpProtocol: tcp
-          FromPort: 80
-          ToPort: 80
-        - CidrIp: 0.0.0.0/0
-          IpProtocol: tcp
-          FromPort: 443
-          ToPort: 443
-
-  ECSServiceSecurityGroup:
-    Type: 'AWS::EC2::SecurityGroup'
-    Properties:
-      GroupName: !Sub '${ApplicationName}-ecs-service-${Environment}'
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-      GroupDescription: 'Security group for ecs services to have open outbound communication'
-      SecurityGroupEgress:
-        - IpProtocol: -1
-          CidrIp: 0.0.0.0/0
-
-  ECSCluster:
-    Type: AWS::ECS::Cluster
-    DependsOn: Database
-    Properties:
-      ClusterName: !Sub ${ApplicationName}-ecs-cluster-${Environment}
-
-  APITaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub ${ApplicationName}-api-task-definition-${Environment}
-      NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 512
-      Memory: 1024
-      RuntimePlatform:
-        CpuArchitecture: X86_64
-        OperatingSystemFamily: LINUX
-      ContainerDefinitions:
-        - Name: api-container
-          Image: !Ref DockerImage
-          EntryPoint:
-            - 'python3'
-            - 'manage.py'
-            - 'start'
-          RepositoryCredentials:
-            CredentialsParameter: !Ref GHRIOSecretArn
-          PortMappings:
-            - ContainerPort: 80
-              AppProtocol: http
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref ECSLogGroup
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: api-container
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
-            - Name: DB_NAME
-              Value: 'postgres'
-            - Name: DB_USERNAME
-              Value: !Ref ApplicationUsername
-            - Name: DB_PASSWORD
-              Value: !Ref ApplicationUserPassword
-            - Name: SUPER_USERNAME
-              Value: !Ref ApplicationUsername
-            - Name: SUPER_PASSWORD
-              Value: !Ref ApplicationUserPassword
-            - Name: DB_HOSTNAME
-              Value: !GetAtt Database.Endpoint.Address
-            - Name: DB_PORT
-              Value: !GetAtt Database.Endpoint.Port
-            - Name: AWS_STORAGE_BUCKET_NAME
-              Value: !Ref S3Bucket
-            - Name: DOMAIN
-              Value: !If [IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}']
-            - Name: MAINTENANCE_QUEUE
-              Value: !GetAtt MaintenanceQueue.QueueName
-            - Name: GENERAL_QUEUE
-              Value: !GetAtt GeneralQueue.QueueName
-
-  APIService:
-    Type: AWS::ECS::Service
-    DependsOn: HTTPSListener
-    Properties:
-      ServiceName: !Sub ${ApplicationName}-api-service-${Environment}
-      EnableExecuteCommand: true
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref APITaskDefinition
-      DesiredCount: 1
-      LaunchType: FARGATE
-      LoadBalancers:
-        - TargetGroupArn: !Ref APITargetGroup
-          ContainerName: api-container
-          ContainerPort: 80
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          Subnets: !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-          SecurityGroups:
-            - !GetAtt DatabaseSecurityGroup.GroupId
-            - !GetAtt APISecurityGroup.GroupId
-            - !GetAtt ECSServiceSecurityGroup.GroupId
-
-  APIScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MaxCapacity: 4
-      MinCapacity: 1
-      ResourceId: !Sub
-        - 'service/${ECSClusterName}/${APIServiceName}'
-        - ECSClusterName: !Ref ECSCluster
-          APIServiceName: !GetAtt APIService.Name
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-
-  APIScalingPolicy:
-    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-    Properties:
-      PolicyName: !Sub ${ApplicationName}-api-scaling-policy-${Environment}
-      PolicyType: TargetTrackingScaling
-      ScalingTargetId: !Ref APIScalableTarget
-      TargetTrackingScalingPolicyConfiguration:
-        PredefinedMetricSpecification:
-          PredefinedMetricType: ALBRequestCountPerTarget
-          ResourceLabel: !Sub
-            - '${LoadBalancerName}/${TargetGroupName}'
-            - LoadBalancerName: !GetAtt APILoadBalancer.LoadBalancerFullName
-              TargetGroupName: !GetAtt APITargetGroup.TargetGroupFullName
-        TargetValue: 50
-
-  BeatTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub ${ApplicationName}-beat-task-definition-${Environment}
-      NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 256
-      Memory: 512
-      RuntimePlatform:
-        CpuArchitecture: X86_64
-        OperatingSystemFamily: LINUX
-      ContainerDefinitions:
-        - Name: beat-container
-          Image: !Ref DockerImage
-          EntryPoint:
-            - 'celery'
-            - '-A'
-            - 'poshbot_api'
-            - 'beat'
-            - '-l'
-            - 'INFO'
-          RepositoryCredentials:
-            CredentialsParameter: !Ref GHRIOSecretArn
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref ECSLogGroup
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: beat-container
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
-            - Name: DB_NAME
-              Value: 'postgres'
-            - Name: DB_USERNAME
-              Value: !Ref ApplicationUsername
-            - Name: DB_PASSWORD
-              Value: !Ref ApplicationUserPassword
-            - Name: DB_HOSTNAME
-              Value: !GetAtt Database.Endpoint.Address
-            - Name: DB_PORT
-              Value: !GetAtt Database.Endpoint.Port
-            - Name: AWS_STORAGE_BUCKET_NAME
-              Value: !Ref S3Bucket
-            - Name: DOMAIN
-              Value: !If [IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}']
-            - Name: MAINTENANCE_QUEUE
-              Value: !GetAtt MaintenanceQueue.QueueName
-            - Name: GENERAL_QUEUE
-              Value: !GetAtt GeneralQueue.QueueName
-
-  BeatService:
-    Type: AWS::ECS::Service
-    Properties:
-      ServiceName: !Sub ${ApplicationName}-beat-service-${Environment}
-      EnableExecuteCommand: true
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref BeatTaskDefinition
-      DesiredCount: 1
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          Subnets: !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-
-  MaintenanceTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub ${ApplicationName}-maintenance-task-definition-${Environment}
-      NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 1024
-      Memory: 2048
-      RuntimePlatform:
-        CpuArchitecture: X86_64
-        OperatingSystemFamily: LINUX
-      ContainerDefinitions:
-        - Name: maintenance-container
-          Image: !Ref DockerImage
-          StopTimeout: 120
-          EntryPoint:
-            - 'celery'
-            - '-A'
-            - 'poshbot_api'
-            - 'worker'
-            - '--concurrency=3'
-            - '-Q'
-            - !GetAtt MaintenanceQueue.QueueName
-            - '-l'
-            - 'INFO'
-          RepositoryCredentials:
-            CredentialsParameter: !Ref GHRIOSecretArn
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref ECSLogGroup
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: maintenance-container
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
-            - Name: DB_NAME
-              Value: 'postgres'
-            - Name: DB_USERNAME
-              Value: !Ref ApplicationUsername
-            - Name: DB_PASSWORD
-              Value: !Ref ApplicationUserPassword
-            - Name: DB_HOSTNAME
-              Value: !GetAtt Database.Endpoint.Address
-            - Name: DB_PORT
-              Value: !GetAtt Database.Endpoint.Port
-            - Name: AWS_STORAGE_BUCKET_NAME
-              Value: !Ref S3Bucket
-            - Name: DOMAIN
-              Value: !If [IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}']
-            - Name: MAINTENANCE_QUEUE
-              Value: !GetAtt MaintenanceQueue.QueueName
-            - Name: GENERAL_QUEUE
-              Value: !GetAtt GeneralQueue.QueueName
-
-  MaintenanceService:
-    Type: AWS::ECS::Service
-    Properties:
-      ServiceName: !Sub ${ApplicationName}-maintenance-service-${Environment}
-      EnableExecuteCommand: true
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref MaintenanceTaskDefinition
-      DesiredCount: 1
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          Subnets: !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-          SecurityGroups:
-            - !GetAtt DatabaseSecurityGroup.GroupId
-            - !GetAtt ECSServiceSecurityGroup.GroupId
-
-  GeneralTaskDefinition:
-    Type: AWS::ECS::TaskDefinition
-    Properties:
-      Family: !Sub ${ApplicationName}-general-task-definition-${Environment}
-      NetworkMode: awsvpc
-      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-      TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 2048
-      Memory: 4096
-      RuntimePlatform:
-        CpuArchitecture: X86_64
-        OperatingSystemFamily: LINUX
-      ContainerDefinitions:
-        - Name: general-container
-          Image: !Ref DockerImage
-          StopTimeout: 120
-          EntryPoint:
-            - 'celery'
-            - '-A'
-            - 'poshbot_api'
-            - 'worker'
-            - '--concurrency=4'
-            - '-Q'
-            - !GetAtt GeneralQueue.QueueName
-            - '-l'
-            - 'INFO'
-          RepositoryCredentials:
-            CredentialsParameter: !Ref GHRIOSecretArn
-          LogConfiguration:
-            LogDriver: awslogs
-            Options:
-              awslogs-group: !Ref ECSLogGroup
-              awslogs-region: !Ref AWS::Region
-              awslogs-stream-prefix: general-container
-          Environment:
-            - Name: DJANGO_SETTINGS_MODULE
-              Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
-            - Name: DB_NAME
-              Value: 'postgres'
-            - Name: DB_USERNAME
-              Value: !Ref ApplicationUsername
-            - Name: DB_PASSWORD
-              Value: !Ref ApplicationUserPassword
-            - Name: DB_HOSTNAME
-              Value: !GetAtt Database.Endpoint.Address
-            - Name: DB_PORT
-              Value: !GetAtt Database.Endpoint.Port
-            - Name: AWS_STORAGE_BUCKET_NAME
-              Value: !Ref S3Bucket
-            - Name: DOMAIN
-              Value: !If [ IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}' ]
-            - Name: MAINTENANCE_QUEUE
-              Value: !GetAtt MaintenanceQueue.QueueName
-            - Name: GENERAL_QUEUE
-              Value: !GetAtt GeneralQueue.QueueName
-
-  GeneralService:
-    Type: AWS::ECS::Service
-    Properties:
-      ServiceName: !Sub ${ApplicationName}-general-service-${Environment}
-      EnableExecuteCommand: true
-      Cluster: !Ref ECSCluster
-      TaskDefinition: !Ref GeneralTaskDefinition
-      DesiredCount: 0
-      LaunchType: FARGATE
-      NetworkConfiguration:
-        AwsvpcConfiguration:
-          Subnets: !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-          SecurityGroups:
-            - !GetAtt DatabaseSecurityGroup.GroupId
-            - !GetAtt ECSServiceSecurityGroup.GroupId
-
-  GeneralScalableTarget:
-    Type: AWS::ApplicationAutoScaling::ScalableTarget
-    Properties:
-      MaxCapacity: 4
-      MinCapacity: 0
-      ResourceId: !Sub
-        - 'service/${ECSClusterName}/${GeneralServiceName}'
-        - ECSClusterName: !Ref ECSCluster
-          GeneralServiceName: !GetAtt GeneralService.Name
-      ScalableDimension: ecs:service:DesiredCount
-      ServiceNamespace: ecs
-
-  GeneralScaleUpPolicy:
-    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
-    Properties:
-      PolicyType: 'StepScaling'
-      PolicyName: !Sub ${ApplicationName}-general-scaleup-policy-${Environment}
-      ScalingTargetId: !Ref GeneralScalableTarget
-      StepScalingPolicyConfiguration:
-        AdjustmentType: 'ExactCapacity'
-        Cooldown: 60
-        MetricAggregationType: 'Average'
-        StepAdjustments:
-          - MetricIntervalLowerBound: 0
-            MetricIntervalUpperBound: 10
-            ScalingAdjustment: 1
-          - MetricIntervalLowerBound: 10
-            MetricIntervalUpperBound: 40
-            ScalingAdjustment: 2
-          - MetricIntervalLowerBound: 40
-            MetricIntervalUpperBound: 100
-            ScalingAdjustment: 3
-          - MetricIntervalLowerBound: 100
-            ScalingAdjustment: 4
-
-  GeneralScaleDownPolicy:
-    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
-    Properties:
-      PolicyType: 'StepScaling'
-      PolicyName: !Sub ${ApplicationName}-general-scaledown-policy-${Environment}
-      ScalingTargetId: !Ref GeneralScalableTarget
-      StepScalingPolicyConfiguration:
-        AdjustmentType: 'ExactCapacity'
-        Cooldown: 60
-        MetricAggregationType: 'Average'
-        StepAdjustments:
-          - MetricIntervalLowerBound: 0
-            MetricIntervalUpperBound: 10
-            ScalingAdjustment: 1
-          - MetricIntervalLowerBound: 10
-            MetricIntervalUpperBound: 40
-            ScalingAdjustment: 2
-          - MetricIntervalLowerBound: 40
-            MetricIntervalUpperBound: 100
-            ScalingAdjustment: 3
-          - MetricIntervalLowerBound: 100
-            ScalingAdjustment: 4
-
-  GeneralScalingAlarm:
-    Type: 'AWS::CloudWatch::Alarm'
-    Properties:
-      AlarmName: !Sub ${ApplicationName}-general-scaling-alarm-${Environment}
-      ComparisonOperator: 'GreaterThanOrEqualToThreshold'
-      EvaluationPeriods: 1
-      MetricName: 'ApproximateNumberOfMessagesVisible'
-      Namespace: 'AWS/SQS'
-      Period: 60
-      Threshold: 1
-      Statistic: 'Sum'
-      AlarmDescription: !Sub 'Alarm used for scaling ${ApplicationName}-general-service-${Environment}'
-      AlarmActions:
-        - !Ref GeneralScaleUpPolicy
-        - !Ref GeneralScaleDownPolicy
-      Dimensions:
-        - Name: QueueName
-          Value: !GetAtt GeneralQueue.QueueName
+#  Database:
+#    Type: 'AWS::RDS::DBInstance'
+#    DeletionPolicy: Delete
+#    Properties:
+#      Engine: 'postgres'
+#      DBInstanceIdentifier: !Sub
+#        - '${ApplicationName}-db-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      MasterUserPassword: admin
+#      ManageMasterUserPassword: true
+#      AllocatedStorage: 400
+#      MaxAllocatedStorage: 1000
+#      DBName:
+#        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      DBSubnetGroupName: !Ref DBSubnetGroup
+#      StorageType: gp3
+#      Iops: 12000
+#      DBInstanceClass: 'db.t3.micro'
+#      VPCSecurityGroups:
+#        - !GetAtt DatabaseSecurityGroup.GroupId
+#      AvailabilityZone: 'us-east-1a'
+#
+#  DBSubnetGroup:
+#    Type: AWS::RDS::DBSubnetGroup
+#    Properties:
+#      DBSubnetGroupDescription: 'Subnet group for application db'
+#      DBSubnetGroupName: !Sub
+#        - '${ApplicationName}-db-group-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      SubnetIds: !Split
+#        - ","
+#        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+#
+#  DatabaseSecurityGroup:
+#    Type: 'AWS::EC2::SecurityGroup'
+#    Properties:
+#      GroupName: !Sub
+#       - '${ApplicationName}-RDS-${Environment}'
+#       - Environment: !Ref Environment
+#         ApplicationName:
+#           Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      VpcId: !ImportValue
+#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+#      GroupDescription: 'Security group for communication with RDS'
+#      SecurityGroupIngress:
+#        - IpProtocol: tcp
+#          FromPort: 5432
+#          ToPort: 5432
+#          SourceSecurityGroupId: !GetAtt APISecurityGroup.GroupId
+#        - IpProtocol: tcp
+#          FromPort: 5432
+#          ToPort: 5432
+#          SourceSecurityGroupId: !GetAtt ECSServiceSecurityGroup.GroupId
+#
+#  APISecurityGroup:
+#    Type: 'AWS::EC2::SecurityGroup'
+#    Properties:
+#      GroupName: !Sub
+#        - '${ApplicationName}-ecs-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      VpcId: !ImportValue
+#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+#      GroupDescription: 'Security group for communication with ECS api containers'
+#      SecurityGroupIngress:
+#        - IpProtocol: -1
+#          FromPort: 80
+#          ToPort: 80
+#          SourceSecurityGroupId: !GetAtt ELBSecurityGroup.GroupId
+#
+#  ELBSecurityGroup:
+#    Type: 'AWS::EC2::SecurityGroup'
+#    Properties:
+#      GroupName: !Sub
+#        - '${ApplicationName}-elb-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      VpcId: !ImportValue
+#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+#      GroupDescription: 'Security group for public communication with elb'
+#      SecurityGroupEgress:
+#        - CidrIp: 0.0.0.0/0
+#          IpProtocol: tcp
+#          FromPort: 80
+#          ToPort: 80
+#      SecurityGroupIngress:
+#        - CidrIp: 0.0.0.0/0
+#          IpProtocol: tcp
+#          FromPort: 80
+#          ToPort: 80
+#        - CidrIp: 0.0.0.0/0
+#          IpProtocol: tcp
+#          FromPort: 443
+#          ToPort: 443
+#
+#  ECSServiceSecurityGroup:
+#    Type: 'AWS::EC2::SecurityGroup'
+#    Properties:
+#      GroupName: !Sub
+#        - '${ApplicationName}-ecs-service-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      VpcId: !ImportValue
+#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+#      GroupDescription: 'Security group for ecs services to have open outbound communication'
+#      SecurityGroupEgress:
+#        - IpProtocol: -1
+#          CidrIp: 0.0.0.0/0
+#
+#  ECSCluster:
+#    Type: AWS::ECS::Cluster
+#    DependsOn: Database
+#    Properties:
+#      ClusterName: !Sub
+#        - '${ApplicationName}-ecs-cluster-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#
+#  APITaskDefinition:
+#    Type: AWS::ECS::TaskDefinition
+#    Properties:
+#      Family: !Sub
+#        - '${ApplicationName}-api-task-definition-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      NetworkMode: awsvpc
+#      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+#      TaskRoleArn: !GetAtt TaskRole.Arn
+#      Cpu: 512
+#      Memory: 1024
+#      RuntimePlatform:
+#        CpuArchitecture: X86_64
+#        OperatingSystemFamily: LINUX
+#      ContainerDefinitions:
+#        - Name: api-container
+#          Image: !Ref DockerImage
+#          EntryPoint:
+#            - 'python3'
+#            - 'manage.py'
+#            - 'start'
+#          RepositoryCredentials:
+#            CredentialsParameter: !Ref GHRIOSecretArn
+#          PortMappings:
+#            - ContainerPort: 80
+#              AppProtocol: http
+#          LogConfiguration:
+#            LogDriver: awslogs
+#            Options:
+#              awslogs-group: !Ref ECSLogGroup
+#              awslogs-region: !Ref AWS::Region
+#              awslogs-stream-prefix: api-container
+#          Environment:
+#            - Name: DJANGO_SETTINGS_MODULE
+#              Value: 'poshbot_api.settings.prod'
+#            - Name: SECRET_KEY
+#              Value: !Ref DjangoSecretKey
+#            - Name: DB_NAME
+#              Value: 'postgres'
+#            - Name: DB_SECRET
+#              Value: !GetAtt Database.MasterUserSecret.SecretArn
+#            - Name: DB_HOSTNAME
+#              Value: !GetAtt Database.Endpoint.Address
+#            - Name: DB_PORT
+#              Value: !GetAtt Database.Endpoint.Port
+#            - Name: AWS_STORAGE_BUCKET_NAME
+#              Value: !Ref S3Bucket
+#            - Name: DOMAIN
+#              Value: !If
+#                - IsProd
+#                - Fn::Sub:
+#                  - 'api.${Domain}'
+#                  - Domain:
+#                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                - Fn::Sub:
+#                  - '${Environment}.api.${Domain}'
+#                  - Domain:
+#                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                    Environment: !Ref Environment
+#            - Name: MAINTENANCE_QUEUE
+#              Value: !GetAtt MaintenanceQueue.QueueName
+#            - Name: GENERAL_QUEUE
+#              Value: !GetAtt GeneralQueue.QueueName
+#            - Name: MASTER_USER_SECRET
+#              Value: !Ref MasterUserPassword
+#            - Name: CAPTCHA_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#            - Name: APPIUM_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#            - Name: ZKE_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#            - Name: MOBILE_HOP_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#            - Name: EMAIL_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#
+#  APIService:
+#    Type: AWS::ECS::Service
+#    DependsOn: HTTPSListener
+#    Properties:
+#      ServiceName: !Sub
+#        - '${ApplicationName}-api-service-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      EnableExecuteCommand: true
+#      Cluster: !Ref ECSCluster
+#      TaskDefinition: !Ref APITaskDefinition
+#      DesiredCount: 1
+#      LaunchType: FARGATE
+#      LoadBalancers:
+#        - TargetGroupArn: !Ref APITargetGroup
+#          ContainerName: api-container
+#          ContainerPort: 80
+#      NetworkConfiguration:
+#        AwsvpcConfiguration:
+#          Subnets: !Split
+#            - ","
+#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+#          SecurityGroups:
+#            - !GetAtt DatabaseSecurityGroup.GroupId
+#            - !GetAtt APISecurityGroup.GroupId
+#            - !GetAtt ECSServiceSecurityGroup.GroupId
+#
+#  APIScalableTarget:
+#    Type: AWS::ApplicationAutoScaling::ScalableTarget
+#    Properties:
+#      MaxCapacity: 4
+#      MinCapacity: 1
+#      ResourceId: !Sub
+#        - 'service/${ECSClusterName}/${APIServiceName}'
+#        - ECSClusterName: !Ref ECSCluster
+#          APIServiceName: !GetAtt APIService.Name
+#      ScalableDimension: ecs:service:DesiredCount
+#      ServiceNamespace: ecs
+#
+#  APIScalingPolicy:
+#    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+#    Properties:
+#      PolicyName: !Sub
+#        - '${ApplicationName}-api-scaling-policy-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      PolicyType: TargetTrackingScaling
+#      ScalingTargetId: !Ref APIScalableTarget
+#      TargetTrackingScalingPolicyConfiguration:
+#        PredefinedMetricSpecification:
+#          PredefinedMetricType: ALBRequestCountPerTarget
+#          ResourceLabel: !Sub
+#            - '${LoadBalancerName}/${TargetGroupName}'
+#            - LoadBalancerName: !GetAtt APILoadBalancer.LoadBalancerFullName
+#              TargetGroupName: !GetAtt APITargetGroup.TargetGroupFullName
+#        TargetValue: 50
+#
+#  BeatTaskDefinition:
+#    Type: AWS::ECS::TaskDefinition
+#    Properties:
+#      Family: !Sub
+#        - '${ApplicationName}-beat-task-definition-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      NetworkMode: awsvpc
+#      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+#      TaskRoleArn: !GetAtt TaskRole.Arn
+#      Cpu: 256
+#      Memory: 512
+#      RuntimePlatform:
+#        CpuArchitecture: X86_64
+#        OperatingSystemFamily: LINUX
+#      ContainerDefinitions:
+#        - Name: beat-container
+#          Image: !Ref DockerImage
+#          EntryPoint:
+#            - 'celery'
+#            - '-A'
+#            - 'poshbot_api'
+#            - 'beat'
+#            - '-l'
+#            - 'INFO'
+#          RepositoryCredentials:
+#            CredentialsParameter: !Ref GHRIOSecretArn
+#          LogConfiguration:
+#            LogDriver: awslogs
+#            Options:
+#              awslogs-group: !Ref ECSLogGroup
+#              awslogs-region: !Ref AWS::Region
+#              awslogs-stream-prefix: beat-container
+#          Environment:
+#            - Name: DJANGO_SETTINGS_MODULE
+#              Value: 'poshbot_api.settings.prod'
+#            - Name: SECRET_KEY
+#              Value: !Ref DjangoSecretKey
+#            - Name: DB_NAME
+#              Value: 'postgres'
+#            - Name: DB_SECRET
+#              Value: !GetAtt Database.MasterUserSecret.SecretArn
+#            - Name: DB_HOSTNAME
+#              Value: !GetAtt Database.Endpoint.Address
+#            - Name: DB_PORT
+#              Value: !GetAtt Database.Endpoint.Port
+#            - Name: AWS_STORAGE_BUCKET_NAME
+#              Value: !Ref S3Bucket
+#            - Name: DOMAIN
+#              Value: !If
+#                - IsProd
+#                - Fn::Sub:
+#                    - 'api.${Domain}'
+#                    - Domain:
+#                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                - Fn::Sub:
+#                    - '${Environment}.api.${Domain}'
+#                    - Domain:
+#                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                      Environment: !Ref Environment
+#            - Name: MAINTENANCE_QUEUE
+#              Value: !GetAtt MaintenanceQueue.QueueName
+#            - Name: GENERAL_QUEUE
+#              Value: !GetAtt GeneralQueue.QueueName
+#            - Name: MASTER_USER_SECRET
+#              Value: !Ref MasterUserPassword
+#            - Name: CAPTCHA_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#            - Name: APPIUM_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#            - Name: ZKE_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#            - Name: MOBILE_HOP_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#            - Name: EMAIL_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#
+#  BeatService:
+#    Type: AWS::ECS::Service
+#    Properties:
+#      ServiceName: !Sub
+#        - '${ApplicationName}-beat-service-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      EnableExecuteCommand: true
+#      Cluster: !Ref ECSCluster
+#      TaskDefinition: !Ref BeatTaskDefinition
+#      DesiredCount: 1
+#      LaunchType: FARGATE
+#      NetworkConfiguration:
+#        AwsvpcConfiguration:
+#          Subnets: !Split
+#            - ","
+#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+#
+#  MaintenanceTaskDefinition:
+#    Type: AWS::ECS::TaskDefinition
+#    Properties:
+#      Family: !Sub
+#        - '${ApplicationName}-maintenance-task-definition-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      NetworkMode: awsvpc
+#      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+#      TaskRoleArn: !GetAtt TaskRole.Arn
+#      Cpu: 1024
+#      Memory: 2048
+#      RuntimePlatform:
+#        CpuArchitecture: X86_64
+#        OperatingSystemFamily: LINUX
+#      ContainerDefinitions:
+#        - Name: maintenance-container
+#          Image: !Ref DockerImage
+#          StopTimeout: 120
+#          EntryPoint:
+#            - 'celery'
+#            - '-A'
+#            - 'poshbot_api'
+#            - 'worker'
+#            - '--concurrency=3'
+#            - '-Q'
+#            - !GetAtt MaintenanceQueue.QueueName
+#            - '-l'
+#            - 'INFO'
+#          RepositoryCredentials:
+#            CredentialsParameter: !Ref GHRIOSecretArn
+#          LogConfiguration:
+#            LogDriver: awslogs
+#            Options:
+#              awslogs-group: !Ref ECSLogGroup
+#              awslogs-region: !Ref AWS::Region
+#              awslogs-stream-prefix: maintenance-container
+#          Environment:
+#            - Name: DJANGO_SETTINGS_MODULE
+#              Value: 'poshbot_api.settings.prod'
+#            - Name: SECRET_KEY
+#              Value: !Ref DjangoSecretKey
+#            - Name: DB_NAME
+#              Value: 'postgres'
+#            - Name: DB_SECRET
+#              Value: !GetAtt Database.MasterUserSecret.SecretArn
+#            - Name: DB_HOSTNAME
+#              Value: !GetAtt Database.Endpoint.Address
+#            - Name: DB_PORT
+#              Value: !GetAtt Database.Endpoint.Port
+#            - Name: AWS_STORAGE_BUCKET_NAME
+#              Value: !Ref S3Bucket
+#            - Name: DOMAIN
+#              Value: !If
+#                - IsProd
+#                - Fn::Sub:
+#                    - 'api.${Domain}'
+#                    - Domain:
+#                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                - Fn::Sub:
+#                    - '${Environment}.api.${Domain}'
+#                    - Domain:
+#                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                      Environment: !Ref Environment
+#            - Name: MAINTENANCE_QUEUE
+#              Value: !GetAtt MaintenanceQueue.QueueName
+#            - Name: GENERAL_QUEUE
+#              Value: !GetAtt GeneralQueue.QueueName
+#            - Name: MASTER_USER_SECRET
+#              Value: !Ref MasterUserPassword
+#            - Name: CAPTCHA_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#            - Name: APPIUM_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#            - Name: ZKE_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#            - Name: MOBILE_HOP_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#            - Name: EMAIL_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#
+#  MaintenanceService:
+#    Type: AWS::ECS::Service
+#    Properties:
+#      ServiceName: !Sub
+#        - '${ApplicationName}-maintenance-service-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      EnableExecuteCommand: true
+#      Cluster: !Ref ECSCluster
+#      TaskDefinition: !Ref MaintenanceTaskDefinition
+#      DesiredCount: 1
+#      LaunchType: FARGATE
+#      NetworkConfiguration:
+#        AwsvpcConfiguration:
+#          Subnets: !Split
+#            - ","
+#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+#          SecurityGroups:
+#            - !GetAtt DatabaseSecurityGroup.GroupId
+#            - !GetAtt ECSServiceSecurityGroup.GroupId
+#
+#  GeneralTaskDefinition:
+#    Type: AWS::ECS::TaskDefinition
+#    Properties:
+#      Family: !Sub
+#        - '${ApplicationName}-general-task-definition-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      NetworkMode: awsvpc
+#      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+#      TaskRoleArn: !GetAtt TaskRole.Arn
+#      Cpu: 2048
+#      Memory: 4096
+#      RuntimePlatform:
+#        CpuArchitecture: X86_64
+#        OperatingSystemFamily: LINUX
+#      ContainerDefinitions:
+#        - Name: general-container
+#          Image: !Ref DockerImage
+#          StopTimeout: 120
+#          EntryPoint:
+#            - 'celery'
+#            - '-A'
+#            - 'poshbot_api'
+#            - 'worker'
+#            - '--concurrency=4'
+#            - '-Q'
+#            - !GetAtt GeneralQueue.QueueName
+#            - '-l'
+#            - 'INFO'
+#          RepositoryCredentials:
+#            CredentialsParameter: !Ref GHRIOSecretArn
+#          LogConfiguration:
+#            LogDriver: awslogs
+#            Options:
+#              awslogs-group: !Ref ECSLogGroup
+#              awslogs-region: !Ref AWS::Region
+#              awslogs-stream-prefix: general-container
+#          Environment:
+#            - Name: DJANGO_SETTINGS_MODULE
+#              Value: 'poshbot_api.settings.prod'
+#            - Name: SECRET_KEY
+#              Value: !Ref DjangoSecretKey
+#            - Name: DB_NAME
+#              Value: 'postgres'
+#            - Name: DB_SECRET
+#              Value: !GetAtt Database.MasterUserSecret.SecretArn
+#            - Name: DB_HOSTNAME
+#              Value: !GetAtt Database.Endpoint.Address
+#            - Name: DB_PORT
+#              Value: !GetAtt Database.Endpoint.Port
+#            - Name: AWS_STORAGE_BUCKET_NAME
+#              Value: !Ref S3Bucket
+#            - Name: DOMAIN
+#              Value: !If
+#                - IsProd
+#                - Fn::Sub:
+#                    - 'api.${Domain}'
+#                    - Domain:
+#                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                - Fn::Sub:
+#                    - '${Environment}.api.${Domain}'
+#                    - Domain:
+#                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#                      Environment: !Ref Environment
+#            - Name: MAINTENANCE_QUEUE
+#              Value: !GetAtt MaintenanceQueue.QueueName
+#            - Name: GENERAL_QUEUE
+#              Value: !GetAtt GeneralQueue.QueueName
+#            - Name: MASTER_USER_SECRET
+#              Value: !Ref MasterUserPassword
+#            - Name: CAPTCHA_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#            - Name: APPIUM_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#            - Name: ZKE_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#            - Name: MOBILE_HOP_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#            - Name: EMAIL_SECRET
+#              Value: !ImportValue
+#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#
+#  GeneralService:
+#    Type: AWS::ECS::Service
+#    Properties:
+#      ServiceName: !Sub
+#        - '${ApplicationName}-general-service-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      EnableExecuteCommand: true
+#      Cluster: !Ref ECSCluster
+#      TaskDefinition: !Ref GeneralTaskDefinition
+#      DesiredCount: 0
+#      LaunchType: FARGATE
+#      NetworkConfiguration:
+#        AwsvpcConfiguration:
+#          Subnets: !Split
+#            - ","
+#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+#          SecurityGroups:
+#            - !GetAtt DatabaseSecurityGroup.GroupId
+#            - !GetAtt ECSServiceSecurityGroup.GroupId
+#
+#  GeneralScalableTarget:
+#    Type: AWS::ApplicationAutoScaling::ScalableTarget
+#    Properties:
+#      MaxCapacity: 4
+#      MinCapacity: 0
+#      ResourceId: !Sub
+#        - 'service/${ECSClusterName}/${GeneralServiceName}'
+#        - ECSClusterName: !Ref ECSCluster
+#          GeneralServiceName: !GetAtt GeneralService.Name
+#      ScalableDimension: ecs:service:DesiredCount
+#      ServiceNamespace: ecs
+#
+#  GeneralScaleUpPolicy:
+#    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+#    Properties:
+#      PolicyType: 'StepScaling'
+#      PolicyName: !Sub
+#        - '${ApplicationName}-general-scaleup-policy-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      ScalingTargetId: !Ref GeneralScalableTarget
+#      StepScalingPolicyConfiguration:
+#        AdjustmentType: 'ExactCapacity'
+#        Cooldown: 60
+#        MetricAggregationType: 'Average'
+#        StepAdjustments:
+#          - MetricIntervalLowerBound: 0
+#            MetricIntervalUpperBound: 10
+#            ScalingAdjustment: 1
+#          - MetricIntervalLowerBound: 10
+#            MetricIntervalUpperBound: 40
+#            ScalingAdjustment: 2
+#          - MetricIntervalLowerBound: 40
+#            MetricIntervalUpperBound: 100
+#            ScalingAdjustment: 3
+#          - MetricIntervalLowerBound: 100
+#            ScalingAdjustment: 4
+#
+#  GeneralScaleDownPolicy:
+#    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+#    Properties:
+#      PolicyType: 'StepScaling'
+#      PolicyName: !Sub
+#        - '${ApplicationName}-general-scaledown-policy-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      ScalingTargetId: !Ref GeneralScalableTarget
+#      StepScalingPolicyConfiguration:
+#        AdjustmentType: 'ExactCapacity'
+#        Cooldown: 60
+#        MetricAggregationType: 'Average'
+#        StepAdjustments:
+#          - MetricIntervalLowerBound: 0
+#            MetricIntervalUpperBound: 10
+#            ScalingAdjustment: 1
+#          - MetricIntervalLowerBound: 10
+#            MetricIntervalUpperBound: 40
+#            ScalingAdjustment: 2
+#          - MetricIntervalLowerBound: 40
+#            MetricIntervalUpperBound: 100
+#            ScalingAdjustment: 3
+#          - MetricIntervalLowerBound: 100
+#            ScalingAdjustment: 4
+#
+#  GeneralScalingAlarm:
+#    Type: 'AWS::CloudWatch::Alarm'
+#    Properties:
+#      AlarmName: !Sub
+#        - '${ApplicationName}-general-scaling-alarm-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      ComparisonOperator: 'GreaterThanOrEqualToThreshold'
+#      EvaluationPeriods: 1
+#      MetricName: 'ApproximateNumberOfMessagesVisible'
+#      Namespace: 'AWS/SQS'
+#      Period: 60
+#      Threshold: 1
+#      Statistic: 'Sum'
+#      AlarmDescription: !Sub 'Alarm used for scaling ${ApplicationName}-general-service-${Environment}'
+#      AlarmActions:
+#        - !Ref GeneralScaleUpPolicy
+#        - !Ref GeneralScaleDownPolicy
+#      Dimensions:
+#        - Name: QueueName
+#          Value: !GetAtt GeneralQueue.QueueName
 
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
-      BucketName: !Sub '${ApplicationName}-files-${Environment}'
+      BucketName: !Sub
+        - '${ApplicationName}-files-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       AccessControl: Private
 
-  RecordSet:
-    Type: AWS::Route53::RecordSet
-    Properties:
-      HostedZoneName: !Sub '${Domain}.'
-      Name: !If [IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}']
-      Type: A
-      AliasTarget:
-        HostedZoneId: !GetAtt APILoadBalancer.CanonicalHostedZoneID
-        DNSName: !GetAtt APILoadBalancer.DNSName
-
-  APILoadBalancer:
-    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-    Properties:
-      Name: !Sub '${ApplicationName}-elb-${Environment}'
-      SecurityGroups:
-        - !GetAtt APISecurityGroup.GroupId
-        - !GetAtt ELBSecurityGroup.GroupId
-      Scheme: internet-facing
-      Subnets: !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
-
-  HTTPListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: redirect
-          RedirectConfig:
-            Protocol: HTTPS
-            Port: '443'
-            StatusCode: 'HTTP_301'
-      LoadBalancerArn: !Ref APILoadBalancer
-      Port: 80
-      Protocol: HTTP
-
-  HTTPSListener:
-    Type: AWS::ElasticLoadBalancingV2::Listener
-    Properties:
-      DefaultActions:
-        - Type: forward
-          ForwardConfig:
-            TargetGroups:
-              - TargetGroupArn: !Ref APITargetGroup
-      LoadBalancerArn: !Ref APILoadBalancer
-      Port: 443
-      Protocol: HTTPS
-      Certificates:
-        - CertificateArn: !Ref SSLCertificate
-
-  APITargetGroup:
-    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-    Properties:
-      HealthCheckPath: '/health'
-      Name: !Sub '${ApplicationName}-target-group-${Environment}'
-      Port: 80
-      Protocol: HTTP
-      TargetType: ip
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-
-  SSLCertificate:
-    Type: AWS::CertificateManager::Certificate
-    Properties:
-      DomainName: !If [IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}']
-      ValidationMethod: DNS
-      DomainValidationOptions:
-        - DomainName: !If [IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}']
-          HostedZoneId: !Ref HostedZoneId
-
-  TaskExecutionRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${ApplicationName}-task-execution-role-${Environment}
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      Policies:
-        - PolicyName: SecretsManagerAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "secretsmanager:GetSecretValue"
-                Resource: !Ref GHRIOSecretArn
-        - PolicyName: AWSCloudWatch
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "logs:CreateLogStream"
-                  - "logs:PutLogEvents"
-                Resource: !GetAtt ECSLogGroup.Arn
-
-  TaskRole:
-    Type: AWS::IAM::Role
-    Properties:
-      RoleName: !Sub ${ApplicationName}-task-role-${Environment}
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: Allow
-            Principal:
-              Service: ecs-tasks.amazonaws.com
-            Action: sts:AssumeRole
-      ManagedPolicyArns:
-        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-      Policies:
-        - PolicyName: S3Access
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "s3:*"
-                Resource:
-                  - !GetAtt S3Bucket.Arn
-                  - !Sub
-                    - '${BucketArn}/*'
-                    - BucketArn: !GetAtt S3Bucket.Arn
-        - PolicyName: SecretsManagerAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "secretsmanager:GetSecretValue"
-                Resource: "*"
-        - PolicyName: SQSAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "sqs:SendMessage"
-                  - "sqs:ReceiveMessage"
-                  - "sqs:DeleteMessage"
-                  - "sqs:ListQueues"
-                  - "sqs:GetQueueAttributes"
-                Resource: '*'
-
-  MaintenanceQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${ApplicationName}-maintenance-queue-${Environment}
-      VisibilityTimeout: 7200
-      ReceiveMessageWaitTimeSeconds: 2
-
-  GeneralQueue:
-    Type: AWS::SQS::Queue
-    Properties:
-      QueueName: !Sub ${ApplicationName}-general-queue-${Environment}
-      VisibilityTimeout: 7200
-      ReceiveMessageWaitTimeSeconds: 2
-
-  ECSLogGroup:
-    Type: AWS::Logs::LogGroup
-    Properties:
-      LogGroupName: !Sub "/ecs/${ApplicationName}-log-group-${Environment}"
-      RetentionInDays: 7
+#  RecordSet:
+#    Type: AWS::Route53::RecordSet
+#    Properties:
+#      HostedZoneId:
+#        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
+#      Name: !If
+#        - IsProd
+#        - Fn::Sub:
+#          - 'api.${Domain}'
+#          - Domain:
+#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#        - Fn::Sub:
+#          - '${Environment}.api.${Domain}'
+#          - Domain:
+#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#            Environment: !Ref Environment
+#      Type: A
+#      AliasTarget:
+#        HostedZoneId: !GetAtt APILoadBalancer.CanonicalHostedZoneID
+#        DNSName: !GetAtt APILoadBalancer.DNSName
+#
+#  APILoadBalancer:
+#    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+#    Properties:
+#      Name: !Sub
+#        - '${ApplicationName}-elb-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      SecurityGroups:
+#        - !GetAtt APISecurityGroup.GroupId
+#        - !GetAtt ELBSecurityGroup.GroupId
+#      Scheme: internet-facing
+#      Subnets: !Split
+#            - ","
+#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
+#
+#  HTTPListener:
+#    Type: AWS::ElasticLoadBalancingV2::Listener
+#    Properties:
+#      DefaultActions:
+#        - Type: redirect
+#          RedirectConfig:
+#            Protocol: HTTPS
+#            Port: '443'
+#            StatusCode: 'HTTP_301'
+#      LoadBalancerArn: !Ref APILoadBalancer
+#      Port: 80
+#      Protocol: HTTP
+#
+#  HTTPSListener:
+#    Type: AWS::ElasticLoadBalancingV2::Listener
+#    Properties:
+#      DefaultActions:
+#        - Type: forward
+#          ForwardConfig:
+#            TargetGroups:
+#              - TargetGroupArn: !Ref APITargetGroup
+#      LoadBalancerArn: !Ref APILoadBalancer
+#      Port: 443
+#      Protocol: HTTPS
+#      Certificates:
+#        - CertificateArn: !Ref SSLCertificate
+#
+#  APITargetGroup:
+#    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+#    Properties:
+#      HealthCheckPath: '/health'
+#      Name: !Sub
+#        - '${ApplicationName}-target-group-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      Port: 80
+#      Protocol: HTTP
+#      TargetType: ip
+#      VpcId: !ImportValue
+#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+#
+#  SSLCertificate:
+#    Type: AWS::CertificateManager::Certificate
+#    Properties:
+#      DomainName: !If
+#        - IsProd
+#        - Fn::Sub:
+#          - 'api.${Domain}'
+#          - Domain:
+#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#        - Fn::Sub:
+#          - '${Environment}.api.${Domain}'
+#          - Domain:
+#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#            Environment: !Ref Environment
+#      ValidationMethod: DNS
+#      DomainValidationOptions:
+#        - DomainName: !If
+#          - IsProd
+#          - Fn::Sub:
+#            - 'api.${Domain}'
+#            - Domain:
+#                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#          - Fn::Sub:
+#            - '${Environment}.api.${Domain}'
+#            - Domain:
+#                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+#              Environment: !Ref Environment
+#          HostedZoneId: !Ref HostedZoneId
+#
+#  TaskExecutionRole:
+#    Type: AWS::IAM::Role
+#    Properties:
+#      RoleName: !Sub
+#        - '${ApplicationName}-task-execution-role-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      AssumeRolePolicyDocument:
+#        Version: "2012-10-17"
+#        Statement:
+#          - Effect: Allow
+#            Principal:
+#              Service: ecs-tasks.amazonaws.com
+#            Action: sts:AssumeRole
+#      Policies:
+#        - PolicyName: SecretsManagerAccess
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "secretsmanager:GetSecretValue"
+#                Resource: !Ref GHRIOSecretArn
+#        - PolicyName: AWSCloudWatch
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "logs:CreateLogStream"
+#                  - "logs:PutLogEvents"
+#                Resource: !GetAtt ECSLogGroup.Arn
+#
+#  TaskRole:
+#    Type: AWS::IAM::Role
+#    Properties:
+#      RoleName: !Sub
+#        - '${ApplicationName}-task-role-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      AssumeRolePolicyDocument:
+#        Version: "2012-10-17"
+#        Statement:
+#          - Effect: Allow
+#            Principal:
+#              Service: ecs-tasks.amazonaws.com
+#            Action: sts:AssumeRole
+#      ManagedPolicyArns:
+#        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+#      Policies:
+#        - PolicyName: S3Access
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "s3:*"
+#                Resource:
+#                  - !GetAtt S3Bucket.Arn
+#                  - !Sub
+#                    - '${BucketArn}/*'
+#                    - BucketArn: !GetAtt S3Bucket.Arn
+#        - PolicyName: SecretsManagerAccess
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "secretsmanager:GetSecretValue"
+#                Resource: "*"
+#        - PolicyName: SQSAccess
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "sqs:SendMessage"
+#                  - "sqs:ReceiveMessage"
+#                  - "sqs:DeleteMessage"
+#                  - "sqs:ListQueues"
+#                  - "sqs:GetQueueAttributes"
+#                Resource: '*'
+#
+#  MaintenanceQueue:
+#    Type: AWS::SQS::Queue
+#    Properties:
+#      QueueName: !Sub
+#        - '${ApplicationName}-maintenance-queue-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      VisibilityTimeout: 7200
+#      ReceiveMessageWaitTimeSeconds: 2
+#
+#  GeneralQueue:
+#    Type: AWS::SQS::Queue
+#    Properties:
+#      QueueName: !Sub
+#        - '${ApplicationName}-general-queue-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      VisibilityTimeout: 7200
+#      ReceiveMessageWaitTimeSeconds: 2
+#
+#  ECSLogGroup:
+#    Type: AWS::Logs::LogGroup
+#    Properties:
+#      LogGroupName: !Sub
+#        - '/ecs/${ApplicationName}-log-group-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      RetentionInDays: 7
+#
+#  DjangoSecretKey:
+#    Type: AWS::SecretsManager::Secret
+#    Properties:
+#      Name: !Sub
+#        - '${ApplicationName}-django-secret-key-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      Description: 'The secret key for the django application'
+#      GenerateSecretString:
+#        IncludeSpace: false
+#        PasswordLength: 52
+#
+#  MasterUserPassword:
+#    Type: AWS::SecretsManager::Secret
+#    Properties:
+#      Name: !Sub
+#        - '${ApplicationName}-django-master-password-${Environment}'
+#        - Environment: !Ref Environment
+#          ApplicationName:
+#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+#      Description: 'The password for the master admin for the django application'
+#      GenerateSecretString:
+#        IncludeSpace: false
+#        PasswordLength: 15
