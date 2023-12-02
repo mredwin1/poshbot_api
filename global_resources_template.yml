@@ -8,9 +8,6 @@ Parameters:
   Domain:
     Type: String
     Description: 'The domain for the application eg. example.com'
-  HostedZoneId:
-    Type: String
-    Description: 'The hosted zone id where the domain lives'
   PackageRegistryUsername:
     Type: String
     NoEcho: true
@@ -236,7 +233,6 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
-
   S3Endpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -246,7 +242,6 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
-
   SecretsManagerEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -256,6 +251,12 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
+
+  # The hosted zone for the application
+#  HostedZone:
+#    Type: AWS::Route53::HostedZone
+#    Properties:
+#      Name: !Ref Domain
 
   # Global secrets used by the application
   PackageRegistryCredentials:
@@ -339,6 +340,11 @@ Outputs:
     Value: !Ref ApplicationName
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", ApplicationName ] ]
+  ApplicationDomain:
+    Description: The domain name of the application being deployed
+    Value: !Ref ApplicationName
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", ApplicationDomain ] ]
   PackageRegistrySecret:
     Description: The ARN for the package registry credentials secret
     Value: !Ref PackageRegistryCredentials
