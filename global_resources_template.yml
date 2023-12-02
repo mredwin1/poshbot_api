@@ -1,6 +1,69 @@
 AWSTemplateFormatVersion: '2010-09-09'
 Description: This stack deploys all necessary foundations for the application
 
+Parameters:
+  ApplicationName:
+    Type: String
+    Description: 'The name of the application'
+  Domain:
+    Type: String
+    Description: 'The domain for the application eg. example.com'
+  HostedZoneId:
+    Type: String
+    Description: 'The hosted zone id where the domain lives'
+  PackageRegistryUsername:
+    Type: String
+    NoEcho: true
+    Description: 'The username used to authenticate with the package registry'
+  PackageRegistryPassword:
+    Type: String
+    NoEcho: true
+    Description: 'The password used to authenticate with the package registry'
+  EmailUsername:
+    Type: String
+    NoEcho: true
+    Description: 'The username used for sending emails'
+  EmailPassword:
+    Type: String
+    NoEcho: true
+    Description: 'The password used for sending emails'
+  MobileHopUsername:
+    Type: String
+    NoEcho: true
+    Description: 'The username to authenticate with mobile hop'
+  MobileHopPassword:
+    Type: String
+    NoEcho: true
+    Description: 'The password used to authenticate with mobile hop'
+  ZKEDBUsername:
+    Type: String
+    NoEcho: true
+    Description: 'The username used for the ZKE database'
+  ZKEDBPassword:
+    Type: String
+    NoEcho: true
+    Description: 'The password used for the ZKE database'
+  ZKEDBHost:
+    Type: String
+    NoEcho: true
+    Description: 'The hostname used for the ZKE database'
+  ZKEDBPort:
+    Type: String
+    NoEcho: true
+    Description: 'The port used for the ZKE database'
+  ZKEDBName:
+    Type: String
+    NoEcho: true
+    Description: 'The name of the databse used for the ZKE database'
+  AppiumServerIP:
+    Type: String
+    NoEcho: true
+    Description: 'The ip address of the appium server'
+  2CaptchaAPIKey:
+    Type: String
+    NoEcho: true
+    Description: 'The API key for the 2Captcha service'
+
 Mappings:
   # Hard values for the subnet masks. These masks define
   # the range of internal IP addresses that can be assigned.
@@ -163,6 +226,70 @@ Resources:
       RouteTableId: !Ref PrivateRouteTableTwo
       SubnetId: !Ref PrivateSubnetTwo
 
+  # VPC Endpoints for all the private subnets for all the used AWS Services
+
+  # Global secrets used by the application
+  PackageRegistryCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-registry-credentials-global'
+      Description: 'Credentials used for docker package registry'
+      SecretString: !Sub |
+        {
+          "username": "${PackageRegistryUsername}",
+          "password": "${PackageRegistryPassword}"
+        }
+
+  EmailCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-email-credentials-global'
+      Description: 'Credentials used for the application email address'
+      SecretString: !Sub |
+        {
+          "username": "${EmailUsername}",
+          "password": "${EmailPassword}"
+        }
+
+  MobileHopCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-mobile-hop-credentials-global'
+      Description: 'Credentials used for the mobile hop console/api'
+      SecretString: !Sub |
+        {
+          "username": "${MobileHopUsername}",
+          "password": "${MobileHopPassword}"
+        }
+
+  ZKEDBCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-zke-db-credentials-global'
+      Description: 'Credentials used for the ZKE database'
+      SecretString: !Sub |
+        {
+          "username": "${ZKEDBUsername}",
+          "password": "${ZKEDBPassword}",
+          "host": "${ZKEDBHost}",
+          "port": "${ZKEDBPort}",
+          "dbname": "${ZKEDBName}"
+        }
+
+  AppiumServerIPSecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-appium-server-ip-global'
+      Description: 'The IP address for the Appium server'
+      SecretString: !Ref AppiumServerIP
+
+  2CaptchaAPIKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-2capcha-api-key-global'
+      Description: 'The API key for the 2Captcha service'
+      SecretString: !Ref 2CaptchaAPIKey
+
 Outputs:
   VpcId:
     Description: The ID of the VPC that this stack is deployed in
@@ -170,14 +297,47 @@ Outputs:
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", VPCId ] ]
   PublicSubnetIds:
-    Description: Comma seperated list of public facing subnets that have
-                 a direct internet connection as long as you assign a public IP
+    Description: Comma seperated list of public facing subnets that have a direct internet connection as long as you assign a public IP
     Value: !Sub '${PublicSubnetOne},${PublicSubnetTwo}'
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", PublicSubnetIds ] ]
   PrivateSubnetIds:
-    Description: Comma seperated list of private subnets that use a NAT
-                 gateway for internet access.
+    Description: Comma seperated list of private subnets that use a NAT gateway for internet access.
     Value: !Sub '${PrivateSubnetOne},${PrivateSubnetTwo}'
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", PrivateSubnetIds ] ]
+  ApplicationName:
+    Description: The name of the application being deployed
+    Value: !Ref ApplicationName
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", ApplicationName ] ]
+  PackageRegistrySecret:
+    Description: The ARN for the package registry credentials secret
+    Value: !Ref PackageRegistryCredentials
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", PackageRegistryCredentials ] ]
+  EmailSecret:
+    Description: The ARN for the email credentials secret
+    Value: !Ref EmailCredentials
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", EmailCredentials ] ]
+  MobileHopSecret:
+    Description: The ARN for the mobile hop credentials secret
+    Value: !Ref MobileHopCredentials
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", MobileHopCredentials ] ]
+  ZKEDBSecret:
+    Description: The ARN for the ZKE db credentials secret
+    Value: !Ref ZKEDBCredentials
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", ZKEDBCredentials ] ]
+  AppiumServerIPSecret:
+    Description: The ARN for the appium server ip secret
+    Value: !Ref AppiumServerIPSecret
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", AppiumServerIPSecret ] ]
+  2CaptchaAPIKeySecret:
+    Description: The ARN for the 2Captcha api key secret
+    Value: !Ref 2CaptchaAPIKeySecret
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", 2CaptchaAPIKeySecret ] ]
