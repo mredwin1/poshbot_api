@@ -61,13 +61,6 @@ Resources:
       VPCSecurityGroups:
         - !GetAtt DatabaseSecurityGroup.GroupId
       AvailabilityZone: 'us-east-1a'
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   DBSubnetGroup:
     Type: AWS::RDS::DBSubnetGroup
@@ -77,13 +70,6 @@ Resources:
       SubnetIds: !Split
         - ","
         - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   DatabaseSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -101,13 +87,6 @@ Resources:
           FromPort: 5432
           ToPort: 5432
           SourceSecurityGroupId: !GetAtt ECSServiceSecurityGroup.GroupId
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   APISecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -121,13 +100,6 @@ Resources:
           FromPort: 80
           ToPort: 80
           SourceSecurityGroupId: !GetAtt ELBSecurityGroup.GroupId
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   ELBSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -150,13 +122,6 @@ Resources:
           IpProtocol: tcp
           FromPort: 443
           ToPort: 443
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   ECSServiceSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
@@ -168,26 +133,12 @@ Resources:
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   ECSCluster:
     Type: AWS::ECS::Cluster
     DependsOn: Database
     Properties:
       ClusterName: !Sub ${ApplicationName}-ecs-cluster-${Environment}
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   APITaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -246,13 +197,6 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   APIService:
     Type: AWS::ECS::Service
@@ -277,13 +221,6 @@ Resources:
             - !GetAtt DatabaseSecurityGroup.GroupId
             - !GetAtt APISecurityGroup.GroupId
             - !GetAtt ECSServiceSecurityGroup.GroupId
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   APIScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -365,13 +302,6 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   BeatService:
     Type: AWS::ECS::Service
@@ -387,13 +317,6 @@ Resources:
           Subnets: !Split
             - ","
             - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   MaintenanceTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -452,13 +375,6 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   MaintenanceService:
     Type: AWS::ECS::Service
@@ -477,13 +393,6 @@ Resources:
           SecurityGroups:
             - !GetAtt DatabaseSecurityGroup.GroupId
             - !GetAtt ECSServiceSecurityGroup.GroupId
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   GeneralTaskDefinition:
     Type: AWS::ECS::TaskDefinition
@@ -542,13 +451,6 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   GeneralService:
     Type: AWS::ECS::Service
@@ -567,13 +469,6 @@ Resources:
           SecurityGroups:
             - !GetAtt DatabaseSecurityGroup.GroupId
             - !GetAtt ECSServiceSecurityGroup.GroupId
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   GeneralScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -657,13 +552,6 @@ Resources:
     Properties:
       BucketName: !Sub '${ApplicationName}-files-${Environment}'
       AccessControl: Private
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   RecordSet:
     Type: AWS::Route53::RecordSet
@@ -686,13 +574,6 @@ Resources:
       Subnets: !Split
             - ","
             - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   HTTPListener:
     Type: AWS::ElasticLoadBalancingV2::Listener
@@ -731,13 +612,6 @@ Resources:
       TargetType: ip
       VpcId: !ImportValue
         Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   SSLCertificate:
     Type: AWS::CertificateManager::Certificate
@@ -747,13 +621,6 @@ Resources:
       DomainValidationOptions:
         - DomainName: !If [IsProd, !Sub 'api.${Domain}', !Sub '${Environment}.api.${Domain}']
           HostedZoneId: !Ref HostedZoneId
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   TaskExecutionRole:
     Type: AWS::IAM::Role
@@ -784,13 +651,6 @@ Resources:
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource: !GetAtt ECSLogGroup.Arn
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   TaskRole:
     Type: AWS::IAM::Role
@@ -838,13 +698,6 @@ Resources:
                   - "sqs:ListQueues"
                   - "sqs:GetQueueAttributes"
                 Resource: '*'
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   MaintenanceQueue:
     Type: AWS::SQS::Queue
@@ -852,13 +705,6 @@ Resources:
       QueueName: !Sub ${ApplicationName}-maintenance-queue-${Environment}
       VisibilityTimeout: 7200
       ReceiveMessageWaitTimeSeconds: 2
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   GeneralQueue:
     Type: AWS::SQS::Queue
@@ -866,13 +712,6 @@ Resources:
       QueueName: !Sub ${ApplicationName}-general-queue-${Environment}
       VisibilityTimeout: 7200
       ReceiveMessageWaitTimeSeconds: 2
-      Tags:
-        - Key: 'Application'
-          Value: !Ref ApplicationName
-        - Key: 'Environment'
-          Value: !Ref Environment
-        - Key: 'Version'
-          Value: !Ref Version
 
   ECSLogGroup:
     Type: AWS::Logs::LogGroup
