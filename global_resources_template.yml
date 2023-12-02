@@ -282,7 +282,6 @@ Resources:
       Name: !Sub '${ApplicationName}-appium-server-ip-global'
       Description: 'The IP address for the Appium server'
       SecretString: !Ref AppiumServerIP
-
   2CaptchaAPIKeySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
