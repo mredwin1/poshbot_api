@@ -11,10 +11,6 @@ Parameters:
   Version:
     Type: String
     Description: 'The version of the application'
-  GHRIOSecretArn:
-    Type: String
-    NoEcho: true
-    Description: 'The ARN for the AWS Secret that has credentials to read ghcr.io'
   DockerImage:
     Type: String
     Description: 'The image to use for the containers'
@@ -23,122 +19,125 @@ Conditions:
   IsProd: !Equals [ !Ref Environment, 'prod' ]
 
 Resources:
-#  Database:
-#    Type: 'AWS::RDS::DBInstance'
-#    DeletionPolicy: Delete
-#    Properties:
-#      Engine: 'postgres'
-#      DBInstanceIdentifier: !Sub
-#        - '${ApplicationName}-db-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      MasterUserPassword: admin
-#      ManageMasterUserPassword: true
-#      AllocatedStorage: 400
-#      MaxAllocatedStorage: 1000
-#      DBName:
-#        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      DBSubnetGroupName: !Ref DBSubnetGroup
-#      StorageType: gp3
-#      Iops: 12000
-#      DBInstanceClass: 'db.t3.micro'
-#      VPCSecurityGroups:
-#        - !GetAtt DatabaseSecurityGroup.GroupId
-#      AvailabilityZone: 'us-east-1a'
-#
-#  DBSubnetGroup:
-#    Type: AWS::RDS::DBSubnetGroup
-#    Properties:
-#      DBSubnetGroupDescription: 'Subnet group for application db'
-#      DBSubnetGroupName: !Sub
-#        - '${ApplicationName}-db-group-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      SubnetIds: !Split
-#        - ","
-#        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-#
-#  DatabaseSecurityGroup:
-#    Type: 'AWS::EC2::SecurityGroup'
-#    Properties:
-#      GroupName: !Sub
-#       - '${ApplicationName}-RDS-${Environment}'
-#       - Environment: !Ref Environment
-#         ApplicationName:
-#           Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      VpcId: !ImportValue
-#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-#      GroupDescription: 'Security group for communication with RDS'
-#      SecurityGroupIngress:
-#        - IpProtocol: tcp
-#          FromPort: 5432
-#          ToPort: 5432
-#          SourceSecurityGroupId: !GetAtt APISecurityGroup.GroupId
-#        - IpProtocol: tcp
-#          FromPort: 5432
-#          ToPort: 5432
-#          SourceSecurityGroupId: !GetAtt ECSServiceSecurityGroup.GroupId
-#
-#  APISecurityGroup:
-#    Type: 'AWS::EC2::SecurityGroup'
-#    Properties:
-#      GroupName: !Sub
-#        - '${ApplicationName}-ecs-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      VpcId: !ImportValue
-#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-#      GroupDescription: 'Security group for communication with ECS api containers'
-#      SecurityGroupIngress:
-#        - IpProtocol: -1
-#          FromPort: 80
-#          ToPort: 80
-#          SourceSecurityGroupId: !GetAtt ELBSecurityGroup.GroupId
-#
-#  ELBSecurityGroup:
-#    Type: 'AWS::EC2::SecurityGroup'
-#    Properties:
-#      GroupName: !Sub
-#        - '${ApplicationName}-elb-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      VpcId: !ImportValue
-#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-#      GroupDescription: 'Security group for public communication with elb'
-#      SecurityGroupEgress:
-#        - CidrIp: 0.0.0.0/0
-#          IpProtocol: tcp
-#          FromPort: 80
-#          ToPort: 80
-#      SecurityGroupIngress:
-#        - CidrIp: 0.0.0.0/0
-#          IpProtocol: tcp
-#          FromPort: 80
-#          ToPort: 80
-#        - CidrIp: 0.0.0.0/0
-#          IpProtocol: tcp
-#          FromPort: 443
-#          ToPort: 443
-#
-#  ECSServiceSecurityGroup:
-#    Type: 'AWS::EC2::SecurityGroup'
-#    Properties:
-#      GroupName: !Sub
-#        - '${ApplicationName}-ecs-service-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      VpcId: !ImportValue
-#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-#      GroupDescription: 'Security group for ecs services to have open outbound communication'
-#      SecurityGroupEgress:
-#        - IpProtocol: -1
-#          CidrIp: 0.0.0.0/0
-#
+  Database:
+    Type: 'AWS::RDS::DBInstance'
+    DeletionPolicy: Delete
+    Properties:
+      Engine: 'postgres'
+      DBInstanceIdentifier: !Sub
+        - '${ApplicationName}-db-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      MasterUsername: !Sub
+        - '${ApplicationName}admin'
+        - ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      ManageMasterUserPassword: true
+      AllocatedStorage: 400
+      MaxAllocatedStorage: 1000
+      DBName:
+        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      DBSubnetGroupName: !Ref DBSubnetGroup
+      StorageType: gp3
+      Iops: 12000
+      DBInstanceClass: 'db.t3.micro'
+      VPCSecurityGroups:
+        - !GetAtt DatabaseSecurityGroup.GroupId
+      AvailabilityZone: 'us-east-1a'
+
+  DBSubnetGroup:
+    Type: AWS::RDS::DBSubnetGroup
+    Properties:
+      DBSubnetGroupDescription: 'Subnet group for application db'
+      DBSubnetGroupName: !Sub
+        - '${ApplicationName}-db-group-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      SubnetIds: !Split
+        - ","
+        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+
+  DatabaseSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub
+       - '${ApplicationName}-RDS-${Environment}'
+       - Environment: !Ref Environment
+         ApplicationName:
+           Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VpcId: !ImportValue
+        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      GroupDescription: 'Security group for communication with RDS'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !GetAtt APISecurityGroup.GroupId
+        - IpProtocol: tcp
+          FromPort: 5432
+          ToPort: 5432
+          SourceSecurityGroupId: !GetAtt ECSServiceSecurityGroup.GroupId
+
+  APISecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub
+        - '${ApplicationName}-ecs-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VpcId: !ImportValue
+        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      GroupDescription: 'Security group for communication with ECS api containers'
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          FromPort: 80
+          ToPort: 80
+          SourceSecurityGroupId: !GetAtt ELBSecurityGroup.GroupId
+
+  ELBSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub
+        - '${ApplicationName}-elb-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VpcId: !ImportValue
+        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      GroupDescription: 'Security group for public communication with elb'
+      SecurityGroupEgress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 80
+          ToPort: 80
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
+
+  ECSServiceSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub
+        - '${ApplicationName}-ecs-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VpcId: !ImportValue
+        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      GroupDescription: 'Security group for ecs services to have open outbound communication'
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
 #  ECSCluster:
 #    Type: AWS::ECS::Cluster
 #    DependsOn: Database
@@ -935,28 +934,28 @@ Resources:
 #            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
 #      RetentionInDays: 7
 #
-#  DjangoSecretKey:
-#    Type: AWS::SecretsManager::Secret
-#    Properties:
-#      Name: !Sub
-#        - '${ApplicationName}-django-secret-key-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      Description: 'The secret key for the django application'
-#      GenerateSecretString:
-#        IncludeSpace: false
-#        PasswordLength: 52
-#
-#  MasterUserPassword:
-#    Type: AWS::SecretsManager::Secret
-#    Properties:
-#      Name: !Sub
-#        - '${ApplicationName}-django-master-password-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      Description: 'The password for the master admin for the django application'
-#      GenerateSecretString:
-#        IncludeSpace: false
-#        PasswordLength: 15
+  DjangoSecretKey:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub
+        - '${ApplicationName}-django-secret-key-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      Description: 'The secret key for the django application'
+      GenerateSecretString:
+        IncludeSpace: false
+        PasswordLength: 52
+
+  MasterUserPassword:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub
+        - '${ApplicationName}-django-master-password-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      Description: 'The password for the master admin for the django application'
+      GenerateSecretString:
+        IncludeSpace: false
+        PasswordLength: 15
