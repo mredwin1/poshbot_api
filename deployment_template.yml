@@ -138,128 +138,128 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
-#  ECSCluster:
-#    Type: AWS::ECS::Cluster
-#    DependsOn: Database
-#    Properties:
-#      ClusterName: !Sub
-#        - '${ApplicationName}-ecs-cluster-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#
-#  APITaskDefinition:
-#    Type: AWS::ECS::TaskDefinition
-#    Properties:
-#      Family: !Sub
-#        - '${ApplicationName}-api-task-definition-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      NetworkMode: awsvpc
-#      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-#      TaskRoleArn: !GetAtt TaskRole.Arn
-#      Cpu: 512
-#      Memory: 1024
-#      RuntimePlatform:
-#        CpuArchitecture: X86_64
-#        OperatingSystemFamily: LINUX
-#      ContainerDefinitions:
-#        - Name: api-container
-#          Image: !Ref DockerImage
-#          EntryPoint:
-#            - 'python3'
-#            - 'manage.py'
-#            - 'start'
-#          RepositoryCredentials:
-#            CredentialsParameter:
-#              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
-#          PortMappings:
-#            - ContainerPort: 80
-#              AppProtocol: http
-#          LogConfiguration:
-#            LogDriver: awslogs
-#            Options:
-#              awslogs-group: !Ref ECSLogGroup
-#              awslogs-region: !Ref AWS::Region
-#              awslogs-stream-prefix: api-container
-#          Environment:
-#            - Name: DJANGO_SETTINGS_MODULE
-#              Value: 'poshbot_api.settings.prod'
-#            - Name: SECRET_KEY
-#              Value: !Ref DjangoSecretKey
-#            - Name: DB_NAME
-#              Value: 'postgres'
-#            - Name: DB_SECRET
-#              Value: !GetAtt Database.MasterUserSecret.SecretArn
-#            - Name: DB_HOSTNAME
-#              Value: !GetAtt Database.Endpoint.Address
-#            - Name: DB_PORT
-#              Value: !GetAtt Database.Endpoint.Port
-#            - Name: AWS_STORAGE_BUCKET_NAME
-#              Value: !Ref S3Bucket
-#            - Name: DOMAIN
-#              Value: !If
-#                - IsProd
-#                - Fn::Sub:
-#                  - 'api.${Domain}'
-#                  - Domain:
-#                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#                - Fn::Sub:
-#                  - '${Environment}.api.${Domain}'
-#                  - Domain:
-#                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#                    Environment: !Ref Environment
-#            - Name: MAINTENANCE_QUEUE
-#              Value: !GetAtt MaintenanceQueue.QueueName
-#            - Name: GENERAL_QUEUE
-#              Value: !GetAtt GeneralQueue.QueueName
-#            - Name: MASTER_USER_SECRET
-#              Value: !Ref MasterUserPassword
-#            - Name: CAPTCHA_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-#            - Name: APPIUM_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-#            - Name: ZKE_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-#            - Name: MOBILE_HOP_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-#            - Name: EMAIL_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-#
-#  APIService:
-#    Type: AWS::ECS::Service
-#    DependsOn: HTTPSListener
-#    Properties:
-#      ServiceName: !Sub
-#        - '${ApplicationName}-api-service-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      EnableExecuteCommand: true
-#      Cluster: !Ref ECSCluster
-#      TaskDefinition: !Ref APITaskDefinition
-#      DesiredCount: 1
-#      LaunchType: FARGATE
-#      LoadBalancers:
-#        - TargetGroupArn: !Ref APITargetGroup
-#          ContainerName: api-container
-#          ContainerPort: 80
-#      NetworkConfiguration:
-#        AwsvpcConfiguration:
-#          Subnets: !Split
-#            - ","
-#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-#          SecurityGroups:
-#            - !GetAtt DatabaseSecurityGroup.GroupId
-#            - !GetAtt APISecurityGroup.GroupId
-#            - !GetAtt ECSServiceSecurityGroup.GroupId
-#
+  ECSCluster:
+    Type: AWS::ECS::Cluster
+    DependsOn: Database
+    Properties:
+      ClusterName: !Sub
+        - '${ApplicationName}-ecs-cluster-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+
+  APITaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub
+        - '${ApplicationName}-api-task-definition-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Cpu: 512
+      Memory: 1024
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: api-container
+          Image: !Ref DockerImage
+          EntryPoint:
+            - 'python3'
+            - 'manage.py'
+            - 'start'
+          RepositoryCredentials:
+            CredentialsParameter:
+              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+          PortMappings:
+            - ContainerPort: 80
+              AppProtocol: http
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: api-container
+          Environment:
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: 'poshbot_api.settings.prod'
+            - Name: SECRET_KEY
+              Value: !Ref DjangoSecretKey
+            - Name: DB_NAME
+              Value: 'postgres'
+            - Name: DB_SECRET
+              Value: !GetAtt Database.MasterUserSecret.SecretArn
+            - Name: DB_HOSTNAME
+              Value: !GetAtt Database.Endpoint.Address
+            - Name: DB_PORT
+              Value: !GetAtt Database.Endpoint.Port
+            - Name: AWS_STORAGE_BUCKET_NAME
+              Value: !Ref S3Bucket
+            - Name: DOMAIN
+              Value: !If
+                - IsProd
+                - Fn::Sub:
+                  - 'api.${Domain}'
+                  - Domain:
+                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+                - Fn::Sub:
+                  - '${Environment}.api.${Domain}'
+                  - Domain:
+                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+                    Environment: !Ref Environment
+            - Name: MAINTENANCE_QUEUE
+              Value: !GetAtt MaintenanceQueue.QueueName
+            - Name: GENERAL_QUEUE
+              Value: !GetAtt GeneralQueue.QueueName
+            - Name: MASTER_USER_SECRET
+              Value: !Ref MasterUserPassword
+            - Name: CAPTCHA_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+            - Name: APPIUM_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+            - Name: ZKE_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+            - Name: MOBILE_HOP_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+            - Name: EMAIL_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+
+  APIService:
+    Type: AWS::ECS::Service
+    DependsOn: HTTPSListener
+    Properties:
+      ServiceName: !Sub
+        - '${ApplicationName}-api-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      EnableExecuteCommand: true
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref APITaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - TargetGroupArn: !Ref APITargetGroup
+          ContainerName: api-container
+          ContainerPort: 80
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+          SecurityGroups:
+            - !GetAtt DatabaseSecurityGroup.GroupId
+            - !GetAtt APISecurityGroup.GroupId
+            - !GetAtt ECSServiceSecurityGroup.GroupId
+
 #  APIScalableTarget:
 #    Type: AWS::ApplicationAutoScaling::ScalableTarget
 #    Properties:
@@ -695,7 +695,9 @@ Resources:
 #      Period: 60
 #      Threshold: 1
 #      Statistic: 'Sum'
-#      AlarmDescription: !Sub 'Alarm used for scaling ${ApplicationName}-general-service-${Environment}'
+#      AlarmDescription: !Sub
+#        - 'Alarm used for scaling ${ServiceName}'
+#        - ServiceName: !GetAtt GeneralService.Name
 #      AlarmActions:
 #        - !Ref GeneralScaleUpPolicy
 #        - !Ref GeneralScaleDownPolicy
@@ -901,7 +903,9 @@ Resources:
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+                  - !Ref DjangoSecretKey
+                  - !Ref MasterUserPassword
+                  - !GetAtt Database.MasterUserSecret.SecretArn
         - PolicyName: SQSAccess
           PolicyDocument:
             Version: "2012-10-17"
