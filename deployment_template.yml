@@ -284,12 +284,8 @@ Resources:
       ScalingTargetId: !Ref APIScalableTarget
       TargetTrackingScalingPolicyConfiguration:
         PredefinedMetricSpecification:
-          PredefinedMetricType: ALBRequestCountPerTarget
-          ResourceLabel: !Sub
-            - '${LoadBalancerName}/${TargetGroupName}'
-            - LoadBalancerName: !GetAtt APILoadBalancer.LoadBalancerFullName
-              TargetGroupName: !GetAtt APITargetGroup.TargetGroupFullName
-        TargetValue: 50
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 85
 
   BeatTaskDefinition:
     Type: AWS::ECS::TaskDefinition
