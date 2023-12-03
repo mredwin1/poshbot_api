@@ -67,8 +67,8 @@ Resources:
        - Environment: !Ref Environment
          ApplicationName:
            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
       GroupDescription: 'Security group for communication with RDS'
       SecurityGroupIngress:
         - IpProtocol: tcp
@@ -88,8 +88,8 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
       GroupDescription: 'Security group for communication with ECS api containers'
       SecurityGroupIngress:
         - IpProtocol: -1
@@ -105,8 +105,8 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
       GroupDescription: 'Security group for public communication with elb'
       SecurityGroupEgress:
         - CidrIp: 0.0.0.0/0
@@ -131,8 +131,8 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      VpcId: !ImportValue
-        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
       GroupDescription: 'Security group for ecs services to have open outbound communication'
       SecurityGroupEgress:
         - IpProtocol: -1
@@ -172,7 +172,8 @@ Resources:
 #            - 'manage.py'
 #            - 'start'
 #          RepositoryCredentials:
-#            CredentialsParameter: !Ref GHRIOSecretArn
+#            CredentialsParameter:
+#              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
 #          PortMappings:
 #            - ContainerPort: 80
 #              AppProtocol: http
@@ -216,20 +217,20 @@ Resources:
 #            - Name: MASTER_USER_SECRET
 #              Value: !Ref MasterUserPassword
 #            - Name: CAPTCHA_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
 #            - Name: APPIUM_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
 #            - Name: ZKE_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
 #            - Name: MOBILE_HOP_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
 #            - Name: EMAIL_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
 #
 #  APIService:
 #    Type: AWS::ECS::Service
@@ -317,7 +318,8 @@ Resources:
 #            - '-l'
 #            - 'INFO'
 #          RepositoryCredentials:
-#            CredentialsParameter: !Ref GHRIOSecretArn
+#            CredentialsParameter:
+#              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
 #          LogConfiguration:
 #            LogDriver: awslogs
 #            Options:
@@ -358,20 +360,20 @@ Resources:
 #            - Name: MASTER_USER_SECRET
 #              Value: !Ref MasterUserPassword
 #            - Name: CAPTCHA_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
 #            - Name: APPIUM_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
 #            - Name: ZKE_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
 #            - Name: MOBILE_HOP_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
 #            - Name: EMAIL_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
 #
 #  BeatService:
 #    Type: AWS::ECS::Service
@@ -423,7 +425,8 @@ Resources:
 #            - '-l'
 #            - 'INFO'
 #          RepositoryCredentials:
-#            CredentialsParameter: !Ref GHRIOSecretArn
+#            CredentialsParameter:
+#              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
 #          LogConfiguration:
 #            LogDriver: awslogs
 #            Options:
@@ -464,20 +467,20 @@ Resources:
 #            - Name: MASTER_USER_SECRET
 #              Value: !Ref MasterUserPassword
 #            - Name: CAPTCHA_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
 #            - Name: APPIUM_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
 #            - Name: ZKE_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
 #            - Name: MOBILE_HOP_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
 #            - Name: EMAIL_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
 #
 #  MaintenanceService:
 #    Type: AWS::ECS::Service
@@ -532,7 +535,8 @@ Resources:
 #            - '-l'
 #            - 'INFO'
 #          RepositoryCredentials:
-#            CredentialsParameter: !Ref GHRIOSecretArn
+#            CredentialsParameter:
+#              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
 #          LogConfiguration:
 #            LogDriver: awslogs
 #            Options:
@@ -573,20 +577,20 @@ Resources:
 #            - Name: MASTER_USER_SECRET
 #              Value: !Ref MasterUserPassword
 #            - Name: CAPTCHA_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
 #            - Name: APPIUM_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
 #            - Name: ZKE_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
 #            - Name: MOBILE_HOP_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
 #            - Name: EMAIL_SECRET
-#              Value: !ImportValue
-#                - !Sub '${GlobalResourcesStackName}:EmailCredentials'
+#              Value:
+#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
 #
 #  GeneralService:
 #    Type: AWS::ECS::Service
@@ -709,231 +713,240 @@ Resources:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       AccessControl: Private
 
-#  RecordSet:
-#    Type: AWS::Route53::RecordSet
-#    Properties:
-#      HostedZoneId:
-#        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
-#      Name: !If
-#        - IsProd
-#        - Fn::Sub:
-#          - 'api.${Domain}'
-#          - Domain:
-#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#        - Fn::Sub:
-#          - '${Environment}.api.${Domain}'
-#          - Domain:
-#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#            Environment: !Ref Environment
-#      Type: A
-#      AliasTarget:
-#        HostedZoneId: !GetAtt APILoadBalancer.CanonicalHostedZoneID
-#        DNSName: !GetAtt APILoadBalancer.DNSName
-#
-#  APILoadBalancer:
-#    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
-#    Properties:
-#      Name: !Sub
-#        - '${ApplicationName}-elb-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      SecurityGroups:
-#        - !GetAtt APISecurityGroup.GroupId
-#        - !GetAtt ELBSecurityGroup.GroupId
-#      Scheme: internet-facing
-#      Subnets: !Split
-#            - ","
-#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
-#
-#  HTTPListener:
-#    Type: AWS::ElasticLoadBalancingV2::Listener
-#    Properties:
-#      DefaultActions:
-#        - Type: redirect
-#          RedirectConfig:
-#            Protocol: HTTPS
-#            Port: '443'
-#            StatusCode: 'HTTP_301'
-#      LoadBalancerArn: !Ref APILoadBalancer
-#      Port: 80
-#      Protocol: HTTP
-#
-#  HTTPSListener:
-#    Type: AWS::ElasticLoadBalancingV2::Listener
-#    Properties:
-#      DefaultActions:
-#        - Type: forward
-#          ForwardConfig:
-#            TargetGroups:
-#              - TargetGroupArn: !Ref APITargetGroup
-#      LoadBalancerArn: !Ref APILoadBalancer
-#      Port: 443
-#      Protocol: HTTPS
-#      Certificates:
-#        - CertificateArn: !Ref SSLCertificate
-#
-#  APITargetGroup:
-#    Type: AWS::ElasticLoadBalancingV2::TargetGroup
-#    Properties:
-#      HealthCheckPath: '/health'
-#      Name: !Sub
-#        - '${ApplicationName}-target-group-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      Port: 80
-#      Protocol: HTTP
-#      TargetType: ip
-#      VpcId: !ImportValue
-#        Fn::Sub: '${GlobalResourcesStackName}:VPCId'
-#
-#  SSLCertificate:
-#    Type: AWS::CertificateManager::Certificate
-#    Properties:
-#      DomainName: !If
-#        - IsProd
-#        - Fn::Sub:
-#          - 'api.${Domain}'
-#          - Domain:
-#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#        - Fn::Sub:
-#          - '${Environment}.api.${Domain}'
-#          - Domain:
-#              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#            Environment: !Ref Environment
-#      ValidationMethod: DNS
-#      DomainValidationOptions:
-#        - DomainName: !If
-#          - IsProd
-#          - Fn::Sub:
-#            - 'api.${Domain}'
-#            - Domain:
-#                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#          - Fn::Sub:
-#            - '${Environment}.api.${Domain}'
-#            - Domain:
-#                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-#              Environment: !Ref Environment
-#          HostedZoneId: !Ref HostedZoneId
-#
-#  TaskExecutionRole:
-#    Type: AWS::IAM::Role
-#    Properties:
-#      RoleName: !Sub
-#        - '${ApplicationName}-task-execution-role-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      AssumeRolePolicyDocument:
-#        Version: "2012-10-17"
-#        Statement:
-#          - Effect: Allow
-#            Principal:
-#              Service: ecs-tasks.amazonaws.com
-#            Action: sts:AssumeRole
-#      Policies:
-#        - PolicyName: SecretsManagerAccess
-#          PolicyDocument:
-#            Version: "2012-10-17"
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "secretsmanager:GetSecretValue"
-#                Resource: !Ref GHRIOSecretArn
-#        - PolicyName: AWSCloudWatch
-#          PolicyDocument:
-#            Version: "2012-10-17"
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "logs:CreateLogStream"
-#                  - "logs:PutLogEvents"
-#                Resource: !GetAtt ECSLogGroup.Arn
-#
-#  TaskRole:
-#    Type: AWS::IAM::Role
-#    Properties:
-#      RoleName: !Sub
-#        - '${ApplicationName}-task-role-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      AssumeRolePolicyDocument:
-#        Version: "2012-10-17"
-#        Statement:
-#          - Effect: Allow
-#            Principal:
-#              Service: ecs-tasks.amazonaws.com
-#            Action: sts:AssumeRole
-#      ManagedPolicyArns:
-#        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
-#      Policies:
-#        - PolicyName: S3Access
-#          PolicyDocument:
-#            Version: "2012-10-17"
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "s3:*"
-#                Resource:
-#                  - !GetAtt S3Bucket.Arn
-#                  - !Sub
-#                    - '${BucketArn}/*'
-#                    - BucketArn: !GetAtt S3Bucket.Arn
-#        - PolicyName: SecretsManagerAccess
-#          PolicyDocument:
-#            Version: "2012-10-17"
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "secretsmanager:GetSecretValue"
-#                Resource: "*"
-#        - PolicyName: SQSAccess
-#          PolicyDocument:
-#            Version: "2012-10-17"
-#            Statement:
-#              - Effect: Allow
-#                Action:
-#                  - "sqs:SendMessage"
-#                  - "sqs:ReceiveMessage"
-#                  - "sqs:DeleteMessage"
-#                  - "sqs:ListQueues"
-#                  - "sqs:GetQueueAttributes"
-#                Resource: '*'
-#
-#  MaintenanceQueue:
-#    Type: AWS::SQS::Queue
-#    Properties:
-#      QueueName: !Sub
-#        - '${ApplicationName}-maintenance-queue-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      VisibilityTimeout: 7200
-#      ReceiveMessageWaitTimeSeconds: 2
-#
-#  GeneralQueue:
-#    Type: AWS::SQS::Queue
-#    Properties:
-#      QueueName: !Sub
-#        - '${ApplicationName}-general-queue-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      VisibilityTimeout: 7200
-#      ReceiveMessageWaitTimeSeconds: 2
-#
-#  ECSLogGroup:
-#    Type: AWS::Logs::LogGroup
-#    Properties:
-#      LogGroupName: !Sub
-#        - '/ecs/${ApplicationName}-log-group-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      RetentionInDays: 7
-#
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
+      Name: !If
+        - IsProd
+        - Fn::Sub:
+          - 'api.${Domain}'
+          - Domain:
+              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+        - Fn::Sub:
+          - '${Environment}.api.${Domain}'
+          - Domain:
+              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+            Environment: !Ref Environment
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt APILoadBalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt APILoadBalancer.DNSName
+
+  APILoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub
+        - '${ApplicationName}-elb-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      SecurityGroups:
+        - !GetAtt APISecurityGroup.GroupId
+        - !GetAtt ELBSecurityGroup.GroupId
+      Scheme: internet-facing
+      Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
+
+  HTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            StatusCode: 'HTTP_301'
+      LoadBalancerArn: !Ref APILoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  HTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref APITargetGroup
+      LoadBalancerArn: !Ref APILoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref SSLCertificate
+
+  APITargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckPath: '/health'
+      Name: !Sub
+        - '${ApplicationName}-target-group-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      Port: 80
+      Protocol: HTTP
+      TargetType: ip
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
+
+  SSLCertificate:
+    Type: AWS::CertificateManager::Certificate
+    DependsOn: RecordSet
+    Properties:
+      DomainName: !If
+        - IsProd
+        - Fn::Sub:
+          - 'api.${Domain}'
+          - Domain:
+              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+        - Fn::Sub:
+          - '${Environment}.api.${Domain}'
+          - Domain:
+              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+            Environment: !Ref Environment
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !If
+          - IsProd
+          - Fn::Sub:
+            - 'api.${Domain}'
+            - Domain:
+                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+          - Fn::Sub:
+            - '${Environment}.api.${Domain}'
+            - Domain:
+                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+              Environment: !Ref Environment
+          HostedZoneId:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
+
+  TaskExecutionRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub
+        - '${ApplicationName}-task-execution-role-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource:
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+        - PolicyName: AWSCloudWatch
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "logs:CreateLogStream"
+                  - "logs:PutLogEvents"
+                Resource: !GetAtt ECSLogGroup.Arn
+
+  TaskRole:
+    Type: AWS::IAM::Role
+    Properties:
+      RoleName: !Sub
+        - '${ApplicationName}-task-role-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: Allow
+            Principal:
+              Service: ecs-tasks.amazonaws.com
+            Action: sts:AssumeRole
+      ManagedPolicyArns:
+        - arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore
+      Policies:
+        - PolicyName: S3Access
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "s3:*"
+                Resource:
+                  - !GetAtt S3Bucket.Arn
+                  - !Sub
+                    - '${BucketArn}/*'
+                    - BucketArn: !GetAtt S3Bucket.Arn
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource:
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+        - PolicyName: SQSAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "sqs:SendMessage"
+                  - "sqs:ReceiveMessage"
+                  - "sqs:DeleteMessage"
+                  - "sqs:ListQueues"
+                  - "sqs:GetQueueAttributes"
+                Resource: '*'
+
+  MaintenanceQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub
+        - '${ApplicationName}-maintenance-queue-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VisibilityTimeout: 7200
+      ReceiveMessageWaitTimeSeconds: 2
+
+  GeneralQueue:
+    Type: AWS::SQS::Queue
+    Properties:
+      QueueName: !Sub
+        - '${ApplicationName}-general-queue-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VisibilityTimeout: 7200
+      ReceiveMessageWaitTimeSeconds: 2
+
+  ECSLogGroup:
+    Type: AWS::Logs::LogGroup
+    Properties:
+      LogGroupName: !Sub
+        - '/ecs/${ApplicationName}-log-group-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      RetentionInDays: 7
+
   DjangoSecretKey:
     Type: AWS::SecretsManager::Secret
     Properties:

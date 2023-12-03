@@ -343,7 +343,7 @@ Outputs:
       Name: !Join [ ":", [ !Ref "AWS::StackName", ApplicationName ] ]
   ApplicationDomain:
     Description: The domain name of the application being deployed
-    Value: !Ref ApplicationName
+    Value: !Ref Domain
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", ApplicationDomain ] ]
   ApplicationHostedZone:
