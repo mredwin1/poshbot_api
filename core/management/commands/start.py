@@ -39,7 +39,7 @@ class Command(BaseCommand):
         if not User.objects.filter(username=super_username).exists():
             User.objects.create_superuser(
                 username=super_username,
-                password=retrieve_secret(os.environ["MasterUserPassword"]),
+                password=retrieve_secret(os.environ["MASTER_USER_SECRET"]),
             )
             logging.info("Superuser created.")
         else:
