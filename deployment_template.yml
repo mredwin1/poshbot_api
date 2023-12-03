@@ -688,7 +688,7 @@ Resources:
       EvaluationPeriods: 1
       MetricName: 'ApproximateNumberOfMessagesVisible'
       Namespace: 'AWS/SQS'
-      Period: 60
+      Period: 10
       Threshold: 1
       Statistic: 'Sum'
       AlarmDescription: !Sub
