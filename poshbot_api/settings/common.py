@@ -23,7 +23,10 @@ def retrieve_secret(secret_arn: str):
     response = secrets_manager_client.get_secret_value(SecretId=secret_arn)
     secret_string = response["SecretString"]
 
-    return json.loads(secret_string)
+    try:
+        return json.loads(secret_string)
+    except json.JSONDecodeError:
+        return secret_string
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
