@@ -10,6 +10,7 @@ For the full list of settings and their values, see
 https://docs.djangoproject.com/en/4.0/ref/settings/
 """
 import boto3
+import json
 import os
 
 from datetime import timedelta
@@ -20,8 +21,9 @@ def retrieve_secret(secret_arn: str):
     secrets_manager_client = boto3.client("secretsmanager")
 
     response = secrets_manager_client.get_secret_value(SecretId=secret_arn)
+    secret_string = response["SecretString"]
 
-    return response
+    return json.loads(secret_string)
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
