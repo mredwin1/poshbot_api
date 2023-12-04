@@ -525,7 +525,7 @@ Resources:
             - '-A'
             - 'poshbot_api'
             - 'worker'
-            - '--concurrency=4'
+            - '--concurrency=2'
             - '-Q'
             - !GetAtt GeneralQueue.QueueName
             - '-l'
@@ -613,7 +613,7 @@ Resources:
   GeneralScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
-      MaxCapacity: 4
+      MaxCapacity: 8
       MinCapacity: 0
       ResourceId: !Sub
         - 'service/${ECSClusterName}/${GeneralServiceName}'
@@ -622,59 +622,43 @@ Resources:
       ScalableDimension: ecs:service:DesiredCount
       ServiceNamespace: ecs
 
-  GeneralScaleUpPolicy:
+  GeneralScalingPolicy:
     Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
     Properties:
       PolicyType: 'StepScaling'
       PolicyName: !Sub
-        - '${ApplicationName}-general-scaleup-policy-${Environment}'
+        - '${ApplicationName}-general-scaling-policy-${Environment}'
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       ScalingTargetId: !Ref GeneralScalableTarget
       StepScalingPolicyConfiguration:
         AdjustmentType: 'ExactCapacity'
-        Cooldown: 60
+        Cooldown: 30
         MetricAggregationType: 'Average'
         StepAdjustments:
-          - MetricIntervalLowerBound: 0
-            MetricIntervalUpperBound: 10
+          - MetricIntervalUpperBound: 1
+            ScalingAdjustment: 0
+          - MetricIntervalLowerBound: 1
+            MetricIntervalUpperBound: 4
             ScalingAdjustment: 1
-          - MetricIntervalLowerBound: 10
-            MetricIntervalUpperBound: 40
-            ScalingAdjustment: 2
-          - MetricIntervalLowerBound: 40
-            MetricIntervalUpperBound: 100
-            ScalingAdjustment: 3
-          - MetricIntervalLowerBound: 100
-            ScalingAdjustment: 4
-
-  GeneralScaleDownPolicy:
-    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
-    Properties:
-      PolicyType: 'StepScaling'
-      PolicyName: !Sub
-        - '${ApplicationName}-general-scaledown-policy-${Environment}'
-        - Environment: !Ref Environment
-          ApplicationName:
-            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      ScalingTargetId: !Ref GeneralScalableTarget
-      StepScalingPolicyConfiguration:
-        AdjustmentType: 'ExactCapacity'
-        Cooldown: 60
-        MetricAggregationType: 'Average'
-        StepAdjustments:
-          - MetricIntervalLowerBound: 0
+          - MetricIntervalLowerBound: 4
             MetricIntervalUpperBound: 10
-            ScalingAdjustment: 1
-          - MetricIntervalLowerBound: 10
-            MetricIntervalUpperBound: 40
             ScalingAdjustment: 2
-          - MetricIntervalLowerBound: 40
-            MetricIntervalUpperBound: 100
+          - MetricIntervalLowerBound: 10
+            MetricIntervalUpperBound: 20
             ScalingAdjustment: 3
-          - MetricIntervalLowerBound: 100
+          - MetricIntervalLowerBound: 20
+            MetricIntervalUpperBound: 40
             ScalingAdjustment: 4
+          - MetricIntervalLowerBound: 40
+            MetricIntervalUpperBound: 60
+            ScalingAdjustment: 6
+          - MetricIntervalLowerBound: 60
+            MetricIntervalUpperBound: 100
+            ScalingAdjustment: 7
+          - MetricIntervalLowerBound: 100
+            ScalingAdjustment: 8
 
   GeneralScalingAlarm:
     Type: 'AWS::CloudWatch::Alarm'
@@ -688,15 +672,14 @@ Resources:
       EvaluationPeriods: 1
       MetricName: 'ApproximateNumberOfMessagesVisible'
       Namespace: 'AWS/SQS'
-      Period: 10
-      Threshold: 1
+      Period: 30
+      Threshold: 0
       Statistic: 'Sum'
       AlarmDescription: !Sub
         - 'Alarm used for scaling ${ServiceName}'
         - ServiceName: !GetAtt GeneralService.Name
       AlarmActions:
-        - !Ref GeneralScaleUpPolicy
-        - !Ref GeneralScaleDownPolicy
+        - !Ref GeneralScalingPolicy
       Dimensions:
         - Name: QueueName
           Value: !GetAtt GeneralQueue.QueueName
