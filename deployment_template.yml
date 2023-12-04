@@ -926,3 +926,18 @@ Outputs:
       - 'https://${DNSName}/admin'
       - DNSName: !Ref RecordSet
     Description: 'The url for the backend'
+  ClusterName:
+    Value: !Ref ECSCluster
+    Description: 'The name of the ECS Cluster'
+  APIService:
+    Value: !GetAtt APIService.Name
+    Description: 'The name of the API Service'
+  MaintenanceService:
+    Value: !GetAtt MaintenanceService.Name
+    Description: 'The name of the Maintenance Service'
+  BeatService:
+    Value: !GetAtt BeatService.Name
+    Description: 'The name of the Beat Service'
+  GeneralService:
+    Value: !GetAtt GeneralService.Name
+    Description: 'The name of the General Service'
