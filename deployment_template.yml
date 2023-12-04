@@ -511,8 +511,8 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 2048
-      Memory: 4096
+      Cpu: 1024
+      Memory: 2048
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
@@ -525,7 +525,7 @@ Resources:
             - '-A'
             - 'poshbot_api'
             - 'worker'
-            - '--concurrency=2'
+            - '--concurrency=1'
             - '-Q'
             - !GetAtt GeneralQueue.QueueName
             - '-l'
@@ -634,31 +634,31 @@ Resources:
       ScalingTargetId: !Ref GeneralScalableTarget
       StepScalingPolicyConfiguration:
         AdjustmentType: 'ExactCapacity'
-        Cooldown: 30
+        Cooldown: 60
         MetricAggregationType: 'Average'
         StepAdjustments:
           - MetricIntervalUpperBound: 1
             ScalingAdjustment: 0
           - MetricIntervalLowerBound: 1
-            MetricIntervalUpperBound: 4
+            MetricIntervalUpperBound: 2
             ScalingAdjustment: 1
-          - MetricIntervalLowerBound: 4
-            MetricIntervalUpperBound: 10
+          - MetricIntervalLowerBound: 2
+            MetricIntervalUpperBound: 4
             ScalingAdjustment: 2
+          - MetricIntervalLowerBound: 4
+            MetricIntervalUpperBound: 6
+            ScalingAdjustment: 3
+          - MetricIntervalLowerBound: 6
+            MetricIntervalUpperBound: 10
+            ScalingAdjustment: 4
           - MetricIntervalLowerBound: 10
             MetricIntervalUpperBound: 20
-            ScalingAdjustment: 3
+            ScalingAdjustment: 6
           - MetricIntervalLowerBound: 20
             MetricIntervalUpperBound: 40
-            ScalingAdjustment: 4
+            ScalingAdjustment: 12
           - MetricIntervalLowerBound: 40
-            MetricIntervalUpperBound: 60
-            ScalingAdjustment: 6
-          - MetricIntervalLowerBound: 60
-            MetricIntervalUpperBound: 100
-            ScalingAdjustment: 7
-          - MetricIntervalLowerBound: 100
-            ScalingAdjustment: 8
+            ScalingAdjustment: 16
 
   GeneralScalingAlarm:
     Type: 'AWS::CloudWatch::Alarm'
