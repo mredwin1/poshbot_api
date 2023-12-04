@@ -712,10 +712,14 @@ class PoshMarkClient(AppiumClient):
                                 update_fields=["is_active_in_posh"]
                             )
 
+                            return False
+
+                        elif "Error. Please try again later." in error.text:
+                            pass
                         else:
                             self.logger.warning("No handler for this error")
 
-                        return False
+                            return False
 
                     while self.is_present(
                         AppiumBy.ID, "progressBar"
