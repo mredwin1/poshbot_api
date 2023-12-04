@@ -8,6 +8,9 @@ jobs:
   build_and_deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Get PR branch
@@ -45,9 +48,15 @@ jobs:
           tags: |
             ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ env.BRANCH_NAME }}
 
+      - name: Authenticate with AWS
+        uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: arn:aws:iam::069773459506:role/github-actions
+          aws-region: us-east-1
+
       - name: Deploy
         run: |
-          echo "Deploying..."
+          aws s3api list-buckets
 
       - name: Set latest commit status as ${{ job.status }}
         uses: myrotvorets/set-commit-status-action@master
