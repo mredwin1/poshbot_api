@@ -12,7 +12,8 @@ jobs:
       id-token: write
       contents: read
       issues: read
-      pull-requests: read
+      pull-requests: write
+      statuses: write
 
     steps:
       - name: Pull Request Comment Branch
@@ -22,6 +23,7 @@ jobs:
       - name: Set latest commit status as pending
         uses: ouzi-dev/commit-status-updater@v2.0.1
         with:
+          name: ${{ steps.comment-branch.outputs.head_ref }}
           status: pending
 
       - name: Checkout PR branch
