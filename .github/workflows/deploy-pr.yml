@@ -46,16 +46,16 @@ jobs:
           username: ${{ github.actor }}
           password: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ steps.comment-branch.outputs.head_ref }}
+#      - name: Build and Push Docker image
+#        uses: docker/build-push-action@v2
+#        with:
+#          context: .
+#          file: Dockerfile
+#          push: true
+#          tags: |
+#            ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ steps.comment-branch.outputs.head_ref }}
 
-      - name: Set commit status to pending
+      - name: Update status description
         uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
