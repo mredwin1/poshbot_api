@@ -1,5 +1,5 @@
 name: Build and Deploy PR
-# test
+
 on:
   issue_comment:
     types: [created]
@@ -11,10 +11,12 @@ jobs:
     permissions:
       id-token: write
       contents: read
+      issues: read
+      pull-requests: read
 
     steps:
-      - name: Get PR branch
-        uses: xt0rted/pull-request-comment-branch@v1
+      - name: Pull Request Comment Branch
+        uses: xt0rted/pull-request-comment-branch@v2.0.0
         id: comment-branch
 
       - name: Set latest commit status as pending
