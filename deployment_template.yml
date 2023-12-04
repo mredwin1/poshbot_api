@@ -956,3 +956,13 @@ Resources:
       GenerateSecretString:
         IncludeSpace: false
         PasswordLength: 15
+
+Outputs:
+  MasterUserPasswordArn:
+    Value: !Ref MasterUserPassword
+    Description: 'The ARN for the AWS secret where the master user password is stored'
+  BackendURL:
+    Value: !Sub
+      - 'https://${DNSName}/admin'
+      - DNSName: !Ref RecordSet
+    Description: 'The url for the backend'
