@@ -86,9 +86,9 @@ jobs:
         with:
           message: |
             Deployment successful details below:
-              Backend URL - ${{ cloudformation-stack.outputs.ClusterName }}
+              Backend URL - ${{ cloudformation-stack.outputs.BackendURL }}
               Backend Username - admin
-              Backend Password - not sure
+              Backend Password - ${{ cloudformation-stack.outputs.MasterUserPasswordArn }}
 
       - name: Set final commit status
         uses: myrotvorets/set-commit-status-action@v2.0.0
