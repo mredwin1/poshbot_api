@@ -8,6 +8,9 @@ jobs:
   build_and_deploy:
     name: Build and Deploy
     runs-on: ubuntu-latest
+    permissions:
+      id-token: write
+      contents: read
 
     steps:
       - name: Get PR branch
@@ -15,10 +18,8 @@ jobs:
         id: comment-branch
 
       - name: Set latest commit status as pending
-        uses: myrotvorets/set-commit-status-action@master
+        uses: ouzi-dev/commit-status-updater@v2.0.1
         with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
           status: pending
 
       - name: Checkout PR branch
@@ -55,27 +56,8 @@ jobs:
         run: |
           aws s3api list-buckets
 
-      - name: Set latest commit status as ${{ job.status }}
-        uses: myrotvorets/set-commit-status-action@master
-        if: always()
+      - name: Set job status
+        uses: ouzi-dev/commit-status-updater@v2
         with:
-          sha: ${{ steps.comment-branch.outputs.head_sha }}
-          token: ${{ secrets.GITHUB_TOKEN }}
-          status: ${{ job.status }}
-
-      - name: Add comment to PR
-        uses: actions/github-script@v6
-        if: always()
-        with:
-          script: |
-            const name = '${{ github.workflow   }}';
-            const url = '${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}';
-            const success = '${{ job.status }}' === 'success';
-            const body = `${name}: ${success ? 'succeeded ✅' : 'failed ❌'}\n${url}`;
-            
-            await github.rest.issues.createComment({
-              issue_number: context.issue.number,
-              owner: context.repo.owner,
-              repo: context.repo.repo,
-              body: body
-            })
+          addHoldComment: "true"
+          status: "${{ job.status }}"
