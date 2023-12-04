@@ -69,6 +69,7 @@ jobs:
           name: poshbot-pr-${{ steps.comment-branch.outputs.head_ref }}
           template: deployment_template.yml
           no-fail-on-empty-changeset: "1"
+          capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
           parameter-overrides: >-
             GlobalResourcesStackName=poshbot-global-resources,
             Environment=${{ steps.comment-branch.outputs.head_ref }},
