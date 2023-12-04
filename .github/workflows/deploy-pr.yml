@@ -20,19 +20,17 @@ jobs:
         uses: xt0rted/pull-request-comment-branch@v2.0.0
         id: comment-branch
 
-      - name: Set latest commit status as pending
-        uses: ouzi-dev/commit-status-updater@v2.0.1
+      - name: Set commit status to pending
+        uses: myrotvorets/set-commit-status-action@v2.0.0
         with:
-          name: ${{ steps.comment-branch.outputs.head_ref }}
+          sha: ${{ steps.comment-branch.outputs.head_sha }}
           status: pending
+          description: 'Building and deploying...'
 
       - name: Checkout PR branch
         uses: actions/checkout@v3
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
-
-      - name: Set branch name as environment variable
-        run: echo "BRANCH_NAME=$(git branch --show-current)" >> $GITHUB_ENV
 
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
@@ -48,7 +46,7 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ env.BRANCH_NAME }}
+            ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Authenticate with AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -59,9 +57,3 @@ jobs:
       - name: Deploy
         run: |
           aws s3api list-buckets
-
-      - name: Set job status
-        uses: ouzi-dev/commit-status-updater@v2
-        with:
-          addHoldComment: "true"
-          status: "${{ job.status }}"
