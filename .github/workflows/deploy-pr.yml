@@ -33,6 +33,13 @@ jobs:
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
 
+      - name: Make API request
+        run: |
+          API_URL="https://api.github.com/installation/repositories"
+          RESPONSE=$(curl -sSL -H "Authorization: Bearer ${{ secrets.GITHUB_TOKEN }}" $API_URL)
+          echo "API Response: $RESPONSE"
+    
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -55,7 +62,6 @@ jobs:
           sha: ${{ steps.comment-branch.outputs.head_sha }}
           status: pending
           description: 'Deploying...'
-
 
       - name: Authenticate with AWS
         uses: aws-actions/configure-aws-credentials@v4
