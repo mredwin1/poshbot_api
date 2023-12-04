@@ -199,17 +199,7 @@ Resources:
             - Name: AWS_STORAGE_BUCKET_NAME
               Value: !Ref S3Bucket
             - Name: DOMAIN
-              Value: !If
-                - IsProd
-                - Fn::Sub:
-                  - 'api.${Domain}'
-                  - Domain:
-                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                - Fn::Sub:
-                  - '${Environment}.api.${Domain}'
-                  - Domain:
-                      Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                    Environment: !Ref Environment
+              Value: !Ref RecordSet
             - Name: MAINTENANCE_QUEUE
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
@@ -338,17 +328,7 @@ Resources:
             - Name: AWS_STORAGE_BUCKET_NAME
               Value: !Ref S3Bucket
             - Name: DOMAIN
-              Value: !If
-                - IsProd
-                - Fn::Sub:
-                    - 'api.${Domain}'
-                    - Domain:
-                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                - Fn::Sub:
-                    - '${Environment}.api.${Domain}'
-                    - Domain:
-                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                      Environment: !Ref Environment
+              Value: !Ref RecordSet
             - Name: MAINTENANCE_QUEUE
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
@@ -445,17 +425,7 @@ Resources:
             - Name: AWS_STORAGE_BUCKET_NAME
               Value: !Ref S3Bucket
             - Name: DOMAIN
-              Value: !If
-                - IsProd
-                - Fn::Sub:
-                    - 'api.${Domain}'
-                    - Domain:
-                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                - Fn::Sub:
-                    - '${Environment}.api.${Domain}'
-                    - Domain:
-                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                      Environment: !Ref Environment
+              Value: !Ref RecordSet
             - Name: MAINTENANCE_QUEUE
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
@@ -555,17 +525,7 @@ Resources:
             - Name: AWS_STORAGE_BUCKET_NAME
               Value: !Ref S3Bucket
             - Name: DOMAIN
-              Value: !If
-                - IsProd
-                - Fn::Sub:
-                    - 'api.${Domain}'
-                    - Domain:
-                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                - Fn::Sub:
-                    - '${Environment}.api.${Domain}'
-                    - Domain:
-                        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-                      Environment: !Ref Environment
+              Value: !Ref RecordSet
             - Name: MAINTENANCE_QUEUE
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
