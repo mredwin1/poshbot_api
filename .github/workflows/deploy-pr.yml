@@ -29,7 +29,7 @@ jobs:
           description: 'Building...'
 
       - name: Checkout PR branch
-        uses: actions/checkout@v3
+        uses: actions/checkout@v4
         with:
           ref: ${{ steps.comment-branch.outputs.head_ref }}
 
