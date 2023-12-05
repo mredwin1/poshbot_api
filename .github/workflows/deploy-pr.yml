@@ -69,26 +69,27 @@ jobs:
           name: poshbot-pr-${{ steps.comment-branch.outputs.head_ref }}
           template: deployment_template.yml
           no-fail-on-empty-changeset: "1"
+          capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
           parameter-overrides: >-
             GlobalResourcesStackName=poshbot-global-resources,
-            Environment=pr-${{ steps.comment-branch.outputs.head_ref }},
-            Version=pr-${{ steps.comment-branch.outputs.head_ref }},
+            Environment=${{ steps.comment-branch.outputs.head_ref }},
+            Version=${{ steps.comment-branch.outputs.head_ref }},
             DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Force re-deploy ecs tasks
         run: |
-          aws ecs update-service --cluster ${{ cloudformation-stack.outputs.ClusterName }} --service ${{ cloudformation-stack.outputs.BeatService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ cloudformation-stack.outputs.ClusterName }} --service ${{ cloudformation-stack.outputs.APIService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ cloudformation-stack.outputs.ClusterName }} --service ${{ cloudformation-stack.outputs.MaintenanceService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ cloudformation-stack.outputs.ClusterName }} --service ${{ cloudformation-stack.outputs.GeneralService }} --force-new-deployment
+          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.BeatService }} --force-new-deployment
+          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.APIService }} --force-new-deployment
+          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.MaintenanceService }} --force-new-deployment
+          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.GeneralService }} --force-new-deployment
 
       - uses: mshick/add-pr-comment@v2
         with:
           message: |
             Deployment successful details below:
-              Backend URL - ${{ cloudformation-stack.outputs.ClusterName }}
-              Backend Username - ${{ cloudformation-stack.outputs.MasterUserPasswordArn }}
-              Backend Password - ${{ cloudformation-stack.outputs.MasterUserPasswordArn }}
+              Backend URL - ${{ steps.cloudformation-stack.outputs.BackendURL }}
+              Backend Username - admin
+              Backend Password - ${{ steps.cloudformation-stack.outputs.MasterUserPasswordArn }}
 
       - name: Set final commit status
         uses: myrotvorets/set-commit-status-action@v2.0.0
