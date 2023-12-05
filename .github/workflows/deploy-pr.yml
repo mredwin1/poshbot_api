@@ -72,9 +72,16 @@ jobs:
           capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
           parameter-overrides: >-
             GlobalResourcesStackName=poshbot-global-resources,
-            Environment=${{ steps.comment-branch.outputs.head_ref }},
-            Version=${{ steps.comment-branch.outputs.head_ref }},
+            Environment=pr-${{ steps.comment-branch.outputs.head_ref }},
+            Version=pr-${{ steps.comment-branch.outputs.head_ref }},
             DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ steps.comment-branch.outputs.head_ref }}
+          tags: >-
+            [
+              { "Key": "Environment", "Value": "pr-${{ steps.comment-branch.outputs.head_ref }}" },
+              { "Key": "AppManagerCFNStackKey", "Value": "pr-${{ steps.comment-branch.outputs.head_ref }}" },
+              { "Key": "Application", "Value": "poshbot" },
+              { "Key": "Version", "Value": "pr-${{ steps.comment-branch.outputs.head_ref }}" }
+            ]
 
       - name: Force re-deploy ecs tasks
         run: |
