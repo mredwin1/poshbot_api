@@ -31,12 +31,7 @@ def path_and_rename(instance, filename):
     filename = None
     path = None
     aws_session = boto3.Session()
-    s3_client = aws_session.resource(
-        "s3",
-        aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-        aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-        region_name=settings.AWS_S3_REGION_NAME,
-    )
+    s3_client = aws_session.resource("s3")
 
     if isinstance(instance, AppData):
         filename = original_filename
@@ -317,12 +312,7 @@ class User(AbstractUser):
     phone_number = models.CharField(max_length=15, blank=True)
 
     def send_text(self, message):
-        client = boto3.client(
-            "pinpoint",
-            aws_access_key_id=settings.AWS_PINPOINT_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_PINPOINT_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_PINPOINT_REGION_NAME,
-        )
+        client = boto3.client("pinpoint")
 
         try:
             response = client.send_messages(

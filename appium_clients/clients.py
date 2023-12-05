@@ -343,12 +343,7 @@ class PoshMarkClient(AppiumClient):
         self.need_alert_check = False
         self.number_of_alert_checks = 0
         aws_session = boto3.Session()
-        s3_client = aws_session.resource(
-            "s3",
-            aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
+        s3_client = aws_session.resource("s3")
         self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
         capabilities = dict(
@@ -1857,12 +1852,7 @@ class SwiftBackupClient(AppiumClient):
 
     def _download_backup_files(self):
         aws_session = boto3.Session()
-        s3_client = aws_session.resource(
-            "s3",
-            aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
+        s3_client = aws_session.resource("s3")
         bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
 
         app_data: AppData = AppData.objects.filter(posh_user=self.posh_user).first()

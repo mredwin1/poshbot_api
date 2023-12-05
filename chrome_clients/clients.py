@@ -324,12 +324,7 @@ class PoshMarkClient(BaseClient):
         super(PoshMarkClient, self).__init__(logger, proxy=proxy)
 
         aws_session = boto3.Session()
-        s3_client = aws_session.resource(
-            "s3",
-            aws_access_key_id=settings.AWS_S3_ACCESS_KEY_ID,
-            aws_secret_access_key=settings.AWS_S3_SECRET_ACCESS_KEY,
-            region_name=settings.AWS_S3_REGION_NAME,
-        )
+        s3_client = aws_session.resource("s3")
         self.bucket = s3_client.Bucket(settings.AWS_STORAGE_BUCKET_NAME)
         self.posh_user = campaign.posh_user
         self.campaign = campaign
