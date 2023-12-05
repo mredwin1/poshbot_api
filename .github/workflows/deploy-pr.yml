@@ -83,13 +83,19 @@ jobs:
           aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.MaintenanceService }} --force-new-deployment
           aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.GeneralService }} --force-new-deployment
 
+      - name: Retrieve password
+        id: retrieve-password
+        run: |
+          secret_value=$(aws secretsmanager get-secret-value --secret-id ${{ steps.cloudformation-stack.outputs.MasterUserPasswordArn }} --query 'SecretString' --output text)
+          echo "::set-output name=password::$secret_value"
+
       - uses: mshick/add-pr-comment@v2
         with:
           message: |
             Deployment successful details below:
               Backend URL - ${{ steps.cloudformation-stack.outputs.BackendURL }}
               Backend Username - admin
-              Backend Password - ${{ steps.cloudformation-stack.outputs.MasterUserPasswordArn }}
+              Backend Password - ${{ steps.retrieve-password.outputs.password }}
 
       - name: Set final commit status
         uses: myrotvorets/set-commit-status-action@v2.0.0
