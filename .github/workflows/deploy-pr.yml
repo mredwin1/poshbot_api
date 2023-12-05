@@ -71,8 +71,8 @@ jobs:
           no-fail-on-empty-changeset: "1"
           parameter-overrides: >-
             GlobalResourcesStackName=poshbot-global-resources,
-            Environment=${{ steps.comment-branch.outputs.head_ref }},
-            Version=${{ steps.comment-branch.outputs.head_ref }},
+            Environment=pr-${{ steps.comment-branch.outputs.head_ref }},
+            Version=pr-${{ steps.comment-branch.outputs.head_ref }},
             DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:pr-${{ steps.comment-branch.outputs.head_ref }}
 
       - name: Force re-deploy ecs tasks
@@ -87,8 +87,8 @@ jobs:
           message: |
             Deployment successful details below:
               Backend URL - ${{ cloudformation-stack.outputs.ClusterName }}
-              Backend Username - admin
-              Backend Password - not sure
+              Backend Username - ${{ cloudformation-stack.outputs.MasterUserPasswordArn }}
+              Backend Password - ${{ cloudformation-stack.outputs.MasterUserPasswordArn }}
 
       - name: Set final commit status
         uses: myrotvorets/set-commit-status-action@v2.0.0
