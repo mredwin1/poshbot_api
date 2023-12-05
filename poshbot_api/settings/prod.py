@@ -1,14 +1,14 @@
 from .common import *
 
-ALLOWED_HOSTS = [f"api.{os.environ['DOMAIN']}", os.environ["DOMAIN"]]
+ALLOWED_HOSTS = [f"{os.environ['DOMAIN'].replace('api.', '')}", os.environ["DOMAIN"]]
 
 CSRF_TRUSTED_ORIGINS = [
-    f"https://api.{os.environ['DOMAIN']}",
+    f"https://{os.environ['DOMAIN'].replace('api.', '')}",
     f"https://{os.environ['DOMAIN']}",
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    f"https://api.{os.environ['DOMAIN']}",
+    f"https://api.{os.environ['DOMAIN'].replace('api.', '')}",
     f"https://{os.environ['DOMAIN']}",
 ]
 
