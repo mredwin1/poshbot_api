@@ -8,7 +8,7 @@ CSRF_TRUSTED_ORIGINS = [
 ]
 
 CORS_ALLOWED_ORIGINS = [
-    f"https://api.{os.environ['DOMAIN'].replace('api.', '')}",
+    f"https://{os.environ['DOMAIN'].replace('api.', '')}",
     f"https://{os.environ['DOMAIN']}",
 ]
 
