@@ -618,7 +618,7 @@ Resources:
         Cooldown: 60
         MetricAggregationType: 'Average'
         StepAdjustments:
-          - MetricIntervalUpperBound: 8
+          - MetricIntervalLowerBound: 8
             ScalingAdjustment: 1
 
   GeneralScaleOutAlarm:
