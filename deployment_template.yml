@@ -653,7 +653,7 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      ComparisonOperator: 'LessThanThreshold'
+      ComparisonOperator: 'LessThanOrEqualToThreshold'
       EvaluationPeriods: 1
       MetricName: 'ApproximateNumberOfMessagesVisible'
       Namespace: 'AWS/SQS'
