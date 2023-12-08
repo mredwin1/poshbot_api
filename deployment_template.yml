@@ -618,7 +618,8 @@ Resources:
         Cooldown: 60
         MetricAggregationType: 'Average'
         StepAdjustments:
-          - MetricIntervalLowerBound: 8
+          - MetricIntervalLowerBound: 1
+            MetricIntervalUpperBound: 8
             ScalingAdjustment: 1
 
   GeneralScaleOutAlarm:
@@ -629,12 +630,12 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      ComparisonOperator: 'GreaterThanOrEqualToThreshold'
+      ComparisonOperator: 'GreaterThanThreshold'
       EvaluationPeriods: 1
       MetricName: 'ApproximateNumberOfMessagesVisible'
       Namespace: 'AWS/SQS'
       Period: 30
-      Threshold: 1
+      Threshold: 8
       Statistic: 'Sum'
       AlarmDescription: !Sub
         - 'Alarm used for scaling ${ServiceName}'
@@ -658,7 +659,7 @@ Resources:
       MetricName: 'ApproximateNumberOfMessagesVisible'
       Namespace: 'AWS/SQS'
       Period: 30
-      Threshold: 1
+      Threshold: 8
       Statistic: 'Sum'
       AlarmDescription: !Sub
         - 'Alarm used for scaling ${ServiceName}'
