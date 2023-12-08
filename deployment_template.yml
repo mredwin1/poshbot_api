@@ -608,7 +608,7 @@ Resources:
     Properties:
       PolicyType: 'StepScaling'
       PolicyName: !Sub
-        - '${ApplicationName}-general-scale-up-policy-${Environment}'
+        - '${ApplicationName}-general-scale-down-policy-${Environment}'
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
