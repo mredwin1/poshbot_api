@@ -1510,11 +1510,16 @@ def check_listed_items(username: str = ""):
                         date_received_str, "%a, %d %b %Y %H:%M:%S %z (%Z)"
                     ).astimezone(pytz.timezone("US/Eastern"))
 
-                    item.status = ListedItem.REDEEMED
+                    if "instant transfer" in matching_email.get("Subject"):
+                        status = ListedItem.REDEEMED
+                    else:
+                        status = ListedItem.REDEEMED_PENDING
+
+                    item.status = status
                     item.datetime_redeemed = date_received
                     item.save()
 
-                    logger.info(f"{posh_user} - Updated {item} to REDEEMED")
+                    logger.info(f"{posh_user} - Updated {item} to {status}")
 
                     break
 
