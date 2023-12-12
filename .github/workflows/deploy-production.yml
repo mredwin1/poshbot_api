@@ -32,7 +32,7 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/poshbot-api:${{ github.event.release.tag_name }}
+            ghcr.io/${{ github.repository }}/poshbot-api:${{ github.event.release.tag_name#v }}
 
       - name: Authenticate with AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -52,7 +52,7 @@ jobs:
             GlobalResourcesStackName=poshbot-global-resources,
             Environment=production,
             Version=${{ github.event.release.tag_name }},
-            DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:${{ github.event.release.tag_name }}
+            DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:${{ github.event.release.tag_name#v }}
           tags: >-
             [
               { "Key": "Environment", "Value": "production" },
