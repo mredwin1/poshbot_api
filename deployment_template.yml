@@ -138,6 +138,23 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
+  ElastiCacheSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub
+        - '${ApplicationName}-elasti-cache-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
+      GroupDescription: 'Security group for communication with ElastiCache'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 6379
+          ToPort: 6379
+          SourceSecurityGroupId: !GetAtt ECSServiceSecurityGroup.GroupId
+
   ECSCluster:
     Type: AWS::ECS::Cluster
     DependsOn: Database
@@ -206,6 +223,8 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: MASTER_USER_SECRET
               Value: !Ref MasterUserPassword
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt RedisEndpoint.Address
             - Name: CAPTCHA_SECRET
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
@@ -335,6 +354,8 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: MASTER_USER_SECRET
               Value: !Ref MasterUserPassword
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt RedisEndpoint.Address
             - Name: CAPTCHA_SECRET
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
@@ -432,6 +453,8 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: MASTER_USER_SECRET
               Value: !Ref MasterUserPassword
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt RedisEndpoint.Address
             - Name: CAPTCHA_SECRET
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
@@ -532,6 +555,8 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: MASTER_USER_SECRET
               Value: !Ref MasterUserPassword
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt RedisEndpoint.Address
             - Name: CAPTCHA_SECRET
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
@@ -623,7 +648,6 @@ Resources:
           - MetricIntervalLowerBound: -8
             MetricIntervalUpperBound: 0
             ScalingAdjustment: 1
-
 
   GeneralScaleOutAlarm:
     Type: 'AWS::CloudWatch::Alarm'
@@ -944,6 +968,31 @@ Resources:
       GenerateSecretString:
         IncludeSpace: false
         PasswordLength: 15
+
+  ElastiCacheCluster:
+    Type: 'AWS::ElastiCache::CacheCluster'
+    Properties:
+      ClusterName: !Sub
+        - '${ApplicationName}-elasti-cache-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      CacheNodeType: cache.t3.micro
+      Engine: redis
+      NumCacheNodes: 1
+      Port: 6379
+      CacheSubnetGroupName: !Ref ElastiCacheSubnetGroup
+      VpcSecurityGroupIds:
+        - !GetAtt ElastiCacheSecurityGroup.GroupId
+      AutoMinorVersionUpgrade: true
+
+    ElastiCacheSubnetGroup:
+      Type: 'AWS::ElastiCache::SubnetGroup'
+      Properties:
+        Description: Subnet group for ElastiCache
+        SubnetIds: !Split
+          - ","
+          - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
 
 Outputs:
   MasterUserPasswordArn:
