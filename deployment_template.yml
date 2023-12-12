@@ -16,7 +16,7 @@ Parameters:
     Description: 'The image to use for the containers'
 
 Conditions:
-  IsProd: !Equals [ !Ref Environment, 'prod' ]
+  IsProd: !Equals [ !Ref Environment, 'production' ]
 
 Resources:
   Database:
