@@ -18,6 +18,10 @@ jobs:
       - name: Checkout main branch
         uses: actions/checkout@v4
 
+      - name: Set Docker Image Tag
+        id: set-docker-tag
+        run: echo "::set-output name=tag::${{ github.event.release.tag_name }}" | sed 's/^v//'
+
       - name: Login to GitHub Container Registry
         uses: docker/login-action@v3
         with:
@@ -32,7 +36,7 @@ jobs:
           file: Dockerfile
           push: true
           tags: |
-            ghcr.io/${{ github.repository }}/poshbot-api:${{ github.event.release.tag_name#v }}
+            ghcr.io/${{ github.repository }}/poshbot-api:${{ steps.set-docker-tag.outputs.tag }}
 
       - name: Authenticate with AWS
         uses: aws-actions/configure-aws-credentials@v4
@@ -52,7 +56,7 @@ jobs:
             GlobalResourcesStackName=poshbot-global-resources,
             Environment=production,
             Version=${{ github.event.release.tag_name }},
-            DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:${{ github.event.release.tag_name#v }}
+            DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:${{ steps.set-docker-tag.outputs.tag }}
           tags: >-
             [
               { "Key": "Environment", "Value": "production" },
