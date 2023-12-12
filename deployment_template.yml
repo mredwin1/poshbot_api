@@ -986,13 +986,13 @@ Resources:
         - !GetAtt ElastiCacheSecurityGroup.GroupId
       AutoMinorVersionUpgrade: true
 
-    ElastiCacheSubnetGroup:
-      Type: 'AWS::ElastiCache::SubnetGroup'
-      Properties:
-        Description: Subnet group for ElastiCache
-        SubnetIds: !Split
-          - ","
-          - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+  ElastiCacheSubnetGroup:
+    Type: 'AWS::ElastiCache::SubnetGroup'
+    Properties:
+      Description: Subnet group for ElastiCache
+      SubnetIds: !Split
+        - ","
+        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
 
 Outputs:
   MasterUserPasswordArn:
