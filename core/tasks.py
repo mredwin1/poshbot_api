@@ -1274,7 +1274,17 @@ def posh_user_cleanup():
     month_ago = (timezone.now() - datetime.timedelta(days=30)).date()
 
     # Get all posh_users who have been inactive for at least a day
-    posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=month_ago)
+    posh_users = PoshUser.objects.filter(
+        is_active=False, date_disabled__lt=month_ago
+    ).exclude(
+        listeditem__status__in=(
+            ListedItem.SOLD,
+            ListedItem.REDEEMED_PENDING,
+            ListedItem.REDEEMABLE,
+            ListedItem.SHIPPED,
+            ListedItem,
+        )
+    )
 
     posh_users.delete()
 
