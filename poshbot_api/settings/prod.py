@@ -75,7 +75,7 @@ CELERY_TASK_ROUTES = {
 CELERY_BEAT_SCHEDULE = {
     "manage_campaigns": {
         "task": "core.tasks.ManageCampaignsTask",
-        "schedule": timedelta(seconds=30),
+        "schedule": timedelta(seconds=10),
     },
     "check_posh_users": {
         "task": "core.tasks.CheckPoshUsers",

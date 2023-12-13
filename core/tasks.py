@@ -1000,7 +1000,7 @@ class ManageCampaignsTask(Task):
         ).order_by("next_runtime")
         queue_num = 1
         check_for_device = True
-
+        time.sleep(10)
         for campaign in campaigns:
             campaign_started = False
             available_device = None
