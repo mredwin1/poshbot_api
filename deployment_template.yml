@@ -615,7 +615,7 @@ Resources:
       ScalingTargetId: !Ref GeneralScalableTarget
       StepScalingPolicyConfiguration:
         AdjustmentType: 'ExactCapacity'
-        Cooldown: 60
+        Cooldown: 120
         MetricAggregationType: 'Average'
         StepAdjustments:
           - MetricIntervalUpperBound: -8
@@ -660,7 +660,7 @@ Resources:
       EvaluationPeriods: 1
       MetricName: 'ApproximateNumberOfMessagesVisible'
       Namespace: 'AWS/SQS'
-      Period: 30
+      Period: 60
       Threshold: 8
       Statistic: 'Sum'
       AlarmDescription: !Sub
@@ -894,7 +894,7 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      VisibilityTimeout: 7200
+      VisibilityTimeout: 1200
       ReceiveMessageWaitTimeSeconds: 2
 
   GeneralQueue:
@@ -905,7 +905,7 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      VisibilityTimeout: 7200
+      VisibilityTimeout: 1200
       ReceiveMessageWaitTimeSeconds: 2
 
   ECSLogGroup:
