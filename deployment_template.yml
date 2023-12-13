@@ -518,15 +518,7 @@ Resources:
           Image: !Ref DockerImage
           StopTimeout: 120
           EntryPoint:
-            - 'celery'
-            - '-A'
-            - 'poshbot_api'
-            - 'worker'
-            - '--concurrency=3'
-            - '-Q'
-            - !GetAtt GeneralQueue.QueueName
-            - '-l'
-            - 'INFO'
+            - './entrypoint.sh'
           RepositoryCredentials:
             CredentialsParameter:
               Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
