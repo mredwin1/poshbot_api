@@ -776,7 +776,7 @@ Resources:
     Properties:
       HealthCheckPath: '/health'
       Name: !Sub
-        - '${ApplicationName}-target-group-${Environment}'
+        - '${ApplicationName}-tgt-grp-${Environment}'
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
