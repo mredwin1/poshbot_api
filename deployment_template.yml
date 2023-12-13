@@ -320,6 +320,8 @@ Resources:
             - '-A'
             - 'poshbot_api'
             - 'beat'
+            - '-S'
+            - 'core.tasks.CustomBeatScheduler'
             - '-l'
             - 'INFO'
           RepositoryCredentials:

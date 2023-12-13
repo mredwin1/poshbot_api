@@ -11,6 +11,7 @@ import traceback
 
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
+from celery.beat import Scheduler
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from decimal import Decimal
 from django.conf import settings
@@ -46,6 +47,25 @@ from .models import (
     Proxy,
     AppData,
 )
+
+
+class CustomBeatScheduler(Scheduler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_due(self, entry):
+        key = f"{entry.task.name}_in_progress"
+        cache = caches["default"]
+        redis_client = cache.client.get_client()
+
+        if redis_client.exists(key):
+            # Task is already in progress, return False
+            return False, None
+        else:
+            # Task is not in progress, start it and add the key
+            redis_client.set(key)
+            redis_client.expire(key, 1200)
+            return True, 0
 
 
 class CampaignTask(Task):
@@ -93,19 +113,19 @@ class CampaignTask(Task):
 
     def init_campaign(self):
         response = {"status": True, "errors": []}
-        redis_client = caches["default"].client.get_client()
-
-        campaign_info = json.loads(redis_client.keys(self.campaign.id))
-
-        if campaign_info["status"] != Campaign.IN_QUEUE:
-            response["status"] = False
-            response["errors"].append(
-                f"The cached campaign status ({campaign_info['status']}) is not {Campaign.IN_QUEUE}"
-            )
-        else:
-            campaign_info["status"] = Campaign.RUNNING
-            redis_client.set(self.campaign.id, json.dumps(campaign_info))
-            redis_client.expire(self.campaign.id, 900)
+        # redis_client = caches["default"].client.get_client()
+        #
+        # campaign_info = json.loads(redis_client.keys(self.campaign.id))
+        #
+        # if campaign_info["status"] != Campaign.IN_QUEUE:
+        #     response["status"] = False
+        #     response["errors"].append(
+        #         f"The cached campaign status ({campaign_info['status']}) is not {Campaign.IN_QUEUE}"
+        #     )
+        # else:
+        #     campaign_info["status"] = Campaign.RUNNING
+        #     redis_client.set(self.campaign.id, json.dumps(campaign_info))
+        #     redis_client.expire(self.campaign.id, 900)
 
         if self.campaign.status in (Campaign.STOPPING, Campaign.STOPPED):
             response["status"] = False
@@ -205,12 +225,12 @@ class CampaignTask(Task):
                 f"Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds"
             )
 
-        try:
-            redis_client = caches["default"].client.get_client()
-
-            redis_client.delete(self.campaign.id)
-        except Exception as e:
-            self.logger.error(e)
+        # try:
+        #     redis_client = caches["default"].client.get_client()
+        #
+        #     redis_client.delete(self.campaign.id)
+        # except Exception as e:
+        #     self.logger.error(e)
 
     def reset_ip(self):
         # if random.random() < .2:
@@ -912,7 +932,7 @@ class ManageCampaignsTask(Task):
                     self.logger.warning("Campaign does not exist. Checking in.")
                     proxy.check_in()
 
-    def start_campaign(self, campaign, redis_client, device=None, proxy=None):
+    def start_campaign(self, campaign, device=None, proxy=None):
         if device and proxy:
             try:
                 device.check_out(campaign.id)
@@ -929,8 +949,8 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=["status", "queue_status"])
 
-                campaign_data = {"status": campaign.status}
-                redis_client.set(campaign.id, json.dumps(campaign_data))
+                # campaign_data = {"status": campaign.status}
+                # redis_client.set(campaign.id, json.dumps(campaign_data))
 
                 CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
                 self.logger.info(
@@ -945,8 +965,8 @@ class ManageCampaignsTask(Task):
                     campaign.queue_status = "N/A"
                     campaign.save(update_fields=["status", "queue_status"])
 
-                    campaign_data = {"status": campaign.status}
-                    redis_client.set(campaign.id, json.dumps(campaign_data))
+                    # campaign_data = {"status": campaign.status}
+                    # redis_client.set(campaign.id, json.dumps(campaign_data))
 
                     CampaignTask.delay(campaign.id)
                     self.logger.info(
@@ -961,8 +981,8 @@ class ManageCampaignsTask(Task):
             campaign.queue_status = "N/A"
             campaign.save(update_fields=["status", "queue_status"])
 
-            campaign_data = {"status": campaign.status}
-            redis_client.set(campaign.id, json.dumps(campaign_data))
+            # campaign_data = {"status": campaign.status}
+            # redis_client.set(campaign.id, json.dumps(campaign_data))
 
             CampaignTask.delay(campaign.id)
 
@@ -980,15 +1000,14 @@ class ManageCampaignsTask(Task):
         ).order_by("next_runtime")
         queue_num = 1
         check_for_device = True
-        redis_client = caches["default"].client.get_client()
 
         for campaign in campaigns:
             campaign_started = False
             available_device = None
             available_proxy = None
 
-            if redis_client.exists(campaign.id):
-                continue
+            # if redis_client.exists(campaign.id):
+            #     continue
 
             need_to_list = ListedItem.objects.filter(
                 posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED
@@ -1015,14 +1034,14 @@ class ManageCampaignsTask(Task):
                 campaign.save(update_fields=["status", "queue_status", "next_runtime"])
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
                 campaign_started = self.start_campaign(
-                    campaign, redis_client, available_device, available_proxy
+                    campaign, available_device, available_proxy
                 )
             elif campaign.status == Campaign.STARTING and (
                 (available_proxy and available_device)
                 or (not need_to_list and campaign.posh_user.is_registered)
             ):
                 campaign_started = self.start_campaign(
-                    campaign, redis_client, available_device, available_proxy
+                    campaign, available_device, available_proxy
                 )
 
             if (not campaign_started and campaign.status == Campaign.STARTING) or (
@@ -1035,6 +1054,9 @@ class ManageCampaignsTask(Task):
 
                 if check_for_device:
                     check_for_device = False
+
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{self.name}_in_progress")
 
 
 class CheckPoshUsers(Task):
