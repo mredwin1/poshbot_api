@@ -392,8 +392,8 @@ Resources:
           Subnets: !Split
             - ","
             - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-        SecurityGroups:
-          - !GetAtt ECSServiceSecurityGroup.GroupId
+          SecurityGroups:
+            - !GetAtt ECSServiceSecurityGroup.GroupId
 
   MaintenanceTaskDefinition:
     Type: AWS::ECS::TaskDefinition
