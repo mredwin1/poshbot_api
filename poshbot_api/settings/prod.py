@@ -95,6 +95,6 @@ CELERY_BEAT_SCHEDULE = {
     },
     "check_listed_items": {
         "task": "core.tasks.check_listed_items",
-        "schedule": timedelta(minutes=5),
+        "schedule": timedelta(minutes=15),
     },
 }
