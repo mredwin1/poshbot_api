@@ -1510,7 +1510,7 @@ def check_listed_items(username: str = ""):
                         date_received_str, "%a, %d %b %Y %H:%M:%S %z (%Z)"
                     ).astimezone(pytz.timezone("US/Eastern"))
 
-                    if "instant transfer" in matching_email.get("Subject"):
+                    if "instant transfer" in matching_email.get("Subject").lower():
                         status = ListedItem.REDEEMED
                     else:
                         status = ListedItem.REDEEMED_PENDING
