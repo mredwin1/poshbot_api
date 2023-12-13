@@ -1,6 +1,5 @@
 import datetime
 import logging
-import os
 import pytz
 import random
 import requests
@@ -11,9 +10,11 @@ import traceback
 
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
+from celery.beat import Scheduler
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from decimal import Decimal
 from django.conf import settings
+from django.core.cache import caches
 from django.db.models import Q
 from django.utils import timezone
 from email.message import EmailMessage
@@ -45,6 +46,25 @@ from .models import (
     Proxy,
     AppData,
 )
+
+
+class CustomBeatScheduler(Scheduler):
+    def __init__(self, *args, **kwargs):
+        super().__init__(*args, **kwargs)
+
+    def is_due(self, entry):
+        key = entry.task
+        cache = caches["default"]
+        redis_client = cache.client.get_client()
+
+        if redis_client.exists(key):
+            # Task is already in progress, return False
+            return False, None
+        else:
+            # Task is not in progress, start it and add the key
+            redis_client.set(key, "scheduled")
+            redis_client.expire(key, 1200)
+            return True, 0
 
 
 class CampaignTask(Task):
@@ -92,6 +112,19 @@ class CampaignTask(Task):
 
     def init_campaign(self):
         response = {"status": True, "errors": []}
+        # redis_client = caches["default"].client.get_client()
+        #
+        # campaign_info = json.loads(redis_client.keys(self.campaign.id))
+        #
+        # if campaign_info["status"] != Campaign.IN_QUEUE:
+        #     response["status"] = False
+        #     response["errors"].append(
+        #         f"The cached campaign status ({campaign_info['status']}) is not {Campaign.IN_QUEUE}"
+        #     )
+        # else:
+        #     campaign_info["status"] = Campaign.RUNNING
+        #     redis_client.set(self.campaign.id, json.dumps(campaign_info))
+        #     redis_client.expire(self.campaign.id, 900)
 
         if self.campaign.status in (Campaign.STOPPING, Campaign.STOPPED):
             response["status"] = False
@@ -190,6 +223,13 @@ class CampaignTask(Task):
             self.logger.info(
                 f"Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds"
             )
+
+        # try:
+        #     redis_client = caches["default"].client.get_client()
+        #
+        #     redis_client.delete(self.campaign.id)
+        # except Exception as e:
+        #     self.logger.error(e)
 
     def reset_ip(self):
         # if random.random() < .2:
@@ -908,6 +948,9 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=["status", "queue_status"])
 
+                # campaign_data = {"status": campaign.status}
+                # redis_client.set(campaign.id, json.dumps(campaign_data))
+
                 CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
                 self.logger.info(
                     f"Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial} with {proxy.license_id} proxy"
@@ -921,6 +964,9 @@ class ManageCampaignsTask(Task):
                     campaign.queue_status = "N/A"
                     campaign.save(update_fields=["status", "queue_status"])
 
+                    # campaign_data = {"status": campaign.status}
+                    # redis_client.set(campaign.id, json.dumps(campaign_data))
+
                     CampaignTask.delay(campaign.id)
                     self.logger.info(
                         f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device"
@@ -933,6 +979,9 @@ class ManageCampaignsTask(Task):
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = "N/A"
             campaign.save(update_fields=["status", "queue_status"])
+
+            # campaign_data = {"status": campaign.status}
+            # redis_client.set(campaign.id, json.dumps(campaign_data))
 
             CampaignTask.delay(campaign.id)
 
@@ -950,11 +999,15 @@ class ManageCampaignsTask(Task):
         ).order_by("next_runtime")
         queue_num = 1
         check_for_device = True
-
+        time.sleep(10)
         for campaign in campaigns:
             campaign_started = False
             available_device = None
             available_proxy = None
+
+            # if redis_client.exists(campaign.id):
+            #     continue
+
             need_to_list = ListedItem.objects.filter(
                 posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED
             ).exists()
@@ -1000,6 +1053,12 @@ class ManageCampaignsTask(Task):
 
                 if check_for_device:
                     check_for_device = False
+
+        try:
+            redis_client = caches["default"].client.get_client()
+            redis_client.delete(f"{self.name}")
+        except Exception:
+            pass
 
 
 class CheckPoshUsers(Task):
@@ -1252,6 +1311,12 @@ class CheckPoshUsers(Task):
 
                         listed_item.save(update_fields=["status", "datetime_removed"])
 
+        try:
+            redis_client = caches["default"].client.get_client()
+            redis_client.delete(f"{self.name}")
+        except Exception:
+            pass
+
 
 CampaignTask = app.register_task(CampaignTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
@@ -1267,6 +1332,12 @@ def log_cleanup():
 
         for log in logs:
             log.delete()
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{log_cleanup.name}")
+    except Exception:
+        pass
 
 
 @shared_task
@@ -1287,6 +1358,12 @@ def posh_user_cleanup():
     )
 
     posh_users.delete()
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{posh_user_cleanup.name}")
+    except Exception:
+        pass
 
 
 @shared_task
@@ -1339,6 +1416,12 @@ def send_support_emails():
                         except Exception as e:
                             logger.error("An error occurred", exc_info=True)
 
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{send_support_emails.name}")
+    except Exception:
+        pass
+
 
 @shared_task
 def get_items_to_report():
@@ -1355,6 +1438,12 @@ def get_items_to_report():
         for listing in bad_listings:
             logger.info(listing[0])
             logger.info(f"https://poshmark.com/listing/{listing[1]}")
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{get_items_to_report.name}")
+    except Exception:
+        pass
 
 
 @shared_task
@@ -1588,6 +1677,12 @@ def check_listed_items(username: str = ""):
                 ):
                     campaign.status = Campaign.STOPPING
                     campaign.save()
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{check_listed_items.name}")
+    except Exception:
+        pass
 
 
 @shared_task

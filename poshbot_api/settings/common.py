@@ -195,6 +195,16 @@ CELERY_IGNORE_RESULT = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_ACKS_LATE = True
 
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{os.environ['REDIS_ENDPOINT']}:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
 CAPTCHA_API_KEY = retrieve_secret(os.environ["CAPTCHA_SECRET"])
 APPIUM_SERVER_IP = retrieve_secret(os.environ["APPIUM_SECRET"])
 ZKE_YAHOO_CREDENTIALS = retrieve_secret(os.environ["ZKE_SECRET"])
