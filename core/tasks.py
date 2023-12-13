@@ -1,5 +1,4 @@
 import datetime
-import json
 import logging
 import pytz
 import random
@@ -54,7 +53,7 @@ class CustomBeatScheduler(Scheduler):
         super().__init__(*args, **kwargs)
 
     def is_due(self, entry):
-        key = f"{entry.task.name}_in_progress"
+        key = entry.task
         cache = caches["default"]
         redis_client = cache.client.get_client()
 
@@ -1056,7 +1055,7 @@ class ManageCampaignsTask(Task):
                     check_for_device = False
 
         redis_client = caches["default"].client.get_client()
-        redis_client.delete(f"{self.name}_in_progress")
+        redis_client.delete(f"{self.name}")
 
 
 class CheckPoshUsers(Task):
