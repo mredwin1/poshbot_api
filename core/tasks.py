@@ -112,19 +112,6 @@ class CampaignTask(Task):
 
     def init_campaign(self):
         response = {"status": True, "errors": []}
-        # redis_client = caches["default"].client.get_client()
-        #
-        # campaign_info = json.loads(redis_client.keys(self.campaign.id))
-        #
-        # if campaign_info["status"] != Campaign.IN_QUEUE:
-        #     response["status"] = False
-        #     response["errors"].append(
-        #         f"The cached campaign status ({campaign_info['status']}) is not {Campaign.IN_QUEUE}"
-        #     )
-        # else:
-        #     campaign_info["status"] = Campaign.RUNNING
-        #     redis_client.set(self.campaign.id, json.dumps(campaign_info))
-        #     redis_client.expire(self.campaign.id, 900)
 
         if self.campaign.status in (Campaign.STOPPING, Campaign.STOPPED):
             response["status"] = False
@@ -224,23 +211,7 @@ class CampaignTask(Task):
                 f"Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds"
             )
 
-        # try:
-        #     redis_client = caches["default"].client.get_client()
-        #
-        #     redis_client.delete(self.campaign.id)
-        # except Exception as e:
-        #     self.logger.error(e)
-
     def reset_ip(self):
-        # if random.random() < .2:
-        #     reset_success = self.proxy.change_location()
-        #     if reset_success:
-        #         time.sleep(20)
-        #     else:
-        #         reset_success = self.proxy.reset_ip()
-        # else:
-        #     reset_success = self.proxy.reset_ip()
-        #     time.sleep(10)
         reset_success = self.proxy.reset_ip()
         time.sleep(10)
 
@@ -948,9 +919,6 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=["status", "queue_status"])
 
-                # campaign_data = {"status": campaign.status}
-                # redis_client.set(campaign.id, json.dumps(campaign_data))
-
                 CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
                 self.logger.info(
                     f"Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial} with {proxy.license_id} proxy"
@@ -964,9 +932,6 @@ class ManageCampaignsTask(Task):
                     campaign.queue_status = "N/A"
                     campaign.save(update_fields=["status", "queue_status"])
 
-                    # campaign_data = {"status": campaign.status}
-                    # redis_client.set(campaign.id, json.dumps(campaign_data))
-
                     CampaignTask.delay(campaign.id)
                     self.logger.info(
                         f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device"
@@ -979,9 +944,6 @@ class ManageCampaignsTask(Task):
             campaign.status = Campaign.IN_QUEUE
             campaign.queue_status = "N/A"
             campaign.save(update_fields=["status", "queue_status"])
-
-            # campaign_data = {"status": campaign.status}
-            # redis_client.set(campaign.id, json.dumps(campaign_data))
 
             CampaignTask.delay(campaign.id)
 
@@ -999,14 +961,11 @@ class ManageCampaignsTask(Task):
         ).order_by("next_runtime")
         queue_num = 1
         check_for_device = True
-        time.sleep(10)
+
         for campaign in campaigns:
             campaign_started = False
             available_device = None
             available_proxy = None
-
-            # if redis_client.exists(campaign.id):
-            #     continue
 
             need_to_list = ListedItem.objects.filter(
                 posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED
