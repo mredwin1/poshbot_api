@@ -95,7 +95,7 @@ class CampaignTask(Task):
         response = {"status": True, "errors": []}
         redis_client = caches["default"].client.get_client()
 
-        campaign_info = json.loads(redis_client.get(self.campaign.id))
+        campaign_info = json.loads(redis_client.keys(self.campaign.id))
 
         if campaign_info["status"] != Campaign.IN_QUEUE:
             response["status"] = False
@@ -104,7 +104,8 @@ class CampaignTask(Task):
             )
         else:
             campaign_info["status"] = Campaign.RUNNING
-            redis_client.set(self.campaign.id, campaign_info)
+            redis_client.set(self.campaign.id, json.dumps(campaign_info))
+            redis_client.expire(self.campaign.id, 900)
 
         if self.campaign.status in (Campaign.STOPPING, Campaign.STOPPED):
             response["status"] = False
@@ -945,7 +946,7 @@ class ManageCampaignsTask(Task):
                     campaign.save(update_fields=["status", "queue_status"])
 
                     campaign_data = {"status": campaign.status}
-                    redis_client.set(campaign.id, campaign_data)
+                    redis_client.set(campaign.id, json.dumps(campaign_data))
 
                     CampaignTask.delay(campaign.id)
                     self.logger.info(
@@ -961,7 +962,7 @@ class ManageCampaignsTask(Task):
             campaign.save(update_fields=["status", "queue_status"])
 
             campaign_data = {"status": campaign.status}
-            redis_client.set(campaign.id, campaign_data)
+            redis_client.set(campaign.id, json.dumps(campaign_data))
 
             CampaignTask.delay(campaign.id)
 
