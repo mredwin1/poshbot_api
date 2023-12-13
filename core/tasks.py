@@ -62,7 +62,7 @@ class CustomBeatScheduler(Scheduler):
             return False, None
         else:
             # Task is not in progress, start it and add the key
-            redis_client.set(key)
+            redis_client.set(key, "scheduled")
             redis_client.expire(key, 1200)
             return True, 0
 
@@ -1054,8 +1054,11 @@ class ManageCampaignsTask(Task):
                 if check_for_device:
                     check_for_device = False
 
-        redis_client = caches["default"].client.get_client()
-        redis_client.delete(f"{self.name}")
+        try:
+            redis_client = caches["default"].client.get_client()
+            redis_client.delete(f"{self.name}")
+        except Exception:
+            pass
 
 
 class CheckPoshUsers(Task):
@@ -1308,6 +1311,12 @@ class CheckPoshUsers(Task):
 
                         listed_item.save(update_fields=["status", "datetime_removed"])
 
+        try:
+            redis_client = caches["default"].client.get_client()
+            redis_client.delete(f"{self.name}")
+        except Exception:
+            pass
+
 
 CampaignTask = app.register_task(CampaignTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
@@ -1324,6 +1333,12 @@ def log_cleanup():
         for log in logs:
             log.delete()
 
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{log_cleanup.name}")
+    except Exception:
+        pass
+
 
 @shared_task
 def posh_user_cleanup():
@@ -1333,6 +1348,12 @@ def posh_user_cleanup():
     posh_users = PoshUser.objects.filter(is_active=False, date_disabled__lt=month_ago)
 
     posh_users.delete()
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{posh_user_cleanup.name}")
+    except Exception:
+        pass
 
 
 @shared_task
@@ -1385,6 +1406,12 @@ def send_support_emails():
                         except Exception as e:
                             logger.error("An error occurred", exc_info=True)
 
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{send_support_emails.name}")
+    except Exception:
+        pass
+
 
 @shared_task
 def get_items_to_report():
@@ -1401,6 +1428,12 @@ def get_items_to_report():
         for listing in bad_listings:
             logger.info(listing[0])
             logger.info(f"https://poshmark.com/listing/{listing[1]}")
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{get_items_to_report.name}")
+    except Exception:
+        pass
 
 
 @shared_task
@@ -1634,6 +1667,12 @@ def check_listed_items(username: str = ""):
                 ):
                     campaign.status = Campaign.STOPPING
                     campaign.save()
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{check_listed_items.name}")
+    except Exception:
+        pass
 
 
 @shared_task
