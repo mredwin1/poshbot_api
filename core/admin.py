@@ -12,7 +12,6 @@ from . import models
 
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.PaymentEmailContent)
-admin.site.register(models.AppData)
 
 
 @admin.action(description="Start selected campaigns")
@@ -171,19 +170,6 @@ class BadPhraseAdmin(admin.ModelAdmin):
     list_display = ["phrase", "report_type"]
 
 
-@admin.register(models.Device)
-class DeviceAdmin(admin.ModelAdmin):
-    list_display = ["serial", "is_active", "associated_campaign", "checkout_time"]
-    readonly_fields = ["checked_out_by", "checkout_time"]
-    actions = [check_devices_in]
-
-    @admin.display(ordering="associated_campaign")
-    def associated_campaign(self, device):
-        campaign = models.Campaign.objects.get(id=device.checked_out_by)
-        url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(campaign.id)})}"
-        return format_html('<a href="{}">{}</a>', url, campaign.title)
-
-
 @admin.register(models.Proxy)
 class ProxyAdmin(admin.ModelAdmin):
     list_display = ["license_id", "is_active", "associated_campaign", "checkout_time"]
@@ -240,7 +226,6 @@ class PoshUserAdmin(admin.ModelAdmin):
         "date_added",
         "time_to_setup_device",
         "time_to_register",
-        "time_to_finish_registration",
         "date_disabled",
     ]
     list_display = [

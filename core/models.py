@@ -1,5 +1,4 @@
 import datetime
-import logging
 import os
 import random
 import string
@@ -7,19 +6,17 @@ import time
 from uuid import uuid4
 
 import boto3
-import pytz
 import requests
 from botocore.exceptions import ClientError
-from dateutil.parser import parse
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
+from django.utils.text import slugify
 from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
-from ppadb.client import Client as AdbClient
 
 from faker_providers import address_provider
 
@@ -32,15 +29,6 @@ def path_and_rename(instance, filename):
     path = None
     aws_session = boto3.Session()
     s3_client = aws_session.resource("s3")
-
-    if isinstance(instance, AppData):
-        filename = original_filename
-        path = os.path.join(
-            instance.posh_user.user.username,
-            "log_images",
-            instance.posh_user.username,
-            filename,
-        )
 
     while not filename:
         if isinstance(instance, Listing):
@@ -94,7 +82,7 @@ def path_and_rename(instance, filename):
 
 class Proxy(models.Model):
     HTTP = "http"
-    SOCKS5 = "socks5"
+    SOCKS5 = "socks"
 
     PROXY_TYPE_CHOICES = [(HTTP, HTTP), (SOCKS5, SOCKS5)]
 
@@ -106,10 +94,12 @@ class Proxy(models.Model):
     checkout_time = models.DateTimeField(null=True, blank=True)
 
     hostname = models.CharField(max_length=255)
-    port = models.CharField(max_length=255)
+    vendor = models.CharField(max_length=30)
+    port = models.PositiveSmallIntegerField()
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
     license_id = models.CharField(max_length=255)
+    proxy_uuid = models.CharField(max_length=255)
     type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=HTTP)
 
     @staticmethod
@@ -133,7 +123,7 @@ class Proxy(models.Model):
         cookies = self.authenticate_with_cookies()
 
         reset_url = (
-            f"https://portal.mobilehop.com/api/v2/proxies/reset/{self.license_id}"
+            f"https://portal.mobilehop.com/api/v2/proxies/reset/{self.proxy_uuid}"
         )
         response = requests.get(reset_url, cookies=cookies)
 
@@ -167,7 +157,7 @@ class Proxy(models.Model):
                 selected_location = random.choice(available_locations)
 
                 # Disconnect from the current location
-                disconnect_url = f"https://portal.mobilehop.com/api/v2/proxies/disconnect/{self.license_id}"
+                disconnect_url = f"https://portal.mobilehop.com/api/v2/proxies/disconnect/{self.proxy_uuid}"
                 response = requests.get(disconnect_url, cookies=cookies)
 
                 if response.status_code != 200:
@@ -176,7 +166,7 @@ class Proxy(models.Model):
                     )
 
                 # Connect to the new random location
-                connect_url = f"https://portal.mobilehop.com/api/v2/proxies/connect/{self.license_id}/{selected_location}"
+                connect_url = f"https://portal.mobilehop.com/api/v2/proxies/connect/{self.proxy_uuid}/{selected_location}"
                 response = requests.get(connect_url, cookies=cookies)
                 # proxy_data = response.json()['result']
 
@@ -212,100 +202,6 @@ class Proxy(models.Model):
         return self.license_id
 
 
-class Device(models.Model):
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-
-    proxy = models.ForeignKey(
-        to=Proxy, on_delete=models.SET_NULL, null=True, blank=True
-    )
-
-    checked_out_by = models.UUIDField(blank=True, null=True)
-    serial = models.CharField(max_length=12, unique=True)
-
-    is_active = models.BooleanField(default=True)
-
-    checkout_time = models.DateTimeField(null=True, blank=True)
-
-    system_port = models.SmallIntegerField(unique=True)
-    mjpeg_server_port = models.SmallIntegerField(unique=True)
-
-    def reboot(self):
-        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
-        adb_device = client.device(serial=self.serial)
-
-        adb_device.reboot()
-
-    def reset_app_data(self, app_package):
-        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
-        adb_device = client.device(serial=self.serial)
-
-        adb_device.shell(f"pm clear {app_package}")
-
-    def change_android_id(self, email, app_package):
-        client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
-        adb_device = client.device(serial=self.serial)
-
-        adb_device.shell(
-            f"am start -n com.tobi.androidideditor/.ShellActivity -e package_id {app_package} -e email {email}"
-        )
-
-    def finished_boot(self):
-        try:
-            client = AdbClient(host=settings.APPIUM_SERVER_IP, port=5037)
-            adb_device = client.device(serial=self.serial)
-
-            if adb_device:
-                try:
-                    ready = (
-                        adb_device.shell("getprop sys.boot_completed").strip() == "1"
-                    )
-                except Exception:
-                    return False
-
-                current_time_str = adb_device.shell("date").strip()
-                current_time = parse(current_time_str).replace(tzinfo=pytz.utc)
-                boot_time_str = adb_device.shell("uptime -s").strip()
-
-                boot_time = datetime.datetime.strptime(
-                    boot_time_str, "%Y-%m-%d %H:%M:%S"
-                ).replace(tzinfo=current_time.tzinfo)
-
-                if ready and (current_time - boot_time).total_seconds() > 10:
-                    return True
-            return False
-        except RuntimeError as e:
-            logger = logging.getLogger(__name__)
-            logger.error(e, exc_info=True)
-            return False
-
-    def is_ready(self):
-        if not self.is_active:
-            return False
-
-        if self.checked_out_by:
-            return False
-
-        return self.finished_boot()
-
-    def check_out(self, campaign_id: uuid4):
-        """Check out the device for use by a posh user."""
-        if not self.is_ready():
-            raise ValueError("Device is already in use")
-
-        self.checked_out_by = campaign_id
-        self.checkout_time = timezone.now()
-        self.save(update_fields=["checked_out_by", "checkout_time"])
-
-    def check_in(self):
-        """Check in the device after use."""
-        self.checked_out_by = None
-        self.checkout_time = None
-        self.save(update_fields=["checked_out_by", "checkout_time"])
-
-    def __str__(self):
-        return self.serial
-
-
 class User(AbstractUser):
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     email = models.EmailField()
@@ -338,10 +234,10 @@ class User(AbstractUser):
 
 
 class PoshUser(models.Model):
-    MALE = "M"
-    FEMALE = "F"
+    MALE = "Male"
+    FEMALE = "Female"
 
-    GENDER_CHOICES = [(MALE, "Male"), (FEMALE, "Female")]
+    GENDER_CHOICES = [(MALE, MALE), (FEMALE, FEMALE)]
 
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
@@ -353,7 +249,7 @@ class PoshUser(models.Model):
     )
     first_name = models.CharField(max_length=30, blank=True)
     last_name = models.CharField(max_length=30, blank=True)
-    gender = models.CharField(max_length=2, choices=GENDER_CHOICES, blank=True)
+    gender = models.CharField(max_length=10, choices=GENDER_CHOICES, blank=True)
     phone_number = models.CharField(max_length=20, default="", blank=True)
     profile_picture_id = models.CharField(max_length=200, blank=True)
     email_password = models.CharField(max_length=250, blank=True)
@@ -363,27 +259,12 @@ class PoshUser(models.Model):
     city = models.CharField(max_length=100, blank=True)
     state = models.CharField(max_length=50, blank=True)
     postcode = models.CharField(max_length=20, blank=True)
-
-    imei1 = models.CharField(max_length=255, blank=True)
-    imei2 = models.CharField(max_length=255, blank=True)
-    wifi_mac = models.CharField(max_length=255, blank=True)
-    wifi_ssid = models.CharField(max_length=255, blank=True)
-    wifi_bssid = models.CharField(max_length=255, blank=True)
-    bluetooth_id = models.CharField(max_length=255, blank=True)
-    sim_sub_id = models.CharField(max_length=255, blank=True)
-    sim_serial = models.CharField(max_length=255, blank=True)
-    android_id = models.CharField(max_length=255, blank=True)
-    mobile_number = models.CharField(max_length=255, blank=True)
-    hw_serial = models.CharField(max_length=255, blank=True)
-    ads_id = models.CharField(max_length=255, blank=True)
-    gsf = models.CharField(max_length=255, blank=True)
-    media_drm = models.CharField(max_length=255, blank=True)
+    octo_uuid = models.CharField(max_length=255, blank=True)
 
     profile_picture = models.ImageField(
         upload_to=path_and_rename, null=True, blank=True
     )
     header_picture = models.ImageField(upload_to=path_and_rename, null=True, blank=True)
-    cookies = models.FileField(upload_to=path_and_rename, null=True, blank=True)
 
     email = models.EmailField(blank=True)
 
@@ -401,16 +282,12 @@ class PoshUser(models.Model):
     is_active_in_posh = models.BooleanField(default=True)
     is_registered = models.BooleanField(default=False)
     profile_updated = models.BooleanField(default=False)
-    finished_registration = models.BooleanField(default=False)
     send_support_email = models.BooleanField(default=False)
 
     time_to_setup_device = models.DurationField(
         default=datetime.timedelta(seconds=0), blank=True
     )
     time_to_register = models.DurationField(
-        default=datetime.timedelta(seconds=0), blank=True
-    )
-    time_to_finish_registration = models.DurationField(
         default=datetime.timedelta(seconds=0), blank=True
     )
 
@@ -455,6 +332,18 @@ class PoshUser(models.Model):
     @property
     def full_name(self):
         return f"{self.first_name} {self.last_name}"
+
+    @property
+    def user_info(self):
+        user_info = {
+            "first_name": self.first_name,
+            "last_name": self.last_name,
+            "email": self.email,
+            "username": self.username,
+            "password": self.password,
+            "gender": self.gender,
+        }
+        return user_info
 
     @staticmethod
     def _generate_username(faker_obj, first_name, last_name, year_of_birth):
@@ -508,8 +397,8 @@ class PoshUser(models.Model):
 
         return password
 
-    @staticmethod
     def generate(
+        self,
         fake,
         user,
         email,
@@ -577,7 +466,7 @@ class PoshUser(models.Model):
             last_name=last_name,
             username=username,
             password=password,
-            gender=fake.random_element(elements=("M", "F")),
+            gender=fake.random_element(elements=(self.MALE, self.FEMALE)),
             email=email,
             email_password=email_password,
             email_imap_password=email_imap_password,
@@ -643,30 +532,28 @@ class PoshUser(models.Model):
             ]
         )
 
+    @staticmethod
+    def _get_file(file):
+        dir_name, cover_photo_name = os.path.split(file.name)
+        os.makedirs(dir_name, exist_ok=True)
+        file_path = os.path.join(dir_name, cover_photo_name)
+        with open(file_path, "wb") as local_file:
+            for chunk in file:
+                local_file.write(chunk)
+
+        return file_path
+
+    def get_profile_picture(self):
+        return self._get_file(self.profile_picture)
+
+    def get_header_picture(self):
+        return self._get_file(self.header_picture)
+
     def __str__(self):
         return self.username
 
     class Meta:
         ordering = ["username"]
-
-
-class AppData(models.Model):
-    POSHMARK = "POSHMARK"
-
-    PROXY_TYPE_CHOICES = [
-        (POSHMARK, POSHMARK),
-    ]
-
-    id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
-    posh_user = models.ForeignKey(to=PoshUser, on_delete=models.CASCADE)
-
-    backup_data = models.FileField(upload_to=path_and_rename)
-    xml_data = models.FileField(upload_to=path_and_rename)
-
-    type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=POSHMARK)
-
-    def __str__(self):
-        return f"Backup for {self.posh_user.username}"
 
 
 class Campaign(models.Model):
@@ -743,9 +630,9 @@ class Listing(models.Model):
     )
     description = models.TextField()
 
-    original_price = models.IntegerField()
-    listing_price = models.IntegerField()
-    lowest_price = models.IntegerField(default=250)
+    original_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    listing_price = models.DecimalField(max_digits=10, decimal_places=2, default=0)
+    lowest_price = models.DecimalField(max_digits=10, decimal_places=2, default=250)
 
     campaign = models.ForeignKey(
         Campaign,
@@ -831,6 +718,46 @@ class ListedItem(models.Model):
         default=datetime.timedelta(seconds=0), blank=True
     )
 
+    @property
+    def item_info(self):
+        department, category = self.listing.category.split(" ")
+        item_info = {
+            "title": self.listing.title,
+            "size": self.listing.size,
+            "brand": self.listing.brand,
+            "department": department,
+            "category": category,
+            "subcategory": self.listing.subcategory,
+            "original_price": str(self.listing.original_price),
+            "listing_price": str(self.listing.listing_price),
+            "description": self.listing.description,
+            "photos": self.get_images(),
+        }
+
+        return item_info
+
+    def get_images(self):
+        paths = []
+
+        dir_name, cover_photo_name = os.path.split(self.listing.cover_photo.name)
+        os.makedirs(dir_name, exist_ok=True)
+        cover_photo_path = os.path.join(dir_name, cover_photo_name)
+        with open(cover_photo_path, "wb") as local_file:
+            for chunk in self.listing.cover_photo.file:
+                local_file.write(chunk)
+        paths.append(cover_photo_path)
+
+        images = ListingImage.objects.filter(listing=self.listing)
+        for image in images:
+            _, image_name = os.path.split(image.image.name)
+            image_path = os.path.join(dir_name, image_name)
+            with open(image_path, mode="wb") as local_file:
+                for chunk in image.image.file.chunks():
+                    local_file.write(chunk)
+            paths.append(image_path)
+
+        return paths
+
     def __str__(self):
         return f"{self.listing_title}"
 
@@ -858,8 +785,6 @@ class ListedItemToReport(models.Model):
     report_type = models.CharField(
         max_length=100, choices=REPORT_TYPE_CHOICES, default=MISTAGGED_ITEM
     )
-    leave_comment = models.BooleanField(default=False)
-    send_bundle_message = models.BooleanField(default=False)
 
     def __str__(self):
         return f"{self.listing_title}"

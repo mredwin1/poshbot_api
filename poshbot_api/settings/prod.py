@@ -62,10 +62,6 @@ CELERY_TASK_ROUTES = {
         "queue": os.environ["MAINTENANCE_QUEUE"],
         "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
-    "core.tasks.get_items_to_report": {
-        "queue": os.environ["MAINTENANCE_QUEUE"],
-        "routing_key": os.environ["MAINTENANCE_QUEUE"],
-    },
     "core.tasks.check_listed_items": {
         "queue": os.environ["MAINTENANCE_QUEUE"],
         "routing_key": os.environ["MAINTENANCE_QUEUE"],

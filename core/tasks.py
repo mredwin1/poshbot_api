@@ -1,5 +1,7 @@
+import asyncio
 import datetime
 import logging
+import os
 import pytz
 import random
 import requests
@@ -20,31 +22,27 @@ from django.utils import timezone
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
-from selenium.common.exceptions import WebDriverException
 from typing import Union
 
-from appium_clients.clients import (
-    PoshMarkClient as MobilePoshMarkClient,
-    ProxyDroidClient,
-    IDChangerClient,
-    SwiftBackupClient,
+from chrome_clients.clients import PoshmarkClient, OctoAPIClient
+from chrome_clients.errors import (
+    LoginOrRegistrationError,
+    UserDisabledError,
+    ShareError,
+    ListingNotFoundError,
+    NoLikesError,
 )
-from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
 from .models import (
     Campaign,
     Listing,
-    ListingImage,
     PoshUser,
-    Device,
     LogGroup,
     ListedItem,
-    ListedItemToReport,
-    ListedItemReport,
     PaymentEmailContent,
     Proxy,
-    AppData,
+    BadPhrase,
 )
 
 
@@ -73,10 +71,61 @@ class CampaignTask(Task):
         self.time_limit = 1200
         self.campaign = None
         self.logger = None
-        self.device = None
-        self.device_id = None
         self.proxy = None
         self.proxy_id = None
+        self.runtime_details = None
+
+    def get_runtime_details(self):
+        current_proxy = {
+            "title": f"{self.proxy.vendor} {self.proxy.license_id}",
+            "type": self.proxy.type,
+            "port": self.proxy.port,
+            "host": self.proxy.hostname,
+            "login": self.proxy.username,
+            "password": self.proxy.password,
+            "external_id": self.proxy.license_id,
+        }
+        octo_client = OctoAPIClient()
+        proxies = octo_client.get_proxies(external_id=self.proxy.license_id)
+
+        if proxies:
+            proxy = proxies[0]
+
+            proxy_differences = {}
+            for key, value in current_proxy.items():
+                if value != proxy[key]:
+                    proxy_differences[key] = value
+
+            if proxy_differences:
+                proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
+        else:
+            proxy = octo_client.create_proxy(current_proxy)
+
+        if not self.campaign.posh_user.octo_uuid:
+            tags = [os.environ["ENVIRONMENT"], self.campaign.user.username]
+            profile_uuid = octo_client.create_profile(
+                self.campaign.posh_user.username, tags, proxy_uuid=proxy["uuid"]
+            )
+            profile = octo_client.get_profile(profile_uuid)
+        else:
+            profile = octo_client.get_profile(self.campaign.posh_user.octo_uuid)
+
+        octo_client.update_profile(profile["uuid"], proxy_uuid=proxy["uuid"])
+        profile["proxy"] = proxy
+
+        width, height = map(
+            int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
+        )
+        runtime_details = octo_client.start_profile(profile["uuid"])
+        runtime_details["width"] = width
+        runtime_details["height"] = height
+
+        return runtime_details
+
+    def stop_octo_profile(self):
+        octo_client = OctoAPIClient()
+
+        octo_client.stop_profile(self.runtime_details["uuid"])
 
     def get_random_delay(self, elapsed_time):
         delay = self.campaign.delay * 60
@@ -92,18 +141,6 @@ class CampaignTask(Task):
                 return delay_after_elapsed_time_in_seconds
             else:
                 return random_delay_in_seconds
-
-    def check_device_in(self):
-        if self.device:
-            self.logger.info(f"Checked out by: {self.device.checked_out_by}")
-        else:
-            self.logger.info(
-                f"Not checked out. Current Campaing user: {self.campaign.posh_user.username}"
-            )
-        if self.device and self.device.checked_out_by == self.campaign.id:
-            time.sleep(8)
-            self.logger.info("Releasing device")
-            self.device.check_in()
 
     def check_proxy_in(self):
         if self.proxy and self.proxy.checked_out_by == self.campaign.id:
@@ -133,58 +170,29 @@ class CampaignTask(Task):
                 f"Posh user, {self.campaign.posh_user}, is inactive"
             )
 
-        if not self.campaign.posh_user.is_registered and not self.device_id:
-            response["status"] = False
-            response["errors"].append(
-                f"Posh user is not registered but no device was given."
-            )
-
         if not self.campaign.posh_user.is_registered and not self.proxy_id:
             response["status"] = False
             response["errors"].append(
-                f"Posh user is not registered but no proxy was given."
+                "Posh user is not registered but no proxy was given."
             )
 
-        if (
-            ListedItem.objects.filter(
-                posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
-            ).exists()
-            and self.campaign.posh_user.is_registered
-            and not AppData.objects.filter(posh_user=self.campaign.posh_user).exists()
-        ):
+        needs_to_list = ListedItem.objects.filter(
+            posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
+        ).exists()
+        if needs_to_list and not self.proxy_id:
             response["status"] = False
-            response["errors"].append(
-                f"Posh user is registered needs to list but the app data is missing"
-            )
+            response["errors"].append("Posh user needs to list but no proxy was given.")
 
-        if self.device_id and self.proxy_id:
-            self.device = Device.objects.get(id=self.device_id)
+        if self.proxy_id:
             self.proxy = Proxy.objects.get(id=self.proxy_id)
 
         return response
 
-    def finalize_campaign(
-        self, success, campaign_delay, duration, save_data: bool = True
-    ):
-        try:
-            if save_data and self.device and self.campaign.posh_user.is_registered:
-                with SwiftBackupClient(
-                    self.device, self.logger, self.campaign.posh_user
-                ) as client:
-                    client.save_backup()
-                    client.sleep(5)
-        except Exception:
-            self.logger.error("Some Web driver exception occurred while doing backup")
-
-        self.check_device_in()
+    def finalize_campaign(self, success, campaign_delay, duration):
+        self.stop_octo_profile()
         self.check_proxy_in()
 
-        if not self.campaign.posh_user.is_active_in_posh:
-            self.campaign.status = Campaign.STOPPING
-            self.campaign.next_runtime = None
-            self.campaign.queue_status = "N/A"
-            self.campaign.save(update_fields=["status"])
-        elif self.campaign.status not in (
+        if self.campaign.status not in (
             Campaign.STOPPING,
             Campaign.STOPPED,
             Campaign.PAUSED,
@@ -230,258 +238,134 @@ class CampaignTask(Task):
 
     def init_logger(self, logger_id=None):
         try:
-            self.logger = LogGroup.objects.get(id=logger_id)
+            logger = LogGroup.objects.get(id=logger_id)
         except LogGroup.DoesNotExist:
-            self.logger = LogGroup(
+            logger = LogGroup(
                 campaign=self.campaign,
                 posh_user=self.campaign.posh_user,
                 created_date=timezone.now(),
             )
-            self.logger.save()
+            logger.save()
 
-    def setup_device(self):
-        start_time = time.time()
+        return logger
 
-        self.device.reset_app_data("com.poshmark.app")
-        # self.logger.debug('Changing android id')
-        #
-        # self.device.change_android_id(self.campaign.posh_user.email, 'com.poshmark.app')
-        #
-        # time.sleep(10)
-        #
-        # while not self.device.finished_boot():
-        #     self.logger.debug('Waiting (2sec) for device to finish booting...')
-        #     time.sleep(2)
+    async def register(self, list_items):
+        ws_endpoint = self.runtime_details["ws_endpoint"]
+        width = self.runtime_details["width"]
+        height = self.runtime_details["height"]
+        async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
+            start_time = time.perf_counter()
+            user_info = self.campaign.posh_user.user_info
 
-        with IDChangerClient(self.device, self.logger) as client:
-            android_id = client.set_android_id(self.campaign.posh_user.android_id)
+            try:
+                username = await client.register(user_info)
 
-            self.campaign.posh_user.android_id = android_id
-            self.campaign.posh_user.save()
+                update_fields = ["is_registered"]
+                if username != user_info["username"]:
+                    self.campaign.posh_user.username = username
+                    update_fields.append("username")
 
-            client.sleep(5)
+                self.campaign.posh_user.is_registered = True
+                self.campaign.posh_user.save()
 
-        self.device.reboot()
+                profile_picture = self.campaign.posh_user.get_profile_picture()
+                await client.finish_registration(
+                    profile_picture, self.campaign.posh_user.postcode
+                )
+                os.remove(profile_picture)
+                end_time = time.perf_counter()
 
-        time.sleep(5)
-
-        while not self.device.finished_boot():
-            self.logger.debug("Waiting (5sec) for device to finish booting...")
-            time.sleep(5)
-
-        ip_reset = self.reset_ip()
-
-        if not ip_reset:
-            return False
-
-        with ProxyDroidClient(self.device, self.logger, self.proxy) as client:
-            client.set_proxy()
-
-        if AppData.objects.filter(posh_user=self.campaign.posh_user).exists():
-            with SwiftBackupClient(
-                self.device, self.logger, self.campaign.posh_user
-            ) as client:
-                client.load_backup()
-
-        end_time = time.time()
-        time_to_setup_device = datetime.timedelta(seconds=round(end_time - start_time))
-        self.logger.info(
-            f"Device Set up complete, time elapsed: {time_to_setup_device}"
-        )
-
-        self.campaign.posh_user.time_to_setup_device = time_to_setup_device
-        self.campaign.posh_user.save()
-
-        return True
-
-    def register(self, list_items):
-        with MobilePoshMarkClient(self.campaign, self.logger, self.device) as client:
-            start_time = time.time()
-            registered = client.register()
-            end_time = time.time()
-
-            if registered:
                 time_to_register = datetime.timedelta(
                     seconds=round(end_time - start_time)
                 )
-
-                self.campaign.posh_user.time_to_register = time_to_register
                 self.logger.info(f"Time to register user: {time_to_register}")
-
-            self.campaign.posh_user.is_registered = registered
-            self.campaign.posh_user.save(
-                update_fields=["time_to_register", "is_registered"]
-            )
-
-            if registered:
-                finish_registration_and_list = self.finish_registration(
-                    list_items, client
+                self.campaign.posh_user.time_to_register = time_to_register
+                self.campaign.posh_user.posh_user.save(
+                    update_fields=["time_to_register"]
                 )
 
-        if (
-            not (registered and finish_registration_and_list)
-            and self.campaign.status == Campaign.RUNNING
-        ):
-            self.logger.info("Restarting campaign due to error")
-            self.campaign.status = Campaign.STARTING
-            self.campaign.queue_status = "Unknown"
-            self.campaign.next_runtime = timezone.now()
-            self.campaign.save(update_fields=["status", "queue_status", "next_runtime"])
+                if list_items:
+                    success = await self.list_items(client)
+                else:
+                    success = True
+            except LoginOrRegistrationError as e:
+                success = False
+                self.logger.error(e)
+                error_str = str(e)
+                if "form__error" in error_str:
+                    self.logger.warning("Stopping campaign and setting user inactive")
+                    self.campaign.posh_user.is_active = False
+                    self.campaign.posh_user.save(update_fields=["is_active"])
 
-            return False
+                campaign_status = Campaign.STOPPING
+            except Exception as e:
+                success = False
+                self.logger.info("Restarting campaign due to error")
+                campaign_status = Campaign.STARTING
 
-        return True
+        self.campaign.status = campaign_status
+        self.campaign.queue_status = "Unknown"
+        self.campaign.next_runtime = timezone.now()
+        self.campaign.save(update_fields=["status", "queue_status", "next_runtime"])
 
-    def finish_registration(self, list_items=True, client=None):
-        listed = not list_items
+        return success
 
-        if client:
-            start_time = time.time()
-            registration_finished = client.finish_registration()
-            end_time = time.time()
-
-            if registration_finished:
-                time_to_finish_registration = datetime.timedelta(
-                    seconds=round(end_time - start_time)
-                )
-                self.campaign.posh_user.time_to_finish_registration = (
-                    time_to_finish_registration
-                )
-                self.logger.info(
-                    f"Time to finish registration: {time_to_finish_registration} seconds"
-                )
-
-            self.campaign.posh_user.finished_registration = registration_finished
-            self.campaign.posh_user.save(
-                update_fields=["time_to_finish_registration", "finished_registration"]
-            )
-
-            if registration_finished and list_items:
-                listed = self.list_items(client)
-        else:
-            with MobilePoshMarkClient(
-                self.campaign, self.logger, self.device
-            ) as client:
-                start_time = time.time()
-                registration_finished = client.finish_registration()
-                end_time = time.time()
-
-                if registration_finished:
-                    time_to_finish_registration = datetime.timedelta(
-                        seconds=round(end_time - start_time)
-                    )
-
-                    self.campaign.posh_user.time_to_finish_registration = (
-                        time_to_finish_registration
-                    )
-                    self.logger.info(
-                        f"Time to finish registration: {time_to_finish_registration}"
-                    )
-
-                self.campaign.posh_user.finished_registration = registration_finished
-                self.campaign.posh_user.save(
-                    update_fields=[
-                        "time_to_finish_registration",
-                        "finished_registration",
-                    ]
-                )
-
-                if registration_finished and list_items:
-                    listed = self.list_items(client)
-
-        if (
-            not (registration_finished and listed)
-            and self.campaign.status == Campaign.RUNNING
-        ):
-            self.logger.info(
-                "Did not list properly or finish registration. Restarting campaign"
-            )
-            self.campaign.status = Campaign.STARTING
-            self.campaign.queue_status = "Unknown"
-            self.campaign.next_runtime = timezone.now()
-            self.campaign.save(update_fields=["status", "queue_status", "next_runtime"])
-            return False
-
-        return True
-
-    def list_items(self, client=None):
-        if not self.device and not self.campaign.posh_user.finished_registration:
-            self.campaign.posh_user.finished_registration = True
-            self.campaign.posh_user.save()
-
-        item_listed = False
+    async def _list_items(self, client):
         items_to_list = ListedItem.objects.filter(
             posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
-        )
-
-        if client:
-            for item_to_list in items_to_list:
-                listing_images = ListingImage.objects.filter(
-                    listing=item_to_list.listing
-                )
-
-                start_time = time.time()
-                item_listed = client.list_item(item_to_list, listing_images)
+        ).select_related("listing")
+        for item_to_list in items_to_list:
+            user_info = self.campaign.posh_user.user_info
+            item_info = item_to_list.item_info
+            start_time = time.time()
+            try:
+                listed_item = await client.list_item(user_info, item_info)
                 end_time = time.time()
                 time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
 
-                if item_listed:
-                    self.logger.info(f"Time to list item: {time_to_list}")
+                self.logger.info(f"Time to list item: {time_to_list}")
+                self.logger.info(f"Listed item ID: {listed_item['listing_id']}")
 
-                    listed_item_id = client.get_listed_item_id()
+                item_to_list.listed_item_id = listed_item["listing_id"]
+                item_to_list.time_to_list = time_to_list
+                item_to_list.status = ListedItem.UNDER_REVIEW
+                item_to_list.datetime_listed = timezone.now()
+                item_to_list.save(
+                    update_fields=[
+                        "time_to_list",
+                        "status",
+                        "datetime_listed",
+                        "listed_item_id",
+                    ]
+                )
 
-                    self.logger.info(f"Listed item ID: {listed_item_id}")
+            except UserDisabledError as e:
+                self.logger.error(e)
+                self.logger.warning("Stopping campaign.")
 
-                    item_to_list.listed_item_id = listed_item_id
-                    item_to_list.time_to_list = time_to_list
-                    item_to_list.status = ListedItem.UNDER_REVIEW
-                    item_to_list.datetime_listed = timezone.now()
-                    item_to_list.save(
-                        update_fields=[
-                            "time_to_list",
-                            "status",
-                            "datetime_listed",
-                            "listed_item_id",
-                        ]
-                    )
+                self.campaign.status = Campaign.STOPPING
+                self.campaign.queue_status = "N/A"
+                self.campaign.next_runtime = None
+                self.campaign.save(
+                    update_fields=["status", "queue_status", "next_runtime"]
+                )
+
+                return False
+
+        return True
+
+    async def list_items(self, client=None):
+        if client:
+            item_listed = await self._list_items(client)
         else:
-            with MobilePoshMarkClient(
-                self.campaign, self.logger, self.device
+            ws_endpoint = self.runtime_details["ws_endpoint"]
+            width = self.runtime_details["width"]
+            height = self.runtime_details["height"]
+            async with PoshmarkClient(
+                ws_endpoint, width, height, self.logger
             ) as client:
-                for item_to_list in items_to_list:
-                    listing_images = ListingImage.objects.filter(
-                        listing=item_to_list.listing
-                    )
+                item_listed = await self._list_items(client)
 
-                    start_time = time.time()
-                    listed = client.list_item(item_to_list, listing_images)
-                    end_time = time.time()
-                    time_to_list = datetime.timedelta(
-                        seconds=round(end_time - start_time)
-                    )
-
-                    if listed:
-                        self.logger.info(f"Time to list item: {time_to_list}")
-
-                        listed_item_id = client.get_listed_item_id()
-
-                        self.logger.info(f"Listed item ID: {listed_item_id}")
-
-                        item_to_list.listed_item_id = listed_item_id
-                        item_to_list.time_to_list = time_to_list
-                        item_to_list.status = ListedItem.UNDER_REVIEW
-                        item_to_list.datetime_listed = timezone.now()
-                        item_to_list.save(
-                            update_fields=[
-                                "time_to_list",
-                                "status",
-                                "datetime_listed",
-                                "listed_item_id",
-                            ]
-                        )
-
-                        if not item_listed:
-                            item_listed = listed
         if not item_listed and self.campaign.status == Campaign.RUNNING:
             self.logger.info("Did not list successfully. Restarting campaign.")
 
@@ -500,276 +384,209 @@ class CampaignTask(Task):
 
         return item_listed
 
-    def share_and_more(self):
-        login_retries = 0
-        update_profile_retries = 0
-        profile_updated = self.campaign.posh_user.profile_updated
+    async def share_and_more(self):
+        # profile_updated = self.campaign.posh_user.profile_updated
+        ws_endpoint = self.runtime_details["ws_endpoint"]
+        width = self.runtime_details["width"]
+        height = self.runtime_details["height"]
         listing_shared = None
         shared = None
-        with PoshMarkClient(self.campaign, self.logger) as client:
-            client.web_driver.get("https://poshmark.com")
-            client.load_cookies()
-            logged_in = None
+        user_info = self.campaign.posh_user.user_info
+        async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
+            # TODO: Implement the below
+            # if not profile_updated:
+            #     await client.update_profile(update_profile_retries)
+            #
+            #     self.campaign.posh_user.profile_updated = True
+            #     self.campaign.posh_user.save(update_fields=["profile_updated"])
 
-            while not logged_in and login_retries < 3:
-                logged_in = client.login(login_retries)
-                login_retries += 1
+            # TODO: Implement the below
+            # Follow random users and report a random listing
+            # random_number = random.random()
+            # if random_number < 0.1:
+            #     client.follow_random_follower()
+            # elif random_number < 0.4:
+            #     client.follow_random_user()
 
-            if logged_in:
-                while not profile_updated and update_profile_retries < 3 and logged_in:
-                    profile_updated = client.update_profile(update_profile_retries)
-                    update_profile_retries += 1
+            # TODO: Implement the below
+            # Get a list of listed item IDs the user has listed
+            # user_listed_item_ids = ListedItem.objects.filter(
+            #     posh_user=self.campaign.posh_user
+            # ).values_list("listed_item_id", flat=True)
+            #
+            # # Get a list of reported item IDs by the given posh_user
+            # reported_item_ids = ListedItemReport.objects.filter(
+            #     posh_user=self.campaign.posh_user
+            # ).values_list("listed_item_to_report__listed_item_id", flat=True)
+            #
+            # excluded_items = user_listed_item_ids.union(reported_item_ids)
+            #
+            # # Get a random unreported item by the given posh_user
+            # unreported_items = ListedItemToReport.objects.exclude(
+            #     listed_item_id__in=excluded_items
+            # )
+            #
+            # if unreported_items:
+            #     unreported_item = random.choice(unreported_items)
+            #
+            #     reported = client.report_listing(
+            #         unreported_item.listed_item_id, unreported_item.report_type
+            #     )
+            #
+            #     if reported:
+            #         ListedItemReport.objects.create(
+            #             posh_user=self.campaign.posh_user,
+            #             listed_item_to_report=unreported_item,
+            #         )
+            #     elif reported is False:
+            #         # unreported_items.delete()
+            #         pass
+            #
 
-                    if profile_updated:
-                        self.campaign.posh_user.profile_updated = True
-                        self.campaign.posh_user.save(update_fields=["profile_updated"])
+            shareable_listings = ListedItem.objects.filter(
+                posh_user=self.campaign.posh_user, status=ListedItem.UP
+            ).exclude(listed_item_id="")
 
-                # Follow random users and report a random listing
-                random_number = random.random()
-                if random_number < 0.1:
-                    client.follow_random_follower()
-                elif random_number < 0.4:
-                    client.follow_random_user()
-
-                # Get a list of listed item IDs the user has listed
-                user_listed_item_ids = ListedItem.objects.filter(
-                    posh_user=self.campaign.posh_user
-                ).values_list("listed_item_id", flat=True)
-
-                # Get a list of reported item IDs by the given posh_user
-                reported_item_ids = ListedItemReport.objects.filter(
-                    posh_user=self.campaign.posh_user
-                ).values_list("listed_item_to_report__listed_item_id", flat=True)
-
-                excluded_items = user_listed_item_ids.union(reported_item_ids)
-
-                # Get a random unreported item by the given posh_user
-                unreported_items = ListedItemToReport.objects.exclude(
-                    listed_item_id__in=excluded_items
-                )
-
-                if unreported_items:
-                    unreported_item = random.choice(unreported_items)
-
-                    reported = client.report_listing(
-                        unreported_item.listed_item_id, unreported_item.report_type
-                    )
-
-                    if reported:
-                        ListedItemReport.objects.create(
-                            posh_user=self.campaign.posh_user,
-                            listed_item_to_report=unreported_item,
+            if shareable_listings:
+                for shareable_listing in shareable_listings:
+                    try:
+                        await client.share_listing(
+                            user_info, shareable_listing.listed_item_id
                         )
+                    except (ShareError, ListingNotFoundError) as e:
+                        self.logger.warning(e)
 
-                        if unreported_item.send_bundle_message:
-                            bundle_message = "If you don’t stop flagging my accounts I will start flagging you back just as heavily."
-                            client.send_private_bundle_message(
-                                unreported_item.listed_item_id, bundle_message
-                            )
+                    if random.random() < 0.20 and shared:
+                        self.logger.info(
+                            "Seeing if it is time to send offers to likers"
+                        )
+                        now = timezone.now()
+                        nine_pm = datetime.datetime(
+                            year=now.year,
+                            month=now.month,
+                            day=now.day,
+                            hour=2,
+                            minute=0,
+                            second=0,
+                        ).replace(tzinfo=pytz.utc)
+                        midnight = nine_pm + datetime.timedelta(hours=3)
 
-                        if unreported_item.leave_comment and random_number < 0.05:
-                            comments = [
-                                "LOL, people still fall for this? Come on!",
-                                "Are you serious? This is like scamming 101.",
-                                "Hey folks, just a heads up: don't get played by this super obvious scam",
-                                "Scammers be like, 'Let's see how much we can shock them today!'",
-                                "This thing stinks worse than a fish market in July. Total scam.",
-                                "Do yourself a favor and don't touch this scam with a ten-foot pole.",
-                                "Anybody with half a brain can tell this is a straight up scam.",
-                                "cmon, don't be clueless classic scam in action right here",
-                                "Believing this? Might as well believe pigs can fly... Total nonsense.",
-                                "You'd need a lobotomy to think this isn't a scam. Seriously....",
-                                "LOL, this is such an obvious fake!",
-                                "OMG, who actually falls for this? It's a total scam!",
-                                "No way, Jose! This is like the definition of fake.",
-                                "Pssst... Don't even think about believing this crap. It's fake AF.",
-                                "Haha, nice try scammers! This is faker than fake.",
-                                "Hey everyone, check out the scam of the day right here!",
-                                "Ugh, these scams are getting dumber by the minute.",
-                                "Yeah right, like anyone's gonna buy into this nonsense.",
-                                "Just another day, just another ridiculous scam attempt.",
-                                "Sigh... Can't believe people still try to pull off these fakes.",
-                                "fake",
-                                "scam",
-                            ]
-
-                            client.comment_on_listing(
-                                unreported_item.listed_item_id, random.choice(comments)
-                            )
-                    elif reported is False:
-                        # unreported_items.delete()
-                        pass
-
-                shareable_listed_items = ListedItem.objects.filter(
-                    posh_user=self.campaign.posh_user, status=ListedItem.UP
-                ).exclude(listed_item_id="")
-
-                if shareable_listed_items:
-                    for listed_item in shareable_listed_items:
-                        listing_shared_retries = 0
-                        while listing_shared is None and listing_shared_retries < 3:
-                            listing_shared = client.share_item(
-                                listed_item.listed_item_id, listed_item.listing_title
-                            )
-                            listing_shared_retries += 1
-
-                        if not shared:
-                            shared = listing_shared
-                        listing_shared = None
-
-                        if random.random() < 0.20 and shared:
-                            self.logger.info(
-                                "Seeing if it is time to send offers to likers"
-                            )
-                            now = timezone.now()
-                            nine_pm = datetime.datetime(
-                                year=now.year,
-                                month=now.month,
-                                day=now.day,
-                                hour=2,
-                                minute=0,
-                                second=0,
-                            ).replace(tzinfo=pytz.utc)
-                            midnight = nine_pm + datetime.timedelta(hours=3)
-
-                            if nine_pm < now < midnight:
-                                client.send_offer_to_likers(listed_item)
-                            else:
-                                self.logger.info(
-                                    f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern"
+                        if nine_pm < now < midnight:
+                            try:
+                                offer = shareable_listing.listing.listing_price * 0.9
+                                await client.send_offers_to_likers(
+                                    user_info, shareable_listing.listed_item_id, offer
                                 )
-
-                        if random.random() < 0.20 and shared:
-                            offer_accepted = client.check_offers(
-                                listed_item.listing_title
+                            except NoLikesError as e:
+                                self.logger.warning(e)
+                        else:
+                            self.logger.info(
+                                f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern"
                             )
 
-                            # Cannot do this because it could be we accept an offer but it doesn't get sold because of the buyer
-                            # if offer_accepted:
-                            #     listed_item.datetime_sold = timezone.now()
-                            #     listed_item.status = ListedItem.SOLD
-                            #
-                            #     listed_item.save()
-                            #
-                            #     continue
-
-                        client.check_comments(
-                            listed_item.listed_item_id, listed_item.listing_title
+                    if random.random() < 0.20 and shared:
+                        await client.check_offers(
+                            user_info, shareable_listing.listed_item_id
                         )
 
-                    return shared
-                else:
-                    all_listed_items = ListedItem.objects.filter(
-                        posh_user=self.campaign.posh_user
+                    bad_phrases = BadPhrase.objects.all()
+                    bad_phrases = [
+                        {"word": phrase.phrase, "report_type": phrase.report_type}
+                        for phrase in bad_phrases
+                    ]
+                    await client.check_comments(
+                        user_info,
+                        shareable_listing.listed_item_id,
                     )
-                    reserved_listed_items = all_listed_items.filter(
-                        status=ListedItem.RESERVED
-                    )
-                    under_review_listed_items = all_listed_items.filter(
-                        status=ListedItem.UNDER_REVIEW
-                    )
-                    sold_listed_items = all_listed_items.filter(status=ListedItem.SOLD)
-                    if reserved_listed_items:
-                        self.logger.info(
-                            "This user has no shareable listings but has some reserved. Setting delay to an hour."
-                        )
 
-                        return False
-                    elif under_review_listed_items:
-                        self.logger.info(
-                            "This user has no shareable listings but has some under review. Pausing campaign"
-                        )
-
-                        self.campaign.status = Campaign.PAUSED
-                        self.campaign.next_runtime = None
-                        self.campaign.save()
-
-                        return False
-                    elif sold_listed_items:
-                        self.logger.info(
-                            "This user has no shareable listings and only ones sold. Stopping campaign"
-                        )
-
-                        self.campaign.status = Campaign.STOPPING
-                        self.campaign.next_runtime = None
-                        self.campaign.save()
-
-                        return False
-                    else:
-                        self.logger.info(
-                            "This user has no listings for sale. Stopping campaign"
-                        )
-
-                        self.campaign.status = Campaign.STOPPING
-                        self.campaign.next_runtime = None
-                        self.campaign.save()
-
-                        return False
-
+                return shared
             else:
-                self.logger.info("Restarting campaign because user could not log in")
+                all_listed_items = ListedItem.objects.filter(
+                    posh_user=self.campaign.posh_user
+                )
+                reserved_listed_items = all_listed_items.filter(
+                    status=ListedItem.RESERVED
+                )
+                under_review_listed_items = all_listed_items.filter(
+                    status=ListedItem.UNDER_REVIEW
+                )
+                sold_listed_items = all_listed_items.filter(status=ListedItem.SOLD)
+                if reserved_listed_items:
+                    self.logger.info(
+                        "This user has no shareable listings but has some reserved. Setting delay to an hour."
+                    )
 
-                return False
+                    return False
+                elif under_review_listed_items:
+                    self.logger.info(
+                        "This user has no shareable listings but has some under review. Pausing campaign"
+                    )
+
+                    self.campaign.status = Campaign.PAUSED
+                    self.campaign.next_runtime = None
+                    self.campaign.save()
+
+                    return False
+                elif sold_listed_items:
+                    self.logger.info(
+                        "This user has no shareable listings and only ones sold. Stopping campaign"
+                    )
+
+                    self.campaign.status = Campaign.STOPPING
+                    self.campaign.next_runtime = None
+                    self.campaign.save()
+
+                    return False
+                else:
+                    self.logger.info(
+                        "This user has no listings for sale. Stopping campaign"
+                    )
+
+                    self.campaign.status = Campaign.STOPPING
+                    self.campaign.next_runtime = None
+                    self.campaign.save()
+
+                    return False
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
+        exc_type, exc_value, exc_traceback = einfo.exc_info
+        self.logger.error(f"Campaign failed due to {exc_type}: {exc_value}")
+        self.logger.debug(traceback.format_exc())
+
+        if type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
+            self.logger.warning(
+                "Campaign ended because it exceeded the run time allowed"
+            )
+
         if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
+            self.logger.info(
+                "Campaign was sent to the end of the line and will start soon"
+            )
             self.campaign.status = Campaign.STARTING
             self.campaign.next_runtime = timezone.now()
             self.campaign.queue_status = "Unknown"
             self.campaign.save(update_fields=["status", "next_runtime", "queue_status"])
 
-        if (
-            self.device
-            and type(exc) is WebDriverException
-            and self.device.checked_out_by == self.campaign.id
-        ):
-            self.logger.warning("Rebooting device")
-
-            self.device.reboot()
-
-            while not self.device.finished_boot():
-                self.logger.debug("Waiting (5sec) for device to finish booting...")
-                time.sleep(5)
-
-        elif type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
-            self.logger.warning(
-                "Campaign ended because it exceeded the run time allowed"
-            )
-
-        if self.device:
-            self.finalize_campaign(False, None, 0)
-        else:
-            self.finalize_campaign(False, None, 0, False)
-
-        exc_type, exc_value, exc_traceback = einfo.exc_info
-        self.logger.error(f"Campaign failed due to {exc_type}: {exc_value}")
-        self.logger.debug(traceback.format_exc())
-
-        self.logger.info("Campaign was sent to the end of the line and will start soon")
+        self.finalize_campaign(False, None, 0)
 
     def run(
         self,
         campaign_id,
         logger_id=None,
-        device_id=None,
         proxy_id=None,
         *args,
         **kwargs,
     ):
-        self.campaign = Campaign.objects.get(id=campaign_id)
-        self.logger = None
-        self.device = None
-        self.device_id = device_id
+        self.campaign = Campaign.objects.get(id=campaign_id).select_related("posh_user")
+        self.logger = self.init_logger(logger_id)
         self.proxy = None
         self.proxy_id = proxy_id
-
         campaign_delay = None
-
-        self.init_logger(logger_id)
-
         campaign_init = self.init_campaign()
 
         if campaign_init["status"]:
+            self.runtime_details = self.get_runtime_details()
+
             self.logger.info(
                 f"Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}"
             )
@@ -778,41 +595,21 @@ class CampaignTask(Task):
             self.campaign.queue_status = "N/A"
             self.campaign.save(update_fields=["status", "queue_status"])
 
-            items_to_list = ListedItem.objects.filter(
+            need_to_list = ListedItem.objects.filter(
                 posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
-            )
-            need_to_list = items_to_list.count() > 0
-            device_setup = None
+            ).exists()
 
             start_time = time.time()
 
-            if (
-                self.device
-                and self.proxy
-                and self.campaign.mode == Campaign.ADVANCED_SHARING
-                and (
-                    not self.campaign.posh_user.is_registered
-                    or (
-                        self.campaign.posh_user.is_registered
-                        and AppData.objects.filter(
-                            posh_user=self.campaign.posh_user
-                        ).exists()
-                    )
-                )
-            ):
-                device_setup = self.setup_device()
-
-            if device_setup and not self.campaign.posh_user.is_registered:
-                success = self.register(list_items=need_to_list)
-            elif device_setup and not self.campaign.posh_user.finished_registration:
-                success = self.finish_registration(list_items=need_to_list)
-            elif device_setup and items_to_list:
-                success = self.list_items()
+            if self.proxy and not self.campaign.posh_user.is_registered:
+                success = asyncio.run(self.register(list_items=need_to_list))
+            elif self.proxy and need_to_list:
+                success = asyncio.run(self.list_items())
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (
                 Campaign.ADVANCED_SHARING,
                 Campaign.BASIC_SHARING,
             ):
-                success = self.share_and_more()
+                success = asyncio.run(self.share_and_more())
             else:
                 self.logger.info("Seems there is nothing to do")
                 success = False
@@ -828,7 +625,6 @@ class CampaignTask(Task):
             self.campaign.status = Campaign.STOPPING
             self.campaign.save(update_fields=["status"])
 
-            self.check_device_in()
             self.check_proxy_in()
 
         self.logger.info("Campaign ended")
@@ -839,36 +635,6 @@ class ManageCampaignsTask(Task):
         self.soft_time_limit = 240
         self.time_limit = 450
         self.logger = logging.getLogger(__name__)
-
-    def get_available_device(self):
-        devices = Device.objects.filter(is_active=True)
-
-        for device in devices:
-            if not device.checked_out_by:
-                if device.is_ready():
-                    return device
-
-            runtime = (
-                (timezone.now() - device.checkout_time).total_seconds()
-                if device.checkout_time is not None
-                else None
-            )
-            if runtime and device.checked_out_by and runtime > CampaignTask.time_limit:
-                try:
-                    campaign = Campaign.objects.get(id=device.checked_out_by)
-                    if campaign.status != Campaign.RUNNING:
-                        self.logger.warning("Campaign isn't running, checking in.")
-                        device.check_in()
-                    elif runtime > CampaignTask.time_limit * 2:
-                        self.logger.warning(
-                            f"Campaign has been running for {runtime} sec, checking in."
-                        )
-                        device.check_in()
-                        campaign.status = Campaign.STARTING
-                        campaign.save()
-                except Campaign.DoesNotExist:
-                    self.logger.warning("Campaign does not exist. Checking in.")
-                    device.check_in()
 
     def get_available_proxy(self):
         proxies = Proxy.objects.filter(is_active=True)
@@ -960,11 +726,10 @@ class ManageCampaignsTask(Task):
             & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))
         ).order_by("next_runtime")
         queue_num = 1
-        check_for_device = True
+        check_for_proxy = True
 
         for campaign in campaigns:
             campaign_started = False
-            available_device = None
             available_proxy = None
 
             need_to_list = ListedItem.objects.filter(
@@ -973,10 +738,9 @@ class ManageCampaignsTask(Task):
 
             if (
                 campaign.posh_user
-                and check_for_device
+                and check_for_proxy
                 and (need_to_list or not campaign.posh_user.is_registered)
             ):
-                available_device = self.get_available_device()
                 available_proxy = self.get_available_proxy()
 
             if (
@@ -991,27 +755,22 @@ class ManageCampaignsTask(Task):
 
                 campaign.save(update_fields=["status", "queue_status", "next_runtime"])
             elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
-                campaign_started = self.start_campaign(
-                    campaign, available_device, available_proxy
-                )
+                campaign_started = self.start_campaign(campaign, available_proxy)
             elif campaign.status == Campaign.STARTING and (
-                (available_proxy and available_device)
+                available_proxy
                 or (not need_to_list and campaign.posh_user.is_registered)
             ):
-                campaign_started = self.start_campaign(
-                    campaign, available_device, available_proxy
-                )
+                campaign_started = self.start_campaign(campaign, available_proxy)
 
             if (not campaign_started and campaign.status == Campaign.STARTING) or (
-                not (available_device or available_proxy)
-                and campaign.status == Campaign.STARTING
+                not available_proxy and campaign.status == Campaign.STARTING
             ):
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=["queue_status"])
                 queue_num += 1
 
-                if check_for_device:
-                    check_for_device = False
+                if check_for_proxy:
+                    check_for_proxy = False
 
         try:
             redis_client = caches["default"].client.get_client()
@@ -1378,29 +1137,6 @@ def send_support_emails():
     try:
         redis_client = caches["default"].client.get_client()
         redis_client.delete(f"{send_support_emails.name}")
-    except Exception:
-        pass
-
-
-@shared_task
-def get_items_to_report():
-    logger = LogGroup(
-        campaign=Campaign.objects.filter(user__username="admin").first(),
-        posh_user=Campaign.objects.filter(user__username="admin").first().posh_user,
-        created_date=timezone.now(),
-    )
-    logger.save()
-
-    with PublicPoshMarkClient(logger) as client:
-        bad_listings = client.find_bad_listings()
-
-        for listing in bad_listings:
-            logger.info(listing[0])
-            logger.info(f"https://poshmark.com/listing/{listing[1]}")
-
-    try:
-        redis_client = caches["default"].client.get_client()
-        redis_client.delete(f"{get_items_to_report.name}")
     except Exception:
         pass
 
