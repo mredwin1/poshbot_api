@@ -201,6 +201,8 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: api-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
             - Name: SECRET_KEY
@@ -334,6 +336,8 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: beat-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
             - Name: SECRET_KEY
@@ -435,6 +439,8 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: maintenance-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
             - Name: SECRET_KEY
@@ -529,6 +535,8 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: general-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
             - Name: SECRET_KEY
