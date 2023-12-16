@@ -1014,8 +1014,8 @@ class ManageCampaignsTask(Task):
         try:
             redis_client = caches["default"].client.get_client()
             redis_client.delete(f"{self.name}")
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.error(e)
 
 
 class CheckPoshUsers(Task):
