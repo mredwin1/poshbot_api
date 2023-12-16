@@ -69,8 +69,8 @@ class CustomBeatScheduler(Scheduler):
 
 class CampaignTask(Task):
     def __init__(self):
-        self.soft_time_limit = 900
-        self.time_limit = 1200
+        self.soft_time_limit = 600
+        self.time_limit = 900
         self.campaign = None
         self.logger = None
         self.device = None
@@ -853,13 +853,14 @@ class ManageCampaignsTask(Task):
                 if device.checkout_time is not None
                 else None
             )
-            if runtime and device.checked_out_by and runtime > CampaignTask.time_limit:
+            if (
+                runtime
+                and device.checked_out_by
+                and runtime > CampaignTask.soft_time_limit
+            ):
                 try:
                     campaign = Campaign.objects.get(id=device.checked_out_by)
-                    if campaign.status != Campaign.RUNNING:
-                        self.logger.warning("Campaign isn't running, checking in.")
-                        device.check_in()
-                    elif runtime > CampaignTask.time_limit * 2:
+                    if runtime > CampaignTask.soft_time_limit * 2:
                         self.logger.warning(
                             f"Campaign has been running for {runtime} sec, checking in."
                         )
