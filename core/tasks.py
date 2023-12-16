@@ -59,7 +59,7 @@ class CustomBeatScheduler(Scheduler):
 
         if redis_client.exists(key):
             # Task is already in progress, return False
-            return False, None
+            return False, 0
         else:
             # Task is not in progress, start it and add the key
             redis_client.set(key, "scheduled")
