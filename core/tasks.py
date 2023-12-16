@@ -1014,7 +1014,6 @@ class ManageCampaignsTask(Task):
         try:
             redis_client = caches["default"].client.get_client()
             redis_client.delete(f"{self.name}")
-            self.logger.info(f"Removed key {self.name} from cache")
         except Exception as e:
             self.logger.error(e)
 
