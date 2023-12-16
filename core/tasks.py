@@ -860,7 +860,7 @@ class ManageCampaignsTask(Task):
             ):
                 try:
                     campaign = Campaign.objects.get(id=device.checked_out_by)
-                    if runtime > CampaignTask.soft_time_limit * 2:
+                    if runtime > CampaignTask.soft_time_limit * 1.5:
                         self.logger.warning(
                             f"Campaign has been running for {runtime} sec, checking in."
                         )
@@ -889,10 +889,7 @@ class ManageCampaignsTask(Task):
             if runtime and proxy.checked_out_by and runtime > CampaignTask.time_limit:
                 try:
                     campaign = Campaign.objects.get(id=proxy.checked_out_by)
-                    if campaign.status != Campaign.RUNNING:
-                        self.logger.warning("Campaign isn't running, checking in.")
-                        proxy.check_in()
-                    elif runtime > CampaignTask.time_limit * 2:
+                    if runtime > CampaignTask.time_limit * 1.5:
                         self.logger.warning(
                             f"Campaign has been running for {runtime} sec, checking in."
                         )
