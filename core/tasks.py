@@ -53,18 +53,25 @@ class CustomBeatScheduler(Scheduler):
         super().__init__(*args, **kwargs)
 
     def is_due(self, entry):
-        key = entry.task
+        # First, check if the task is due based on the default scheduler logic
+        is_due, next_time_to_run = super().is_due(entry)
+
+        if not is_due:
+            # If the task is not due based on schedule, no further checks are needed
+            return False, next_time_to_run
+
+        # Proceed with the Redis check if the task is due
+        key = entry.name  # Using entry.name to identify the task
         cache = caches["default"]
         redis_client = cache.client.get_client()
 
         if redis_client.exists(key):
             # Task is already in progress, return False
-            return False, 0
+            return False, next_time_to_run
         else:
             # Task is not in progress, start it and add the key
-            redis_client.set(key, "scheduled")
-            redis_client.expire(key, 1200)
-            return True, 0
+            redis_client.set(key, "scheduled", ex=1200)  # Set key with expiry
+            return True, next_time_to_run
 
 
 class CampaignTask(Task):
