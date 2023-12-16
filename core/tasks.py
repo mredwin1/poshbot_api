@@ -61,7 +61,7 @@ class CustomBeatScheduler(Scheduler):
             return False, next_time_to_run
 
         # Proceed with the Redis check if the task is due
-        key = entry.name  # Using entry.name to identify the task
+        key = entry.task  # Using entry.name to identify the task
         cache = caches["default"]
         redis_client = cache.client.get_client()
 
