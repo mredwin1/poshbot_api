@@ -912,7 +912,11 @@ class ManageCampaignsTask(Task):
                 if proxy.checkout_time is not None
                 else None
             )
-            if runtime and proxy.checked_out_by and runtime > CampaignTask.soft_time_limit:
+            if (
+                runtime
+                and proxy.checked_out_by
+                and runtime > CampaignTask.soft_time_limit
+            ):
                 try:
                     campaign = Campaign.objects.get(id=proxy.checked_out_by)
                     if runtime > CampaignTask.soft_time_limit * 1.5:
