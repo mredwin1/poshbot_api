@@ -548,8 +548,9 @@ class PoshMarkClient(AppiumClient):
             if self.is_present(AppiumBy.ID, "userTab"):
                 self.logger.info("User is registered")
                 return True
+            retries = 0
 
-            while not self.is_registered:
+            while not self.is_registered and retries < 4:
                 if self.need_alert_check:
                     self.need_alert_check = False
                     alert_dismissed = self.alert_check()
@@ -683,6 +684,7 @@ class PoshMarkClient(AppiumClient):
                     ):
                         self.is_registered = True
                     else:
+                        retries += 1
                         if window_title:
                             self.logger.info(
                                 f"No handler for screen with title {window_title.text}"
@@ -715,7 +717,7 @@ class PoshMarkClient(AppiumClient):
                             return False
 
                         elif "Error. Please try again later." in error.text:
-                            pass
+                            retries += 1
                         else:
                             self.logger.warning("No handler for this error")
 
