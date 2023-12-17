@@ -169,6 +169,11 @@ class CampaignTask(Task):
             self.device = Device.objects.get(id=self.device_id)
             self.proxy = Proxy.objects.get(id=self.proxy_id)
 
+            self.device.checkout_time = timezone.now()
+            self.device.save(update_fields=["checkout_time"])
+            self.proxy.checkout_time = timezone.now()
+            self.proxy.save(update_fields=["checkout_time"])
+
         return response
 
     def finalize_campaign(
