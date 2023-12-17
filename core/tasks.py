@@ -28,6 +28,7 @@ from appium_clients.clients import (
     ProxyDroidClient,
     IDChangerClient,
     SwiftBackupClient,
+    APPIUM_SERVER_URL,
 )
 from chrome_clients.clients import PoshMarkClient, PublicPoshMarkClient
 from email_retrieval import zke_yahoo
@@ -61,7 +62,7 @@ class CustomBeatScheduler(Scheduler):
             return False, next_time_to_run
 
         # Proceed with the Redis check if the task is due
-        key = entry.task  # Using entry.name to identify the task
+        key = entry.task
         cache = caches["default"]
         redis_client = cache.client.get_client()
 
@@ -847,6 +848,18 @@ class ManageCampaignsTask(Task):
         self.time_limit = 450
         self.logger = logging.getLogger(__name__)
 
+    def remove_appium_session(self, device_udid):
+        try:
+            response = requests.get(f"{APPIUM_SERVER_URL}/sessions")
+            response_json = response.json()
+
+            for session in response_json["value"]:
+                if session["capabilities"]["udid"] == device_udid:
+                    requests.delete(f'{APPIUM_SERVER_URL}/session/{session["id"]}')
+                    self.logger.info(f"Deleted the session for {device_udid}")
+        except Exception as e:
+            self.logger.error(e)
+
     def get_available_device(self):
         devices = Device.objects.filter(is_active=True)
 
@@ -871,6 +884,7 @@ class ManageCampaignsTask(Task):
                         self.logger.warning(
                             f"Campaign has been running for {runtime} sec, checking in."
                         )
+                        self.remove_appium_session(device.serial)
                         device.check_in()
                         campaign.status = Campaign.STARTING
                         campaign.save()
