@@ -251,6 +251,8 @@ Resources:
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: TASK_DEFINITION
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref APITaskDefinition
       DesiredCount: 1
@@ -383,6 +385,8 @@ Resources:
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: TASK_DEFINITION
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref BeatTaskDefinition
       DesiredCount: 1
@@ -484,6 +488,8 @@ Resources:
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: TASK_DEFINITION
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref MaintenanceTaskDefinition
       DesiredCount: 1
@@ -586,6 +592,8 @@ Resources:
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: TASK_DEFINITION
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref GeneralTaskDefinition
       DesiredCount: 1
