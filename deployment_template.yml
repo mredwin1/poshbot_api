@@ -711,6 +711,38 @@ Resources:
         - Name: QueueName
           Value: !GetAtt GeneralQueue.QueueName
 
+  ECSAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      AutoScalingGroupName: !Sub
+        - '${ApplicationName}-general-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      LaunchConfigurationName: !Ref ECSLaunchConfiguration
+      DesiredCapacity: 1
+      MinSize: 1
+      MaxSize: 3
+      VPCZoneIdentifier: !Split
+        - ","
+        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+
+    ECSLaunchConfiguration:
+      Type: "AWS::AutoScaling::LaunchConfiguration"
+      Properties:
+        LaunchConfigurationName: !Sub
+        - '${ApplicationName}-general-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+        ImageId: ami-045a946a7171d63ce
+        InstanceType: t3.large
+        IamInstanceProfile: !Ref EC2InstanceProfile
+        UserData:
+          Fn::Base64: !Sub |
+            #!/bin/bash
+            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+
   OctoCache:
     Type: AWS::EFS::FileSystem
     Properties:
@@ -940,6 +972,27 @@ Resources:
                   - 'elasticfilesystem:ClientWrite'
                   - 'elasticfilesystem:DescribeFileSystems'
                 Resource: !GetAtt OctoCache.Arn
+
+  EC2InstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+
+  EC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref EC2InstanceRole
 
   MaintenanceQueue:
     Type: AWS::SQS::Queue
