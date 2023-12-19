@@ -17,16 +17,16 @@ from datetime import timedelta
 from pathlib import Path
 
 
-# def retrieve_secret(secret_arn: str):
-#     secrets_manager_client = boto3.client("secretsmanager")
-#
-#     response = secrets_manager_client.get_secret_value(SecretId=secret_arn)
-#     secret_string = response["SecretString"]
-#
-#     try:
-#         return json.loads(secret_string)
-#     except json.JSONDecodeError:
-#         return secret_string
+def retrieve_secret(secret_arn: str):
+    secrets_manager_client = boto3.client("secretsmanager")
+
+    response = secrets_manager_client.get_secret_value(SecretId=secret_arn)
+    secret_string = response["SecretString"]
+
+    try:
+        return json.loads(secret_string)
+    except json.JSONDecodeError:
+        return secret_string
 
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
@@ -177,17 +177,17 @@ LOGGING = {
     },
 }
 
-# database_credentials = retrieve_secret(os.environ["DB_SECRET"])
-# DATABASES = {
-#     "default": {
-#         "ENGINE": "custom_postgres_engine",
-#         "NAME": os.environ["DB_NAME"],
-#         "USER": database_credentials["username"],
-#         "PASSWORD": database_credentials["password"],
-#         "HOST": os.environ["DB_HOSTNAME"],
-#         "PORT": os.environ["DB_PORT"],
-#     }
-# }
+database_credentials = retrieve_secret(os.environ["DB_SECRET"])
+DATABASES = {
+    "default": {
+        "ENGINE": "custom_postgres_engine",
+        "NAME": os.environ["DB_NAME"],
+        "USER": database_credentials["username"],
+        "PASSWORD": database_credentials["password"],
+        "HOST": os.environ["DB_HOSTNAME"],
+        "PORT": os.environ["DB_PORT"],
+    }
+}
 
 CELERY_ENABLE_REMOTE_CONTROL = False
 CELERY_RESULT_BACKEND = None
@@ -195,19 +195,19 @@ CELERY_IGNORE_RESULT = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_ACKS_LATE = True
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": f"redis://{os.environ['REDIS_ENDPOINT']}:6379",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         },
-#     }
-# }
-#
-# CAPTCHA_API_KEY = retrieve_secret(os.environ["CAPTCHA_SECRET"])
-# APPIUM_SERVER_IP = retrieve_secret(os.environ["APPIUM_SECRET"])
-# ZKE_YAHOO_CREDENTIALS = retrieve_secret(os.environ["ZKE_SECRET"])
-# MOBILE_HOP_CREDENTIALS = retrieve_secret(os.environ["MOBILE_HOP_SECRET"])
-# EMAIL_CREDENTIALS = retrieve_secret(os.environ["EMAIL_SECRET"])
-# OCTO_API_KEY = retrieve_secret(os.environ["OCTO_SECRET"])
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{os.environ['REDIS_ENDPOINT']}:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
+
+CAPTCHA_API_KEY = retrieve_secret(os.environ["CAPTCHA_SECRET"])
+APPIUM_SERVER_IP = retrieve_secret(os.environ["APPIUM_SECRET"])
+ZKE_YAHOO_CREDENTIALS = retrieve_secret(os.environ["ZKE_SECRET"])
+MOBILE_HOP_CREDENTIALS = retrieve_secret(os.environ["MOBILE_HOP_SECRET"])
+EMAIL_CREDENTIALS = retrieve_secret(os.environ["EMAIL_SECRET"])
+OCTO_API_KEY = retrieve_secret(os.environ["OCTO_SECRET"])
