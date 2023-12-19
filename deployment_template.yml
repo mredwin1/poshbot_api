@@ -514,11 +514,13 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 2048
-      Memory: 4096
-      RuntimePlatform:
-        CpuArchitecture: X86_64
-        OperatingSystemFamily: LINUX
+      Volumes:
+        - Name: 'shm'
+          Host:
+            SourcePath: '/dev/shm'
+        - Name: 'octo-cache'
+          EFSVolumeConfiguration:
+            FileSystemId: !Ref OctoCache
       ContainerDefinitions:
         - Name: general-container
           Image: !Ref DockerImage
@@ -529,6 +531,11 @@ Resources:
           RepositoryCredentials:
             CredentialsParameter:
               Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+          MountPoints:
+            - SourceVolume: 'shm'
+              ContainerPath: '/dev/shm'
+            - SourceVolume: 'octo-cache'
+              ContainerPath: '/home/.Octo Browser/bin'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -703,6 +710,12 @@ Resources:
       Dimensions:
         - Name: QueueName
           Value: !GetAtt GeneralQueue.QueueName
+
+  OctoCache:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      PerformanceMode: 'generalPurpose'
 
   S3Bucket:
     Type: AWS::S3::Bucket
@@ -917,6 +930,16 @@ Resources:
                   - "sqs:ListQueues"
                   - "sqs:GetQueueAttributes"
                 Resource: '*'
+        - PolicyName: EFSAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'elasticfilesystem:ClientMount'
+                  - 'elasticfilesystem:ClientWrite'
+                  - 'elasticfilesystem:DescribeFileSystems'
+                Resource: !GetAtt OctoCache.Arn
 
   MaintenanceQueue:
     Type: AWS::SQS::Queue
