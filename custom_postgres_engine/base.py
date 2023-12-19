@@ -1,9 +1,14 @@
-import threading
 import boto3
 import json
+import logging
 import os
 import psycopg2
+import threading
+
 from django.db.backends.postgresql import base
+
+
+logger = logging.getLogger(__name__)
 
 
 class DatabaseWrapper(base.DatabaseWrapper):
@@ -18,15 +23,14 @@ class DatabaseWrapper(base.DatabaseWrapper):
             client = session.client(
                 service_name="secretsmanager", region_name="us-east-1"
             )
-            secrets = client.get_secret_value(SecretId=os.environ["DB_SECRET"])
-            return json.loads(secrets["SecretString"])["password"]
+            secret = client.get_secret_value(SecretId=os.environ["DB_SECRET"])
+            return json.loads(secret["SecretString"])["password"]
         except Exception as e:
             raise Exception("Failed to retrieve credentials from Secrets Manager", e)
 
     def get_connection_params(self):
         params = super().get_connection_params()
-        with self.lock:
-            params["password"] = self.get_new_password()
+        params["password"] = self.get_new_password()
         return params
 
     def _cursor(self, name=None):
@@ -35,9 +39,13 @@ class DatabaseWrapper(base.DatabaseWrapper):
         except psycopg2.OperationalError as e:
             if "password authentication failed for user" in str(e):
                 with self.lock:
-                    self.close_if_unusable_or_obsolete()
-                    self.connection = None
+                    # Close the current connection if it exists
+                    if self.connection is not None:
+                        self.connection.close()
+                        self.connection = None
+
+                    # Refresh the password and re-establish the connection
                     self.connect()
-                return super()._cursor(name)
+                    return super()._cursor(name)
             else:
                 raise e
