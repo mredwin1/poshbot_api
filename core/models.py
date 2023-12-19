@@ -492,7 +492,7 @@ class PoshUser(models.Model):
         if len(username) > 15:
             username = username[:15]
 
-        return username
+        return username.lower()
 
     @staticmethod
     def _generate_password(length=12):
