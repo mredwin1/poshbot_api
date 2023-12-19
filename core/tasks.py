@@ -51,24 +51,31 @@ class CustomBeatScheduler(Scheduler):
         super().__init__(*args, **kwargs)
 
     def is_due(self, entry):
+        # First, check if the task is due based on the default scheduler logic
+        is_due, next_time_to_run = super().is_due(entry)
+
+        if not is_due:
+            # If the task is not due based on schedule, no further checks are needed
+            return False, next_time_to_run
+
+        # Proceed with the Redis check if the task is due
         key = entry.task
         cache = caches["default"]
         redis_client = cache.client.get_client()
 
         if redis_client.exists(key):
             # Task is already in progress, return False
-            return False, None
+            return False, next_time_to_run
         else:
             # Task is not in progress, start it and add the key
-            redis_client.set(key, "scheduled")
-            redis_client.expire(key, 1200)
-            return True, 0
+            redis_client.set(key, "scheduled", ex=1200)  # Set key with expiry
+            return True, next_time_to_run
 
 
 class CampaignTask(Task):
     def __init__(self):
-        self.soft_time_limit = 900
-        self.time_limit = 1200
+        self.soft_time_limit = 600
+        self.time_limit = 900
         self.campaign = None
         self.logger = None
         self.proxy = None
@@ -185,6 +192,9 @@ class CampaignTask(Task):
 
         if self.proxy_id:
             self.proxy = Proxy.objects.get(id=self.proxy_id)
+
+            self.proxy.checkout_time = timezone.now()
+            self.proxy.save(update_fields=["checkout_time"])
 
         return response
 
@@ -651,13 +661,14 @@ class ManageCampaignsTask(Task):
                 if proxy.checkout_time is not None
                 else None
             )
-            if runtime and proxy.checked_out_by and runtime > CampaignTask.time_limit:
+            if (
+                runtime
+                and proxy.checked_out_by
+                and runtime > CampaignTask.soft_time_limit
+            ):
                 try:
                     campaign = Campaign.objects.get(id=proxy.checked_out_by)
-                    if campaign.status != Campaign.RUNNING:
-                        self.logger.warning("Campaign isn't running, checking in.")
-                        proxy.check_in()
-                    elif runtime > CampaignTask.time_limit * 2:
+                    if runtime > CampaignTask.soft_time_limit * 1.5:
                         self.logger.warning(
                             f"Campaign has been running for {runtime} sec, checking in."
                         )
@@ -775,8 +786,8 @@ class ManageCampaignsTask(Task):
         try:
             redis_client = caches["default"].client.get_client()
             redis_client.delete(f"{self.name}")
-        except Exception:
-            pass
+        except Exception as e:
+            self.logger.error(e)
 
 
 class CheckPoshUsers(Task):

@@ -64,10 +64,3 @@ jobs:
               { "Key": "Application", "Value": "poshbot" },
               { "Key": "Version", "Value": "${{ github.event.release.tag_name }}" }
             ]
-
-      - name: Force re-deploy ecs tasks
-        run: |
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.BeatService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.APIService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.MaintenanceService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.GeneralService }} --force-new-deployment
