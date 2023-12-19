@@ -165,14 +165,6 @@ class OctoAPIClient:
 
         return response.json()
 
-    def update_proxy(self, uuid: str, data) -> Dict:
-        response = requests.patch(
-            f"{self.octo_api}/proxies/{uuid}", headers=self._octo_api_headers, json=data
-        )
-        json_response = response.json()
-
-        return json_response["data"]
-
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
