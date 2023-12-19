@@ -180,7 +180,7 @@ LOGGING = {
 database_credentials = retrieve_secret(os.environ["DB_SECRET"])
 DATABASES = {
     "default": {
-        "ENGINE": "poshbot_api.custom_postgres_engine.base.DatabaseWrapper",
+        "ENGINE": "custom_postgres_engine",
         "NAME": os.environ["DB_NAME"],
         "USER": database_credentials["username"],
         "PASSWORD": database_credentials["password"],
