@@ -227,6 +227,9 @@ Resources:
               Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            - Name: OCTO_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
             - Name: CAPTCHA_SECRET
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
@@ -364,6 +367,9 @@ Resources:
               Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            - Name: OCTO_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
             - Name: CAPTCHA_SECRET
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
@@ -469,6 +475,9 @@ Resources:
               Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            - Name: OCTO_SECRET
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
             - Name: CAPTCHA_SECRET
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'

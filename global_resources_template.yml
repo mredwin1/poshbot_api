@@ -60,6 +60,10 @@ Parameters:
     Type: String
     NoEcho: true
     Description: 'The API key for the 2Captcha service'
+  OctoAPIKey:
+    Type: String
+    NoEcho: true
+    Description: 'The API key for the Octo Browser service'
 
 Mappings:
   # Hard values for the subnet masks. These masks define
@@ -313,12 +317,20 @@ Resources:
       Name: !Sub '${ApplicationName}-appium-server-ip-global'
       Description: 'The IP address for the Appium server'
       SecretString: !Ref AppiumServerIP
+
   2CaptchaAPIKeySecret:
     Type: AWS::SecretsManager::Secret
     Properties:
       Name: !Sub '${ApplicationName}-2capcha-api-key-global'
       Description: 'The API key for the 2Captcha service'
       SecretString: !Ref 2CaptchaAPIKey
+
+  OctoAPIKeySecret:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-octo-api-key-global'
+      Description: 'The API key for the Octo service'
+      SecretString: !Ref OctoAPIKey
 
 Outputs:
   VpcId:
@@ -381,3 +393,8 @@ Outputs:
     Value: !Ref 2CaptchaAPIKeySecret
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", 2CaptchaAPIKeySecret ] ]
+  OctoAPIKeySecret:
+    Description: The ARN for the Octo api key secret
+    Value: !Ref OctoAPIKeySecret
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", OctoAPIKeySecret ] ]
