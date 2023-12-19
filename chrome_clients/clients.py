@@ -113,7 +113,7 @@ class BaseClient:
         self.web_driver_options = Options()
 
         # Add preference to disable image loading
-        self.web_driver_options.add_argument('--blink-settings=imagesEnabled=false')
+        self.web_driver_options.add_argument("--blink-settings=imagesEnabled=false")
         # prefs = {"profile.managed_default_content_settings.images": 2}
         # self.web_driver_options.add_experimental_option("prefs", prefs)
         self.web_driver_options.add_experimental_option(
