@@ -111,6 +111,10 @@ class BaseClient:
         self.logger = logger
         self.web_driver = None
         self.web_driver_options = Options()
+
+        # Add preference to disable image loading
+        prefs = {"profile.managed_default_content_settings.images": 2}
+        self.web_driver_options.add_experimental_option("prefs", prefs)
         self.web_driver_options.add_experimental_option(
             "excludeSwitches", ["enable-automation"]
         )
