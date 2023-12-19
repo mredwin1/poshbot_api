@@ -523,6 +523,7 @@ Resources:
         - Name: general-container
           Image: !Ref DockerImage
           StopTimeout: 120
+          MemoryReservation: 1024
           EntryPoint:
             - './entrypoint.sh'
           RepositoryCredentials:
@@ -589,7 +590,9 @@ Resources:
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref GeneralTaskDefinition
       DesiredCount: 1
-      LaunchType: FARGATE
+      LaunchType: EC2
+      PropagateTags: TASK_DEFINITION
+      EnableECSManagedTags: true
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets: !Split
