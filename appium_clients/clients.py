@@ -53,8 +53,8 @@ class AppiumClient:
 
         capabilities["udid"] = device_serial
         capabilities["adbExecTimeout"] = 50000
-        capabilities["systemPort"] = system_port
-        capabilities["mjpegServerPort"] = mjpeg_server_port
+        # capabilities["systemPort"] = system_port
+        # capabilities["mjpegServerPort"] = mjpeg_server_port
 
         self.capabilities = capabilities
         self.capabilities_options = UiAutomator2Options().load_capabilities(
