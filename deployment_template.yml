@@ -1098,6 +1098,6 @@ Outputs:
   BeatService:
     Value: !GetAtt BeatService.Name
     Description: 'The name of the Beat Service'
-  GeneralService:
-    Value: !GetAtt GeneralService.Name
-    Description: 'The name of the General Service'
+#  GeneralService:
+#    Value: !GetAtt GeneralService.Name
+#    Description: 'The name of the General Service'
