@@ -373,3 +373,8 @@ Outputs:
     Value: !Ref 2CaptchaAPIKeySecret
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", 2CaptchaAPIKeySecret ] ]
+  OctoAPIKeySecret:
+    Description: The ARN for the Octo api key secret
+    Value: !Ref OctoAPIKeySecret
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", OctoAPIKeySecret ] ]
