@@ -35,7 +35,7 @@ BASE_DIR = Path(__file__).resolve().parent.parent.parent
 # Application definition
 DEBUG = False
 
-# SECRET_KEY = retrieve_secret(os.environ["SECRET_KEY"])
+SECRET_KEY = retrieve_secret(os.environ["SECRET_KEY"])
 
 INSTALLED_APPS = [
     "django.contrib.admin",
