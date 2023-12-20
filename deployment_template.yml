@@ -261,7 +261,7 @@ Resources:
               ValueFrom: !Ref MasterUserPassword
             - Name: CAPTCHA_API_KEY
               ValueFrom:
-                Fn::ImportValueFrom: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
             - Name: ZKE_CREDENTIALS
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
@@ -402,7 +402,7 @@ Resources:
               ValueFrom: !Ref MasterUserPassword
             - Name: CAPTCHA_API_KEY
               ValueFrom:
-                Fn::ImportValueFrom: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
             - Name: ZKE_CREDENTIALS
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
@@ -622,7 +622,7 @@ Resources:
               ValueFrom: !Ref MasterUserPassword
             - Name: CAPTCHA_API_KEY
               ValueFrom:
-                Fn::ImportValueFrom: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
             - Name: ZKE_CREDENTIALS
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
