@@ -53,6 +53,9 @@ RUN mkdir -p /etc/sudoers.d && \
     echo 'octo ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/octo && \
     chmod 0440 /etc/sudoers.d/octo
 
+# Set the working directory to /home/octo
+WORKDIR /home/octo
+
 #sudo octo
 RUN usermod -a -G sudo octo
 
