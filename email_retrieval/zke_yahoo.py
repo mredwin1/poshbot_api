@@ -1,18 +1,19 @@
 import email
 import imaplib
+import json
+import os
 
 import mysql.connector
 
-from django.conf import settings
-
 
 def _connect_to_db():
+    zke_yahoo_credentials = json.loads(os.environ["ZKE_CREDENTIALS"])
     db = mysql.connector.connect(
-        host=settings.ZKE_YAHOO_CREDENTIALS["host"],
-        port=settings.ZKE_YAHOO_CREDENTIALS["port"],
-        user=settings.ZKE_YAHOO_CREDENTIALS["username"],
-        password=settings.ZKE_YAHOO_CREDENTIALS["password"],
-        database=settings.ZKE_YAHOO_CREDENTIALS["dbname"],
+        host=zke_yahoo_credentials["host"],
+        port=zke_yahoo_credentials["port"],
+        user=zke_yahoo_credentials["username"],
+        password=zke_yahoo_credentials["password"],
+        database=zke_yahoo_credentials["dbname"],
     )
 
     if db.is_connected():

@@ -1,4 +1,5 @@
 import asyncio
+import os
 import pyppeteer
 import random
 import re
@@ -24,7 +25,7 @@ class OctoAPIClient:
         self.octo_local_api = "http://localhost:58888/api"
 
         self._octo_api_headers = {
-            "X-Octo-Api-Token": settings.OCTO_API_KEY,
+            "X-Octo-Api-Token": os.environ["OCTO_API_KEY"],
             "Content-Type": "application/json",
         }
         self._octo_local_api_header = {"Content-Type": "application/json"}
@@ -447,7 +448,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     captcha_src_val = await captcha_src.jsonValue()
 
                     site_key = re.findall(r"(?<=k=)(.*?)(?=&)", captcha_src_val)[0]
-                    solver = TwoCaptcha("c7e5b47cf69deba6946ef87b6d1faaf8")
+                    solver = TwoCaptcha(os.environ["CAPTCHA_SECRET"])
                     result = solver.recaptcha(sitekey=site_key, url=self.page.url)
 
                     await self.page.evaluate(

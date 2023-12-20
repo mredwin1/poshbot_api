@@ -1,5 +1,6 @@
 import asyncio
 import datetime
+import json
 import logging
 import os
 import pytz
@@ -15,7 +16,6 @@ from celery import shared_task, Task
 from celery.beat import Scheduler
 from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from decimal import Decimal
-from django.conf import settings
 from django.core.cache import caches
 from django.db.models import Q
 from django.utils import timezone
@@ -1267,8 +1267,9 @@ def check_listed_items(username: str = ""):
 
                 logger.info(f"{posh_user} - Updated {item} to REDEEMABLE")
                 if item.posh_user.user.email:
-                    from_email = settings.EMAIL_CREDENTIALS["username"]
-                    password = settings.EMAIL_CREDENTIALS["password"]
+                    email_credentials = json.loads(os.environ["EMAIL_CREDENTIALS"])
+                    from_email = email_credentials["username"]
+                    password = email_credentials["password"]
                     to_email = [item.posh_user.user.email]
                     subject = (
                         f"New Sale Available to Redeem for {item.posh_user.username}"

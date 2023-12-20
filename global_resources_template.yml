@@ -64,6 +64,14 @@ Parameters:
     Type: String
     NoEcho: true
     Description: 'The API key for the Octo Browser service'
+  OctoUsername:
+    Type: String
+    NoEcho: true
+    Description: 'The username to authenticate with octo'
+  OctoPassword:
+    Type: String
+    NoEcho: true
+    Description: 'The password used to authenticate with octo'
 
 Mappings:
   # Hard values for the subnet masks. These masks define
@@ -248,6 +256,33 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
+  ECSAgentEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref 'VPC'
+      VpcEndpointType: Interface
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs-agent'
+      SubnetIds:
+        - !Ref PrivateSubnetOne
+        - !Ref PrivateSubnetTwo
+  ECSTelemetryEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref 'VPC'
+      VpcEndpointType: Interface
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs-telemetry'
+      SubnetIds:
+        - !Ref PrivateSubnetOne
+        - !Ref PrivateSubnetTwo
+  ECSEndpoint:
+    Type: AWS::EC2::VPCEndpoint
+    Properties:
+      VpcId: !Ref 'VPC'
+      VpcEndpointType: Interface
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs'
+      SubnetIds:
+        - !Ref PrivateSubnetOne
+        - !Ref PrivateSubnetTwo
 
   # The hosted zone for the application
   HostedZone:
@@ -325,6 +360,17 @@ Resources:
       Description: 'The API key for the Octo service'
       SecretString: !Ref OctoAPIKey
 
+  OctoCredentials:
+    Type: AWS::SecretsManager::Secret
+    Properties:
+      Name: !Sub '${ApplicationName}-octo-credentials-global'
+      Description: 'Credentials used for the octo console/api'
+      SecretString: !Sub |
+        {
+          "username": "${OctoUsername}",
+          "password": "${OctoPassword}"
+        }
+
 Outputs:
   VpcId:
     Description: The ID of the VPC that this stack is deployed in
@@ -391,3 +437,8 @@ Outputs:
     Value: !Ref OctoAPIKeySecret
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", OctoAPIKeySecret ] ]
+  OctoSecret:
+    Description: The ARN for the octo credentials secret
+    Value: !Ref MobileHopCredentials
+    Export:
+      Name: !Join [ ":", [ !Ref "AWS::StackName", OctoCredentials ] ]

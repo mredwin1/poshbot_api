@@ -1,4 +1,5 @@
 import datetime
+import json
 import os
 import random
 import string
@@ -13,7 +14,6 @@ from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
 from django.db import models
 from django.utils import timezone
-from django.utils.text import slugify
 from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
@@ -105,9 +105,10 @@ class Proxy(models.Model):
     @staticmethod
     def authenticate_with_cookies():
         login_url = "https://portal.mobilehop.com/login"
+        mobile_hop_credentials = json.loads(os.environ["MOBILE_HOP_CREDENTIALS"])
         login_data = {
-            "username": settings.MOBILE_HOP_CREDENTIALS["username"],
-            "password": settings.MOBILE_HOP_CREDENTIALS["password"],
+            "username": mobile_hop_credentials["username"],
+            "password": mobile_hop_credentials["password"],
         }
 
         response = requests.post(login_url, data=login_data)

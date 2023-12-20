@@ -138,6 +138,37 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
+  ECSSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub
+        - '${ApplicationName}-ecs-server-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
+      GroupDescription: 'Security group for ecs ec2 instance to have open outbound communication'
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  EFSFileSystemSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EFS file system
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref ECSServiceSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+
   ElastiCacheSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -205,8 +236,6 @@ Resources:
               Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
             - Name: DB_NAME
               Value: 'postgres'
             - Name: DB_SECRET
@@ -223,28 +252,31 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-            - Name: MASTER_USER_SECRET
-              Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: OCTO_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: CAPTCHA_SECRET
+          Secrets:
+            - Name: SECRET_KEY
+              Value: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              Value: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-            - Name: APPIUM_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-            - Name: ZKE_SECRET
+            - Name: ZKE_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-            - Name: MOBILE_HOP_SECRET
+            - Name: MOBILE_HOP_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-            - Name: EMAIL_SECRET
+            - Name: EMAIL_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   APIService:
     Type: AWS::ECS::Service
@@ -345,8 +377,6 @@ Resources:
               Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
             - Name: DB_NAME
               Value: 'postgres'
             - Name: DB_SECRET
@@ -363,28 +393,31 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-            - Name: MASTER_USER_SECRET
-              Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: OCTO_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: CAPTCHA_SECRET
+          Secrets:
+            - Name: SECRET_KEY
+              Value: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              Value: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-            - Name: APPIUM_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-            - Name: ZKE_SECRET
+            - Name: ZKE_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-            - Name: MOBILE_HOP_SECRET
+            - Name: MOBILE_HOP_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-            - Name: EMAIL_SECRET
+            - Name: EMAIL_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   BeatService:
     Type: AWS::ECS::Service
@@ -453,8 +486,6 @@ Resources:
               Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
             - Name: DB_NAME
               Value: 'postgres'
             - Name: DB_SECRET
@@ -471,28 +502,31 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-            - Name: MASTER_USER_SECRET
-              Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: OCTO_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: CAPTCHA_SECRET
+          Secrets:
+            - Name: SECRET_KEY
+              Value: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              Value: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-            - Name: APPIUM_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-            - Name: ZKE_SECRET
+            - Name: ZKE_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-            - Name: MOBILE_HOP_SECRET
+            - Name: MOBILE_HOP_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-            - Name: EMAIL_SECRET
+            - Name: EMAIL_CREDENTIALS
               Value:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   MaintenanceService:
     Type: AWS::ECS::Service
@@ -519,245 +553,281 @@ Resources:
             - !GetAtt DatabaseSecurityGroup.GroupId
             - !GetAtt ECSServiceSecurityGroup.GroupId
 
-#  GeneralTaskDefinition:
-#    Type: AWS::ECS::TaskDefinition
-#    Properties:
-#      Family: !Sub
-#        - '${ApplicationName}-general-task-definition-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      NetworkMode: awsvpc
-#      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-#      TaskRoleArn: !GetAtt TaskRole.Arn
-#      Volumes:
-#        - Name: 'shm'
-#          Host:
-#            SourcePath: '/dev/shm'
-#        - Name: 'octo-cache'
-#          EFSVolumeConfiguration:
-#            FileSystemId: !Ref OctoCache
-#      ContainerDefinitions:
-#        - Name: general-container
-#          Image: !Ref DockerImage
-#          StopTimeout: 120
-#          MemoryReservation: 1024
-#          EntryPoint:
-#            - './entrypoint.sh'
-#          RepositoryCredentials:
-#            CredentialsParameter:
-#              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
-#          MountPoints:
-#            - SourceVolume: 'shm'
-#              ContainerPath: '/dev/shm'
-#            - SourceVolume: 'octo-cache'
-#              ContainerPath: '/home/.Octo Browser/bin'
-#          LogConfiguration:
-#            LogDriver: awslogs
-#            Options:
-#              awslogs-group: !Ref ECSLogGroup
-#              awslogs-region: !Ref AWS::Region
-#              awslogs-stream-prefix: general-container
-#          Environment:
-#            - Name: ENVIRONMENT
-#              Value: !Ref Environment
-#            - Name: DJANGO_SETTINGS_MODULE
-#              Value: 'poshbot_api.settings.prod'
-#            - Name: SECRET_KEY
-#              Value: !Ref DjangoSecretKey
-#            - Name: DB_NAME
-#              Value: 'postgres'
-#            - Name: DB_SECRET
-#              Value: !GetAtt Database.MasterUserSecret.SecretArn
-#            - Name: DB_HOSTNAME
-#              Value: !GetAtt Database.Endpoint.Address
-#            - Name: DB_PORT
-#              Value: !GetAtt Database.Endpoint.Port
-#            - Name: AWS_STORAGE_BUCKET_NAME
-#              Value: !Ref S3Bucket
-#            - Name: DOMAIN
-#              Value: !Ref RecordSet
-#            - Name: MAINTENANCE_QUEUE
-#              Value: !GetAtt MaintenanceQueue.QueueName
-#            - Name: GENERAL_QUEUE
-#              Value: !GetAtt GeneralQueue.QueueName
-#            - Name: MASTER_USER_SECRET
-#              Value: !Ref MasterUserPassword
-#            - Name: REDIS_ENDPOINT
-#              Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-#            - Name: CAPTCHA_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-#            - Name: APPIUM_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-#            - Name: ZKE_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-#            - Name: MOBILE_HOP_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-#            - Name: EMAIL_SECRET
-#              Value:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-#
-#  GeneralService:
-#    Type: AWS::ECS::Service
-#    Properties:
-#      ServiceName: !Sub
-#        - '${ApplicationName}-general-service-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      EnableExecuteCommand: true
-#      Cluster: !Ref ECSCluster
-#      TaskDefinition: !Ref GeneralTaskDefinition
-#      DesiredCount: 1
-#      LaunchType: EC2
-#      PropagateTags: TASK_DEFINITION
-#      EnableECSManagedTags: true
-#      NetworkConfiguration:
-#        AwsvpcConfiguration:
-#          Subnets: !Split
-#            - ","
-#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-#          SecurityGroups:
-#            - !GetAtt DatabaseSecurityGroup.GroupId
-#            - !GetAtt ECSServiceSecurityGroup.GroupId
-#
-#  GeneralScalableTarget:
-#    Type: AWS::ApplicationAutoScaling::ScalableTarget
-#    Properties:
-#      MaxCapacity: 8
-#      MinCapacity: 1
-#      ResourceId: !Sub
-#        - 'service/${ECSClusterName}/${GeneralServiceName}'
-#        - ECSClusterName: !Ref ECSCluster
-#          GeneralServiceName: !GetAtt GeneralService.Name
-#      ScalableDimension: ecs:service:DesiredCount
-#      ServiceNamespace: ecs
-#
-#  GeneralScaleUpPolicy:
-#    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
-#    Properties:
-#      PolicyType: 'StepScaling'
-#      PolicyName: !Sub
-#        - '${ApplicationName}-general-scale-up-policy-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      ScalingTargetId: !Ref GeneralScalableTarget
-#      StepScalingPolicyConfiguration:
-#        AdjustmentType: 'ChangeInCapacity'
-#        Cooldown: 60
-#        MetricAggregationType: 'Average'
-#        StepAdjustments:
-#          - MetricIntervalLowerBound: 0
-#            MetricIntervalUpperBound: 12
-#            ScalingAdjustment: 1
-#          - MetricIntervalLowerBound: 12
-#            ScalingAdjustment: 2
-#
-#  GeneralScaleDownPolicy:
-#    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
-#    Properties:
-#      PolicyType: 'StepScaling'
-#      PolicyName: !Sub
-#        - '${ApplicationName}-general-scale-down-policy-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      ScalingTargetId: !Ref GeneralScalableTarget
-#      StepScalingPolicyConfiguration:
-#        AdjustmentType: 'ExactCapacity'
-#        Cooldown: 120
-#        MetricAggregationType: 'Average'
-#        StepAdjustments:
-#          - MetricIntervalUpperBound: -8
-#            ScalingAdjustment: 1
-#          - MetricIntervalLowerBound: -8
-#            MetricIntervalUpperBound: 0
-#            ScalingAdjustment: 1
-#
-#  GeneralScaleOutAlarm:
-#    Type: 'AWS::CloudWatch::Alarm'
-#    Properties:
-#      AlarmName: !Sub
-#        - '${ApplicationName}-general-scale-out-alarm-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      ComparisonOperator: 'GreaterThanThreshold'
-#      EvaluationPeriods: 1
-#      MetricName: 'ApproximateNumberOfMessagesVisible'
-#      Namespace: 'AWS/SQS'
-#      Period: 30
-#      Threshold: 8
-#      Statistic: 'Sum'
-#      AlarmDescription: !Sub
-#        - 'Alarm used for scaling ${ServiceName}'
-#        - ServiceName: !GetAtt GeneralService.Name
-#      AlarmActions:
-#        - !Ref GeneralScaleUpPolicy
-#      Dimensions:
-#        - Name: QueueName
-#          Value: !GetAtt GeneralQueue.QueueName
-#
-#  GeneralScaleInAlarm:
-#    Type: 'AWS::CloudWatch::Alarm'
-#    Properties:
-#      AlarmName: !Sub
-#        - '${ApplicationName}-general-scale-in-alarm-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      ComparisonOperator: 'LessThanOrEqualToThreshold'
-#      EvaluationPeriods: 1
-#      MetricName: 'ApproximateNumberOfMessagesVisible'
-#      Namespace: 'AWS/SQS'
-#      Period: 60
-#      Threshold: 8
-#      Statistic: 'Sum'
-#      AlarmDescription: !Sub
-#        - 'Alarm used for scaling ${ServiceName}'
-#        - ServiceName: !GetAtt GeneralService.Name
-#      AlarmActions:
-#        - !Ref GeneralScaleDownPolicy
-#      Dimensions:
-#        - Name: QueueName
-#          Value: !GetAtt GeneralQueue.QueueName
-#
-#  ECSAutoScalingGroup:
-#    Type: "AWS::AutoScaling::AutoScalingGroup"
-#    Properties:
-#      AutoScalingGroupName: !Sub
-#        - '${ApplicationName}-general-service-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      LaunchConfigurationName: !Ref ECSLaunchConfiguration
-#      DesiredCapacity: 1
-#      MinSize: 1
-#      MaxSize: 3
-#      VPCZoneIdentifier: !Split
-#        - ","
-#        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-#
-#    ECSLaunchConfiguration:
-#      Type: "AWS::AutoScaling::LaunchConfiguration"
-#      Properties:
-#        LaunchConfigurationName: !Sub
-#        - '${ApplicationName}-general-service-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#        ImageId: ami-045a946a7171d63ce
-#        InstanceType: t3.large
-#        IamInstanceProfile: !Ref EC2InstanceProfile
-#        UserData:
-#          Fn::Base64: !Sub |
-#            #!/bin/bash
-#            echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+  GeneralTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub
+        - '${ApplicationName}-general-task-definition-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Volumes:
+        - Name: 'shm'
+          Host:
+            SourcePath: '/dev/shm'
+        - Name: 'octo-cache'
+          EFSVolumeConfiguration:
+            FilesystemId: !GetAtt OctoCache.FileSystemId
+      ContainerDefinitions:
+        - Name: general-container
+          Image: !Ref DockerImage
+          StopTimeout: 120
+          MemoryReservation: 1024
+          EntryPoint:
+            - './entrypoint.sh'
+          RepositoryCredentials:
+            CredentialsParameter:
+              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+          MountPoints:
+            - SourceVolume: 'shm'
+              ContainerPath: '/dev/shm'
+            - SourceVolume: 'octo-cache'
+              ContainerPath: '/home/.Octo Browser/bin'
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: general-container
+          Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: 'poshbot_api.settings.prod'
+            - Name: DB_NAME
+              Value: 'postgres'
+            - Name: DB_SECRET
+              Value: !GetAtt Database.MasterUserSecret.SecretArn
+            - Name: DB_HOSTNAME
+              Value: !GetAtt Database.Endpoint.Address
+            - Name: DB_PORT
+              Value: !GetAtt Database.Endpoint.Port
+            - Name: AWS_STORAGE_BUCKET_NAME
+              Value: !Ref S3Bucket
+            - Name: DOMAIN
+              Value: !Ref RecordSet
+            - Name: MAINTENANCE_QUEUE
+              Value: !GetAtt MaintenanceQueue.QueueName
+            - Name: GENERAL_QUEUE
+              Value: !GetAtt GeneralQueue.QueueName
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+          Secrets:
+            - Name: SECRET_KEY
+              Value: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              Value: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+            - Name: ZKE_CREDENTIALS
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+            - Name: MOBILE_HOP_CREDENTIALS
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+            - Name: EMAIL_CREDENTIALS
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              Value:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
+
+  GeneralService:
+    Type: AWS::ECS::Service
+    Properties:
+      ServiceName: !Sub
+        - '${ApplicationName}-general-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      EnableExecuteCommand: true
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref GeneralTaskDefinition
+      DesiredCount: 1
+      LaunchType: EC2
+      PropagateTags: TASK_DEFINITION
+      EnableECSManagedTags: true
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+          SecurityGroups:
+            - !GetAtt DatabaseSecurityGroup.GroupId
+            - !GetAtt ECSServiceSecurityGroup.GroupId
+            - !GetAtt EFSFileSystemSecurityGroup.GroupId
+
+  GeneralScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 8
+      MinCapacity: 1
+      ResourceId: !Sub
+        - 'service/${ECSClusterName}/${GeneralServiceName}'
+        - ECSClusterName: !Ref ECSCluster
+          GeneralServiceName: !GetAtt GeneralService.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  GeneralScaleUpPolicy:
+    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Properties:
+      PolicyType: 'StepScaling'
+      PolicyName: !Sub
+        - '${ApplicationName}-general-scale-up-policy-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      ScalingTargetId: !Ref GeneralScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: 'ChangeInCapacity'
+        Cooldown: 60
+        MetricAggregationType: 'Average'
+        StepAdjustments:
+          - MetricIntervalLowerBound: 0
+            MetricIntervalUpperBound: 12
+            ScalingAdjustment: 1
+          - MetricIntervalLowerBound: 12
+            ScalingAdjustment: 2
+
+  GeneralScaleDownPolicy:
+    Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
+    Properties:
+      PolicyType: 'StepScaling'
+      PolicyName: !Sub
+        - '${ApplicationName}-general-scale-down-policy-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      ScalingTargetId: !Ref GeneralScalableTarget
+      StepScalingPolicyConfiguration:
+        AdjustmentType: 'ExactCapacity'
+        Cooldown: 120
+        MetricAggregationType: 'Average'
+        StepAdjustments:
+          - MetricIntervalUpperBound: -8
+            ScalingAdjustment: 1
+          - MetricIntervalLowerBound: -8
+            MetricIntervalUpperBound: 0
+            ScalingAdjustment: 1
+
+  GeneralScaleOutAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmName: !Sub
+        - '${ApplicationName}-general-scale-out-alarm-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      ComparisonOperator: 'GreaterThanThreshold'
+      EvaluationPeriods: 1
+      MetricName: 'ApproximateNumberOfMessagesVisible'
+      Namespace: 'AWS/SQS'
+      Period: 30
+      Threshold: 8
+      Statistic: 'Sum'
+      AlarmDescription: !Sub
+        - 'Alarm used for scaling ${ServiceName}'
+        - ServiceName: !GetAtt GeneralService.Name
+      AlarmActions:
+        - !Ref GeneralScaleUpPolicy
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt GeneralQueue.QueueName
+
+  GeneralScaleInAlarm:
+    Type: 'AWS::CloudWatch::Alarm'
+    Properties:
+      AlarmName: !Sub
+        - '${ApplicationName}-general-scale-in-alarm-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      ComparisonOperator: 'LessThanOrEqualToThreshold'
+      EvaluationPeriods: 1
+      MetricName: 'ApproximateNumberOfMessagesVisible'
+      Namespace: 'AWS/SQS'
+      Period: 60
+      Threshold: 8
+      Statistic: 'Sum'
+      AlarmDescription: !Sub
+        - 'Alarm used for scaling ${ServiceName}'
+        - ServiceName: !GetAtt GeneralService.Name
+      AlarmActions:
+        - !Ref GeneralScaleDownPolicy
+      Dimensions:
+        - Name: QueueName
+          Value: !GetAtt GeneralQueue.QueueName
+
+  ECSAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      AutoScalingGroupName: !Sub
+        - '${ApplicationName}-general-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      LaunchConfigurationName: !Ref ECSLaunchConfiguration
+      DesiredCapacity: 1
+      MinSize: 1
+      MaxSize: 3
+      VPCZoneIdentifier: !Split
+        - ","
+        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+
+  ECSLaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      LaunchConfigurationName: !Sub
+      - '${ApplicationName}-general-service-${Environment}'
+      - Environment: !Ref Environment
+        ApplicationName:
+          Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      ImageId: ami-045a946a7171d63ce
+      InstanceType: t3.large
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroups:
+        - !Ref ECSSecurityGroup
+        - !Ref EFSFileSystemSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+
+
+
+  EFSMountTargetOne:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref OctoCache
+      SubnetId:
+        Fn::Select:
+          - "0"
+          - !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+      SecurityGroups:
+        - !Ref EFSFileSystemSecurityGroup
+
+  EFSMountTargetTwo:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref OctoCache
+      SubnetId:
+        Fn::Select:
+          - "1"
+          - !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+      SecurityGroups:
+        - !Ref EFSFileSystemSecurityGroup
 
   OctoCache:
     Type: AWS::EFS::FileSystem
@@ -989,6 +1059,7 @@ Resources:
                   - 'elasticfilesystem:ClientMount'
                   - 'elasticfilesystem:ClientWrite'
                   - 'elasticfilesystem:DescribeFileSystems'
+                  - 'elasticfilesystem:DescribeMountTargets'
                 Resource: !GetAtt OctoCache.Arn
 
   EC2InstanceRole:

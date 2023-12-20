@@ -17,7 +17,7 @@ class DatabaseWrapper(base.DatabaseWrapper):
         self.lock = threading.Lock()
 
     @staticmethod
-    def get_new_password():
+    def get_new_credentials():
         try:
             session = boto3.session.Session()
             client = session.client(
@@ -30,7 +30,10 @@ class DatabaseWrapper(base.DatabaseWrapper):
 
     def get_connection_params(self):
         params = super().get_connection_params()
-        params["password"] = self.get_new_password()
+        credentials = self.get_new_credentials()
+
+        params["user"] = credentials["username"]
+        params["password"] = credentials["password"]
         return params
 
     def _cursor(self, name=None):
