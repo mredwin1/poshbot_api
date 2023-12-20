@@ -60,6 +60,10 @@ Parameters:
     Type: String
     NoEcho: true
     Description: 'The API key for the 2Captcha service'
+  OctoAPIKey:
+    Type: String
+    NoEcho: true
+    Description: 'The API key for the Octo Browser service'
 
 Mappings:
   # Hard values for the subnet masks. These masks define
