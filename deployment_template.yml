@@ -511,9 +511,10 @@ Resources:
       LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
+          AssignPublicIp: ENABLED
           Subnets: !Split
             - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
           SecurityGroups:
             - !GetAtt DatabaseSecurityGroup.GroupId
             - !GetAtt ECSServiceSecurityGroup.GroupId
