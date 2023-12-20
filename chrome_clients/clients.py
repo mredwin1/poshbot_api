@@ -248,8 +248,7 @@ class BasePuppeteerClient:
     async def close(self):
         """Closes the Puppeteer browser."""
         if self.browser:
-            # await asyncio.ensure_future(self.browser.close())
-            await asyncio.ensure_future(self.browser.disconnect())
+            await asyncio.ensure_future(self.browser.close())
 
     @staticmethod
     def intercept_request(req):
