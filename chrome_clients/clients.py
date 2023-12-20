@@ -975,9 +975,6 @@ class PoshmarkClient(BasePuppeteerClient):
                         "(element) => element.textContent", username_elem
                     )
 
-                self.logger.info(username_elem)
-                self.logger.info(username)
-
                 # Check if the comment contains any bad words
                 for bad_word in bad_words:
                     word = bad_word["word"]
