@@ -256,26 +256,26 @@ Resources:
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
           Secrets:
             - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
+              ValueFrom: !Ref DjangoSecretKey
             - Name: MASTER_USER_PASSWORD
-              Value: !Ref MasterUserPassword
+              ValueFrom: !Ref MasterUserPassword
             - Name: CAPTCHA_API_KEY
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+              ValueFrom:
+                Fn::ImportValueFrom: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
             - Name: ZKE_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
             - Name: MOBILE_HOP_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
             - Name: EMAIL_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
             - Name: OCTO_API_KEY
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
             - Name: OCTO_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   APIService:
@@ -397,26 +397,26 @@ Resources:
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
           Secrets:
             - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
+              ValueFrom: !Ref DjangoSecretKey
             - Name: MASTER_USER_PASSWORD
-              Value: !Ref MasterUserPassword
+              ValueFrom: !Ref MasterUserPassword
             - Name: CAPTCHA_API_KEY
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+              ValueFrom:
+                Fn::ImportValueFrom: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
             - Name: ZKE_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
             - Name: MOBILE_HOP_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
             - Name: EMAIL_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
             - Name: OCTO_API_KEY
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
             - Name: OCTO_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   BeatService:
@@ -617,26 +617,26 @@ Resources:
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
           Secrets:
             - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
+              ValueFrom: !Ref DjangoSecretKey
             - Name: MASTER_USER_PASSWORD
-              Value: !Ref MasterUserPassword
+              ValueFrom: !Ref MasterUserPassword
             - Name: CAPTCHA_API_KEY
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+              ValueFrom:
+                Fn::ImportValueFrom: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
             - Name: ZKE_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
             - Name: MOBILE_HOP_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
             - Name: EMAIL_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
             - Name: OCTO_API_KEY
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
             - Name: OCTO_CREDENTIALS
-              Value:
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   GeneralService:
