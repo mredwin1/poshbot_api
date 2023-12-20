@@ -50,6 +50,6 @@ class Command(BaseCommand):
 
         logging.info("Starting server...")
         os.system(
-            "gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 2 -w 2"
+            "gunicorn --preload -b 0.0.0.0:8000 poshbot_api.wsgi:application --threads 2 -w 2"
         )
         exit()

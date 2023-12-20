@@ -192,7 +192,7 @@ Resources:
             CredentialsParameter:
               Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
           PortMappings:
-            - ContainerPort: 80
+            - ContainerPort: 8000
               AppProtocol: http
           LogConfiguration:
             LogDriver: awslogs
@@ -265,7 +265,7 @@ Resources:
       LoadBalancers:
         - TargetGroupArn: !Ref APITargetGroup
           ContainerName: api-container
-          ContainerPort: 80
+          ContainerPort: 8000
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets: !Split
@@ -848,7 +848,7 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      Port: 80
+      Port: 8000
       Protocol: HTTP
       TargetType: ip
       VpcId:
