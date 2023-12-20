@@ -903,6 +903,7 @@ Resources:
                   - "secretsmanager:GetSecretValue"
                 Resource:
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
