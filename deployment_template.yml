@@ -801,9 +801,6 @@ Resources:
           #!/bin/bash
           echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
 
-
-
-
   EFSMountTargetOne:
     Type: AWS::EFS::MountTarget
     Properties:
