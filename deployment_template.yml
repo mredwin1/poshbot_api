@@ -176,8 +176,8 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 512
-      Memory: 1024
+      Cpu: 1024
+      Memory: 2048
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
