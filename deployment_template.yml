@@ -981,6 +981,14 @@ Resources:
                   - "secretsmanager:GetSecretValue"
                 Resource:
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+                  - !Ref DjangoSecretKey
+                  - !Ref MasterUserPassword
         - PolicyName: AWSCloudWatch
           PolicyDocument:
             Version: "2012-10-17"
@@ -990,22 +998,6 @@ Resources:
                   - "logs:CreateLogStream"
                   - "logs:PutLogEvents"
                 Resource: !GetAtt ECSLogGroup.Arn
-        - PolicyName: SecretsManagerAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "secretsmanager:GetSecretValue"
-                Resource:
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-                  - !Ref DjangoSecretKey
-                  - !Ref MasterUserPassword
 
   TaskRole:
     Type: AWS::IAM::Role
