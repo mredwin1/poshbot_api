@@ -454,6 +454,6 @@ Outputs:
       Name: !Join [ ":", [ !Ref "AWS::StackName", OctoAPIKeySecret ] ]
   OctoSecret:
     Description: The ARN for the octo credentials secret
-    Value: !Ref MobileHopCredentials
+    Value: !Ref OctoCredentials
     Export:
       Name: !Join [ ":", [ !Ref "AWS::StackName", OctoCredentials ] ]
