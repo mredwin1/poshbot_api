@@ -24,7 +24,7 @@ class DatabaseWrapper(base.DatabaseWrapper):
                 service_name="secretsmanager", region_name="us-east-1"
             )
             secret = client.get_secret_value(SecretId=os.environ["DB_SECRET"])
-            return json.loads(secret["SecretString"])["password"]
+            return json.loads(secret["SecretString"])
         except Exception as e:
             raise Exception("Failed to retrieve credentials from Secrets Manager", e)
 
