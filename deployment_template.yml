@@ -770,7 +770,7 @@ Resources:
     Type: "AWS::AutoScaling::AutoScalingGroup"
     Properties:
       AutoScalingGroupName: !Sub
-        - '${ApplicationName}-general-service-${Environment}'
+        - '${ApplicationName}-auto-scaling-${Environment}'
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
@@ -786,7 +786,7 @@ Resources:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
       LaunchConfigurationName: !Sub
-      - '${ApplicationName}-general-service-${Environment}'
+      - '${ApplicationName}-launch-config-${Environment}'
       - Environment: !Ref Environment
         ApplicationName:
           Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
@@ -984,6 +984,7 @@ Resources:
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
                   - !Ref DjangoSecretKey
                   - !Ref MasterUserPassword
         - PolicyName: AWSCloudWatch
