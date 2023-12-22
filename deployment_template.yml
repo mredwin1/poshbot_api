@@ -196,144 +196,144 @@ Resources:
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
 
-#  APITaskDefinition:
-#    Type: AWS::ECS::TaskDefinition
-#    Properties:
-#      Family: !Sub
-#        - '${ApplicationName}-api-task-definition-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      NetworkMode: awsvpc
-#      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
-#      TaskRoleArn: !GetAtt TaskRole.Arn
-#      Cpu: 512
-#      Memory: 1024
-#      RuntimePlatform:
-#        CpuArchitecture: X86_64
-#        OperatingSystemFamily: LINUX
-#      ContainerDefinitions:
-#        - Name: api-container
-#          Image: !Ref DockerImage
-#          EntryPoint:
-#            - 'python3'
-#            - 'manage.py'
-#            - 'start'
-#          RepositoryCredentials:
-#            CredentialsParameter:
-#              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
-#          PortMappings:
-#            - ContainerPort: 8000
-#              AppProtocol: http
-#          LogConfiguration:
-#            LogDriver: awslogs
-#            Options:
-#              awslogs-group: !Ref ECSLogGroup
-#              awslogs-region: !Ref AWS::Region
-#              awslogs-stream-prefix: api-container
-#          Environment:
-#            - Name: ENVIRONMENT
-#              Value: !Ref Environment
-#            - Name: DJANGO_SETTINGS_MODULE
-#              Value: 'poshbot_api.settings.prod'
-#            - Name: DB_NAME
-#              Value: 'postgres'
-#            - Name: DB_SECRET
-#              Value: !GetAtt Database.MasterUserSecret.SecretArn
-#            - Name: DB_HOSTNAME
-#              Value: !GetAtt Database.Endpoint.Address
-#            - Name: DB_PORT
-#              Value: !GetAtt Database.Endpoint.Port
-#            - Name: AWS_STORAGE_BUCKET_NAME
-#              Value: !Ref S3Bucket
-#            - Name: DOMAIN
-#              Value: !Ref RecordSet
-#            - Name: MAINTENANCE_QUEUE
-#              Value: !GetAtt MaintenanceQueue.QueueName
-#            - Name: GENERAL_QUEUE
-#              Value: !GetAtt GeneralQueue.QueueName
-#            - Name: REDIS_ENDPOINT
-#              Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-#          Secrets:
-#            - Name: SECRET_KEY
-#              ValueFrom: !Ref DjangoSecretKey
-#            - Name: MASTER_USER_PASSWORD
-#              ValueFrom: !Ref MasterUserPassword
-#            - Name: CAPTCHA_API_KEY
-#              ValueFrom:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-#            - Name: ZKE_CREDENTIALS
-#              ValueFrom:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-#            - Name: MOBILE_HOP_CREDENTIALS
-#              ValueFrom:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-#            - Name: EMAIL_CREDENTIALS
-#              ValueFrom:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-#            - Name: OCTO_API_KEY
-#              ValueFrom:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-#            - Name: OCTO_CREDENTIALS
-#              ValueFrom:
-#                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
-#
-#  APIService:
-#    Type: AWS::ECS::Service
-#    DependsOn: HTTPSListener
-#    Properties:
-#      ServiceName: !Sub
-#        - '${ApplicationName}-api-service-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      EnableExecuteCommand: true
-#      EnableECSManagedTags: true
-#      PropagateTags: TASK_DEFINITION
-#      Cluster: !Ref ECSCluster
-#      TaskDefinition: !Ref APITaskDefinition
-#      DesiredCount: 1
-#      LaunchType: FARGATE
-#      LoadBalancers:
-#        - TargetGroupArn: !Ref APITargetGroup
-#          ContainerName: api-container
-#          ContainerPort: 8000
-#      NetworkConfiguration:
-#        AwsvpcConfiguration:
-#          Subnets: !Split
-#            - ","
-#            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-#          SecurityGroups:
-#            - !GetAtt DatabaseSecurityGroup.GroupId
-#            - !GetAtt APISecurityGroup.GroupId
-#            - !GetAtt ECSServiceSecurityGroup.GroupId
-#
-#  APIScalableTarget:
-#    Type: AWS::ApplicationAutoScaling::ScalableTarget
-#    Properties:
-#      MaxCapacity: 4
-#      MinCapacity: 1
-#      ResourceId: !Sub
-#        - 'service/${ECSClusterName}/${APIServiceName}'
-#        - ECSClusterName: !Ref ECSCluster
-#          APIServiceName: !GetAtt APIService.Name
-#      ScalableDimension: ecs:service:DesiredCount
-#      ServiceNamespace: ecs
-#
-#  APIScalingPolicy:
-#    Type: AWS::ApplicationAutoScaling::ScalingPolicy
-#    Properties:
-#      PolicyName: !Sub
-#        - '${ApplicationName}-api-scaling-policy-${Environment}'
-#        - Environment: !Ref Environment
-#          ApplicationName:
-#            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-#      PolicyType: TargetTrackingScaling
-#      ScalingTargetId: !Ref APIScalableTarget
-#      TargetTrackingScalingPolicyConfiguration:
-#        PredefinedMetricSpecification:
-#          PredefinedMetricType: ECSServiceAverageCPUUtilization
-#        TargetValue: 85
+  APITaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub
+        - '${ApplicationName}-api-task-definition-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Cpu: 512
+      Memory: 1024
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: api-container
+          Image: !Ref DockerImage
+          EntryPoint:
+            - 'python3'
+            - 'manage.py'
+            - 'start'
+          RepositoryCredentials:
+            CredentialsParameter:
+              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+          PortMappings:
+            - ContainerPort: 8000
+              AppProtocol: http
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: api-container
+          Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: 'poshbot_api.settings.prod'
+            - Name: DB_NAME
+              Value: 'postgres'
+            - Name: DB_SECRET
+              Value: !GetAtt Database.MasterUserSecret.SecretArn
+            - Name: DB_HOSTNAME
+              Value: !GetAtt Database.Endpoint.Address
+            - Name: DB_PORT
+              Value: !GetAtt Database.Endpoint.Port
+            - Name: AWS_STORAGE_BUCKET_NAME
+              Value: !Ref S3Bucket
+            - Name: DOMAIN
+              Value: !Ref RecordSet
+            - Name: MAINTENANCE_QUEUE
+              Value: !GetAtt MaintenanceQueue.QueueName
+            - Name: GENERAL_QUEUE
+              Value: !GetAtt GeneralQueue.QueueName
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+          Secrets:
+            - Name: SECRET_KEY
+              ValueFrom: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              ValueFrom: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+            - Name: ZKE_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+            - Name: MOBILE_HOP_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+            - Name: EMAIL_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
+
+  APIService:
+    Type: AWS::ECS::Service
+    DependsOn: HTTPSListener
+    Properties:
+      ServiceName: !Sub
+        - '${ApplicationName}-api-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: TASK_DEFINITION
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref APITaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - TargetGroupArn: !Ref APITargetGroup
+          ContainerName: api-container
+          ContainerPort: 8000
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+          SecurityGroups:
+            - !GetAtt DatabaseSecurityGroup.GroupId
+            - !GetAtt APISecurityGroup.GroupId
+            - !GetAtt ECSServiceSecurityGroup.GroupId
+
+  APIScalableTarget:
+    Type: AWS::ApplicationAutoScaling::ScalableTarget
+    Properties:
+      MaxCapacity: 4
+      MinCapacity: 1
+      ResourceId: !Sub
+        - 'service/${ECSClusterName}/${APIServiceName}'
+        - ECSClusterName: !Ref ECSCluster
+          APIServiceName: !GetAtt APIService.Name
+      ScalableDimension: ecs:service:DesiredCount
+      ServiceNamespace: ecs
+
+  APIScalingPolicy:
+    Type: AWS::ApplicationAutoScaling::ScalingPolicy
+    Properties:
+      PolicyName: !Sub
+        - '${ApplicationName}-api-scaling-policy-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      PolicyType: TargetTrackingScaling
+      ScalingTargetId: !Ref APIScalableTarget
+      TargetTrackingScalingPolicyConfiguration:
+        PredefinedMetricSpecification:
+          PredefinedMetricType: ECSServiceAverageCPUUtilization
+        TargetValue: 85
 #
 #  BeatTaskDefinition:
 #    Type: AWS::ECS::TaskDefinition
