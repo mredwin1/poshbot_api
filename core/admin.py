@@ -67,11 +67,6 @@ def enable_posh_users(modeladmin, request, queryset):
     queryset.update(is_active=True, date_disabled=None)
 
 
-@admin.action(description="Check device in")
-def check_devices_in(modeladmin, request, queryset):
-    queryset.update(checked_out_by=None, checkout_time=None)
-
-
 @admin.action(description="Check proxy in")
 def check_proxies_in(modeladmin, request, queryset):
     queryset.update(checked_out_by=None, checkout_time=None)
@@ -224,7 +219,6 @@ class UserAdmin(BaseUserAdmin):
 class PoshUserAdmin(admin.ModelAdmin):
     readonly_fields = [
         "date_added",
-        "time_to_setup_device",
         "time_to_register",
         "date_disabled",
     ]
@@ -277,11 +271,7 @@ class PoshUserAdmin(admin.ModelAdmin):
                         "profile_updated",
                         "send_support_email",
                     ),
-                    (
-                        "time_to_setup_device",
-                        "time_to_register",
-                        "time_to_finish_registration",
-                    ),
+                    ("time_to_register",),
                     ("user", "date_added", "date_disabled"),
                     (
                         "username",
@@ -312,17 +302,6 @@ class PoshUserAdmin(admin.ModelAdmin):
                     ),
                     ("profile_picture", "profile_picture_id"),
                     ("header_picture"),
-                ),
-            },
-        ),
-        (
-            "Device Info",
-            {
-                "classes": ("collapse",),
-                "fields": (
-                    ("imei1", "imei2", "wifi_mac", "wifi_ssid", "wifi_bssid"),
-                    ("bluetooth_id", "sim_sub_id", "sim_serial", "android_id"),
-                    ("mobile_number", "hw_serial", "ads_id", "gsf", "media_drm"),
                 ),
             },
         ),
