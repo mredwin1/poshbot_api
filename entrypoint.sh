@@ -16,6 +16,8 @@ retry_count=0
 OCTO_EMAIL=$(echo $OCTO_CREDENTIALS | jq -r '.username')
 OCTO_PASSWORD=$(echo $OCTO_CREDENTIALS | jq -r '.password')
 
+echo "Credentials $OCTO_CREDENTIALS"
+
 while [ $retry_count -lt $max_retries ] && \
       { [ -z "$response" ] || [[ $response != *'{"msg":"Logged in successfully"}'* ]] && \
         [[ $response != *'{"error":"Already logged in"}'* ]]; }; do
