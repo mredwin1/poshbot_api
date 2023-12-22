@@ -285,9 +285,6 @@ class PoshUser(models.Model):
     profile_updated = models.BooleanField(default=False)
     send_support_email = models.BooleanField(default=False)
 
-    time_to_setup_device = models.DurationField(
-        default=datetime.timedelta(seconds=0), blank=True
-    )
     time_to_register = models.DurationField(
         default=datetime.timedelta(seconds=0), blank=True
     )
