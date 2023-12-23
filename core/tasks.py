@@ -329,6 +329,7 @@ class CampaignTask(Task):
         async for item_to_list in items_to_list:
             user_info = self.campaign.posh_user.user_info
             item_info = item_to_list.item_info
+            item_info["photos"] = await item_to_list.get_images()
             start_time = time.time()
             try:
                 listed_item = await client.list_item(user_info, item_info)

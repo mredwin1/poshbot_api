@@ -729,12 +729,11 @@ class ListedItem(models.Model):
             "original_price": str(self.listing.original_price),
             "listing_price": str(self.listing.listing_price),
             "description": self.listing.description,
-            "photos": self.get_images(),
         }
 
         return item_info
 
-    def get_images(self):
+    async def get_images(self):
         paths = []
 
         dir_name, cover_photo_name = os.path.split(self.listing.cover_photo.name)
@@ -746,7 +745,7 @@ class ListedItem(models.Model):
         paths.append(cover_photo_path)
 
         images = ListingImage.objects.filter(listing=self.listing)
-        for image in images:
+        async for image in images:
             _, image_name = os.path.split(image.image.name)
             image_path = os.path.join(dir_name, image_name)
             with open(image_path, mode="wb") as local_file:
