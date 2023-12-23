@@ -11,7 +11,6 @@ import ssl
 import time
 import traceback
 
-from asgiref.sync import sync_to_async
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
 from celery.beat import Scheduler
@@ -579,7 +578,7 @@ class CampaignTask(Task):
                 "Campaign was sent to the end of the line and will start soon"
             )
             self.campaign.status = Campaign.STARTING
-            self.campaign.next_runtime = timezone.now()
+            self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
             self.campaign.queue_status = "Unknown"
             self.campaign.save(update_fields=["status", "next_runtime", "queue_status"])
 
