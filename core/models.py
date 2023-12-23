@@ -395,8 +395,8 @@ class PoshUser(models.Model):
 
         return password
 
+    @staticmethod
     def generate(
-        self,
         fake,
         user,
         email,
@@ -464,7 +464,7 @@ class PoshUser(models.Model):
             last_name=last_name,
             username=username,
             password=password,
-            gender=fake.random_element(elements=(self.MALE, self.FEMALE)),
+            gender=fake.random_element(elements=(PoshUser.MALE, PoshUser.FEMALE)),
             email=email,
             email_password=email_password,
             email_imap_password=email_imap_password,
