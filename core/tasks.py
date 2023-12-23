@@ -587,7 +587,9 @@ class CampaignTask(Task):
         *args,
         **kwargs,
     ):
-        self.campaign = Campaign.objects.get(id=campaign_id).select_related("posh_user")
+        self.campaign = (
+            Campaign.objects.filter(id=campaign_id).select_related("posh_user").first()
+        )
         self.logger = self.init_logger(logger_id)
         self.proxy = None
         self.proxy_id = proxy_id
