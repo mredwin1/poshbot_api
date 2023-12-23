@@ -620,7 +620,7 @@ class PoshmarkClient(BasePuppeteerClient):
         if "/login" not in self.page.url:
             await self.click(selector='a[href="/login"]')
 
-            await self.sleep(1.5, 2.5)
+        await self.sleep(1.5, 2.5)
 
         await self.type("#login_form_username_email", username)
         await self.type("#login_form_password", password)
