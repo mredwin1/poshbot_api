@@ -186,7 +186,7 @@ class OctoAPIClient:
         active_uuids = [active_profile["uuid"] for active_profile in active_profiles]
 
         if uuid in active_uuids:
-            self.force_stop_profile(uuid)
+            self.stop_profile(uuid)
 
         response = requests.post(
             f"{self.octo_local_api}/profiles/start",
