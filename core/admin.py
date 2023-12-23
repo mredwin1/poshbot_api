@@ -279,7 +279,7 @@ class PoshUserAdmin(admin.ModelAdmin):
                         "email_password",
                         "email_imap_password",
                     ),
-                    ("phone_number",),
+                    ("phone_number", "octo_uuid"),
                 )
             },
         ),
