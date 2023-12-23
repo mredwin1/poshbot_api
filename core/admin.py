@@ -267,7 +267,6 @@ class PoshUserAdmin(admin.ModelAdmin):
                         "is_active",
                         "is_active_in_posh",
                         "is_registered",
-                        "finished_registration",
                         "profile_updated",
                         "send_support_email",
                     ),
