@@ -679,42 +679,24 @@ class ManageCampaignsTask(Task):
                     self.logger.warning("Campaign does not exist. Checking in.")
                     proxy.check_in()
 
-    def start_campaign(self, campaign, device=None, proxy=None):
-        if device and proxy:
+    def start_campaign(self, campaign, proxy=None):
+        if proxy:
             try:
-                device.check_out(campaign.id)
-                try:
-                    proxy.check_out(campaign.id)
-                except ValueError:
-                    self.logger.warning(f"Proxy: {proxy.id} is not ready")
-                    device.check_in()
-
-                    return False
+                proxy.check_out(campaign.id)
 
                 campaign.status = Campaign.IN_QUEUE
                 campaign.queue_status = "N/A"
 
                 campaign.save(update_fields=["status", "queue_status"])
 
-                CampaignTask.delay(campaign.id, device_id=device.id, proxy_id=proxy.id)
+                CampaignTask.delay(campaign.id, proxy_id=proxy.id)
                 self.logger.info(
-                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username} on {device.serial} with {proxy.license_id} proxy"
+                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy.license_id} proxy"
                 )
 
                 return True
             except ValueError:
-                self.logger.warning(f"Device: {device.serial} is not ready")
-                if campaign.status == Campaign.IDLE:
-                    campaign.status = Campaign.IN_QUEUE
-                    campaign.queue_status = "N/A"
-                    campaign.save(update_fields=["status", "queue_status"])
-
-                    CampaignTask.delay(campaign.id)
-                    self.logger.info(
-                        f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device"
-                    )
-
-                    return True
+                self.logger.warning(f"Proxy: {proxy} already in use")
 
                 return False
         else:
