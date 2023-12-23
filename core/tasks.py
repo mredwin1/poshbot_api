@@ -117,6 +117,10 @@ class CampaignTask(Task):
                 self.campaign.posh_user.username, tags, proxy_uuid=proxy["uuid"]
             )
             profile = octo_client.get_profile(profile_uuid)
+
+            self.campaign.posh_user.octo_uuid = profile["uuid"]
+            self.campaign.posh_user.save(update_fields=["octo_uuid"])
+
         else:
             profile = octo_client.get_profile(self.campaign.posh_user.octo_uuid)
 
