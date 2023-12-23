@@ -164,7 +164,7 @@ class OctoAPIClient:
             headers=self._octo_api_headers,
         )
 
-        return response.json()
+        return response.json()["data"]
 
     def start_profile(self, uuid: str) -> Dict:
         data = {
