@@ -170,7 +170,6 @@ class OctoAPIClient:
             f"{self.octo_local_api}/profiles/active",
             headers=self._octo_local_api_header,
         ).json()
-        print(active_profiles)
 
         return active_profiles
 
