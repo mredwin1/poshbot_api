@@ -6,7 +6,6 @@ import re
 import requests
 
 from decimal import Decimal, getcontext
-from django.conf import settings
 from pyppeteer.browser import Browser
 from pyppeteer.page import Page
 from pyppeteer.element_handle import ElementHandle
