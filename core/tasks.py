@@ -11,6 +11,7 @@ import ssl
 import time
 import traceback
 
+from asgiref.sync import sync_to_async
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
 from celery.beat import Scheduler
@@ -254,15 +255,7 @@ class CampaignTask(Task):
         return False
 
     def init_logger(self, logger_id=None):
-        try:
-            logger = LogGroup.objects.get(id=logger_id)
-        except LogGroup.DoesNotExist:
-            logger = LogGroup(
-                campaign=self.campaign,
-                posh_user=self.campaign.posh_user,
-                created_date=timezone.now(),
-            )
-            logger.save()
+        logger = logging.getLogger(__name__)
 
         return logger
 
@@ -283,7 +276,7 @@ class CampaignTask(Task):
                     update_fields.append("username")
 
                 self.campaign.posh_user.is_registered = True
-                self.campaign.posh_user.save()
+                await self.campaign.posh_user.asave()
 
                 profile_picture = self.campaign.posh_user.get_profile_picture()
                 await client.finish_registration(
@@ -297,7 +290,7 @@ class CampaignTask(Task):
                 )
                 self.logger.info(f"Time to register user: {time_to_register}")
                 self.campaign.posh_user.time_to_register = time_to_register
-                self.campaign.posh_user.posh_user.save(
+                await self.campaign.posh_user.posh_user.asave(
                     update_fields=["time_to_register"]
                 )
 
@@ -312,7 +305,7 @@ class CampaignTask(Task):
                 if "form__error" in error_str:
                     self.logger.warning("Stopping campaign and setting user inactive")
                     self.campaign.posh_user.is_active = False
-                    self.campaign.posh_user.save(update_fields=["is_active"])
+                    await self.campaign.posh_user.asave(update_fields=["is_active"])
 
                 campaign_status = Campaign.STOPPING
             except Exception as e:
@@ -323,7 +316,9 @@ class CampaignTask(Task):
         self.campaign.status = campaign_status
         self.campaign.queue_status = "Unknown"
         self.campaign.next_runtime = timezone.now()
-        self.campaign.save(update_fields=["status", "queue_status", "next_runtime"])
+        await self.campaign.asave(
+            update_fields=["status", "queue_status", "next_runtime"]
+        )
 
         return success
 
@@ -331,7 +326,7 @@ class CampaignTask(Task):
         items_to_list = ListedItem.objects.filter(
             posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
         ).select_related("listing")
-        for item_to_list in items_to_list:
+        async for item_to_list in items_to_list:
             user_info = self.campaign.posh_user.user_info
             item_info = item_to_list.item_info
             start_time = time.time()
@@ -347,7 +342,7 @@ class CampaignTask(Task):
                 item_to_list.time_to_list = time_to_list
                 item_to_list.status = ListedItem.UNDER_REVIEW
                 item_to_list.datetime_listed = timezone.now()
-                item_to_list.save(
+                await item_to_list.asave(
                     update_fields=[
                         "time_to_list",
                         "status",
@@ -363,7 +358,7 @@ class CampaignTask(Task):
                 self.campaign.status = Campaign.STOPPING
                 self.campaign.queue_status = "N/A"
                 self.campaign.next_runtime = None
-                self.campaign.save(
+                await self.campaign.asave(
                     update_fields=["status", "queue_status", "next_runtime"]
                 )
 
@@ -389,7 +384,9 @@ class CampaignTask(Task):
             self.campaign.status = Campaign.STARTING
             self.campaign.queue_status = "Unknown"
             self.campaign.next_runtime = timezone.now()
-            self.campaign.save(update_fields=["status", "queue_status", "next_runtime"])
+            await self.campaign.asave(
+                update_fields=["status", "queue_status", "next_runtime"]
+            )
         else:
             all_items = ListedItem.objects.filter(
                 posh_user=self.campaign.posh_user, status=ListedItem.UP
@@ -397,7 +394,7 @@ class CampaignTask(Task):
 
             if all_items.count() == 0:
                 self.campaign.status = Campaign.PAUSED
-                self.campaign.save(update_fields=["status"])
+                await self.campaign.asave(update_fields=["status"])
 
         return item_listed
 
@@ -465,7 +462,7 @@ class CampaignTask(Task):
             ).exclude(listed_item_id="")
 
             if shareable_listings:
-                for shareable_listing in shareable_listings:
+                async for shareable_listing in shareable_listings:
                     try:
                         await client.share_listing(
                             user_info, shareable_listing.listed_item_id
@@ -512,8 +509,7 @@ class CampaignTask(Task):
                         for phrase in bad_phrases
                     ]
                     await client.check_comments(
-                        user_info,
-                        shareable_listing.listed_item_id,
+                        user_info, shareable_listing.listed_item_id, bad_phrases
                     )
 
                 return shared
@@ -523,11 +519,13 @@ class CampaignTask(Task):
                 )
                 reserved_listed_items = all_listed_items.filter(
                     status=ListedItem.RESERVED
-                )
+                ).aexists()
                 under_review_listed_items = all_listed_items.filter(
                     status=ListedItem.UNDER_REVIEW
-                )
-                sold_listed_items = all_listed_items.filter(status=ListedItem.SOLD)
+                ).aexists()
+                sold_listed_items = all_listed_items.filter(
+                    status=ListedItem.SOLD
+                ).aexists()
                 if reserved_listed_items:
                     self.logger.info(
                         "This user has no shareable listings but has some reserved. Setting delay to an hour."
@@ -541,7 +539,7 @@ class CampaignTask(Task):
 
                     self.campaign.status = Campaign.PAUSED
                     self.campaign.next_runtime = None
-                    self.campaign.save()
+                    await self.campaign.asave()
 
                     return False
                 elif sold_listed_items:
@@ -551,7 +549,7 @@ class CampaignTask(Task):
 
                     self.campaign.status = Campaign.STOPPING
                     self.campaign.next_runtime = None
-                    self.campaign.save()
+                    await self.campaign.asave()
 
                     return False
                 else:
@@ -561,7 +559,7 @@ class CampaignTask(Task):
 
                     self.campaign.status = Campaign.STOPPING
                     self.campaign.next_runtime = None
-                    self.campaign.save()
+                    await self.campaign.asave()
 
                     return False
 
