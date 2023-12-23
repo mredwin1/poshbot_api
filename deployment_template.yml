@@ -575,6 +575,8 @@ Resources:
         - Name: general-container
           Image: !Ref DockerImage
           StopTimeout: 120
+          DockerSecurityOptions:
+            - "seccomp:unconfined"
           MemoryReservation: 1024
           EntryPoint:
             - './entrypoint.sh'
