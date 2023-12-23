@@ -173,6 +173,14 @@ class OctoAPIClient:
             "flags": ["--disable-backgrounding-occluded-windows", "--no-sandbox"],
         }
 
+        active_profiles = requests.get(
+            f"{self.octo_api}/profiles/active", headers=self._octo_api_headers
+        ).json()
+        active_uuids = [active_profile["uuid"] for active_profile in active_profiles]
+
+        if uuid in active_uuids:
+            self.force_stop_profile(uuid)
+
         response = requests.post(
             f"{self.octo_local_api}/profiles/start",
             headers=self._octo_local_api_header,
@@ -193,6 +201,14 @@ class OctoAPIClient:
         json_response = response.json()
 
         return json_response
+
+    def force_stop_profile(self, uuid: str):
+        data = {"uuid": uuid}
+        requests.post(
+            f"{self.octo_local_api}/profiles/force_stop",
+            headers=self._octo_local_api_header,
+            json=data,
+        )
 
 
 class BasePuppeteerClient:
