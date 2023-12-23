@@ -171,7 +171,7 @@ class OctoAPIClient:
             "uuid": uuid,
             "headless": True,
             "debug_port": True,
-            "flags": ["--disable-backgrounding-occluded-windows"],
+            "flags": ["--disable-backgrounding-occluded-windows", "--no-sandbox"],
         }
 
         response = requests.post(
