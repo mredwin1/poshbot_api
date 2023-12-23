@@ -165,6 +165,15 @@ class OctoAPIClient:
 
         return response.json()["data"]
 
+    def get_active_profiles(self):
+        active_profiles = requests.get(
+            f"{self.octo_local_api}/profiles/active",
+            headers=self._octo_local_api_header,
+        ).json()
+        print(active_profiles)
+
+        return active_profiles
+
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
@@ -173,9 +182,7 @@ class OctoAPIClient:
             "flags": ["--disable-backgrounding-occluded-windows", "--no-sandbox"],
         }
 
-        active_profiles = requests.get(
-            f"{self.octo_api}/profiles/active", headers=self._octo_api_headers
-        ).json()
+        active_profiles = self.get_active_profiles()
         active_uuids = [active_profile["uuid"] for active_profile in active_profiles]
 
         if uuid in active_uuids:
