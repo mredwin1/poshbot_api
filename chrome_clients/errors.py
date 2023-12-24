@@ -20,3 +20,7 @@ class NoActiveOffers(Exception):
 
 class ShareError(Exception):
     pass
+
+
+class ProfileStartError(Exception):
+    pass

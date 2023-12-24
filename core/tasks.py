@@ -31,6 +31,7 @@ from chrome_clients.errors import (
     ShareError,
     ListingNotFoundError,
     NoLikesError,
+    ProfileStartError,
 )
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
@@ -130,7 +131,19 @@ class CampaignTask(Task):
         width, height = map(
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
         )
-        runtime_details = octo_client.start_profile(profile["uuid"])
+
+        try:
+            start_response = octo_client.start_profile(profile["uuid"])
+        except ProfileStartError as e:
+            if "Profile is already started" in str(e):
+                self.logger.warning(f"Profile {profile['uuid']} force stopping...")
+                octo_client.force_stop_profile(profile["uuid"])
+                start_response = octo_client.start_profile(profile["uuid"])
+                self.logger.debug(f"Start response: {start_response}")
+            else:
+                start_response = {}
+
+        runtime_details = start_response
         runtime_details["width"] = width
         runtime_details["height"] = height
 

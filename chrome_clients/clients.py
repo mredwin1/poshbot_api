@@ -181,18 +181,15 @@ class OctoAPIClient:
             "flags": ["--disable-backgrounding-occluded-windows", "--no-sandbox"],
         }
 
-        active_profiles = self.get_active_profiles()
-        active_uuids = [active_profile["uuid"] for active_profile in active_profiles]
-
-        if uuid in active_uuids:
-            self.force_stop_profile(uuid)
-
         response = requests.post(
             f"{self.octo_local_api}/profiles/start",
             headers=self._octo_local_api_header,
             json=data,
         )
         json_response = response.json()
+
+        if "error" in json_response:
+            raise ProfileStartError(json_response["error"])
 
         return json_response
 
