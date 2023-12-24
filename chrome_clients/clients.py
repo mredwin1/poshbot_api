@@ -258,11 +258,11 @@ class BasePuppeteerClient:
             {"width": self.width, "height": self.height, "deviceScaleFactor": 1}
         )
 
-        # Enable request interception
-        await self.page.setRequestInterception(True)
-
-        # Define request interception logic
-        self.page.on("request", self.intercept_request)
+        # # Enable request interception
+        # await self.page.setRequestInterception(True)
+        #
+        # # Define request interception logic
+        # self.page.on("request", self.intercept_request)
 
     async def close(self):
         """Closes the Puppeteer browser."""
