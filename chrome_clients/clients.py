@@ -505,8 +505,11 @@ class PoshmarkClient(BasePuppeteerClient):
                     logged_in = await self.logged_in(username)
                     if password and not logged_in:
                         await self.login(user_info)
+
+                        self.logger.info("Recovery successful, continuing...")
                         return await callback(*args, **kwargs)
                     elif logged_in:
+                        self.logger.info("Recovery successful, continuing...")
                         return await callback(*args, **kwargs)
 
         screenshots_dir = os.path.join(os.getcwd(), "screenshots")
