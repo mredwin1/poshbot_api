@@ -274,6 +274,11 @@ class CampaignTask(Task):
         return logger
 
     async def register(self, list_items):
+        reset_ip = self.reset_ip()
+
+        if not reset_ip:
+            return False
+
         ws_endpoint = self.runtime_details["ws_endpoint"]
         width = self.runtime_details["width"]
         height = self.runtime_details["height"]
@@ -385,6 +390,11 @@ class CampaignTask(Task):
         if client:
             item_listed = await self._list_items(client)
         else:
+            reset_ip = self.reset_ip()
+
+            if not reset_ip:
+                return False
+
             ws_endpoint = self.runtime_details["ws_endpoint"]
             width = self.runtime_details["width"]
             height = self.runtime_details["height"]
