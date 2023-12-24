@@ -575,7 +575,7 @@ Resources:
         - Name: general-container
           Image: !Ref DockerImage
           StopTimeout: 120
-          MemoryReservation: 1024
+          MemoryReservation: 1536
           EntryPoint:
             - './entrypoint.sh'
           RepositoryCredentials:
