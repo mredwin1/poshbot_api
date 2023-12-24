@@ -138,8 +138,10 @@ class CampaignTask(Task):
 
     def stop_octo_profile(self):
         octo_client = OctoAPIClient()
-
-        octo_client.stop_profile(self.runtime_details["uuid"])
+        try:
+            octo_client.stop_profile(self.runtime_details["uuid"])
+        except KeyError:
+            pass
 
     def get_random_delay(self, elapsed_time):
         delay = self.campaign.delay * 60
