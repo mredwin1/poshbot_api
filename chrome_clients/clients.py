@@ -498,16 +498,22 @@ class PoshmarkClient(BasePuppeteerClient):
                 user_info = kwargs.get("user_info", {})
                 username = user_info.get("username")
                 if username:
+                    self.logger.info(f"Checking login status of {username}")
                     password = user_info.get("password")
                     logged_in = await self.logged_in(username)
                     if password and not logged_in:
+                        self.logger.info("User not logged in, logging in.")
                         await self.login(user_info)
 
-                        self.logger.info("Recovery successful, continuing...")
+                        self.logger.info("Recovery successful logged in, continuing...")
                         return await callback(*args, **kwargs)
                     elif logged_in:
-                        self.logger.info("Recovery successful, continuing...")
+                        self.logger.info(
+                            "Recovery successful already logged in, continuing..."
+                        )
                         return await callback(*args, **kwargs)
+                else:
+                    self.logger.info("No username to attempt login")
 
         screenshots_dir = os.path.join(os.getcwd(), "screenshots")
         screenshot_name = f"error_{callback.__name__}.png"
@@ -527,12 +533,13 @@ class PoshmarkClient(BasePuppeteerClient):
     async def logged_in(self, username: str) -> bool:
         await self.page.goto("https://poshmark.com")
         if "/feed" in self.page.url:
-            profile_pic = await self.find(".user-image")
-            profile_pic_alt_property = await profile_pic.getProperty("alt")
-            profile_pic_alt = await profile_pic_alt_property.jsonValue()
+            if await self.is_present(".user-image"):
+                profile_pic = await self.find(".user-image")
+                profile_pic_alt_property = await profile_pic.getProperty("alt")
+                profile_pic_alt = await profile_pic_alt_property.jsonValue()
 
-            if profile_pic_alt == username:
-                return True
+                if profile_pic_alt == username:
+                    return True
 
         return False
 
