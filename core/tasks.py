@@ -332,6 +332,7 @@ class CampaignTask(Task):
                 campaign_status = Campaign.STOPPING
             except Exception as e:
                 success = False
+                self.logger.exception(e, exc_info=True)
                 self.logger.info("Restarting campaign due to error")
                 campaign_status = Campaign.STARTING
 
