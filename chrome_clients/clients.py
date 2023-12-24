@@ -14,7 +14,7 @@ from pyppeteer.errors import TimeoutError, ElementHandleError
 from twocaptcha import TwoCaptcha
 from urllib.parse import urlparse, parse_qs
 
-from typing import Union, List, Dict, Tuple
+from typing import Union, List, Dict, Tuple, Callable
 from .errors import *
 
 
@@ -489,7 +489,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
         return False
 
-    async def _handle_generic_errors(self, error, callback, *args, **kwargs):
+    async def _handle_generic_errors(
+        self, error: Exception, callback: Callable, *args, **kwargs
+    ):
         if not self.recovery_attempted:
             self.recovery_attempted = True
             if isinstance(error, TimeoutError):
@@ -506,6 +508,19 @@ class PoshmarkClient(BasePuppeteerClient):
                         return await callback(*args, **kwargs)
                     elif logged_in:
                         return await callback(*args, **kwargs)
+
+        screenshots_dir = os.path.join(os.getcwd(), "screenshots")
+        screenshot_name = f"error_{callback.__name__}.png"
+        try:
+            os.makedirs(screenshots_dir, exist_ok=True)
+            await self.page.screenshot(
+                {"path": os.path.join(screenshots_dir, screenshot_name)}
+            )
+            self.logger.info(f"Screenshot saved to {screenshot_name}")
+        except Exception:
+            self.logger.warning(
+                f"Could not save screenshot to {screenshot_name} on error"
+            )
 
         raise error
 
