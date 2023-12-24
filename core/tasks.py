@@ -633,11 +633,11 @@ class CampaignTask(Task):
         campaign_init = self.init_campaign()
 
         if campaign_init["status"]:
-            self.runtime_details = self.get_runtime_details()
-
             self.logger.info(
                 f"Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}"
             )
+
+            self.runtime_details = self.get_runtime_details()
 
             self.campaign.status = Campaign.RUNNING
             self.campaign.queue_status = "N/A"
