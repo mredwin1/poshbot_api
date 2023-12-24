@@ -679,6 +679,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
     async def list_item(self, user_info: Dict, item_info: Dict) -> Dict:
         try:
+            self.logger.info(f"delete_me: listing item in client")
             if "/feed" in self.page.url:
                 await self.click(selector='a[href="/sell"]')
             elif "create-listing" in self.page.url:
@@ -688,6 +689,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(selector='a[href="/sell"]')
 
             await self.sleep(1.5, 2.4)
+
+            self.logger.info(f"delete_me: listing item  after nav")
 
             error_xpath = "//div[contains(@class, 'modal__body') and contains(text(), 'cannot currently perform this')]"
             if await self.is_present(error_xpath, xpath=True):
@@ -812,6 +815,7 @@ class PoshmarkClient(BasePuppeteerClient):
             latest_url = self.page.url
             while self.page.url != "https://poshmark.com/feed":
                 latest_url = self.page.url
+                self.logger.info(f"delete_me: listing item  url - {self.page.url}")
                 await self.sleep(1)
 
             parsed_url = urlparse(latest_url)
