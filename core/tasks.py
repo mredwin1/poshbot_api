@@ -259,7 +259,13 @@ class CampaignTask(Task):
         return logger
 
     async def register(self, list_items):
-        ws_endpoint = self.runtime_details["ws_endpoint"]
+        try:
+            ws_endpoint = self.runtime_details["ws_endpoint"]
+        except KeyError as e:
+            self.logger.error(e)
+            self.logger.info(f"Runtime details: {self.runtime_details}")
+            return False
+
         width = self.runtime_details["width"]
         height = self.runtime_details["height"]
         async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
@@ -370,7 +376,13 @@ class CampaignTask(Task):
         if client:
             item_listed = await self._list_items(client)
         else:
-            ws_endpoint = self.runtime_details["ws_endpoint"]
+            try:
+                ws_endpoint = self.runtime_details["ws_endpoint"]
+            except KeyError as e:
+                self.logger.error(e)
+                self.logger.info(f"Runtime details: {self.runtime_details}")
+                return False
+
             width = self.runtime_details["width"]
             height = self.runtime_details["height"]
             async with PoshmarkClient(
@@ -400,7 +412,13 @@ class CampaignTask(Task):
 
     async def share_and_more(self):
         # profile_updated = self.campaign.posh_user.profile_updated
-        ws_endpoint = self.runtime_details["ws_endpoint"]
+        try:
+            ws_endpoint = self.runtime_details["ws_endpoint"]
+        except KeyError as e:
+            self.logger.error(e)
+            self.logger.info(f"Runtime details: {self.runtime_details}")
+            return False
+
         width = self.runtime_details["width"]
         height = self.runtime_details["height"]
         listing_shared = None
