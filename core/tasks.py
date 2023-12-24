@@ -346,10 +346,12 @@ class CampaignTask(Task):
         return success
 
     async def _list_items(self, client):
+        self.logger.info("delete_me: listing item")
         items_to_list = ListedItem.objects.filter(
             posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
         ).select_related("listing")
         async for item_to_list in items_to_list:
+            self.logger.info(f"delete_me: listing item  - {item_to_list}")
             user_info = self.campaign.posh_user.user_info
             item_info = item_to_list.item_info
             item_info["photos"] = await item_to_list.get_images()
