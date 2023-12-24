@@ -136,7 +136,9 @@ class CampaignTask(Task):
             start_response = octo_client.start_profile(profile["uuid"])
         except ProfileStartError as e:
             if "Profile is already started" in str(e):
-                self.logger.warning(f"Profile {profile['uuid']} force stopping...")
+                self.logger.warning(
+                    f"Profile {profile['uuid']} already running force stopping..."
+                )
                 octo_client.force_stop_profile(profile["uuid"])
                 start_response = octo_client.start_profile(profile["uuid"])
                 self.logger.debug(f"Start response: {start_response}")
@@ -251,9 +253,9 @@ class CampaignTask(Task):
                 f"Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds"
             )
 
-    def reset_ip(self):
+    async def reset_ip(self):
         reset_success = self.proxy.reset_ip()
-        time.sleep(10)
+        await asyncio.sleep(10)
 
         if reset_success:
             self.logger.info(reset_success)
@@ -274,7 +276,7 @@ class CampaignTask(Task):
         return logger
 
     async def register(self, list_items):
-        reset_ip = self.reset_ip()
+        reset_ip = await self.reset_ip()
 
         if not reset_ip:
             return False
@@ -390,7 +392,7 @@ class CampaignTask(Task):
         if client:
             item_listed = await self._list_items(client)
         else:
-            reset_ip = self.reset_ip()
+            reset_ip = await self.reset_ip()
 
             if not reset_ip:
                 return False
