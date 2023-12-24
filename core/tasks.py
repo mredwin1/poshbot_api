@@ -81,7 +81,7 @@ class CampaignTask(Task):
         self.logger = None
         self.proxy = None
         self.proxy_id = None
-        self.runtime_details = None
+        self.runtime_details = {}
 
     def get_runtime_details(self):
         current_proxy = {
@@ -140,6 +140,7 @@ class CampaignTask(Task):
                     f"Profile {profile['uuid']} already running force stopping..."
                 )
                 octo_client.force_stop_profile(profile["uuid"])
+                time.sleep(5)
                 start_response = octo_client.start_profile(profile["uuid"])
                 self.logger.debug(f"Start response: {start_response}")
             else:
