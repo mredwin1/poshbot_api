@@ -567,106 +567,121 @@ class PoshmarkClient(BasePuppeteerClient):
                 )
 
     async def register(self, user_info: Dict) -> str:
-        self.logger.info(f"delete_me: register in client")
-        if "/signup" not in self.page.url:
-            await self.page.goto("https://poshmark.com")
-            await self.click(selector='a[href="/signup"]')
+        try:
+            self.logger.info(f"delete_me: register in client")
+            if "/signup" not in self.page.url:
+                await self.page.goto("https://poshmark.com")
+                await self.click(selector='a[href="/signup"]')
 
-            await self.sleep(0.4, 1.2)
-        self.logger.info(f"delete_me: register post nav")
-        target_username: str = user_info["username"]
+                await self.sleep(0.4, 1.2)
+            self.logger.info(f"delete_me: register post nav")
+            target_username: str = user_info["username"]
 
-        await self.type("#firstName", user_info["first_name"])
-        await self.type("#lastName", user_info["last_name"])
-        await self.type("#email", user_info["email"])
-        await self.type('input[name="userName"]', target_username)
-        await self.type("#password", user_info["password"])
-
-        await self.sleep(0.2, 0.8)
-
-        if user_info["gender"] is not None:
-            await self.click(selector=".dropdown__selector--select-tag")
+            await self.type("#firstName", user_info["first_name"])
+            await self.type("#lastName", user_info["last_name"])
+            await self.type("#email", user_info["email"])
+            await self.type('input[name="userName"]', target_username)
+            await self.type("#password", user_info["password"])
 
             await self.sleep(0.2, 0.8)
 
-            await self.click(
-                selector=f"//div[contains(@class, 'dropdown__link') and contains(text(), '{user_info['gender']}')]",
-                xpath=True,
-            )
+            if user_info["gender"] is not None:
+                await self.click(selector=".dropdown__selector--select-tag")
 
-        self.logger.info(f"delete_me: register pre submit")
+                await self.sleep(0.2, 0.8)
 
-        await self.click(selector='button[type="submit"]')
-
-        await self.sleep(2, 3)
-
-        self.logger.info(f"delete_me: register post submit")
-
-        retries = 0
-        error_handled = None
-        while retries < 3 and error_handled is not False:
-            error_handled = await self._handle_form_errors()
-
-            if await self.is_present('button[data-et-name="suggested_username"]'):
-                await self.sleep(0.65, 1.25)
-
-                target_username = await self.page.querySelectorEval(
-                    'button[data-et-name="suggested_username"]',
-                    "(element) => element.textContent",
+                await self.click(
+                    selector=f"//div[contains(@class, 'dropdown__link') and contains(text(), '{user_info['gender']}')]",
+                    xpath=True,
                 )
 
-                target_username = target_username.strip()
+            self.logger.info(f"delete_me: register pre submit")
 
-                await self.click(selector='button[data-et-name="suggested_username"]')
+            await self.click(selector='button[type="submit"]')
 
-                self.logger.info(f"New username selected: {target_username}")
+            await self.sleep(2, 3)
 
-            retries += 1
+            self.logger.info(f"delete_me: register post submit")
 
-        return target_username
+            retries = 0
+            error_handled = None
+            while retries < 3 and error_handled is not False:
+                error_handled = await self._handle_form_errors()
+
+                if await self.is_present('button[data-et-name="suggested_username"]'):
+                    await self.sleep(0.65, 1.25)
+
+                    target_username = await self.page.querySelectorEval(
+                        'button[data-et-name="suggested_username"]',
+                        "(element) => element.textContent",
+                    )
+
+                    target_username = target_username.strip()
+
+                    await self.click(
+                        selector='button[data-et-name="suggested_username"]'
+                    )
+
+                    self.logger.info(f"New username selected: {target_username}")
+
+                retries += 1
+
+            return target_username
+        except Exception as e:
+            return await self._handle_generic_errors(
+                e, self.register, user_info=user_info
+            )
 
     async def finish_registration(self, profile_pic_path: str, zipcode: str) -> None:
-        # Upload profile picture to .user-image
-        await self.upload_file(".image-selector__input-img-files", profile_pic_path)
+        try:
+            # Upload profile picture to .user-image
+            await self.upload_file(".image-selector__input-img-files", profile_pic_path)
 
-        await self.sleep(1, 2)
-        await self.click(selector='button[data-et-name="apply"]')
-        await self.sleep(1, 2)
+            await self.sleep(1, 2)
+            await self.click(selector='button[data-et-name="apply"]')
+            await self.sleep(1, 2)
 
-        # Set shirt/dress size
-        await self.click(
-            selector="//div[preceding-sibling::label[contains(text(), 'Shirt Size')]][@id='set-profile-info-size-dropdown']",
-            xpath=True,
-        )
-        await self.click_random("ul.dropdown__menu--expanded > li", count=1)
-        await self.sleep(1, 2)
+            # Set shirt/dress size
+            await self.click(
+                selector="//div[preceding-sibling::label[contains(text(), 'Shirt Size')]][@id='set-profile-info-size-dropdown']",
+                xpath=True,
+            )
+            await self.click_random("ul.dropdown__menu--expanded > li", count=1)
+            await self.sleep(1, 2)
 
-        # Set shoe size
-        await self.click(
-            selector="//div[preceding-sibling::label[contains(text(), 'Shoe Size')]][@id='set-profile-info-size-dropdown']",
-            xpath=True,
-        )
-        await self.click_random("ul.dropdown__menu--expanded > li", count=1)
-        await self.sleep(1, 2)
+            # Set shoe size
+            await self.click(
+                selector="//div[preceding-sibling::label[contains(text(), 'Shoe Size')]][@id='set-profile-info-size-dropdown']",
+                xpath=True,
+            )
+            await self.click_random("ul.dropdown__menu--expanded > li", count=1)
+            await self.sleep(1, 2)
 
-        # Enter zipcode
-        await self.type(selector='input[name="zip"]', text=zipcode)
-        await self.sleep(1, 2)
-        await self.click(selector='button[type="submit"]')
+            # Enter zipcode
+            await self.type(selector='input[name="zip"]', text=zipcode)
+            await self.sleep(1, 2)
+            await self.click(selector='button[type="submit"]')
 
-        await self.page.waitForNavigation()
-        await self.sleep(0.5, 1)
+            await self.page.waitForNavigation()
+            await self.sleep(0.5, 1)
 
-        # Select random number of brands
-        await self.click_random(selector=".content-grid-item")
-        await self.click(selector='button[type="submit"]')
+            # Select random number of brands
+            await self.click_random(selector=".content-grid-item")
+            await self.click(selector='button[type="submit"]')
 
-        await self.page.waitForNavigation()
-        await self.sleep(0.5, 1)
+            await self.page.waitForNavigation()
+            await self.sleep(0.5, 1)
 
-        # Click submit again
-        await self.click(selector='button[type="submit"]')
-        await self.page.waitForNavigation()
+            # Click submit again
+            await self.click(selector='button[type="submit"]')
+            await self.page.waitForNavigation()
+        except Exception as e:
+            return await self._handle_generic_errors(
+                e,
+                self.finish_registration,
+                profile_pic_path=profile_pic_path,
+                zipcode=zipcode,
+            )
 
     async def login(self, user_info: Dict) -> None:
         username = user_info["username"]
