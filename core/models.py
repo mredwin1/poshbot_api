@@ -121,9 +121,7 @@ class Proxy(models.Model):
         return response.cookies
 
     def reset_ip(self):
-        reset_url = (
-            f"https://portal.mobilehop.com/proxies/{self.proxy_uuid}/reset"
-        )
+        reset_url = f"https://portal.mobilehop.com/proxies/{self.proxy_uuid}/reset"
         response = requests.get(reset_url)
 
         if response.status_code == 200:
