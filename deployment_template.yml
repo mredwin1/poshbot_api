@@ -640,6 +640,7 @@ Resources:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   GeneralService:
+    DependsOn: ECSLaunchConfiguration
     Type: AWS::ECS::Service
     Properties:
       ServiceName: !Sub
