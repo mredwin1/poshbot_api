@@ -648,7 +648,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
             # Set shirt/dress size
             size_text = (
-                "Dress Size" if user_info["Gender"] == "Female" else "Shirt Size"
+                "Dress Size" if user_info["gender"] == "Female" else "Shirt Size"
             )
 
             await self.click(
