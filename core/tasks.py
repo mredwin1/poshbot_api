@@ -908,7 +908,9 @@ class CheckPoshUsers(Task):
 
                     if campaign.status == Campaign.PAUSED:
                         campaign.status = Campaign.STARTING
-                        campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
+                        campaign.next_runtime = timezone.now() + datetime.timedelta(
+                            seconds=60
+                        )
 
                         campaign.save(update_fields=["status", "next_runtime"])
                 except Campaign.DoesNotExist:
