@@ -595,7 +595,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
         await self.click(selector='button[type="submit"]')
 
-        await self.sleep(2, 3)
+        await self.page.waitForNavigation()
 
         retries = 0
         error_handled = None
@@ -648,16 +648,20 @@ class PoshmarkClient(BasePuppeteerClient):
         await self.type(selector='input[name="zip"]', text=zipcode)
         await self.sleep(1, 2)
         await self.click(selector='button[type="submit"]')
-        await self.sleep(1, 2)
+
+        await self.page.waitForNavigation()
+        await self.sleep(0.5, 1)
 
         # Select random number of brands
         await self.click_random(selector=".content-grid-item")
         await self.click(selector='button[type="submit"]')
-        await self.sleep(1, 2)
+
+        await self.page.waitForNavigation()
+        await self.sleep(0.5, 1)
 
         # Click submit again
         await self.click(selector='button[type="submit"]')
-        await self.sleep(1, 2)
+        await self.page.waitForNavigation()
 
     async def login(self, user_info: Dict) -> None:
         username = user_info["username"]
@@ -674,6 +678,8 @@ class PoshmarkClient(BasePuppeteerClient):
 
         await self.sleep(0.2, 0.6)
         await self.click(selector='button[type="submit"]')
+
+        await self.page.waitForNavigation()
 
         retries = 0
         error_handled = None
