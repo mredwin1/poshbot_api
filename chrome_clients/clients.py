@@ -270,6 +270,25 @@ class BasePuppeteerClient:
             await asyncio.ensure_future(self.browser.close())
 
     @staticmethod
+    def cleanse_selector(selector):
+        """
+        Cleanses a string to be used as a CSS selector by removing characters
+        that are not valid in CSS identifiers.
+
+        This function keeps letters (a-z, A-Z), digits (0-9), hyphens (-),
+        and underscores (_), and removes all other characters. It does not handle
+        cases where the selector starts with a digit or two hyphens, which are
+        technically invalid in CSS.
+
+        Parameters:
+        selector (str): The string to be cleansed for use as a CSS selector.
+
+        Returns:
+        str: A cleansed string with only valid CSS identifier characters.
+        """
+        return re.sub(r"[^a-zA-Z0-9-_]", "", selector)
+
+    @staticmethod
     def intercept_request(req):
         """Intercepts requests to block images, CSS, fonts, and media."""
         resource_type = req.resourceType
@@ -798,7 +817,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     if tab_counter > 0:
                         await self.click(element=current_tab_elem)
 
-                    size_selector = f"#size-{item_info['size']}"
+                    size_selector = f"#size-{self.cleanse_selector(item_info['size'])}"
                     if await self.is_present(size_selector):
                         await self.click(selector=size_selector)
                         size_found = True
