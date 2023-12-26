@@ -466,7 +466,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     captcha_src_val = await captcha_src.jsonValue()
 
                     site_key = re.findall(r"(?<=k=)(.*?)(?=&)", captcha_src_val)[0]
-                    solver = TwoCaptcha(os.environ["CAPTCHA_SECRET"])
+                    solver = TwoCaptcha(os.environ["CAPTCHA_API_KEY"])
                     result = solver.recaptcha(sitekey=site_key, url=self.page.url)
 
                     await self.page.evaluate(
