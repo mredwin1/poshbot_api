@@ -786,10 +786,14 @@ Resources:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
       LaunchConfigurationName: !Sub
-      - '${ApplicationName}-launch-config-${Environment}'
+      - '${ApplicationName}-lch-config-${Environment}'
       - Environment: !Ref Environment
         ApplicationName:
           Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 60
       ImageId: ami-045a946a7171d63ce
       InstanceType: t3.medium
       IamInstanceProfile: !Ref EC2InstanceProfile
