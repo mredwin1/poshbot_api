@@ -258,12 +258,6 @@ class BasePuppeteerClient:
             {"width": self.width, "height": self.height, "deviceScaleFactor": 1}
         )
 
-        # # Enable request interception
-        # await self.page.setRequestInterception(True)
-        #
-        # # Define request interception logic
-        # self.page.on("request", self.intercept_request)
-
     async def close(self):
         """Closes the Puppeteer browser."""
         if self.browser:
@@ -288,18 +282,6 @@ class BasePuppeteerClient:
         """
         return re.sub(r"[^a-zA-Z0-9-_]", "", selector)
 
-    @staticmethod
-    def intercept_request(req):
-        """Intercepts requests to block images, CSS, fonts, and media."""
-        resource_type = req.resourceType
-
-        # List of resource types to block
-        blocked_types = ["image", "stylesheet", "font", "media"]
-
-        if resource_type in blocked_types:
-            asyncio.create_task(req.abort())
-        else:
-            asyncio.create_task(req.continue_())
 
     @staticmethod
     def random_coordinates_within_box(
