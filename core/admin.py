@@ -12,7 +12,6 @@ from . import models
 
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.PaymentEmailContent)
-admin.site.register(models.AppData)
 
 
 @admin.action(description="Start selected campaigns")
@@ -66,11 +65,6 @@ def disable_posh_users(modeladmin, request, queryset):
 @admin.action(description="Enable posh user")
 def enable_posh_users(modeladmin, request, queryset):
     queryset.update(is_active=True, date_disabled=None)
-
-
-@admin.action(description="Check device in")
-def check_devices_in(modeladmin, request, queryset):
-    queryset.update(checked_out_by=None, checkout_time=None)
 
 
 @admin.action(description="Check proxy in")
@@ -171,19 +165,6 @@ class BadPhraseAdmin(admin.ModelAdmin):
     list_display = ["phrase", "report_type"]
 
 
-@admin.register(models.Device)
-class DeviceAdmin(admin.ModelAdmin):
-    list_display = ["serial", "is_active", "associated_campaign", "checkout_time"]
-    readonly_fields = ["checked_out_by", "checkout_time"]
-    actions = [check_devices_in]
-
-    @admin.display(ordering="associated_campaign")
-    def associated_campaign(self, device):
-        campaign = models.Campaign.objects.get(id=device.checked_out_by)
-        url = f"{reverse('admin:core_campaign_changelist')}?{urlencode({'id': str(campaign.id)})}"
-        return format_html('<a href="{}">{}</a>', url, campaign.title)
-
-
 @admin.register(models.Proxy)
 class ProxyAdmin(admin.ModelAdmin):
     list_display = ["license_id", "is_active", "associated_campaign", "checkout_time"]
@@ -238,9 +219,7 @@ class UserAdmin(BaseUserAdmin):
 class PoshUserAdmin(admin.ModelAdmin):
     readonly_fields = [
         "date_added",
-        "time_to_setup_device",
         "time_to_register",
-        "time_to_finish_registration",
         "date_disabled",
     ]
     list_display = [
@@ -288,15 +267,10 @@ class PoshUserAdmin(admin.ModelAdmin):
                         "is_active",
                         "is_active_in_posh",
                         "is_registered",
-                        "finished_registration",
                         "profile_updated",
                         "send_support_email",
                     ),
-                    (
-                        "time_to_setup_device",
-                        "time_to_register",
-                        "time_to_finish_registration",
-                    ),
+                    ("time_to_register",),
                     ("user", "date_added", "date_disabled"),
                     (
                         "username",
@@ -305,7 +279,7 @@ class PoshUserAdmin(admin.ModelAdmin):
                         "email_password",
                         "email_imap_password",
                     ),
-                    ("phone_number",),
+                    ("phone_number", "octo_uuid"),
                 )
             },
         ),
@@ -327,17 +301,6 @@ class PoshUserAdmin(admin.ModelAdmin):
                     ),
                     ("profile_picture", "profile_picture_id"),
                     ("header_picture"),
-                ),
-            },
-        ),
-        (
-            "Device Info",
-            {
-                "classes": ("collapse",),
-                "fields": (
-                    ("imei1", "imei2", "wifi_mac", "wifi_ssid", "wifi_bssid"),
-                    ("bluetooth_id", "sim_sub_id", "sim_serial", "android_id"),
-                    ("mobile_number", "hw_serial", "ads_id", "gsf", "media_drm"),
                 ),
             },
         ),

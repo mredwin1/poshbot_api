@@ -138,6 +138,37 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
+  ECSSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub
+        - '${ApplicationName}-ecs-server-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
+      GroupDescription: 'Security group for ecs ec2 instance to have open outbound communication'
+      SecurityGroupEgress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
+
+  EFSFileSystemSecurityGroup:
+    Type: AWS::EC2::SecurityGroup
+    Properties:
+      GroupDescription: Security group for EFS file system
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
+      SecurityGroupIngress:
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref ECSServiceSecurityGroup
+        - IpProtocol: tcp
+          FromPort: 2049
+          ToPort: 2049
+          SourceSecurityGroupId: !Ref ECSSecurityGroup
+
   ElastiCacheSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
@@ -192,7 +223,7 @@ Resources:
             CredentialsParameter:
               Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
           PortMappings:
-            - ContainerPort: 80
+            - ContainerPort: 8000
               AppProtocol: http
           LogConfiguration:
             LogDriver: awslogs
@@ -201,10 +232,10 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: api-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
             - Name: DB_NAME
               Value: 'postgres'
             - Name: DB_SECRET
@@ -221,25 +252,31 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-            - Name: MASTER_USER_SECRET
-              Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: CAPTCHA_SECRET
-              Value:
+          Secrets:
+            - Name: SECRET_KEY
+              ValueFrom: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              ValueFrom: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-            - Name: APPIUM_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-            - Name: ZKE_SECRET
-              Value:
+            - Name: ZKE_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-            - Name: MOBILE_HOP_SECRET
-              Value:
+            - Name: MOBILE_HOP_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-            - Name: EMAIL_SECRET
-              Value:
+            - Name: EMAIL_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   APIService:
     Type: AWS::ECS::Service
@@ -260,7 +297,7 @@ Resources:
       LoadBalancers:
         - TargetGroupArn: !Ref APITargetGroup
           ContainerName: api-container
-          ContainerPort: 80
+          ContainerPort: 8000
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets: !Split
@@ -336,10 +373,10 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: beat-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
             - Name: DB_NAME
               Value: 'postgres'
             - Name: DB_SECRET
@@ -356,25 +393,31 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-            - Name: MASTER_USER_SECRET
-              Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: CAPTCHA_SECRET
-              Value:
+          Secrets:
+            - Name: SECRET_KEY
+              ValueFrom: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              ValueFrom: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-            - Name: APPIUM_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-            - Name: ZKE_SECRET
-              Value:
+            - Name: ZKE_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-            - Name: MOBILE_HOP_SECRET
-              Value:
+            - Name: MOBILE_HOP_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-            - Name: EMAIL_SECRET
-              Value:
+            - Name: EMAIL_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   BeatService:
     Type: AWS::ECS::Service
@@ -439,10 +482,10 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: maintenance-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
             - Name: DB_NAME
               Value: 'postgres'
             - Name: DB_SECRET
@@ -459,25 +502,31 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-            - Name: MASTER_USER_SECRET
-              Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: CAPTCHA_SECRET
-              Value:
+          Secrets:
+            - Name: SECRET_KEY
+              ValueFrom: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              ValueFrom: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-            - Name: APPIUM_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-            - Name: ZKE_SECRET
-              Value:
+            - Name: ZKE_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-            - Name: MOBILE_HOP_SECRET
-              Value:
+            - Name: MOBILE_HOP_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-            - Name: EMAIL_SECRET
-              Value:
+            - Name: EMAIL_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   MaintenanceService:
     Type: AWS::ECS::Service
@@ -515,28 +564,28 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 2048
-      Memory: 4096
-      RuntimePlatform:
-        CpuArchitecture: X86_64
-        OperatingSystemFamily: LINUX
+      Volumes:
+        - Name: 'shm'
+          Host:
+            SourcePath: '/dev/shm'
+        - Name: 'octo-cache'
+          EFSVolumeConfiguration:
+            FilesystemId: !GetAtt OctoCache.FileSystemId
       ContainerDefinitions:
         - Name: general-container
           Image: !Ref DockerImage
           StopTimeout: 120
+          MemoryReservation: 1536
           EntryPoint:
-            - 'celery'
-            - '-A'
-            - 'poshbot_api'
-            - 'worker'
-            - '--concurrency=3'
-            - '-Q'
-            - !GetAtt GeneralQueue.QueueName
-            - '-l'
-            - 'INFO'
+            - './entrypoint.sh'
           RepositoryCredentials:
             CredentialsParameter:
               Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+          MountPoints:
+            - SourceVolume: 'shm'
+              ContainerPath: '/dev/shm'
+            - SourceVolume: 'octo-cache'
+              ContainerPath: '/home/.Octo Browser/bin'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -544,10 +593,10 @@ Resources:
               awslogs-region: !Ref AWS::Region
               awslogs-stream-prefix: general-container
           Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
             - Name: DJANGO_SETTINGS_MODULE
               Value: 'poshbot_api.settings.prod'
-            - Name: SECRET_KEY
-              Value: !Ref DjangoSecretKey
             - Name: DB_NAME
               Value: 'postgres'
             - Name: DB_SECRET
@@ -564,25 +613,31 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
-            - Name: MASTER_USER_SECRET
-              Value: !Ref MasterUserPassword
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: CAPTCHA_SECRET
-              Value:
+          Secrets:
+            - Name: SECRET_KEY
+              ValueFrom: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              ValueFrom: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-            - Name: APPIUM_SECRET
-              Value:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-            - Name: ZKE_SECRET
-              Value:
+            - Name: ZKE_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-            - Name: MOBILE_HOP_SECRET
-              Value:
+            - Name: MOBILE_HOP_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-            - Name: EMAIL_SECRET
-              Value:
+            - Name: EMAIL_CREDENTIALS
+              ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+            - Name: OCTO_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   GeneralService:
     Type: AWS::ECS::Service
@@ -593,21 +648,21 @@ Resources:
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       EnableExecuteCommand: true
-      EnableECSManagedTags: true
-      PropagateTags: TASK_DEFINITION
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref GeneralTaskDefinition
       DesiredCount: 1
-      LaunchType: FARGATE
+      LaunchType: EC2
+      PropagateTags: TASK_DEFINITION
+      EnableECSManagedTags: true
       NetworkConfiguration:
         AwsvpcConfiguration:
-          AssignPublicIp: ENABLED
           Subnets: !Split
             - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
           SecurityGroups:
             - !GetAtt DatabaseSecurityGroup.GroupId
             - !GetAtt ECSServiceSecurityGroup.GroupId
+            - !GetAtt EFSFileSystemSecurityGroup.GroupId
 
   GeneralScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -711,6 +766,77 @@ Resources:
         - Name: QueueName
           Value: !GetAtt GeneralQueue.QueueName
 
+  ECSAutoScalingGroup:
+    Type: "AWS::AutoScaling::AutoScalingGroup"
+    Properties:
+      AutoScalingGroupName: !Sub
+        - '${ApplicationName}-auto-scaling-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      LaunchConfigurationName: !Ref ECSLaunchConfiguration
+      DesiredCapacity: 1
+      MinSize: 1
+      MaxSize: 3
+      VPCZoneIdentifier: !Split
+        - ","
+        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+
+  ECSLaunchConfiguration:
+    Type: "AWS::AutoScaling::LaunchConfiguration"
+    Properties:
+      LaunchConfigurationName: !Sub
+      - '${ApplicationName}-lch-config-${Environment}'
+      - Environment: !Ref Environment
+        ApplicationName:
+          Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      BlockDeviceMappings:
+        - DeviceName: /dev/sda1
+          Ebs:
+            VolumeSize: 60
+      ImageId: ami-045a946a7171d63ce
+      InstanceType: t3.medium
+      IamInstanceProfile: !Ref EC2InstanceProfile
+      SecurityGroups:
+        - !Ref ECSSecurityGroup
+        - !Ref EFSFileSystemSecurityGroup
+      UserData:
+        Fn::Base64: !Sub |
+          #!/bin/bash
+          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+
+  EFSMountTargetOne:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref OctoCache
+      SubnetId:
+        Fn::Select:
+          - "0"
+          - !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+      SecurityGroups:
+        - !Ref EFSFileSystemSecurityGroup
+
+  EFSMountTargetTwo:
+    Type: AWS::EFS::MountTarget
+    Properties:
+      FileSystemId: !Ref OctoCache
+      SubnetId:
+        Fn::Select:
+          - "1"
+          - !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+      SecurityGroups:
+        - !Ref EFSFileSystemSecurityGroup
+
+  OctoCache:
+    Type: AWS::EFS::FileSystem
+    Properties:
+      Encrypted: true
+      PerformanceMode: 'generalPurpose'
+
   S3Bucket:
     Type: AWS::S3::Bucket
     Properties:
@@ -794,7 +920,7 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      Port: 80
+      Port: 8000
       Protocol: HTTP
       TargetType: ip
       VpcId:
@@ -856,6 +982,15 @@ Resources:
                   - "secretsmanager:GetSecretValue"
                 Resource:
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
+                  - !Ref DjangoSecretKey
+                  - !Ref MasterUserPassword
         - PolicyName: AWSCloudWatch
           PolicyDocument:
             Version: "2012-10-17"
@@ -904,14 +1039,6 @@ Resources:
                 Action:
                   - "secretsmanager:GetSecretValue"
                 Resource:
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:AppiumServerIPSecret'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-                  - !Ref DjangoSecretKey
-                  - !Ref MasterUserPassword
                   - !GetAtt Database.MasterUserSecret.SecretArn
         - PolicyName: SQSAccess
           PolicyDocument:
@@ -926,6 +1053,38 @@ Resources:
                   - "sqs:GetQueueAttributes"
                   - "sqs:changemessagevisibility"
                 Resource: '*'
+        - PolicyName: EFSAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - 'elasticfilesystem:ClientMount'
+                  - 'elasticfilesystem:ClientWrite'
+                  - 'elasticfilesystem:DescribeFileSystems'
+                  - 'elasticfilesystem:DescribeMountTargets'
+                Resource: !GetAtt OctoCache.Arn
+
+  EC2InstanceRole:
+    Type: "AWS::IAM::Role"
+    Properties:
+      AssumeRolePolicyDocument:
+        Version: "2012-10-17"
+        Statement:
+          - Effect: "Allow"
+            Principal:
+              Service: "ec2.amazonaws.com"
+            Action: "sts:AssumeRole"
+      Path: "/"
+      ManagedPolicyArns:
+        - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+
+  EC2InstanceProfile:
+    Type: "AWS::IAM::InstanceProfile"
+    Properties:
+      Path: "/"
+      Roles:
+        - !Ref EC2InstanceRole
 
   MaintenanceQueue:
     Type: AWS::SQS::Queue

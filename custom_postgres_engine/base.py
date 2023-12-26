@@ -17,20 +17,23 @@ class DatabaseWrapper(base.DatabaseWrapper):
         self.lock = threading.Lock()
 
     @staticmethod
-    def get_new_password():
+    def get_new_credentials():
         try:
             session = boto3.session.Session()
             client = session.client(
                 service_name="secretsmanager", region_name="us-east-1"
             )
             secret = client.get_secret_value(SecretId=os.environ["DB_SECRET"])
-            return json.loads(secret["SecretString"])["password"]
+            return json.loads(secret["SecretString"])
         except Exception as e:
             raise Exception("Failed to retrieve credentials from Secrets Manager", e)
 
     def get_connection_params(self):
         params = super().get_connection_params()
-        params["password"] = self.get_new_password()
+        credentials = self.get_new_credentials()
+
+        params["user"] = credentials["username"]
+        params["password"] = credentials["password"]
         return params
 
     def _cursor(self, name=None):

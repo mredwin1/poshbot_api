@@ -4,7 +4,7 @@ verify_ssl = true
 name = "pypi"
 
 [packages]
-django = "~=4.0.3"
+django = "~=5.0"
 django-debug-toolbar = "~=3.2.4"
 djangorestframework = "*"
 django-filter = "*"
@@ -23,17 +23,15 @@ psycopg2-binary = "*"
 whitenoise = "*"
 gunicorn = "*"
 celery = "==5.3.1"
-selenium = "*"
 pycurl = "*"
-appium-python-client = "*"
-pure-python-adb = "*"
 python-dateutil = "*"
 faker = "*"
-selenium-stealth = "*"
 mysql-connector-python = "*"
 beautifulsoup4 = "*"
 black = "*"
 django-redis = "*"
+pyppeteer = "*"
+2captcha-python = "*"
 
 [dev-packages]
 

@@ -10,7 +10,6 @@ from core.models import (
     ListingImage,
     LogEntry,
     ListedItem,
-    AppData,
     LogGroup,
 )
 from core.tasks import send_email
@@ -19,11 +18,6 @@ from email_retrieval import zke_yahoo
 
 @receiver(post_delete, sender=PoshUser)
 def posh_user_deleted(sender, instance, *args, **kwargs):
-    try:
-        os.remove(f"/shared_volume/cookies/{instance.username}.pkl")
-    except OSError:
-        pass
-
     instance.profile_picture.delete(save=False)
     instance.header_picture.delete(save=False)
 
@@ -66,12 +60,6 @@ def log_entry_deleted(sender, instance, *args, **kwargs):
 def listed_item_saved(sender, instance: ListedItem, *args, **kwargs):
     if not instance.listing and instance.status == ListedItem.NOT_LISTED:
         instance.delete()
-
-
-@receiver(post_delete, sender=AppData)
-def app_data_deleted(sender, instance: AppData, *args, **kwargs):
-    instance.backup_data.delete(save=False)
-    instance.xml_data.delete(save=False)
 
 
 @receiver(post_save, sender=LogGroup)

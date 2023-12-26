@@ -8,7 +8,6 @@ from django.core.management.base import BaseCommand
 from django.db.utils import OperationalError
 
 from core.models import User
-from poshbot_api.settings.common import retrieve_secret
 
 
 class Command(BaseCommand):
@@ -39,7 +38,7 @@ class Command(BaseCommand):
         if not User.objects.filter(username=super_username).exists():
             User.objects.create_superuser(
                 username=super_username,
-                password=retrieve_secret(os.environ["MASTER_USER_SECRET"]),
+                password=os.environ["MASTER_USER_PASSWORD"],
             )
             logging.info("Superuser created.")
         else:
@@ -50,6 +49,6 @@ class Command(BaseCommand):
 
         logging.info("Starting server...")
         os.system(
-            "gunicorn --preload -b 0.0.0.0:80 poshbot_api.wsgi:application --threads 2 -w 2"
+            "gunicorn --preload -b 0.0.0.0:8000 poshbot_api.wsgi:application --threads 2 -w 2"
         )
         exit()
