@@ -270,10 +270,10 @@ class CampaignTask(Task):
 
     def reset_ip(self):
         reset_success = self.proxy.reset_ip()
-        time.sleep(20)
 
         if reset_success:
             self.logger.info(reset_success)
+            time.sleep(10)
             return True
 
         self.logger.info(f"Could not reset IP. Sending campaign to the end of the line")
