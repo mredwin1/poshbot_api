@@ -571,6 +571,7 @@ class PoshmarkClient(BasePuppeteerClient):
             self.logger.info(f"delete_me: register in client")
             if "/signup" not in self.page.url:
                 await self.page.goto("https://poshmark.com")
+                await self.sleep(.6, 1)
                 await self.click(selector='a[href="/signup"]')
 
                 await self.sleep(0.4, 1.2)
