@@ -595,6 +595,8 @@ class PoshmarkClient(BasePuppeteerClient):
 
         await self.click(selector='button[type="submit"]')
 
+        await self.sleep(2, 3)
+
         retries = 0
         error_handled = None
         while retries < 3 and error_handled is not False:
