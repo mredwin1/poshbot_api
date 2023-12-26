@@ -575,6 +575,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(selector='a[href="/signup"]')
 
                 await self.page.waitForNavigation()
+                await self.sleep(1, 2)
             self.logger.info(f"delete_me: register post nav")
             target_username: str = user_info["username"]
 
