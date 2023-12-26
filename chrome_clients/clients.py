@@ -810,6 +810,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     current_tab = await current_tab_inner_text.jsonValue()
                     current_tab = current_tab.strip()
                     tab_counter += 1
+                    await self.sleep(0.3, 0.6)
 
                 if current_tab == "Custom" and not size_found:
                     await self.type("#customSizeInput0", item_info["size"])
