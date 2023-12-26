@@ -221,6 +221,12 @@ class CampaignTask(Task):
             self.proxy.checkout_time = timezone.now()
             self.proxy.save(update_fields=["checkout_time"])
 
+            ip_reset = self.reset_ip()
+
+            if not ip_reset:
+                response["status"] = False
+                response["errors"].append("IP reset unsuccessful")
+
         return response
 
     def finalize_campaign(self, success, campaign_delay, duration):
@@ -277,11 +283,6 @@ class CampaignTask(Task):
         return logger
 
     async def register(self, list_items):
-        reset_ip = await self.reset_ip()
-
-        if not reset_ip:
-            return False
-
         ws_endpoint = self.runtime_details["ws_endpoint"]
         width = self.runtime_details["width"]
         height = self.runtime_details["height"]
@@ -396,11 +397,6 @@ class CampaignTask(Task):
         if client:
             item_listed = await self._list_items(client)
         else:
-            reset_ip = await self.reset_ip()
-
-            if not reset_ip:
-                return False
-
             ws_endpoint = self.runtime_details["ws_endpoint"]
             width = self.runtime_details["width"]
             height = self.runtime_details["height"]
