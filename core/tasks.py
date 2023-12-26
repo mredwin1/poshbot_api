@@ -260,9 +260,9 @@ class CampaignTask(Task):
                 f"Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds"
             )
 
-    async def reset_ip(self):
+    def reset_ip(self):
         reset_success = self.proxy.reset_ip()
-        await asyncio.sleep(10)
+        time.sleep(10)
 
         if reset_success:
             self.logger.info(reset_success)
