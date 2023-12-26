@@ -423,7 +423,7 @@ class CampaignTask(Task):
                 posh_user=self.campaign.posh_user, status=ListedItem.UP
             )
 
-            if all_items.count() == 0:
+            if all_items.acount() == 0:
                 self.campaign.status = Campaign.PAUSED
                 await self.campaign.asave(update_fields=["status"])
 
