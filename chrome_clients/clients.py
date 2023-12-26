@@ -254,7 +254,7 @@ class BasePuppeteerClient:
             # If no pages are open, create a new one
             self.page = await self.browser.newPage()
 
-        await self.page.setDefaultNavigationTimeout(60000)
+        self.page.setDefaultNavigationTimeout(60000)
         await self.page.setViewport(
             {"width": self.width, "height": self.height, "deviceScaleFactor": 1}
         )
