@@ -84,6 +84,8 @@ class OctoAPIClient:
         )
         json_response = response.json()
 
+        print(json_response)
+
         return json_response["data"]["uuid"]
 
     def get_tags(self) -> List:
