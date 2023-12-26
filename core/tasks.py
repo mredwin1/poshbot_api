@@ -299,6 +299,7 @@ class CampaignTask(Task):
         async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
             start_time = time.perf_counter()
             user_info = self.campaign.posh_user.user_info
+            user_info["profile_picture"] = self.campaign.posh_user.get_profile_picture()
 
             try:
                 username = await client.register(user_info)
@@ -310,12 +311,8 @@ class CampaignTask(Task):
 
                 self.campaign.posh_user.is_registered = True
                 await self.campaign.posh_user.asave()
-
-                profile_picture = self.campaign.posh_user.get_profile_picture()
-                await client.finish_registration(
-                    profile_picture, self.campaign.posh_user.postcode
-                )
-                os.remove(profile_picture)
+                await client.finish_registration(user_info)
+                os.remove(user_info["profile_picture"])
                 end_time = time.perf_counter()
 
                 time_to_register = datetime.timedelta(

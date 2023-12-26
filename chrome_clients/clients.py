@@ -636,10 +636,11 @@ class PoshmarkClient(BasePuppeteerClient):
             )
 
     async def finish_registration(self, user_info: Dict) -> None:
-        profile_pic_path = user_info["profile_pic_path"]
         try:
             # Upload profile picture to .user-image
-            await self.upload_file(".image-selector__input-img-files", profile_pic_path)
+            await self.upload_file(
+                ".image-selector__input-img-files", user_info["profile_picture"]
+            )
 
             await self.sleep(1, 2)
             await self.click(selector='button[data-et-name="apply"]')
@@ -687,7 +688,7 @@ class PoshmarkClient(BasePuppeteerClient):
             return await self._handle_generic_errors(
                 e,
                 self.finish_registration,
-                profile_pic_path=profile_pic_path,
+                profile_pic_path=user_info["profile_picture"],
                 zipcode=user_info["zipcode"],
             )
 

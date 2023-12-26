@@ -336,6 +336,7 @@ class PoshUser(models.Model):
             "password": self.password,
             "gender": self.gender,
             "registered": self.is_registered,
+            "zipcode": self.postcode,
         }
         return user_info
 
