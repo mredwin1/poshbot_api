@@ -318,7 +318,7 @@ class BasePuppeteerClient:
         self, selector: str, xpath: bool = False, options: Dict = None
     ) -> ElementHandle:
         if options is None:
-            options = {"visible": True, "timeout": 5000}
+            options = {"visible": True, "timeout": 10000}
 
         if xpath:
             return await self.page.waitForXPath(selector, options)
@@ -326,7 +326,7 @@ class BasePuppeteerClient:
             return await self.page.waitForSelector(selector, options)
 
     async def find_all(self, selector: str, xpath: bool = False) -> List[ElementHandle]:
-        options = {"visible": True, "timeout": 5000}
+        options = {"visible": True, "timeout": 10000}
 
         if xpath:
             await self.page.waitForXPath(selector, options)
