@@ -84,30 +84,37 @@ class CampaignTask(Task):
         self.runtime_details = {}
 
     def get_runtime_details(self):
-        current_proxy = {
-            "title": f"{self.proxy.vendor} {self.proxy.license_id}",
-            "type": self.proxy.type,
-            "port": self.proxy.port,
-            "host": self.proxy.hostname,
-            "login": self.proxy.username,
-            "password": self.proxy.password,
-            "external_id": self.proxy.license_id,
-        }
         octo_client = OctoAPIClient()
-        proxies = octo_client.get_proxies(external_id=self.proxy.license_id)
+        proxy_uuid = ""
+        proxy = None
 
-        # if proxies:
-        #     proxy = proxies[0]
-        #
-        #     proxy_differences = {}
-        #     for key, value in current_proxy.items():
-        #         if value != proxy[key]:
-        #             proxy_differences[key] = value
-        #
-        #     if proxy_differences:
-        #         proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
-        # else:
-        #     proxy = octo_client.create_proxy(current_proxy)
+        if self.proxy is not None:
+            current_proxy = {
+                "title": f"{self.proxy.vendor} {self.proxy.license_id}",
+                "type": self.proxy.type,
+                "port": self.proxy.port,
+                "host": self.proxy.hostname,
+                "login": self.proxy.username,
+                "password": self.proxy.password,
+                "external_id": self.proxy.license_id,
+                "change_ip_url": f"https://portal.mobilehop.com/proxies/{self.proxy.proxy_uuid}/reset",
+            }
+            proxies = octo_client.get_proxies(external_id=self.proxy.license_id)
+
+            if proxies:
+                proxy = proxies[0]
+
+                proxy_differences = {}
+                for key, value in current_proxy.items():
+                    if value != proxy[key]:
+                        proxy_differences[key] = value
+
+                if proxy_differences:
+                    proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
+            else:
+                proxy = octo_client.create_proxy(current_proxy)
+
+            proxy_uuid = proxy["uuid"]
 
         if not self.campaign.posh_user.octo_uuid:
             tags = [
@@ -115,7 +122,7 @@ class CampaignTask(Task):
                 self.campaign.user.username,
             ]
             profile_uuid = octo_client.create_profile(
-                self.campaign.posh_user.username, tags, proxy_uuid=proxy["uuid"]
+                self.campaign.posh_user.username, tags, proxy_uuid=proxy_uuid
             )
             profile = octo_client.get_profile(profile_uuid)
 
@@ -125,8 +132,9 @@ class CampaignTask(Task):
         else:
             profile = octo_client.get_profile(self.campaign.posh_user.octo_uuid)
 
-        # octo_client.update_profile(profile["uuid"], proxy_uuid=proxy["uuid"])
-        # profile["proxy"] = proxy
+        if proxy:
+            octo_client.update_profile(profile["uuid"], proxy_uuid=proxy_uuid)
+            profile["proxy"] = proxy
 
         width, height = map(
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
