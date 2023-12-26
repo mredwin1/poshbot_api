@@ -567,12 +567,13 @@ class PoshmarkClient(BasePuppeteerClient):
                 )
 
     async def register(self, user_info: Dict) -> str:
+        self.logger.info(f"delete_me: register in client")
         if "/signup" not in self.page.url:
             await self.page.goto("https://poshmark.com")
             await self.click(selector='a[href="/signup"]')
 
             await self.sleep(0.4, 1.2)
-
+        self.logger.info(f"delete_me: register post nav")
         target_username: str = user_info["username"]
 
         await self.type("#firstName", user_info["first_name"])
@@ -593,9 +594,13 @@ class PoshmarkClient(BasePuppeteerClient):
                 xpath=True,
             )
 
+        self.logger.info(f"delete_me: register pre submit")
+
         await self.click(selector='button[type="submit"]')
 
         await self.sleep(2, 3)
+
+        self.logger.info(f"delete_me: register post submit")
 
         retries = 0
         error_handled = None
