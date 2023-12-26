@@ -135,6 +135,8 @@ class CampaignTask(Task):
         if proxy:
             octo_client.update_profile(profile["uuid"], proxy_uuid=proxy_uuid)
             profile["proxy"] = proxy
+        elif not proxy and profile["proxy"]:
+            octo_client.update_profile(profile["uuid"], proxy_uuid=proxy_uuid)
 
         width, height = map(
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
@@ -321,9 +323,7 @@ class CampaignTask(Task):
                 )
                 self.logger.info(f"Time to register user: {time_to_register}")
                 self.campaign.posh_user.time_to_register = time_to_register
-                await self.campaign.posh_user.posh_user.asave(
-                    update_fields=["time_to_register"]
-                )
+                await self.campaign.posh_user.asave(update_fields=["time_to_register"])
 
                 if list_items:
                     success = await self.list_items(client)
