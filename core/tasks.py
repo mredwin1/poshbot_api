@@ -96,18 +96,18 @@ class CampaignTask(Task):
         octo_client = OctoAPIClient()
         proxies = octo_client.get_proxies(external_id=self.proxy.license_id)
 
-        if proxies:
-            proxy = proxies[0]
-
-            proxy_differences = {}
-            for key, value in current_proxy.items():
-                if value != proxy[key]:
-                    proxy_differences[key] = value
-
-            if proxy_differences:
-                proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
-        else:
-            proxy = octo_client.create_proxy(current_proxy)
+        # if proxies:
+        #     proxy = proxies[0]
+        #
+        #     proxy_differences = {}
+        #     for key, value in current_proxy.items():
+        #         if value != proxy[key]:
+        #             proxy_differences[key] = value
+        #
+        #     if proxy_differences:
+        #         proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
+        # else:
+        #     proxy = octo_client.create_proxy(current_proxy)
 
         if not self.campaign.posh_user.octo_uuid:
             tags = [
@@ -125,8 +125,8 @@ class CampaignTask(Task):
         else:
             profile = octo_client.get_profile(self.campaign.posh_user.octo_uuid)
 
-        octo_client.update_profile(profile["uuid"], proxy_uuid=proxy["uuid"])
-        profile["proxy"] = proxy
+        # octo_client.update_profile(profile["uuid"], proxy_uuid=proxy["uuid"])
+        # profile["proxy"] = proxy
 
         width, height = map(
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
