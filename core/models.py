@@ -125,8 +125,7 @@ class Proxy(models.Model):
         response = requests.get(reset_url)
 
         if response.status_code == 200:
-            result = response.json()
-            return result.get("result", "IP reset successful")
+            return response.text
         elif response.status_code == 401:
             raise Exception("Authentication failed. Please check your credentials.")
         else:
