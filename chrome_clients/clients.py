@@ -318,7 +318,7 @@ class BasePuppeteerClient:
         self, selector: str, xpath: bool = False, options: Dict = None
     ) -> ElementHandle:
         if options is None:
-            options = {"visible": True, "timeout": 10000}
+            options = {"visible": True, "timeout": 5000}
 
         if xpath:
             return await self.page.waitForXPath(selector, options)
@@ -326,7 +326,7 @@ class BasePuppeteerClient:
             return await self.page.waitForSelector(selector, options)
 
     async def find_all(self, selector: str, xpath: bool = False) -> List[ElementHandle]:
-        options = {"visible": True, "timeout": 10000}
+        options = {"visible": True, "timeout": 5000}
 
         if xpath:
             await self.page.waitForXPath(selector, options)
@@ -635,7 +635,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 e, self.register, user_info=user_info
             )
 
-    async def finish_registration(self, profile_pic_path: str, zipcode: str) -> None:
+    async def finish_registration(self, user_info: Dict) -> None:
+        profile_pic_path = user_info["profile_pic_path"]
         try:
             # Upload profile picture to .user-image
             await self.upload_file(".image-selector__input-img-files", profile_pic_path)
@@ -645,8 +646,12 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(1, 2)
 
             # Set shirt/dress size
+            size_text = (
+                "Dress Size" if user_info["Gender"] == "Female" else "Shirt Size"
+            )
+
             await self.click(
-                selector="//div[preceding-sibling::label[contains(text(), 'Shirt Size')]][@id='set-profile-info-size-dropdown']",
+                selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
                 xpath=True,
             )
             await self.click_random("ul.dropdown__menu--expanded > li", count=1)
@@ -661,7 +666,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(1, 2)
 
             # Enter zipcode
-            await self.type(selector='input[name="zip"]', text=zipcode)
+            await self.type(selector='input[name="zip"]', text=user_info["zipcode"])
             await self.sleep(1, 2)
             await self.click(selector='button[type="submit"]')
 
@@ -683,7 +688,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 e,
                 self.finish_registration,
                 profile_pic_path=profile_pic_path,
-                zipcode=zipcode,
+                zipcode=user_info["zipcode"],
             )
 
     async def login(self, user_info: Dict) -> None:
