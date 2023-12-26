@@ -272,7 +272,7 @@ class CampaignTask(Task):
 
         self.campaign.status = Campaign.STARTING
         self.campaign.queue_status = "Unknown"
-        self.campaign.next_runtime = timezone.now()
+        self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
         self.campaign.save(update_fields=["status", "queue_status", "next_runtime"])
 
         return False
@@ -410,7 +410,7 @@ class CampaignTask(Task):
 
             self.campaign.status = Campaign.STARTING
             self.campaign.queue_status = "Unknown"
-            self.campaign.next_runtime = timezone.now()
+            self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
             await self.campaign.asave(
                 update_fields=["status", "queue_status", "next_runtime"]
             )
@@ -666,8 +666,10 @@ class CampaignTask(Task):
             self.logger.info(
                 f'Campaign could not be initiated due to the following issues {", ".join(campaign_init["errors"])}'
             )
-            self.campaign.status = Campaign.STOPPING
-            self.campaign.save(update_fields=["status"])
+
+            if self.campaign.status != Campaign.STARTING:
+                self.campaign.status = Campaign.STOPPING
+                self.campaign.save(update_fields=["status"])
 
             self.check_proxy_in()
 
@@ -906,7 +908,7 @@ class CheckPoshUsers(Task):
 
                     if campaign.status == Campaign.PAUSED:
                         campaign.status = Campaign.STARTING
-                        campaign.next_runtime = timezone.now()
+                        campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
 
                         campaign.save(update_fields=["status", "next_runtime"])
                 except Campaign.DoesNotExist:
