@@ -497,7 +497,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 )
                 user_info = kwargs.get("user_info", {})
                 username = user_info.get("username")
-                if username:
+                registered = user_info.get("registered")
+                if username and registered:
                     self.logger.info(f"Checking login status of {username}")
                     password = user_info.get("password")
                     logged_in = await self.logged_in(username)
@@ -512,6 +513,8 @@ class PoshmarkClient(BasePuppeteerClient):
                             "Recovery successful already logged in, continuing..."
                         )
                         return await callback(*args, **kwargs)
+                elif username:
+                    self.logger.info("User not registered, not attempting to login.")
                 else:
                     self.logger.info("No username to attempt login")
 
