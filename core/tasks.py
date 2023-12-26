@@ -270,7 +270,7 @@ class CampaignTask(Task):
 
     def reset_ip(self):
         reset_success = self.proxy.reset_ip()
-        time.sleep(10)
+        time.sleep(20)
 
         if reset_success:
             self.logger.info(reset_success)
