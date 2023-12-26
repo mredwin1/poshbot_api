@@ -254,6 +254,7 @@ class BasePuppeteerClient:
             # If no pages are open, create a new one
             self.page = await self.browser.newPage()
 
+        await self.page.setDefaultNavigationTimeout(60000)
         await self.page.setViewport(
             {"width": self.width, "height": self.height, "deviceScaleFactor": 1}
         )
@@ -281,7 +282,6 @@ class BasePuppeteerClient:
         str: A cleansed string with only valid CSS identifier characters.
         """
         return re.sub(r"[^a-zA-Z0-9-_]", "", selector)
-
 
     @staticmethod
     def random_coordinates_within_box(
@@ -535,7 +535,7 @@ class PoshmarkClient(BasePuppeteerClient):
         raise error
 
     async def logged_in(self, username: str) -> bool:
-        await self.page.goto("https://poshmark.com", {"timeout": 60000})
+        await self.page.goto("https://poshmark.com")
         if "/feed" in self.page.url:
             if await self.is_present(".user-image"):
                 profile_pic = await self.find(".user-image")
@@ -552,7 +552,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.page.reload()
         else:
             await self.page.goto(
-                f"https://poshmark.com/closet/{username}", {"timeout": 60000}
+                f"https://poshmark.com/closet/{username}"
             )
 
     async def go_to_listing(self, username: str, listing_id: str):
@@ -573,7 +573,7 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             self.logger.info(f"delete_me: register in client")
             if "/signup" not in self.page.url:
-                await self.page.goto("https://poshmark.com", {"timeout": 60000})
+                await self.page.goto("https://poshmark.com")
                 await self.sleep(0.6, 1)
                 await self.click(selector='a[href="/signup"]')
 
@@ -693,7 +693,7 @@ class PoshmarkClient(BasePuppeteerClient):
         password = user_info["password"]
 
         if "/login" not in self.page.url:
-            await self.page.goto("https://poshmark.com", {"timeout": 60000})
+            await self.page.goto("https://poshmark.com")
             await self.click(selector='a[href="/login"]')
 
         await self.sleep(1.5, 2.5)
@@ -721,7 +721,7 @@ class PoshmarkClient(BasePuppeteerClient):
             elif "create-listing" in self.page.url:
                 await self.page.reload()
             else:
-                await self.page.goto("https://poshmark.com/", {"timeout": 60000})
+                await self.page.goto("https://poshmark.com/")
                 await self.click(selector='a[href="/sell"]')
 
             await self.sleep(1.5, 2.4)
