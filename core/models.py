@@ -122,7 +122,7 @@ class Proxy(models.Model):
 
     def reset_ip(self):
         reset_url = (
-            f"https://portal.mobilehop.com/api/v2/proxies/{self.proxy_uuid}/reset"
+            f"https://portal.mobilehop.com/proxies/{self.proxy_uuid}/reset"
         )
         response = requests.get(reset_url)
 
