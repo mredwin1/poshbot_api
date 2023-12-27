@@ -126,16 +126,13 @@ class OctoAPIClient:
         else:
             data["proxy"] = None
 
-        # if not data:
-        #     raise ValueError("Must update at least one thing")
-
         response = requests.patch(
             f"{self.octo_api}/profiles/{uuid}",
             headers=self._octo_api_headers,
             json=data,
         )
         json_response = response.json()
-        print(json_response)
+
         return json_response["data"]
 
     def get_proxies(self, external_id: str = None) -> List[Dict]:
@@ -189,8 +186,6 @@ class OctoAPIClient:
             json=data,
         )
         json_response = response.json()
-
-        print(json_response)
 
         if "error" in json_response:
             raise ProfileStartError(json_response["error"])
