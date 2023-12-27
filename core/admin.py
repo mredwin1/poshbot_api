@@ -59,12 +59,12 @@ def stop_campaigns(modeladmin, request, queryset):
 
 @admin.action(description="Disable posh user")
 def disable_posh_users(modeladmin, request, queryset):
-    queryset.update(is_active=False, date_disabled=timezone.now())
+    queryset.update(is_active=False)
 
 
 @admin.action(description="Enable posh user")
 def enable_posh_users(modeladmin, request, queryset):
-    queryset.update(is_active=True, date_disabled=None)
+    queryset.update(is_active=True)
 
 
 @admin.action(description="Check proxy in")

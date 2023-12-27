@@ -152,8 +152,7 @@ class PoshUserViewSet(
             pass
 
         posh_user.is_active = False
-        posh_user.date_disabled = timezone.now().date()
-        posh_user.save(update_fields=["is_active", "date_disabled"])
+        posh_user.save(update_fields=["is_active"])
 
         serializer = self.get_serializer(posh_user)
 
