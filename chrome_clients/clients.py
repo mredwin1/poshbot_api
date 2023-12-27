@@ -900,7 +900,6 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 # Click share to my followers
                 await self.click(selector=".internal-share")
-                await self.sleep(1, 1.6)
 
                 flash_message_elem = await self.find(selector="#flash__message")
                 flash_message_inner_text = await flash_message_elem.getProperty(
