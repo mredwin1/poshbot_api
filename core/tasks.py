@@ -501,7 +501,7 @@ class CampaignTask(Task):
                 posh_user=self.campaign.posh_user, status=ListedItem.UP
             ).exclude(listed_item_id="")
 
-            if shareable_listings:
+            if shareable_listings.aexists():
                 async for shareable_listing in shareable_listings:
                     try:
                         await client.share_listing(
