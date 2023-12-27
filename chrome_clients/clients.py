@@ -126,8 +126,8 @@ class OctoAPIClient:
         if proxy_uuid is not None:
             data["proxy"] = {"uuid": proxy_uuid}
 
-        if not data:
-            raise ValueError("Must update at least one thing")
+        # if not data:
+        #     raise ValueError("Must update at least one thing")
 
         response = requests.patch(
             f"{self.octo_api}/profiles/{uuid}",
@@ -135,7 +135,7 @@ class OctoAPIClient:
             json=data,
         )
         json_response = response.json()
-
+        print(json_response)
         return json_response["data"]
 
     def get_proxies(self, external_id: str = None) -> List[Dict]:
