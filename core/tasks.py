@@ -556,14 +556,11 @@ class CampaignTask(Task):
                 all_listed_items = ListedItem.objects.filter(
                     posh_user=self.campaign.posh_user
                 )
-                reserved_listed_items = all_listed_items.filter(
+                reserved_listed_items = await all_listed_items.filter(
                     status=ListedItem.RESERVED
                 ).aexists()
-                under_review_listed_items = all_listed_items.filter(
+                under_review_listed_items = await all_listed_items.filter(
                     status=ListedItem.UNDER_REVIEW
-                ).aexists()
-                sold_listed_items = all_listed_items.filter(
-                    status=ListedItem.SOLD
                 ).aexists()
                 if reserved_listed_items:
                     self.logger.info(
