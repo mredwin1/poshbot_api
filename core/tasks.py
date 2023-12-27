@@ -546,7 +546,7 @@ class CampaignTask(Task):
                     bad_phrases = BadPhrase.objects.all()
                     bad_phrases = [
                         {"word": phrase.phrase, "report_type": phrase.report_type}
-                        for phrase in bad_phrases
+                        async for phrase in bad_phrases
                     ]
                     await client.check_comments(
                         user_info, shareable_listing.listed_item_id, bad_phrases
