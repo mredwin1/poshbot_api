@@ -444,7 +444,6 @@ class CampaignTask(Task):
         width = self.runtime_details["width"]
         height = self.runtime_details["height"]
         listing_shared = None
-        shared = None
         user_info = self.campaign.posh_user.user_info
         async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
             # TODO: Implement the below
@@ -510,7 +509,7 @@ class CampaignTask(Task):
                     except (ShareError, ListingNotFoundError) as e:
                         self.logger.warning(e)
 
-                    if random.random() < 0.20 and shared:
+                    if random.random() < 0.20:
                         self.logger.info(
                             "Seeing if it is time to send offers to likers"
                         )
@@ -538,7 +537,7 @@ class CampaignTask(Task):
                                 f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern"
                             )
 
-                    if random.random() < 0.20 and shared:
+                    if random.random() < 0.20:
                         await client.check_offers(
                             user_info, shareable_listing.listed_item_id
                         )
@@ -552,7 +551,7 @@ class CampaignTask(Task):
                         user_info, shareable_listing.listed_item_id, bad_phrases
                     )
 
-                return shared
+                return True
             else:
                 all_listed_items = ListedItem.objects.filter(
                     posh_user=self.campaign.posh_user
@@ -578,26 +577,6 @@ class CampaignTask(Task):
                     )
 
                     self.campaign.status = Campaign.PAUSED
-                    self.campaign.next_runtime = None
-                    await self.campaign.asave()
-
-                    return False
-                elif sold_listed_items:
-                    self.logger.info(
-                        "This user has no shareable listings and only ones sold. Stopping campaign"
-                    )
-
-                    self.campaign.status = Campaign.STOPPING
-                    self.campaign.next_runtime = None
-                    await self.campaign.asave()
-
-                    return False
-                else:
-                    self.logger.info(
-                        "This user has no listings for sale. Stopping campaign"
-                    )
-
-                    self.campaign.status = Campaign.STOPPING
                     self.campaign.next_runtime = None
                     await self.campaign.asave()
 
