@@ -84,8 +84,6 @@ class OctoAPIClient:
         )
         json_response = response.json()
 
-        print(json_response)
-
         return json_response["data"]["uuid"]
 
     def get_tags(self) -> List:
@@ -182,7 +180,7 @@ class OctoAPIClient:
             "uuid": uuid,
             "headless": True,
             "debug_port": True,
-            "flags": ["--disable-backgrounding-occluded-windows", "--no-sandbox"],
+            "flags": ["--disable-backgrounding-occluded-windows"],
         }
 
         response = requests.post(
@@ -191,6 +189,8 @@ class OctoAPIClient:
             json=data,
         )
         json_response = response.json()
+
+        print(json_response)
 
         if "error" in json_response:
             raise ProfileStartError(json_response["error"])

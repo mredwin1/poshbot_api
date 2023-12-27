@@ -804,7 +804,13 @@ Resources:
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          echo ECS_CLUSTER=${ECSCluster} >> /etc/ecs/ecs.config
+          echo ECS_CLUSTER=${ECSCluster}  >> /etc/ecs/ecs.config;
+          sleep 30
+          yum install wget -y
+          cd /etc/docker/
+          wget https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json 
+          sed -i 's/^OPTIONS=.*/OPTIONS=\"--default-ulimit nofile=32768:65535 --seccomp-profile=\/etc\/docker\/chrome.json\"/' /etc/sysconfig/docker
+          systemctl restart docker
 
   EFSMountTargetOne:
     Type: AWS::EFS::MountTarget
