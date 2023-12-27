@@ -896,7 +896,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     raise ListingNotFoundError(
                         f"Could not find listing with id: {listing_id}"
                     )
-                await self.sleep(1, 1.6)
+                await self.sleep(1.5, 2)
 
                 # Click share to my followers
                 await self.click(selector=".internal-share")
