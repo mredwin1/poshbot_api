@@ -1048,7 +1048,10 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.go_to_listing(user_info["username"], listing_id)
 
             # Select all comment elements
-            comments = await self.find_all(".comment-item")
+            try:
+                comments = await self.find_all(".comment-item")
+            except TimeoutError:
+                comments = []
 
             # Iterate through each comment
             for comment in comments:

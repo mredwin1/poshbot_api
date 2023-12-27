@@ -787,7 +787,7 @@ Resources:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
       LaunchConfigurationName: !Sub
-      - '${ApplicationName}-lch-config-${Environment}'
+      - '${ApplicationName}-lch-cnfg-${Environment}'
       - Environment: !Ref Environment
         ApplicationName:
           Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
