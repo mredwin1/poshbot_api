@@ -536,11 +536,11 @@ class CampaignTask(Task):
                             self.logger.info(
                                 f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern"
                             )
-
-                    if random.random() < 0.20:
-                        await client.check_offers(
-                            user_info, shareable_listing.listed_item_id
-                        )
+                    # TODO: Finish implementing this
+                    # if random.random() < 0.20:
+                    #     await client.check_offers(
+                    #         user_info, shareable_listing.listed_item_id
+                    #     )
 
                     bad_phrases = BadPhrase.objects.all()
                     bad_phrases = [
