@@ -125,6 +125,8 @@ class OctoAPIClient:
 
         if proxy_uuid is not None:
             data["proxy"] = {"uuid": proxy_uuid}
+        else:
+            data["proxy"] = None
 
         # if not data:
         #     raise ValueError("Must update at least one thing")

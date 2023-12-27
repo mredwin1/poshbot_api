@@ -141,7 +141,7 @@ class CampaignTask(Task):
             octo_client.update_profile(profile["uuid"], proxy_uuid=proxy_uuid)
             profile["proxy"] = proxy
         elif not proxy and profile["proxy"]:
-            octo_client.update_profile(profile["uuid"], proxy_uuid=proxy_uuid)
+            octo_client.update_profile(profile["uuid"])
 
         width, height = map(
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
