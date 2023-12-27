@@ -121,9 +121,14 @@ class CampaignTask(Task):
                 os.environ["ENVIRONMENT"].replace("-", ""),
                 self.campaign.user.username,
             ]
-            profile_uuid = octo_client.create_profile(
-                self.campaign.posh_user.username, tags, proxy_uuid=proxy_uuid
-            )
+            if proxy:
+                profile_uuid = octo_client.create_profile(
+                    self.campaign.posh_user.username, tags, proxy_uuid=proxy_uuid
+                )
+            else:
+                profile_uuid = octo_client.create_profile(
+                    self.campaign.posh_user.username, tags
+                )
             profile = octo_client.get_profile(profile_uuid)
 
             self.campaign.posh_user.octo_uuid = profile["uuid"]
@@ -324,8 +329,11 @@ class CampaignTask(Task):
 
                 if list_items:
                     success = await self.list_items(client)
+                    campaign_status = Campaign.PAUSED
                 else:
                     success = True
+                    campaign_status = Campaign.IDLE
+
             except LoginOrRegistrationError as e:
                 success = False
                 self.logger.error(e)
