@@ -786,11 +786,6 @@ Resources:
   ECSLaunchConfiguration:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
-      LaunchConfigurationName: !Sub
-      - '${ApplicationName}-lch-cnfg-${Environment}'
-      - Environment: !Ref Environment
-        ApplicationName:
-          Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       BlockDeviceMappings:
         - DeviceName: /dev/sda1
           Ebs:
@@ -808,7 +803,7 @@ Resources:
           sleep 30
           yum install wget -y
           cd /etc/docker/
-          wget https://raw.githubusercontent.com/jessfraz/dotfiles/master/etc/docker/seccomp/chrome.json 
+          echo "{\"defaultAction\": \"SCMP_ACT_ALLOW\"}" > chrome.json
           sed -i 's/^OPTIONS=.*/OPTIONS=\"--default-ulimit nofile=32768:65535 --seccomp-profile=\/etc\/docker\/chrome.json\"/' /etc/sysconfig/docker
           systemctl restart docker
 
