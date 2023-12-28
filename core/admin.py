@@ -363,7 +363,6 @@ class CampaignAdmin(admin.ModelAdmin):
             super(CampaignAdmin, self)
             .get_queryset(request)
             .select_related("posh_user")
-            .prefetch_related("loggroup_set")
             .annotate(
                 listings_count=Count("listings"),
                 queue_status_num=Case(
@@ -396,18 +395,6 @@ class CampaignAdmin(admin.ModelAdmin):
     def listings_count(self, campaign):
         url = f"{reverse('admin:core_listing_changelist')}?{urlencode({'campaign__id': str(campaign.id)})}"
         return format_html('<a href="{}">{}</a>', url, campaign.listings_count)
-
-    @admin.display()
-    def latest_log(self, campaign):
-        log = campaign.loggroup_set.filter(posh_user=campaign.posh_user).first()
-        if log:
-            url = f"{reverse('admin:core_loggroup_change', args=[log.id])}"
-            return format_html(
-                '<a href="{}">{}</a>',
-                url,
-                log.created_date.strftime("%m-%d-%Y %I:%M:%S"),
-            )
-        return log
 
     @admin.display(ordering="queue_status_num")
     def queue_status_num(self, campaign):

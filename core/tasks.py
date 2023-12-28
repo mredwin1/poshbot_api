@@ -39,7 +39,6 @@ from .models import (
     Campaign,
     Listing,
     PoshUser,
-    LogGroup,
     ListedItem,
     PaymentEmailContent,
     Proxy,
@@ -1059,23 +1058,6 @@ class CheckPoshUsers(Task):
 CampaignTask = app.register_task(CampaignTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
 CheckPoshUsers = app.register_task(CheckPoshUsers())
-
-
-@shared_task
-def log_cleanup():
-    campaigns = Campaign.objects.all()
-
-    for campaign in campaigns:
-        logs = LogGroup.objects.filter(campaign=campaign).order_by("-created_date")[5:]
-
-        for log in logs:
-            log.delete()
-
-    try:
-        redis_client = caches["default"].client.get_client()
-        redis_client.delete(f"{log_cleanup.name}")
-    except Exception:
-        pass
 
 
 @shared_task

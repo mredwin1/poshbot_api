@@ -46,10 +46,6 @@ CELERY_TASK_ROUTES = {
         "queue": os.environ["MAINTENANCE_QUEUE"],
         "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
-    "core.tasks.log_cleanup": {
-        "queue": os.environ["MAINTENANCE_QUEUE"],
-        "routing_key": os.environ["MAINTENANCE_QUEUE"],
-    },
     "imagekit.cachefiles.backends._generate_file": {
         "queue": os.environ["MAINTENANCE_QUEUE"],
         "routing_key": os.environ["MAINTENANCE_QUEUE"],
@@ -76,10 +72,6 @@ CELERY_BEAT_SCHEDULE = {
     "check_posh_users": {
         "task": "core.tasks.CheckPoshUsers",
         "schedule": timedelta(minutes=20),
-    },
-    "log_cleanup": {
-        "task": "core.tasks.log_cleanup",
-        "schedule": timedelta(hours=1),
     },
     "posh_user_cleanup": {
         "task": "core.tasks.posh_user_cleanup",

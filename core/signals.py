@@ -8,9 +8,7 @@ from core.models import (
     PoshUser,
     Listing,
     ListingImage,
-    LogEntry,
     ListedItem,
-    LogGroup,
 )
 from core.tasks import send_email
 from email_retrieval import zke_yahoo
@@ -51,26 +49,7 @@ def listing_image_deleted(sender, instance, *args, **kwargs):
     instance.image.delete(save=False)
 
 
-@receiver(post_delete, sender=LogEntry)
-def log_entry_deleted(sender, instance, *args, **kwargs):
-    instance.image.delete(save=False)
-
-
 @receiver(post_save, sender=ListedItem)
 def listed_item_saved(sender, instance: ListedItem, *args, **kwargs):
     if not instance.listing and instance.status == ListedItem.NOT_LISTED:
         instance.delete()
-
-
-@receiver(post_save, sender=LogGroup)
-def log_group_saved(sender, instance: LogGroup, *args, **kwargs):
-    if instance.has_error:
-        log_entry: LogEntry = instance.log_entries.filter(
-            level__gte=LogEntry.ERROR
-        ).first()
-        send_email.delay(
-            os.environ["EMAIL_ADDRESS"],
-            ["ecruz1113@gmail.com", "johnnyhustle41@gmail.com"],
-            f"Error when running {instance.posh_user.username}",
-            log_entry.message,
-        )
