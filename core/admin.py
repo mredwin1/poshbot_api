@@ -351,7 +351,6 @@ class CampaignAdmin(admin.ModelAdmin):
         "associated_user",
         "associated_posh_user",
         "listings_count",
-        "latest_log",
     ]
     search_fields = ["title__istartswith", "posh_user__username__istartswith"]
     list_filter = ["status", "user"]
