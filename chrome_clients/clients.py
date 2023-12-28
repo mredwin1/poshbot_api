@@ -1049,7 +1049,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
             # Select all comment elements
             try:
-                comments = await self.find_all(".comment-item")
+                comments = await self.find_all(".comment-item__container")
             except TimeoutError:
                 comments = []
 
@@ -1060,15 +1060,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 comment_text = await self.page.evaluate(
                     "(element) => element.textContent", comment_item_text
                 )
-
-                username_elem = await comment.querySelector(
-                    'a[data-et-name="username"]'
-                )
-                username = None
-                if username_elem:
-                    username = await self.page.evaluate(
-                        "(element) => element.textContent", username_elem
-                    )
 
                 # Check if the comment contains any bad words
                 for bad_word in bad_words:
@@ -1089,6 +1080,7 @@ class PoshmarkClient(BasePuppeteerClient):
                                 username = await self.page.evaluate(
                                     "(element) => element.textContent", username_elem
                                 )
+                                username = username.strip()
 
                             await report_button.click()
                             await self.sleep(0.3, 0.7)
