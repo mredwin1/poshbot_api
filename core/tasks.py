@@ -495,9 +495,13 @@ class CampaignTask(Task):
             #         pass
             #
 
-            shareable_listings = ListedItem.objects.filter(
-                posh_user=self.campaign.posh_user, status=ListedItem.UP
-            ).exclude(listed_item_id="").select_related('listing')
+            shareable_listings = (
+                ListedItem.objects.filter(
+                    posh_user=self.campaign.posh_user, status=ListedItem.UP
+                )
+                .exclude(listed_item_id="")
+                .select_related("listing")
+            )
 
             if await shareable_listings.aexists():
                 async for shareable_listing in shareable_listings:
