@@ -261,7 +261,7 @@ class BasePuppeteerClient:
     async def close(self):
         """Closes the Puppeteer browser."""
         if self.browser:
-            await asyncio.ensure_future(self.browser.close())
+            await self.browser.close()
 
     @staticmethod
     def cleanse_selector(selector):
