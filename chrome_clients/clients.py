@@ -565,6 +565,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 raise ListingNotFoundError(
                     f"Could not find listing with id: {listing_id}"
                 )
+        else:
+            await self.page.reload()
 
     async def register(self, user_info: Dict) -> str:
         try:
