@@ -787,7 +787,7 @@ Resources:
     Type: "AWS::AutoScaling::LaunchConfiguration"
     Properties:
       BlockDeviceMappings:
-        - DeviceName: /dev/sda1
+        - DeviceName: /dev/xvda
           Ebs:
             VolumeSize: 60
       ImageId: ami-045a946a7171d63ce
