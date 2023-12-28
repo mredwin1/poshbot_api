@@ -552,6 +552,8 @@ class PoshmarkClient(BasePuppeteerClient):
         else:
             await self.page.goto(f"https://poshmark.com/closet/{username}")
 
+        await self.sleep(0.7, 1.2)
+
     async def go_to_listing(self, username: str, listing_id: str):
         if listing_id not in self.page.url or "/listing" not in self.page.url:
             await self.go_to_closet(username)
