@@ -898,16 +898,14 @@ class PaymentEmailContent(models.Model):
 
 
 class BadPhrase(models.Model):
-    DESIGNER_REPLICA = "Designer Replica"
-    NON_PM_TRANSACTION = "Non-PM Transactions"
-    UNSUPPORTED_ITEMS = "Unsupported Items"
     SPAM = "Spam"
+    NON_PM_TRANSACTION = "Transaction Off Poshmark"
+    OFFENSIVE_COMMENT = "Offensive Comment"
     HARASSMENT = "Harassment"
 
     REPORT_TYPE_CHOICES = [
-        (DESIGNER_REPLICA, DESIGNER_REPLICA),
         (NON_PM_TRANSACTION, NON_PM_TRANSACTION),
-        (UNSUPPORTED_ITEMS, UNSUPPORTED_ITEMS),
+        (OFFENSIVE_COMMENT, OFFENSIVE_COMMENT),
         (SPAM, SPAM),
         (HARASSMENT, HARASSMENT),
     ]
