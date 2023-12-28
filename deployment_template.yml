@@ -791,7 +791,7 @@ Resources:
           Ebs:
             VolumeSize: 60
       ImageId: ami-045a946a7171d63ce
-      InstanceType: t3.medium
+      InstanceType: t3.large
       IamInstanceProfile: !Ref EC2InstanceProfile
       SecurityGroups:
         - !Ref ECSSecurityGroup
