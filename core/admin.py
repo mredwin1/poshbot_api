@@ -82,18 +82,6 @@ class ListingImageInline(admin.TabularInline):
     extra = 0
 
 
-class LogEntryInline(admin.StackedInline):
-    model = models.LogEntry
-    extra = 0
-    fields = ["level", "timestamp_seconds", "message", "image"]
-    readonly_fields = ["level", "timestamp_seconds", "message", "image"]
-    ordering = ["timestamp"]
-
-    @staticmethod
-    def timestamp_seconds(log_entry):
-        return log_entry.timestamp.strftime("%b %d, %Y, %I:%M:%S %p")
-
-
 class PoshUserStatusFilter(admin.SimpleListFilter):
     title = "status"
     parameter_name = "status"
@@ -442,41 +430,6 @@ class CampaignAdmin(admin.ModelAdmin):
             },
         ),
     )
-
-
-@admin.register(models.LogGroup)
-class LogGroupAdmin(admin.ModelAdmin):
-    list_display = [
-        "created_date",
-        "campaign",
-        "posh_user",
-        "has_error",
-        "associated_user",
-    ]
-    readonly_fields = ["campaign", "posh_user", "created_date", "has_error"]
-    list_filter = ["has_error", "created_date"]
-    search_fields = ["posh_user__username__istartswith"]
-    inlines = [LogEntryInline]
-
-    def get_queryset(self, request):
-        return super(LogGroupAdmin, self).get_queryset(request)
-
-    fieldsets = (
-        (
-            "Log Information",
-            {
-                "fields": (
-                    ("created_date",),
-                    ("campaign", "posh_user"),
-                )
-            },
-        ),
-    )
-
-    @admin.display(ordering="posh_user")
-    def associated_user(self, log_group: models.LogGroup):
-        url = f"{reverse('admin:core_user_change', args=[log_group.posh_user.user.id])}"
-        return format_html('<a href="{}">{}</a>', url, log_group.posh_user.user)
 
 
 @admin.register(models.ListedItem)

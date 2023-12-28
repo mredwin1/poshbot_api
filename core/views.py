@@ -25,7 +25,7 @@ from rest_framework_simplejwt.views import (
 from email_retrieval import zke_yahoo
 from . import serializers
 from .mixins import DestroyWithPayloadModelMixin
-from .models import PoshUser, Campaign, Listing, ListingImage, LogGroup, ListedItem
+from .models import PoshUser, Campaign, Listing, ListingImage, ListedItem
 
 
 class TokenObtainPairView(BaseTokenObtainPairView):
@@ -292,14 +292,3 @@ class CampaignViewSet(
         serializer = self.get_serializer(campaign)
 
         return Response(serializer.data)
-
-
-class LogGroupViewSet(RetrieveModelMixin, ListModelMixin, GenericViewSet):
-    serializer_class = serializers.LogGroupSerializer
-    filter_backends = [filters.SearchFilter, DjangoFilterBackend]
-    permission_classes = [IsAuthenticated]
-
-    def get_queryset(self):
-        queryset = LogGroup.objects.filter(campaign_id=self.kwargs["campaign_pk"])
-
-        return queryset

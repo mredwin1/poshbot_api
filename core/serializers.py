@@ -16,8 +16,6 @@ from .models import (
     Campaign,
     Listing,
     ListingImage,
-    LogEntry,
-    LogGroup,
     ListedItem,
 )
 
@@ -257,43 +255,3 @@ class CampaignSerializer(serializers.ModelSerializer):
             campaign.listings.add(listing)
 
         return campaign
-
-
-class LogEntrySerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LogEntry
-        fields = ["id", "log_level", "log_group", "timestamp", "message", "image"]
-
-        extra_kwargs = {
-            "id": {"read_only": True},
-        }
-
-    log_level = serializers.SerializerMethodField(method_name="get_log_level")
-
-    @staticmethod
-    def get_log_level(log_entry: LogEntry):
-        if log_entry.level >= LogEntry.CRITICAL:
-            return "CRITICAL"
-        elif log_entry.level >= LogEntry.ERROR:
-            return "ERROR"
-        elif log_entry.level >= LogEntry.WARNING:
-            return "WARNING"
-        elif log_entry.level >= LogEntry.INFO:
-            return "INFO"
-        elif log_entry.level >= LogEntry.DEBUG:
-            return "DEBUG"
-        else:
-            return "NOTSET"
-
-
-class LogGroupSerializer(serializers.ModelSerializer):
-    class Meta:
-        model = LogGroup
-        fields = ["id", "campaign", "posh_user", "created_date", "log_entries"]
-
-        extra_kwargs = {
-            "id": {"read_only": True},
-            "created_date": {"read_only": True},
-        }
-
-    log_entries = LogEntrySerializer(many=True, read_only=True)

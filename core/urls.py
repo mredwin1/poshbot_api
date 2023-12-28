@@ -13,7 +13,6 @@ listings_router = routers.NestedSimpleRouter(router, "listings", lookup="listing
 listings_router.register("images", views.ListingImageViewSet, basename="listing-images")
 
 campaigns_router = routers.NestedSimpleRouter(router, "campaigns", lookup="campaign")
-campaigns_router.register("logs", views.LogGroupViewSet, basename="campaign-logs")
 
 urlpatterns = [
     path("auth/token/create/", views.TokenObtainPairView.as_view(), name="token")
