@@ -118,8 +118,8 @@ class CampaignTask(Task):
 
         if not self.campaign.posh_user.octo_uuid:
             tags = [
-                os.environ["ENVIRONMENT"].replace("-", ""),
-                self.campaign.user.username,
+                os.environ["ENVIRONMENT"].replace("-", "")[:10],
+                self.campaign.user.username[:10],
             ]
             if proxy:
                 profile_uuid = octo_client.create_profile(
