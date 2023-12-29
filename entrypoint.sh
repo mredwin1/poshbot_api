@@ -35,4 +35,4 @@ if [ $retry_count -eq $max_retries ]; then
     exit 1
 fi
 
-celery -A poshbot_api worker --concurrency=3 -Q "$GENERAL_QUEUE" -l INFO
+celery -A poshbot_api worker --concurrency=4 -Q "$GENERAL_QUEUE" -l INFO
