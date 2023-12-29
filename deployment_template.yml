@@ -805,7 +805,7 @@ Resources:
           max_retries=3
           retry_count=0
           
-          SECRET_ARN="${OCTO_SECRET_ARN}"
+          SECRET_ARN="${OctoSecretArn}"
           
           # Retrieve the secret using AWS CLI
           secret=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query 'SecretString' --output text)
