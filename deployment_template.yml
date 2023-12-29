@@ -1072,6 +1072,15 @@ Resources:
                 Resource:
                   - !GetAtt Database.MasterUserSecret.SecretArn
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
+        - PolicyName: CloudFormationAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cloudformation:DescribeStacks"
+                Resource:
+                  - "*"
 
   EC2InstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
