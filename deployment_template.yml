@@ -274,9 +274,6 @@ Resources:
             - Name: OCTO_API_KEY
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: OCTO_CREDENTIALS
-              ValueFrom:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   APIService:
     Type: AWS::ECS::Service
@@ -415,9 +412,6 @@ Resources:
             - Name: OCTO_API_KEY
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: OCTO_CREDENTIALS
-              ValueFrom:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   BeatService:
     Type: AWS::ECS::Service
@@ -524,9 +518,6 @@ Resources:
             - Name: OCTO_API_KEY
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: OCTO_CREDENTIALS
-              ValueFrom:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   MaintenanceService:
     Type: AWS::ECS::Service
@@ -983,7 +974,6 @@ Resources:
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
                   - !Ref DjangoSecretKey
                   - !Ref MasterUserPassword
         - PolicyName: AWSCloudWatch
@@ -1048,17 +1038,6 @@ Resources:
                   - "sqs:GetQueueAttributes"
                   - "sqs:changemessagevisibility"
                 Resource: '*'
-        - PolicyName: EFSAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'elasticfilesystem:ClientMount'
-                  - 'elasticfilesystem:ClientWrite'
-                  - 'elasticfilesystem:DescribeFileSystems'
-                  - 'elasticfilesystem:DescribeMountTargets'
-                Resource: !GetAtt OctoCache.Arn
 
   EC2InstanceRole:
     Type: "AWS::IAM::Role"
@@ -1074,6 +1053,17 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
         - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource:
+                  - !GetAtt Database.MasterUserSecret.SecretArn
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   EC2InstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
