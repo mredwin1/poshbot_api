@@ -784,7 +784,7 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
 
-          apt update && apt install -y \
+          apt update && apt install -y libgl1 libglib2.0-0 zip \
           apt-transport-https ca-certificates curl jq \
           gnupg unzip libgles2 libegl1 xvfb --no-install-recommends \
           && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
