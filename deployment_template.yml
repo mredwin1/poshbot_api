@@ -152,6 +152,9 @@ Resources:
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
 
   EFSFileSystemSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -767,8 +770,14 @@ Resources:
       InstanceType: t3.xlarge
       PropagateTagsToVolumeOnCreation: true
       SecurityGroupIds:
-        - String
-      SubnetId: String
+        - !GetAtt ECSSecurityGroup.GroupId
+      SubnetId:
+        Fn::Select:
+          - 0
+          - Fn::Split:
+              - ","
+              - Fn::ImportValue:
+                  !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
