@@ -805,7 +805,7 @@ Resources:
           max_retries=3
           retry_count=0
           
-          SECRET_ARN="${OctoSecretArn}"
+          OCTO_SECRET_ARN="$(aws cloudformation describe-stacks --stack-name ${GlobalResourcesStackName} --query "Stacks[0].Outputs" | jq -r '.[] | select(.OutputKey == "OctoSecret") | .OutputValue')"
           
           # Retrieve the secret using AWS CLI
           secret=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query 'SecretString' --output text)
@@ -826,7 +826,6 @@ Resources:
               retry_count=$((retry_count+1))
               sleep 5
           done
-          - OctoSecretArn: Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
 
   S3Bucket:
     Type: AWS::S3::Bucket
