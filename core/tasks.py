@@ -165,6 +165,12 @@ class CampaignTask(Task):
         runtime_details["width"] = width
         runtime_details["height"] = height
 
+        ws_endpoint = runtime_details["ws_endpoint"]
+        ws_endpoint = ws_endpoint.replace("127.0.0.1", os.environ["OCTO_ENDPOINT"])
+        runtime_details["ws_endpoint"] = ws_endpoint
+
+        print(runtime_details)
+
         return runtime_details
 
     def stop_octo_profile(self):

@@ -21,7 +21,7 @@ from .errors import *
 class OctoAPIClient:
     def __init__(self):
         self.octo_api = "https://app.octobrowser.net/api/v2/automation"
-        self.octo_local_api = "http://localhost:58888/api"
+        self.octo_local_api = f"http://{os.environ['OCTO_ENDPOINT']}:58888/api"
 
         self._octo_api_headers = {
             "X-Octo-Api-Token": os.environ["OCTO_API_KEY"],
@@ -186,6 +186,8 @@ class OctoAPIClient:
             json=data,
         )
         json_response = response.json()
+
+        print(json_response)
 
         if "error" in json_response:
             raise ProfileStartError(json_response["error"])

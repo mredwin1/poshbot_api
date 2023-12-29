@@ -609,6 +609,8 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            - Name: OCTO_ENDPOINT
+              Value: !GetAtt EC2Instance.PrivateDnsName
           Secrets:
             - Name: SECRET_KEY
               ValueFrom: !Ref DjangoSecretKey
@@ -817,7 +819,7 @@ Resources:
           OCTO_SECRET_ARN="$(aws cloudformation describe-stacks --stack-name ${GlobalResourcesStackName} --query "Stacks[0].Outputs" | jq -r '.[] | select(.OutputKey == "OctoSecret") | .OutputValue')"
           
           # Retrieve the secret using AWS CLI
-          secret=$(aws secretsmanager get-secret-value --secret-id $SECRET_ARN --query 'SecretString' --output text)
+          secret=$(aws secretsmanager get-secret-value --secret-id $OCTO_SECRET_ARN --query 'SecretString' --output text)
           echo "$secret"
           # Extract username and password from the secret
           OCTO_EMAIL=$(echo $secret | jq -r '.username')
