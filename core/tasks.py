@@ -530,7 +530,9 @@ class CampaignTask(Task):
 
                         if nine_pm < now < midnight:
                             try:
-                                offer = math.floor(shareable_listing.listing.listing_price * 0.9)
+                                offer = math.floor(
+                                    shareable_listing.listing.listing_price * 0.9
+                                )
                                 await client.send_offers_to_likers(
                                     user_info, shareable_listing.listed_item_id, offer
                                 )

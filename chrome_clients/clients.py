@@ -1009,7 +1009,6 @@ class PoshmarkClient(BasePuppeteerClient):
     ) -> None:
         try:
             await self.go_to_closet(username)
-            await self.sleep(0.2, 0.7)
 
             await self.click(selector='div[data-et-name="more_icon"]')
             await self.sleep(0.2, 0.4)
