@@ -558,8 +558,8 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Cpu: 2048
-      Memory: 4096
+      Cpu: 1024
+      Memory: 2048
       Volumes:
         - Name: 'efs-volume'
           EFSVolumeConfiguration:
@@ -778,7 +778,7 @@ Resources:
         CPUCredits: unlimited
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: ami-0c7217cdde317cfec
-      InstanceType: t3.xlarge
+      InstanceType: !If [IsProd, t3.xlarge, t3.large]
       PropagateTagsToVolumeOnCreation: true
       SecurityGroupIds:
         - !GetAtt ECSSecurityGroup.GroupId
