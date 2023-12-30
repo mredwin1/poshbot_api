@@ -743,7 +743,9 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.page.goto("https://poshmark.com/")
                 await self.click(selector='a[href="/sell"]')
 
-            await self.sleep(1.5, 2.4)
+            await self.page.waitForNavigation()
+
+            await self.sleep(0.8, 1.2)
 
             self.logger.info(f"delete_me: listing item  after nav")
 
