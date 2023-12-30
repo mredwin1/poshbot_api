@@ -118,8 +118,8 @@ class CampaignTask(Task):
 
         if not self.campaign.posh_user.octo_uuid:
             tags = [
-                os.environ["ENVIRONMENT"].replace("-", ""),
-                self.campaign.user.username,
+                os.environ["ENVIRONMENT"].replace("-", "")[:10],
+                self.campaign.user.username[:10],
             ]
             if proxy:
                 profile_uuid = octo_client.create_profile(
@@ -164,6 +164,12 @@ class CampaignTask(Task):
         runtime_details = start_response
         runtime_details["width"] = width
         runtime_details["height"] = height
+
+        ws_endpoint = runtime_details["ws_endpoint"]
+        ws_endpoint = ws_endpoint.replace("127.0.0.1", os.environ["OCTO_ENDPOINT"])
+        runtime_details["ws_endpoint"] = ws_endpoint
+
+        print(runtime_details)
 
         return runtime_details
 

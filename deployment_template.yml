@@ -152,6 +152,9 @@ Resources:
       SecurityGroupEgress:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
+      SecurityGroupIngress:
+        - IpProtocol: -1
+          CidrIp: 0.0.0.0/0
 
   EFSFileSystemSecurityGroup:
     Type: AWS::EC2::SecurityGroup
@@ -274,9 +277,6 @@ Resources:
             - Name: OCTO_API_KEY
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: OCTO_CREDENTIALS
-              ValueFrom:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   APIService:
     Type: AWS::ECS::Service
@@ -415,9 +415,6 @@ Resources:
             - Name: OCTO_API_KEY
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: OCTO_CREDENTIALS
-              ValueFrom:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   BeatService:
     Type: AWS::ECS::Service
@@ -524,9 +521,6 @@ Resources:
             - Name: OCTO_API_KEY
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: OCTO_CREDENTIALS
-              ValueFrom:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   MaintenanceService:
     Type: AWS::ECS::Service
@@ -564,28 +558,28 @@ Resources:
       NetworkMode: awsvpc
       ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
       TaskRoleArn: !GetAtt TaskRole.Arn
-      Volumes:
-        - Name: 'shm'
-          Host:
-            SourcePath: '/dev/shm'
-        - Name: 'octo-cache'
-          EFSVolumeConfiguration:
-            FilesystemId: !GetAtt OctoCache.FileSystemId
+      Cpu: 2048
+      Memory: 4096
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
       ContainerDefinitions:
         - Name: general-container
           Image: !Ref DockerImage
           StopTimeout: 120
-          MemoryReservation: 1536
           EntryPoint:
-            - './entrypoint.sh'
+            - 'celery'
+            - '-A'
+            - 'poshbot_api'
+            - 'worker'
+            - '--concurrency=2'
+            - '-Q'
+            - !GetAtt GeneralQueue.QueueName
+            - '-l'
+            - 'INFO'
           RepositoryCredentials:
             CredentialsParameter:
               Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
-          MountPoints:
-            - SourceVolume: 'shm'
-              ContainerPath: '/dev/shm'
-            - SourceVolume: 'octo-cache'
-              ContainerPath: '/home/.Octo Browser/bin'
           LogConfiguration:
             LogDriver: awslogs
             Options:
@@ -615,6 +609,8 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            - Name: OCTO_ENDPOINT
+              Value: !GetAtt EC2Instance.PrivateDnsName
           Secrets:
             - Name: SECRET_KEY
               ValueFrom: !Ref DjangoSecretKey
@@ -635,13 +631,10 @@ Resources:
             - Name: OCTO_API_KEY
               ValueFrom:
                 Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
-            - Name: OCTO_CREDENTIALS
-              ValueFrom:
-                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
 
   GeneralService:
-    DependsOn: ECSLaunchConfiguration
     Type: AWS::ECS::Service
+    DependsOn: EC2Instance
     Properties:
       ServiceName: !Sub
         - '${ApplicationName}-general-service-${Environment}'
@@ -649,21 +642,20 @@ Resources:
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: TASK_DEFINITION
       Cluster: !Ref ECSCluster
       TaskDefinition: !Ref GeneralTaskDefinition
       DesiredCount: 1
-      LaunchType: EC2
-      PropagateTags: TASK_DEFINITION
-      EnableECSManagedTags: true
+      LaunchType: FARGATE
       NetworkConfiguration:
         AwsvpcConfiguration:
           Subnets: !Split
             - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
           SecurityGroups:
             - !GetAtt DatabaseSecurityGroup.GroupId
             - !GetAtt ECSServiceSecurityGroup.GroupId
-            - !GetAtt EFSFileSystemSecurityGroup.GroupId
 
   GeneralScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
@@ -767,77 +759,99 @@ Resources:
         - Name: QueueName
           Value: !GetAtt GeneralQueue.QueueName
 
-  ECSAutoScalingGroup:
-    Type: "AWS::AutoScaling::AutoScalingGroup"
-    Properties:
-      AutoScalingGroupName: !Sub
-        - '${ApplicationName}-auto-scaling-${Environment}'
-        - Environment: !Ref Environment
-          ApplicationName:
-            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      LaunchConfigurationName: !Ref ECSLaunchConfiguration
-      DesiredCapacity: 1
-      MinSize: 1
-      MaxSize: 3
-      VPCZoneIdentifier: !Split
-        - ","
-        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-
-  ECSLaunchConfiguration:
-    Type: "AWS::AutoScaling::LaunchConfiguration"
+  EC2Instance:
+    Type: AWS::EC2::Instance
     Properties:
       BlockDeviceMappings:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeSize: 60
-      ImageId: ami-045a946a7171d63ce
-      InstanceType: t3.large
+      CreditSpecification:
+        CPUCredits: unlimited
       IamInstanceProfile: !Ref EC2InstanceProfile
-      SecurityGroups:
-        - !Ref ECSSecurityGroup
-        - !Ref EFSFileSystemSecurityGroup
+      ImageId: ami-0c7217cdde317cfec
+      InstanceType: t3.xlarge
+      PropagateTagsToVolumeOnCreation: true
+      SecurityGroupIds:
+        - !GetAtt ECSSecurityGroup.GroupId
+      SubnetId:
+        Fn::Select:
+          - 0
+          - Fn::Split:
+              - ","
+              - Fn::ImportValue:
+                  !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
       UserData:
         Fn::Base64: !Sub |
           #!/bin/bash
-          echo ECS_CLUSTER=${ECSCluster}  >> /etc/ecs/ecs.config;
-          sleep 30
-          yum install wget -y
-          cd /etc/docker/
-          echo "{\"defaultAction\": \"SCMP_ACT_ALLOW\"}" > chrome.json
-          sed -i 's/^OPTIONS=.*/OPTIONS=\"--default-ulimit nofile=32768:65535 --seccomp-profile=\/etc\/docker\/chrome.json\"/' /etc/sysconfig/docker
-          systemctl restart docker
 
-  EFSMountTargetOne:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref OctoCache
-      SubnetId:
-        Fn::Select:
-          - "0"
-          - !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-      SecurityGroups:
-        - !Ref EFSFileSystemSecurityGroup
+          apt update && apt install -y libgl1 libglib2.0-0 zip \
+          apt-transport-https ca-certificates curl jq \
+          gnupg unzip libgles2 libegl1 xvfb --no-install-recommends \
+          && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+          && echo "deb https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+          && apt update && apt install -y \
+          fontconfig fonts-ipafont-gothic fonts-kacst fonts-noto \
+          fonts-symbola fonts-thai-tlwg fonts-wqy-zenhei connect-proxy \
+          dnsutils fonts-freefont-ttf iproute2 iptables iputils-ping \
+          net-tools openvpn procps socat ssh sshpass sudo tcpdump \
+          telnet traceroute tzdata vim-nox
 
-  EFSMountTargetTwo:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref OctoCache
-      SubnetId:
-        Fn::Select:
-          - "1"
-          - !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-      SecurityGroups:
-        - !Ref EFSFileSystemSecurityGroup
+          curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/chrome.deb
+          apt install -y /tmp/chrome.deb
 
-  OctoCache:
-    Type: AWS::EFS::FileSystem
-    Properties:
-      Encrypted: true
-      PerformanceMode: 'generalPurpose'
+          # Create
+          mkdir -p /home/octo/browser
+
+          # Create new user
+          groupadd -r octo && \
+          useradd -r -g octo -s /bin/bash -m -G audio,video,sudo -p $(echo 1 | openssl passwd -1 -stdin) octo
+
+          # Create sudoers.d directory and add sudo permissions for the octo user
+          mkdir -p /etc/sudoers.d && \
+          echo 'octo ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/octo && \
+          chmod 0440 /etc/sudoers.d/octo
+
+          curl -o /tmp/octo-browser.tar.gz https://binaries.octobrowser.net/releases/installer/OctoBrowser.linux.tar.gz
+          tar -xzf /tmp/octo-browser.tar.gz -C /home/octo/browser
+
+          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+          unzip awscliv2.zip
+          sudo ./aws/install
+          sudo chown -R octo:octo /home/octo
+          
+          sudo -u octo bash << EOF
+          Xvfb :1 -ac -screen 0 "1920x1080x24" -nolisten tcp +extension GLX +render -noreset &
+
+          (DISPLAY=:1 OCTO_HEADLESS=1 ~/browser/OctoBrowser.AppImage &)
+          EOF
+          
+          sleep 10
+
+          max_retries=3
+          retry_count=0
+
+          OCTO_SECRET_ARN="$(aws cloudformation describe-stacks --stack-name ${GlobalResourcesStackName} --query "Stacks[0].Outputs" | jq -r '.[] | select(.OutputKey == "OctoSecret") | .OutputValue')"
+
+          # Retrieve the secret using AWS CLI
+          secret=$(aws secretsmanager get-secret-value --secret-id $OCTO_SECRET_ARN --query 'SecretString' --output text)
+          echo "$secret"
+          # Extract username and password from the secret
+          OCTO_EMAIL=$(echo $secret | jq -r '.username')
+          OCTO_PASSWORD=$(echo $secret | jq -r '.password')
+
+          while [ $retry_count -lt $max_retries ] && \
+                { [ -z "$response" ] || [[ $response != *'{"msg":"Logged in successfully"}'* ]] && \
+                  [[ $response != *'{"error":"Already logged in"}'* ]]; }; do
+          
+              # Capture the response of the curl command
+              response=$(curl --location http://localhost:58888/api/auth/login --header 'Content-Type: application/json' --data-raw "{\"email\": \"$OCTO_EMAIL\", \"password\": \"$OCTO_PASSWORD\"}")
+          
+              echo "Attempt: $((retry_count+1)), Response: $response"
+          
+              retry_count=$((retry_count+1))
+              sleep 5
+          done
 
   S3Bucket:
     Type: AWS::S3::Bucket
@@ -985,7 +999,6 @@ Resources:
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
                   - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
                   - !Ref DjangoSecretKey
                   - !Ref MasterUserPassword
         - PolicyName: AWSCloudWatch
@@ -1050,17 +1063,6 @@ Resources:
                   - "sqs:GetQueueAttributes"
                   - "sqs:changemessagevisibility"
                 Resource: '*'
-        - PolicyName: EFSAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'elasticfilesystem:ClientMount'
-                  - 'elasticfilesystem:ClientWrite'
-                  - 'elasticfilesystem:DescribeFileSystems'
-                  - 'elasticfilesystem:DescribeMountTargets'
-                Resource: !GetAtt OctoCache.Arn
 
   EC2InstanceRole:
     Type: "AWS::IAM::Role"
@@ -1076,6 +1078,26 @@ Resources:
       ManagedPolicyArns:
         - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
         - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+      Policies:
+        - PolicyName: SecretsManagerAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "secretsmanager:GetSecretValue"
+                Resource:
+                  - !GetAtt Database.MasterUserSecret.SecretArn
+                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
+        - PolicyName: CloudFormationAccess
+          PolicyDocument:
+            Version: "2012-10-17"
+            Statement:
+              - Effect: Allow
+                Action:
+                  - "cloudformation:DescribeStacks"
+                Resource:
+                  - "*"
 
   EC2InstanceProfile:
     Type: "AWS::IAM::InstanceProfile"

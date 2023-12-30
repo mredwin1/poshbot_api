@@ -21,7 +21,7 @@ from .errors import *
 class OctoAPIClient:
     def __init__(self):
         self.octo_api = "https://app.octobrowser.net/api/v2/automation"
-        self.octo_local_api = "http://localhost:58888/api"
+        self.octo_local_api = f"http://{os.environ['OCTO_ENDPOINT']}:58888/api"
 
         self._octo_api_headers = {
             "X-Octo-Api-Token": os.environ["OCTO_API_KEY"],
@@ -186,6 +186,8 @@ class OctoAPIClient:
             json=data,
         )
         json_response = response.json()
+
+        print(json_response)
 
         if "error" in json_response:
             raise ProfileStartError(json_response["error"])
@@ -632,6 +634,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 retries += 1
 
+            if retries >= 3:
+                raise LoginOrRegistrationError("Max number of retries exceeded")
+
             return target_username
         except Exception as e:
             return await self._handle_generic_errors(
@@ -654,10 +659,17 @@ class PoshmarkClient(BasePuppeteerClient):
                 "Dress Size" if user_info["gender"] == "Female" else "Shirt Size"
             )
 
-            await self.click(
-                selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
-                xpath=True,
-            )
+            try:
+                await self.click(
+                    selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
+                    xpath=True,
+                )
+            except TimeoutError as e:
+                size_text = "Shirt Size" if size_text == "Dress Size" else "Dress Size"
+                await self.click(
+                    selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
+                    xpath=True,
+                )
             await self.click_random("ul.dropdown__menu--expanded > li", count=1)
             await self.sleep(1, 2)
 
