@@ -634,6 +634,7 @@ Resources:
 
   GeneralService:
     Type: AWS::ECS::Service
+    DependsOn: EC2Instance
     Properties:
       ServiceName: !Sub
         - '${ApplicationName}-general-service-${Environment}'
@@ -758,85 +759,102 @@ Resources:
         - Name: QueueName
           Value: !GetAtt GeneralQueue.QueueName
 
-  EC2Instance:
-    Type: AWS::EC2::Instance
-    Properties:
-      BlockDeviceMappings:
-        - DeviceName: /dev/xvda
-          Ebs:
-            VolumeSize: 60
-      CreditSpecification:
-        CPUCredits: unlimited
-      IamInstanceProfile: !Ref EC2InstanceProfile
-      ImageId: ami-0c7217cdde317cfec
-      InstanceType: t3.xlarge
-      PropagateTagsToVolumeOnCreation: true
-      SecurityGroupIds:
-        - !GetAtt ECSSecurityGroup.GroupId
-      SubnetId:
-        Fn::Select:
-          - 0
-          - Fn::Split:
-              - ","
-              - Fn::ImportValue:
-                  !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
-      UserData:
-        Fn::Base64: !Sub |
-          #!/bin/bash
-
-          apt update && apt install -y libgl1 libglib2.0-0 zip \
-          apt-transport-https ca-certificates curl jq \
-          gnupg unzip libgles2 libegl1 xvfb --no-install-recommends \
-          && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
-          && echo "deb https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
-          && apt update && apt install -y \
-          fontconfig fonts-ipafont-gothic fonts-kacst fonts-noto \
-          fonts-symbola fonts-thai-tlwg fonts-wqy-zenhei connect-proxy \
-          dnsutils fonts-freefont-ttf iproute2 iptables iputils-ping \
-          net-tools openvpn procps socat ssh sshpass sudo tcpdump \
-          telnet traceroute tzdata vim-nox
-          
-          curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/chrome.deb
-          apt install -y /tmp/chrome.deb
-          
-          curl -o /tmp/octo-browser.tar.gz https://binaries.octobrowser.net/releases/installer/OctoBrowser.linux.tar.gz
-          mkdir ~/octo-browser
-          tar -xzf /tmp/octo-browser.tar.gz -C ~/octo-browser
-          
-          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
-          unzip awscliv2.zip
-          sudo ./aws/install
-          
-          Xvfb :1 -ac -screen 0 "1920x1080x24" -nolisten tcp +extension GLX +render -noreset &
-          
-          (DISPLAY=:1 OCTO_HEADLESS=1 ~/octo-browser/OctoBrowser.AppImage &)
-          
-          sleep 10
-          
-          max_retries=3
-          retry_count=0
-          
-          OCTO_SECRET_ARN="$(aws cloudformation describe-stacks --stack-name ${GlobalResourcesStackName} --query "Stacks[0].Outputs" | jq -r '.[] | select(.OutputKey == "OctoSecret") | .OutputValue')"
-          
-          # Retrieve the secret using AWS CLI
-          secret=$(aws secretsmanager get-secret-value --secret-id $OCTO_SECRET_ARN --query 'SecretString' --output text)
-          echo "$secret"
-          # Extract username and password from the secret
-          OCTO_EMAIL=$(echo $secret | jq -r '.username')
-          OCTO_PASSWORD=$(echo $secret | jq -r '.password')
-          
-          while [ $retry_count -lt $max_retries ] && \
-                { [ -z "$response" ] || [[ $response != *'{"msg":"Logged in successfully"}'* ]] && \
-                  [[ $response != *'{"error":"Already logged in"}'* ]]; }; do
-          
-              # Capture the response of the curl command
-              response=$(curl --location http://localhost:58888/api/auth/login --header 'Content-Type: application/json' --data-raw "{\"email\": \"$OCTO_EMAIL\", \"password\": \"$OCTO_PASSWORD\"}")
-          
-              echo "Attempt: $((retry_count+1)), Response: $response"
-          
-              retry_count=$((retry_count+1))
-              sleep 5
-          done
+#  EC2Instance:
+#    Type: AWS::EC2::Instance
+#    Properties:
+#      BlockDeviceMappings:
+#        - DeviceName: /dev/xvda
+#          Ebs:
+#            VolumeSize: 60
+#      CreditSpecification:
+#        CPUCredits: unlimited
+#      IamInstanceProfile: !Ref EC2InstanceProfile
+#      ImageId: ami-0c7217cdde317cfec
+#      InstanceType: t3.xlarge
+#      PropagateTagsToVolumeOnCreation: true
+#      SecurityGroupIds:
+#        - !GetAtt ECSSecurityGroup.GroupId
+#      SubnetId:
+#        Fn::Select:
+#          - 0
+#          - Fn::Split:
+#              - ","
+#              - Fn::ImportValue:
+#                  !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
+#      UserData:
+#        Fn::Base64: !Sub |
+#          #!/bin/bash
+#
+#          apt update && apt install -y libgl1 libglib2.0-0 zip \
+#          apt-transport-https ca-certificates curl jq \
+#          gnupg unzip libgles2 libegl1 xvfb --no-install-recommends \
+#          && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
+#          && echo "deb https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
+#          && apt update && apt install -y \
+#          fontconfig fonts-ipafont-gothic fonts-kacst fonts-noto \
+#          fonts-symbola fonts-thai-tlwg fonts-wqy-zenhei connect-proxy \
+#          dnsutils fonts-freefont-ttf iproute2 iptables iputils-ping \
+#          net-tools openvpn procps socat ssh sshpass sudo tcpdump \
+#          telnet traceroute tzdata vim-nox
+#
+#          curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/chrome.deb
+#          apt install -y /tmp/chrome.deb
+#
+#          # Create
+#          mkdir -p /home/octo/browser
+#
+#          # Create new user
+#          groupadd -r octo && \
+#          useradd -r -g octo -s /bin/bash -m -G audio,video,sudo -p $(echo 1 | openssl passwd -1 -stdin) octo && \
+#          mkdir -p /home/octo/
+#
+#          # Create sudoers.d directory and add sudo permissions for the octo user
+#          mkdir -p /etc/sudoers.d && \
+#          echo 'octo ALL=(ALL) NOPASSWD:ALL' > /etc/sudoers.d/octo && \
+#          chmod 0440 /etc/sudoers.d/octo
+#
+#          curl -o /tmp/octo-browser.tar.gz https://binaries.octobrowser.net/releases/installer/OctoBrowser.linux.tar.gz
+#          tar -xzf /tmp/octo-browser.tar.gz -C /home/octo/browser
+#
+#          chown -R octo:octo /home/octo
+#
+#          sudo -u octo bash << EOF
+#
+#          curl "https://awscli.amazonaws.com/awscli-exe-linux-x86_64.zip" -o "awscliv2.zip"
+#          unzip awscliv2.zip
+#          sudo ./aws/install
+#
+#          Xvfb :1 -ac -screen 0 "1920x1080x24" -nolisten tcp +extension GLX +render -noreset &
+#
+#          (DISPLAY=:1 OCTO_HEADLESS=1 ~/octo-browser/OctoBrowser.AppImage &)
+#
+#          sleep 10
+#
+#          max_retries=3
+#          retry_count=0
+#
+#          OCTO_SECRET_ARN="$(aws cloudformation describe-stacks --stack-name ${GlobalResourcesStackName} --query "Stacks[0].Outputs" | jq -r '.[] | select(.OutputKey == "OctoSecret") | .OutputValue')"
+#
+#          # Retrieve the secret using AWS CLI
+#          secret=$(aws secretsmanager get-secret-value --secret-id $OCTO_SECRET_ARN --query 'SecretString' --output text)
+#          echo "$secret"
+#          # Extract username and password from the secret
+#          OCTO_EMAIL=$(echo $secret | jq -r '.username')
+#          OCTO_PASSWORD=$(echo $secret | jq -r '.password')
+#
+#          while [ $retry_count -lt $max_retries ] && \
+#                { [ -z "$response" ] || [[ $response != *'{"msg":"Logged in successfully"}'* ]] && \
+#                  [[ $response != *'{"error":"Already logged in"}'* ]]; }; do
+#
+#              # Capture the response of the curl command
+#              response=$(curl --location http://localhost:58888/api/auth/login --header 'Content-Type: application/json' --data-raw "{\"email\": \"$OCTO_EMAIL\", \"password\": \"$OCTO_PASSWORD\"}")
+#
+#              echo "Attempt: $((retry_count+1)), Response: $response"
+#
+#              retry_count=$((retry_count+1))
+#              sleep 5
+#          done
+#          EOF
 
   S3Bucket:
     Type: AWS::S3::Bucket
