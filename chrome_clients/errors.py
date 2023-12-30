@@ -24,3 +24,7 @@ class ShareError(Exception):
 
 class ProfileStartError(Exception):
     pass
+
+
+class NotLoggedInError(Exception):
+    pass

@@ -33,6 +33,7 @@ from chrome_clients.errors import (
     ListingNotFoundError,
     NoLikesError,
     ProfileStartError,
+    NotLoggedInError,
 )
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
@@ -717,6 +718,13 @@ class ManageCampaignsTask(Task):
                     proxy.check_in()
 
     def start_campaign(self, campaign, proxy=None):
+        try:
+            octo_client = OctoAPIClient()
+            octo_client.check_username()
+        except NotLoggedInError as e:
+            self.logger.error(str(e))
+            return False
+
         if proxy:
             try:
                 proxy.check_out(campaign.id)

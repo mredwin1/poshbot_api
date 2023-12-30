@@ -530,6 +530,7 @@ class PoshUser(models.Model):
     @staticmethod
     def _get_file(file):
         dir_name, cover_photo_name = os.path.split(file.name)
+        dir_name = f"/mnt/efs/{dir_name}"
         os.makedirs(dir_name, exist_ok=True)
         file_path = os.path.join(dir_name, cover_photo_name)
         with open(file_path, "wb") as local_file:
@@ -734,6 +735,7 @@ class ListedItem(models.Model):
         paths = []
 
         dir_name, cover_photo_name = os.path.split(self.listing.cover_photo.name)
+        dir_name = f"/mnt/efs/{dir_name}"
         os.makedirs(dir_name, exist_ok=True)
         cover_photo_path = os.path.join(dir_name, cover_photo_name)
         with open(cover_photo_path, "wb") as local_file:

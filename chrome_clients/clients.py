@@ -29,6 +29,17 @@ class OctoAPIClient:
         }
         self._octo_local_api_header = {"Content-Type": "application/json"}
 
+    def check_username(self) -> Dict:
+        response = requests.get(
+            f"{self.octo_local_api}/username", headers=self._octo_local_api_header
+        )
+        json_response = response.json()
+
+        if "error" in json_response:
+            raise NotLoggedInError(response.text)
+
+        return json_response
+
     def get_profile(self, uuid: str) -> Dict:
         response = requests.get(
             f"{self.octo_api}/profiles/{uuid}", headers=self._octo_api_headers
