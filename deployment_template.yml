@@ -609,8 +609,8 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: OCTO_ENDPOINT
-              Value: !GetAtt EC2Instance.PrivateDnsName
+#            - Name: OCTO_ENDPOINT
+#              Value: !GetAtt EC2Instance.PrivateDnsName
           Secrets:
             - Name: SECRET_KEY
               ValueFrom: !Ref DjangoSecretKey
@@ -634,7 +634,7 @@ Resources:
 
   GeneralService:
     Type: AWS::ECS::Service
-    DependsOn: EC2Instance
+#    DependsOn: EC2Instance
     Properties:
       ServiceName: !Sub
         - '${ApplicationName}-general-service-${Environment}'
