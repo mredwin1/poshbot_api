@@ -656,10 +656,17 @@ class PoshmarkClient(BasePuppeteerClient):
                 "Dress Size" if user_info["gender"] == "Female" else "Shirt Size"
             )
 
-            await self.click(
-                selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
-                xpath=True,
-            )
+            try:
+                await self.click(
+                    selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
+                    xpath=True,
+                )
+            except TimeoutError as e:
+                size_text = "Shirt Size" if size_text == "Dress Size" else "Dress Size"
+                await self.click(
+                    selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
+                    xpath=True,
+                )
             await self.click_random("ul.dropdown__menu--expanded > li", count=1)
             await self.sleep(1, 2)
 
