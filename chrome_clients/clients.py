@@ -634,6 +634,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 retries += 1
 
+            if retries >= 3:
+                raise LoginOrRegistrationError("Max number of retries exceeded")
+
             return target_username
         except Exception as e:
             return await self._handle_generic_errors(
