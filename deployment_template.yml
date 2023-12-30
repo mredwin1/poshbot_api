@@ -156,22 +156,6 @@ Resources:
         - IpProtocol: -1
           CidrIp: 0.0.0.0/0
 
-  EFSFileSystemSecurityGroup:
-    Type: AWS::EC2::SecurityGroup
-    Properties:
-      GroupDescription: Security group for EFS file system
-      VpcId:
-        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
-      SecurityGroupIngress:
-        - IpProtocol: tcp
-          FromPort: 2049
-          ToPort: 2049
-          SourceSecurityGroupId: !Ref ECSServiceSecurityGroup
-        - IpProtocol: tcp
-          FromPort: 2049
-          ToPort: 2049
-          SourceSecurityGroupId: !Ref ECSSecurityGroup
-
   ElastiCacheSecurityGroup:
     Type: 'AWS::EC2::SecurityGroup'
     Properties:
