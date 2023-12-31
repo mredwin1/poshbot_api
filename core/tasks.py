@@ -148,21 +148,7 @@ class CampaignTask(Task):
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
         )
 
-        try:
-            start_response = octo_client.start_profile(profile["uuid"])
-        except ProfileStartError as e:
-            if "Profile is already started" in str(e):
-                self.logger.warning(
-                    f"Profile {profile['uuid']} already running force stopping..."
-                )
-                octo_client.force_stop_profile(profile["uuid"])
-                time.sleep(10)
-                start_response = octo_client.start_profile(profile["uuid"])
-                self.logger.debug(f"Start response: {start_response}")
-            else:
-                start_response = {}
-
-        runtime_details = start_response
+        runtime_details = octo_client.start_profile(profile["uuid"])
         runtime_details["width"] = width
         runtime_details["height"] = height
 
@@ -601,10 +587,20 @@ class CampaignTask(Task):
         self.logger.error(f"Campaign failed due to {exc_type}: {exc_value}")
         self.logger.debug(traceback.format_exc())
 
+        self.logger.info(exc)
         if type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
             self.logger.warning(
                 "Campaign ended because it exceeded the run time allowed"
             )
+        elif isinstance(exc, ProfileStartError) and "Profile is already started" in str(
+            exc
+        ):
+            octo_client = OctoAPIClient()
+            profile_uuid = str(exc).split(",")[-1]
+            self.logger.warning(
+                f"Profile {profile_uuid} already running force stopping..."
+            )
+            octo_client.force_stop_profile(profile_uuid)
 
         if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
             self.logger.info(
