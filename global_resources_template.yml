@@ -225,12 +225,26 @@ Resources:
       RouteTableId: !Ref PrivateRouteTableTwo
       SubnetId: !Ref PrivateSubnetTwo
   # VPC Endpoints for all the private subnets for all the used AWS Services
+  EndpointSecurityGroup:
+    Type: 'AWS::EC2::SecurityGroup'
+    Properties:
+      GroupName: !Sub '${ApplicationName}-vpc-endpoint-global'
+      VpcId: !Ref VPC
+      GroupDescription: 'Security group for incoming communication with VPC Endpoints'
+      SecurityGroupIngress:
+        - CidrIp: 0.0.0.0/0
+          IpProtocol: tcp
+          FromPort: 443
+          ToPort: 443
   SQSEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
+      PrivateDnsEnabled: true
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.sqs'
+      SecurityGroupIds:
+        - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
@@ -240,6 +254,8 @@ Resources:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
+      SecurityGroupIds:
+        - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
@@ -248,7 +264,10 @@ Resources:
     Properties:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
+      PrivateDnsEnabled: true
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.secretsmanager'
+      SecurityGroupIds:
+        - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
@@ -257,7 +276,10 @@ Resources:
     Properties:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
+      PrivateDnsEnabled: true
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.elasticfilesystem'
+      SecurityGroupIds:
+        - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
@@ -266,7 +288,10 @@ Resources:
     Properties:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
+      PrivateDnsEnabled: true
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs-agent'
+      SecurityGroupIds:
+        - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
@@ -275,7 +300,10 @@ Resources:
     Properties:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
+      PrivateDnsEnabled: true
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs-telemetry'
+      SecurityGroupIds:
+        - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
@@ -284,7 +312,10 @@ Resources:
     Properties:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
+      PrivateDnsEnabled: true
       ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs'
+      SecurityGroupIds:
+        - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
