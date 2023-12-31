@@ -687,14 +687,15 @@ class PoshmarkClient(BasePuppeteerClient):
 
     async def finish_registration(self, user_info: Dict) -> None:
         try:
-            # Upload profile picture to .user-image
-            await self.upload_file(
-                ".image-selector__input-img-files", user_info["profile_picture"]
-            )
+            if user_info["profile_picture"]:
+                # Upload profile picture to .user-image
+                await self.upload_file(
+                    ".image-selector__input-img-files", user_info["profile_picture"]
+                )
 
-            await self.sleep(1, 2)
-            await self.click(selector='button[data-et-name="apply"]')
-            await self.sleep(1, 2)
+                await self.sleep(1, 2)
+                await self.click(selector='button[data-et-name="apply"]')
+                await self.sleep(1, 2)
 
             # Set shirt/dress size
             size_text = (

@@ -540,10 +540,14 @@ class PoshUser(models.Model):
         return file_path
 
     def get_profile_picture(self):
-        return self._get_file(self.profile_picture)
+        if self.profile_picture:
+            return self._get_file(self.profile_picture)
+        return ""
 
     def get_header_picture(self):
-        return self._get_file(self.header_picture)
+        if self.header_picture:
+            return self._get_file(self.header_picture)
+        return ""
 
     def __str__(self):
         return self.username
