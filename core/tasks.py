@@ -600,7 +600,7 @@ class CampaignTask(Task):
             self.logger.warning(
                 f"Profile {profile_uuid} already running force stopping..."
             )
-            octo_client.force_stop_profile(profile_uuid)
+            octo_client.stop_profile(profile_uuid)
 
         if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
             self.logger.info(
