@@ -523,7 +523,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         selector="button[type='submit']",
                         navigation=True,
                         navigation_options={
-                            "waitUntil": "networkidle0",
+                            "waitUntil": "networkidle2",
                             "timeout": 5000,
                         },
                     )
@@ -655,7 +655,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(
                 selector='button[type="submit"]',
                 navigation=True,
-                navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+                navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
             )
 
             await self.sleep(3, 4)
@@ -769,7 +769,7 @@ class PoshmarkClient(BasePuppeteerClient):
         await self.click(
             selector='button[type="submit"]',
             navigation=True,
-            navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+            navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
         )
 
         retries = 0
@@ -786,7 +786,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
                 )
             elif "create-listing" in self.page.url:
                 await self.page.reload()
@@ -795,7 +795,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
                 )
 
             self.logger.info(f"delete_me: listing item  after nav")
@@ -979,7 +979,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         selector=f'div[data-et-prop-listing_id="{listing_id}"].social-action-bar__share',
                         navigation=True,
                         navigation_options={
-                            "waitUntil": "networkidle0",
+                            "waitUntil": "networkidle2",
                             "timeout": 5000,
                         },
                     )
