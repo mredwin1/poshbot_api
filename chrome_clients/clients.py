@@ -217,15 +217,22 @@ class OctoAPIClient:
         )
         json_response = response.json()
 
+        print(json_response)
+
         return json_response
 
-    def force_stop_profile(self, uuid: str):
+    def force_stop_profile(self, uuid: str) -> Dict:
         data = {"uuid": uuid}
-        requests.post(
+        response = requests.post(
             f"{self.octo_local_api}/profiles/force_stop",
             headers=self._octo_local_api_header,
             json=data,
         )
+        json_response = response.json()
+
+        print(json_response)
+
+        return json_response
 
 
 class BasePuppeteerClient:
