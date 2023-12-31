@@ -351,8 +351,19 @@ class BasePuppeteerClient:
             return await self.page.querySelectorAll(selector)
 
     async def click(
-        self, element: ElementHandle = None, selector: str = "", xpath: bool = False
+        self,
+        element: ElementHandle = None,
+        selector: str = "",
+        xpath: bool = False,
+        navigation: bool = False,
+        navigation_options: Dict = None,
     ) -> ElementHandle:
+        navigation_promise = None
+        if navigation:
+            if navigation_options is None:
+                navigation_options = {"timeout": 5500}
+            navigation_promise = self.page.waitForNavigation(navigation_options)
+
         if not element and selector:
             element = await self.find(selector, xpath)
         elif not element and not selector:
@@ -374,6 +385,12 @@ class BasePuppeteerClient:
             await self.page.mouse.click(x, y)
         else:
             await element.click()
+
+        if navigation_promise:
+            try:
+                await navigation_promise
+            except TimeoutError:
+                pass
 
         return element
 
@@ -593,10 +610,9 @@ class PoshmarkClient(BasePuppeteerClient):
             if "/signup" not in self.page.url:
                 await self.page.goto("https://poshmark.com")
                 await self.sleep(0.6, 1)
-                await self.click(selector='a[href="/signup"]')
+                await self.click(selector='a[href="/signup"]', navigation=True)
 
-                await self.page.waitForNavigation()
-                await self.sleep(1, 2)
+                await self.sleep(0.2, 0.6)
             self.logger.info(f"delete_me: register post nav")
             target_username: str = user_info["username"]
 
@@ -699,21 +715,14 @@ class PoshmarkClient(BasePuppeteerClient):
             # Enter zipcode
             await self.type(selector='input[name="zip"]', text=user_info["zipcode"])
             await self.sleep(1, 2)
-            await self.click(selector='button[type="submit"]')
-
-            await self.page.waitForNavigation()
-            await self.sleep(0.5, 1)
+            await self.click(selector='button[type="submit"]', navigation=True)
 
             # Select random number of brands
             await self.click_random(selector=".content-grid-item")
-            await self.click(selector='button[type="submit"]')
-
-            await self.page.waitForNavigation()
-            await self.sleep(0.5, 1)
+            await self.click(selector='button[type="submit"]', navigation=True)
 
             # Click submit again
-            await self.click(selector='button[type="submit"]')
-            await self.page.waitForNavigation()
+            await self.click(selector='button[type="submit"]', navigation=True)
         except Exception as e:
             return await self._handle_generic_errors(
                 e,
@@ -736,9 +745,11 @@ class PoshmarkClient(BasePuppeteerClient):
         await self.type("#login_form_password", password)
 
         await self.sleep(0.2, 0.6)
-        await self.click(selector='button[type="submit"]')
-
-        await self.page.waitForNavigation()
+        await self.click(
+            selector='button[type="submit"]',
+            navigation=True,
+            navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+        )
 
         retries = 0
         error_handled = None
@@ -756,11 +767,11 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.page.reload()
             else:
                 await self.page.goto("https://poshmark.com/")
-                await self.click(selector='a[href="/sell"]')
-
-            await self.page.waitForNavigation()
-
-            await self.sleep(0.8, 1.2)
+                await self.click(
+                    selector='a[href="/sell"]',
+                    navigation=True,
+                    navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+                )
 
             self.logger.info(f"delete_me: listing item  after nav")
 
@@ -940,7 +951,12 @@ class PoshmarkClient(BasePuppeteerClient):
                 # Click share button
                 try:
                     await self.click(
-                        selector=f'div[data-et-prop-listing_id="{listing_id}"].social-action-bar__share'
+                        selector=f'div[data-et-prop-listing_id="{listing_id}"].social-action-bar__share',
+                        navigation=True,
+                        navigation_options={
+                            "waitUntil": "networkidle0",
+                            "timeout": 5000,
+                        },
                     )
                 except TimeoutError:
                     raise ListingNotFoundError(
@@ -1061,9 +1077,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 )
 
                 if status_text.strip() == "New Counteroffer":
-                    await self.click(element=offer)
-
-                    await self.page.waitForNavigation()
+                    await self.click(element=offer, navigation=True)
 
                     chat_bubbles = await self.find_all(".chat-bubble")
                     counter_offer_locator = f'div[data-test="offer_details_offer_interaction_{len(chat_bubbles)}"]'
