@@ -510,7 +510,14 @@ class PoshmarkClient(BasePuppeteerClient):
 
                     await self.sleep(0.3, 1)
 
-                    await self.click(selector="button[type='submit']")
+                    await self.click(
+                        selector="button[type='submit']",
+                        navigation=True,
+                        navigation_options={
+                            "waitUntil": "networkidle0",
+                            "timeout": 5000,
+                        },
+                    )
 
                     await self.sleep(3, 4)
 
@@ -636,7 +643,11 @@ class PoshmarkClient(BasePuppeteerClient):
 
             self.logger.info(f"delete_me: register pre submit")
 
-            await self.click(selector='button[type="submit"]')
+            await self.click(
+                selector='button[type="submit"]',
+                navigation=True,
+                navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+            )
 
             await self.sleep(3, 4)
 
