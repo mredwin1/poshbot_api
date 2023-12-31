@@ -156,7 +156,7 @@ class CampaignTask(Task):
                     f"Profile {profile['uuid']} already running force stopping..."
                 )
                 octo_client.force_stop_profile(profile["uuid"])
-                time.sleep(5)
+                time.sleep(10)
                 start_response = octo_client.start_profile(profile["uuid"])
                 self.logger.debug(f"Start response: {start_response}")
             else:
