@@ -358,12 +358,8 @@ class BasePuppeteerClient:
         navigation: bool = False,
         navigation_options: Dict = None,
     ) -> ElementHandle:
-        navigation_promise = None
-        if navigation:
-            if navigation_options is None:
-                navigation_options = {"timeout": 5500}
-            navigation_promise = self.page.waitForNavigation(navigation_options)
-
+        if navigation and navigation_options is None:
+            navigation_options = {"timeout": 5000}
         if not element and selector:
             element = await self.find(selector, xpath)
         elif not element and not selector:
@@ -374,23 +370,36 @@ class BasePuppeteerClient:
 
         # Get the bounding box of the element
         bounding_box = await element.boundingBox()
-        if bounding_box:
-            x, y = self.random_coordinates_within_box(
-                bounding_box["x"],
-                bounding_box["y"],
-                bounding_box["width"],
-                bounding_box["height"],
-            )
-            # Perform the click at the chosen coordinates
-            await self.page.mouse.click(x, y)
-        else:
-            await element.click()
-
-        if navigation_promise:
-            try:
-                await navigation_promise
-            except TimeoutError:
-                pass
+        try:
+            if bounding_box:
+                x, y = self.random_coordinates_within_box(
+                    bounding_box["x"],
+                    bounding_box["y"],
+                    bounding_box["width"],
+                    bounding_box["height"],
+                )
+                # Perform the click at the chosen coordinates
+                if navigation:
+                    await asyncio.wait(
+                        [
+                            self.page.mouse.click(x, y),
+                            self.page.waitForNavigation(navigation_options),
+                        ]
+                    )
+                else:
+                    await self.page.mouse.click(x, y)
+            else:
+                if navigation:
+                    await asyncio.wait(
+                        [
+                            element.click(),
+                            self.page.waitForNavigation(navigation_options),
+                        ]
+                    )
+                else:
+                    await element.click()
+        except TimeoutError:
+            pass
 
         return element
 
@@ -774,7 +783,11 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             self.logger.info(f"delete_me: listing item in client")
             if "/feed" in self.page.url:
-                await self.click(selector='a[href="/sell"]')
+                await self.click(
+                    selector='a[href="/sell"]',
+                    navigation=True,
+                    navigation_options={"waitUntil": "networkidle0", "timeout": 5000},
+                )
             elif "create-listing" in self.page.url:
                 await self.page.reload()
             else:
