@@ -692,7 +692,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 retries += 1
 
-            if retries >= 3:
+            if retries >= 3 and "/signup" not in self.page.url:
                 raise LoginOrRegistrationError("Max number of retries exceeded")
 
             return target_username
