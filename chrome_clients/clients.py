@@ -775,15 +775,21 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(selector='button[data-et-name="apply"]')
             await self.sleep(0.4, 0.9)
 
+            self.logger.info(f"delete_me: sent images")
+
             # Type item Title
             await self.type('input[data-vv-name="title"]', item_info["title"])
             await self.sleep(0.4, 0.9)
+
+            self.logger.info(f"delete_me: typed title")
 
             # Type item Description
             await self.type(
                 'textarea[data-vv-name="description"]', item_info["description"]
             )
             await self.sleep(0.4, 0.9)
+
+            self.logger.info(f"delete_me: types description")
 
             # Put in item Department, Category, and Subcategory
             await self.click(
@@ -805,6 +811,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 selector=f'a[data-et-prop-content="{item_info["subcategory"]}"]'
             )
             await self.sleep(0.5, 1)
+
+            self.logger.info(f"delete_me: selected department")
 
             # Put in item size
             size_elem = await self.find(selector=f'div[data-test="size"]')
@@ -831,6 +839,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 current_tab = "Standard"
                 size_found = False
                 while current_tab != "Custom" and not size_found:
+                    self.logger.info(f"delete_me: at {current_tab}")
                     current_tab_elem = await self.find(
                         f'li[data-test="horizontal-{tab_counter}"]'
                     )
@@ -839,6 +848,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
                     size_selector = f"#size-{self.cleanse_selector(item_info['size'])}"
                     if await self.is_present(size_selector):
+                        self.logger.info(f"delete_me: found size by {size_selector}")
                         await self.click(selector=size_selector)
                         size_found = True
 
@@ -848,9 +858,13 @@ class PoshmarkClient(BasePuppeteerClient):
                     current_tab = await current_tab_inner_text.jsonValue()
                     current_tab = current_tab.strip()
                     tab_counter += 1
+                    self.logger.info(f"delete_me: size not found going to next tab")
                     await self.sleep(0.3, 0.6)
 
                 if current_tab == "Custom" and not size_found:
+                    self.logger.info(
+                        f"delete_me: size not found putting in custom size"
+                    )
                     await self.type("#customSizeInput0", item_info["size"])
                     await self.click(
                         selector='//*[@id="content"]/div/div[1]/div[2]/section[4]/div[2]/div[2]/div[1]/div/div[2]/div[2]/div/div/div[1]/ul/li/div/div/button',
@@ -860,11 +874,15 @@ class PoshmarkClient(BasePuppeteerClient):
 
                     await self.click(selector='button[data-et-name="apply"]')
 
+            self.logger.info(f"delete_me: size inputed")
+
             # Type in item Brand
             await self.type(
                 'input[placeholder="Enter the Brand/Designer"]', item_info["brand"]
             )
             await self.sleep(0.3, 0.9)
+
+            self.logger.info(f"delete_me: brand inputted")
 
             # Type in Original Price
             await self.type(
@@ -872,11 +890,15 @@ class PoshmarkClient(BasePuppeteerClient):
             )
             await self.sleep(0.3, 0.9)
 
+            self.logger.info(f"delete_me: original price typed")
+
             # Type in Listing Price
             await self.type(
                 'input[data-vv-name="listingPrice"]', item_info["listing_price"]
             )
             await self.sleep(2, 3)
+
+            self.logger.info(f"delete_me: listing price typed")
 
             # Click Next
             await self.click(selector='button[data-et-name="next"]')
