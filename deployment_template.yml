@@ -794,9 +794,6 @@ Resources:
         Fn::Base64: !Sub |
           #!/bin/bash
           
-          yum install -y amazon-efs-utils
-          
-          
           apt update && apt install -y libgl1 libglib2.0-0 zip \
           apt-transport-https ca-certificates curl jq git binutils \
           gnupg unzip libgles2 libegl1 xvfb --no-install-recommends \
@@ -810,9 +807,10 @@ Resources:
           telnet traceroute tzdata vim-nox
           
           git clone https://github.com/aws/efs-utils
-          ./efs-utils/build-deb.sh
-          
-          apt -y install ./efs-utils/build/amazon-efs-utils*deb
+          cd efs-utils
+          ./build-deb.sh
+          apt -y install ./build/amazon-efs-utils*deb
+          cd ..
           
           mkdir /mnt/efs
           mount -t efs ${EFSVolume}:/ /mnt/efs
