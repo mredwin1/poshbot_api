@@ -549,11 +549,15 @@ class CampaignTask(Task):
                             self.logger.info(
                                 f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern"
                             )
-                    # TODO: Finish implementing this
-                    # if random.random() < 0.20:
-                    #     await client.check_offers(
-                    #         user_info, shareable_listing.listed_item_id
-                    #     )
+                    if random.random() < 0.20:
+                        if shareable_listing.listing:
+                            lowest_price = shareable_listing.listing.lowest_price
+                        else:
+                            lowest_price = self.campaign.lowest_price
+
+                        await client.check_offers(
+                            user_info, shareable_listing.listed_item_id, lowest_price
+                        )
 
                     bad_phrases = BadPhrase.objects.all()
                     bad_phrases = [

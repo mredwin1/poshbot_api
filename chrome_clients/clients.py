@@ -21,7 +21,9 @@ from .errors import *
 class OctoAPIClient:
     def __init__(self):
         self.octo_api = "https://app.octobrowser.net/api/v2/automation"
-        self.octo_local_api = f"http://{os.environ['OCTO_ENDPOINT']}:58888/api"
+        self.octo_local_api = (
+            f"http://{os.environ.get('OCTO_ENDPOINT', '127.0.0.1')}:58888/api"
+        )
 
         self._octo_api_headers = {
             "X-Octo-Api-Token": os.environ["OCTO_API_KEY"],
@@ -186,7 +188,7 @@ class OctoAPIClient:
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
-            "headless": True,
+            "headless": False,
             "debug_port": True,
             "flags": ["--disable-backgrounding-occluded-windows"],
         }
@@ -493,6 +495,8 @@ class PoshmarkClient(BasePuppeteerClient):
 
                     await self.click(selector="button[type='submit']")
 
+                    await self.sleep(3, 4)
+
                     return True
                 else:
                     raise LoginOrRegistrationError(f"{error_class}: {error_text}")
@@ -618,7 +622,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
             await self.click(selector='button[type="submit"]')
 
-            await self.sleep(2, 3)
+            await self.sleep(3, 4)
 
             self.logger.info(f"delete_me: register post submit")
 
@@ -1014,16 +1018,81 @@ class PoshmarkClient(BasePuppeteerClient):
             )
 
     async def check_offers(
-        self, user_info: Dict, listing_id: str, lowest_price: Decimal
+        self, user_info: Dict, listing_id: str, lowest_price: int
     ) -> None:
         try:
             await self.page.goto(
-                f"https://poshmark.com/posts/{listing_id}/active_offers?pageName=ACTIVE_OFFERS&pageType=new",
-                {"timeout": 60000},
+                f"https://poshmark.com/posts/{listing_id}/active_offers?pageName=ACTIVE_OFFERS&pageType=new"
             )
 
             if await self.is_present(".active-offers__content__empty-image"):
                 raise NoActiveOffers("No active offers")
+
+            all_offers = await self.find_all(".active-offers__content")
+
+            for index in range(len(all_offers)):
+                offers = await self.find_all(".active-offers__content")
+                offer = offers[index]
+                status_element = await offer.querySelector(".tc--g")
+                status_text = await self.page.evaluate(
+                    "(element) => element.textContent", status_element
+                )
+
+                if status_text.strip() == "New Counteroffer":
+                    await self.click(element=offer)
+
+                    await self.page.waitForNavigation()
+
+                    chat_bubbles = await self.find_all(".chat-bubble")
+                    counter_offer_locator = f'div[data-test="offer_details_offer_interaction_{len(chat_bubbles)}"]'
+                    counter_offer_elem = await self.find(counter_offer_locator)
+                    counter_offer_message = await self.page.evaluate(
+                        "(element) => element.textContent", counter_offer_elem
+                    )
+
+                    counter_offer_match = re.search(
+                        r"(offered|counteroffered) \$(\d+)", counter_offer_message
+                    )
+                    counter_offer = int(counter_offer_match.group(2))
+
+                    if counter_offer > lowest_price:
+                        await self.click(selector='button[data-et-name="accept_offer"]')
+                        await self.sleep(5)
+                        await self.click(
+                            selector="/html/body/div[2]/main/div[2]/div/div[2]/div[5]/div[3]/div[2]/div[3]/button[2]",
+                            xpath=True,
+                        )
+
+                        await self.sleep(8)
+                    else:
+                        last_offer_locator = f'div[data-test="offer_details_offer_interaction_{len(chat_bubbles) - 1}"]'
+
+                        last_offer_elem = await self.find(last_offer_locator)
+                        last_offer_message = await self.page.evaluate(
+                            "(element) => element.textContent", last_offer_elem
+                        )
+
+                        last_offer_match = re.search(
+                            r"(offered|counteroffered) \$(\d+)", last_offer_message
+                        )
+                        last_offer = int(last_offer_match.group(2))
+                        new_offer = int(last_offer * 0.9)
+
+                        await self.click(
+                            selector='button[data-et-name="counter_offer"]'
+                        )
+
+                        await self.sleep(2)
+
+                        await self.type('input[name="offer"]', str(new_offer))
+                        await self.sleep(2)
+                        await self.click(selector='button[data-et-name="submit"]')
+                        await self.sleep(1)
+
+                    await self.page.goto(
+                        f"https://poshmark.com/posts/{listing_id}/active_offers?pageName=ACTIVE_OFFERS&pageType=new"
+                    )
+
         except Exception as e:
             await self._handle_generic_errors(
                 e, self.check_offers, user_info=user_info, listing_id=listing_id
