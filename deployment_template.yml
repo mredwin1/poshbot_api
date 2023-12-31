@@ -795,11 +795,10 @@ Resources:
           #!/bin/bash
           
           yum install -y amazon-efs-utils
-          mkdir /mnt/efs
-          mount -t efs ${EFSVolume}:/ /mnt/efs
+          
           
           apt update && apt install -y libgl1 libglib2.0-0 zip \
-          apt-transport-https ca-certificates curl jq \
+          apt-transport-https ca-certificates curl jq git binutils \
           gnupg unzip libgles2 libegl1 xvfb --no-install-recommends \
           && curl -sSL https://dl.google.com/linux/linux_signing_key.pub | apt-key add - \
           && echo "deb https://dl.google.com/linux/chrome/deb/ stable main" > /etc/apt/sources.list.d/google-chrome.list \
@@ -809,7 +808,15 @@ Resources:
           dnsutils fonts-freefont-ttf iproute2 iptables iputils-ping \
           net-tools openvpn procps socat ssh sshpass sudo tcpdump \
           telnet traceroute tzdata vim-nox
-
+          
+          git clone https://github.com/aws/efs-utils
+          ./efs-utils/build-deb.sh
+          
+          apt -y install ./efs-utils/build/amazon-efs-utils*deb
+          
+          mkdir /mnt/efs
+          mount -t efs ${EFSVolume}:/ /mnt/efs
+          
           curl https://dl.google.com/linux/direct/google-chrome-stable_current_amd64.deb --output /tmp/chrome.deb
           apt install -y /tmp/chrome.deb
 
@@ -920,19 +927,6 @@ Resources:
           - !Split
             - ","
             - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
-      SecurityGroups:
-        - !Ref EFSFileSystemSecurityGroup
-
-  EFSMountTargetThree:
-    Type: AWS::EFS::MountTarget
-    Properties:
-      FileSystemId: !Ref EFSVolume
-      SubnetId:
-        Fn::Select:
-          - "0"
-          - !Split
-            - ","
-            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
       SecurityGroups:
         - !Ref EFSFileSystemSecurityGroup
 
