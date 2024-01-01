@@ -561,7 +561,7 @@ class CampaignTask(Task):
                         await client.check_comments(
                             user_info, shareable_listing.listed_item_id, bad_phrases
                         )
-                    except ListingNotFoundError:
+                    except ListingNotFoundError as e:
                         self.logger.warning(e)
 
                 return True
