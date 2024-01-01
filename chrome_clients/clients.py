@@ -402,7 +402,9 @@ class BasePuppeteerClient:
                 else:
                     await element.click()
         except TimeoutError:
-            self.logger.debug("Timeout error occurred while performing navigation click")
+            self.logger.debug(
+                "Timeout error occurred while performing navigation click"
+            )
 
         return element
 
