@@ -506,7 +506,7 @@ class CampaignTask(Task):
                         await client.share_listing(
                             user_info, shareable_listing.listed_item_id
                         )
-                    except (ShareError, ListingNotFoundError) as e:
+                    except ShareError as e:
                         self.logger.warning(e)
 
                     if random.random() < 0.20:
@@ -557,12 +557,9 @@ class CampaignTask(Task):
                         {"word": phrase.phrase, "report_type": phrase.report_type}
                         async for phrase in bad_phrases
                     ]
-                    try:
-                        await client.check_comments(
-                            user_info, shareable_listing.listed_item_id, bad_phrases
-                        )
-                    except ListingNotFoundError as e:
-                        self.logger.warning(e)
+                    await client.check_comments(
+                        user_info, shareable_listing.listed_item_id, bad_phrases
+                    )
 
                 return True
             else:

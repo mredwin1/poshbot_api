@@ -1032,6 +1032,8 @@ class PoshmarkClient(BasePuppeteerClient):
 
             if not share_success and shared:
                 raise ShareError("Not successfully shared")
+        except ListingNotFoundError as e:
+            self.logger.warning(e)
         except Exception as e:
             return await self._handle_generic_errors(
                 e, self.share_listing, user_info=user_info, listing_id=listing_id
@@ -1157,7 +1159,8 @@ class PoshmarkClient(BasePuppeteerClient):
                     await self.page.goto(
                         f"https://poshmark.com/posts/{listing_id}/active_offers?pageName=ACTIVE_OFFERS&pageType=new"
                     )
-
+        except ListingNotFoundError as e:
+            self.logger.warning(e)
         except Exception as e:
             await self._handle_generic_errors(
                 e, self.check_offers, user_info=user_info, listing_id=listing_id
