@@ -589,9 +589,7 @@ class CampaignTask(Task):
 
                     return False
                 else:
-                    self.logger.info(
-                        "Nothing to do. Stopping campaign"
-                    )
+                    self.logger.info("Nothing to do. Stopping campaign")
 
                     self.campaign.status = Campaign.STOPPING
                     self.campaign.next_runtime = None
