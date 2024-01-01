@@ -662,7 +662,11 @@ class PoshmarkClient(BasePuppeteerClient):
 
             retries = 0
             error_handled = None
-            while retries < 3 and error_handled is not False:
+            while (
+                "/signup" in self.page.url
+                and retries < 3
+                and error_handled is not False
+            ):
                 error_handled = await self._handle_form_errors()
 
                 if await self.is_present('button[data-et-name="suggested_username"]'):
