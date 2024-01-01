@@ -388,16 +388,15 @@ class BasePuppeteerClient:
                 # Perform the click at the chosen coordinates
                 if navigation:
                     await asyncio.gather(
-                        self.page.mouse.click(x, y),
                         self.page.waitForNavigation(navigation_options),
+                        self.page.mouse.click(x, y),
                     )
                 else:
                     await self.page.mouse.click(x, y)
             else:
                 if navigation:
                     await asyncio.gather(
-                        element.click(),
-                        self.page.waitForNavigation(navigation_options),
+                        self.page.waitForNavigation(navigation_options), element.click()
                     )
                 else:
                     await element.click()
@@ -791,7 +790,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
                 )
             elif "create-listing" in self.page.url:
                 await self.page.reload()
@@ -800,7 +799,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
                 )
 
             self.logger.info(f"delete_me: listing item  after nav")
