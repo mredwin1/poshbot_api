@@ -972,9 +972,9 @@ class PoshmarkClient(BasePuppeteerClient):
             share_success = False
             retries = 0
 
-            await self.go_to_closet(username)
-
             while not shared and retries < 3:
+                await self.go_to_closet(username)
+
                 # Click share button
                 try:
                     await self.click(
@@ -996,35 +996,34 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 try:
                     flash_message_elem = await self.find(selector="#flash__message")
-                except TimeoutError:
-                    # Click share to my followers
-                    await self.click(selector=".internal-share")
-                    flash_message_elem = await self.find(selector="#flash__message")
 
-                flash_message_inner_text = await flash_message_elem.getProperty(
-                    "innerText"
-                )
-                flash_message = await flash_message_inner_text.jsonValue()
-                share_success = flash_message.strip() == "Shared Successfully"
-                shared = True
-
-                if await self.is_present(".g-recaptcha-con"):
-                    shared = False
-                    captcha_iframe = await self.find("iframe")
-                    await captcha_iframe._scrollIntoViewIfNeeded()
-                    captcha_src = await captcha_iframe.getProperty("src")
-                    captcha_src_val = await captcha_src.jsonValue()
-
-                    site_key = re.findall(r"(?<=k=)(.*?)(?=&)", captcha_src_val)[0]
-                    solver = TwoCaptcha(os.environ["CAPTCHA_API_KEY"])
-                    result = solver.recaptcha(sitekey=site_key, url=self.page.url)
-
-                    await self.page.evaluate(
-                        f"document.querySelector('#g-recaptcha-response').value = '{result}'"
+                    flash_message_inner_text = await flash_message_elem.getProperty(
+                        "innerText"
                     )
-                    await self.page.evaluate("validateResponse()")
+                    flash_message = await flash_message_inner_text.jsonValue()
+                    share_success = flash_message.strip() == "Shared Successfully"
+                    shared = True
 
-                    self.logger.info("Captcha solved! Re-sharing.")
+                    if await self.is_present(".g-recaptcha-con"):
+                        shared = False
+                        captcha_iframe = await self.find("iframe")
+                        await captcha_iframe._scrollIntoViewIfNeeded()
+                        captcha_src = await captcha_iframe.getProperty("src")
+                        captcha_src_val = await captcha_src.jsonValue()
+
+                        site_key = re.findall(r"(?<=k=)(.*?)(?=&)", captcha_src_val)[0]
+                        solver = TwoCaptcha(os.environ["CAPTCHA_API_KEY"])
+                        result = solver.recaptcha(sitekey=site_key, url=self.page.url)
+
+                        await self.page.evaluate(
+                            f"document.querySelector('#g-recaptcha-response').value = '{result}'"
+                        )
+                        await self.page.evaluate("validateResponse()")
+
+                        self.logger.info("Captcha solved! Re-sharing.")
+
+                except TimeoutError:
+                    shared = False
 
                 retries += 1
 
