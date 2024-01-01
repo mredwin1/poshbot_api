@@ -156,8 +156,6 @@ class CampaignTask(Task):
         ws_endpoint = ws_endpoint.replace("127.0.0.1", os.environ["OCTO_ENDPOINT"])
         runtime_details["ws_endpoint"] = ws_endpoint
 
-        print(runtime_details)
-
         return runtime_details
 
     def stop_octo_profile(self):
@@ -554,9 +552,12 @@ class CampaignTask(Task):
                         {"word": phrase.phrase, "report_type": phrase.report_type}
                         async for phrase in bad_phrases
                     ]
-                    await client.check_comments(
-                        user_info, shareable_listing.listed_item_id, bad_phrases
-                    )
+                    try:
+                        await client.check_comments(
+                            user_info, shareable_listing.listed_item_id, bad_phrases
+                        )
+                    except ListingNotFoundError:
+                        self.logger.warning(e)
 
                 return True
             else:
