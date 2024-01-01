@@ -14,7 +14,7 @@ class NoLikesError(Exception):
     pass
 
 
-class NoActiveOffers(Exception):
+class NoActiveOffersError(Exception):
     pass
 
 
