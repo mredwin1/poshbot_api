@@ -146,6 +146,8 @@ class OctoAPIClient:
         )
         json_response = response.json()
 
+        print(json_response)
+
         return json_response["data"]
 
     def get_proxies(self, external_id: str = None) -> List[Dict]:
