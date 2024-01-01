@@ -1087,7 +1087,7 @@ class PoshmarkClient(BasePuppeteerClient):
             )
 
             if await self.is_present(".active-offers__content__empty-image"):
-                raise NoActiveOffers("No active offers")
+                raise NoActiveOffersError("No active offers")
 
             all_offers = await self.find_all(".active-offers__content")
 
