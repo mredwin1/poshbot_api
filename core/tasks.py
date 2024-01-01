@@ -588,6 +588,16 @@ class CampaignTask(Task):
                     await self.campaign.asave()
 
                     return False
+                else:
+                    self.logger.info(
+                        "Nothing to do. Stopping campaign"
+                    )
+
+                    self.campaign.status = Campaign.STOPPING
+                    self.campaign.next_runtime = None
+                    await self.campaign.asave()
+
+                    return False
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
         exc_type, exc_value, exc_traceback = einfo.exc_info
