@@ -602,6 +602,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
         await self.sleep(0.7, 1.2)
 
+        if await self.is_present('button[data-et-name="see_all_listings"]'):
+            await self.click(selector="button[data-et-name=see_all_listings")
+
     async def go_to_listing(self, username: str, listing_id: str):
         if listing_id not in self.page.url or "/listing" not in self.page.url:
             await self.go_to_closet(username)
