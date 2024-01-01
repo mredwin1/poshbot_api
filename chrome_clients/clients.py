@@ -200,8 +200,6 @@ class OctoAPIClient:
         )
         json_response = response.json()
 
-        print(json_response)
-
         if "error" in json_response:
             raise ProfileStartError(f'{json_response["error"]},{uuid}')
 
@@ -217,8 +215,6 @@ class OctoAPIClient:
         )
         json_response = response.json()
 
-        print(json_response)
-
         return json_response
 
     def force_stop_profile(self, uuid: str) -> Dict:
@@ -229,8 +225,6 @@ class OctoAPIClient:
             json=data,
         )
         json_response = response.json()
-
-        print(json_response)
 
         return json_response
 
@@ -689,7 +683,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 retries += 1
 
-            if retries >= 3 and "/signup" not in self.page.url:
+            if retries >= 3 and "/signup" in self.page.url:
                 raise LoginOrRegistrationError("Max number of retries exceeded")
 
             return target_username
