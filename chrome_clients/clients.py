@@ -366,7 +366,7 @@ class BasePuppeteerClient:
         navigation_options: Dict = None,
     ) -> ElementHandle:
         if navigation and navigation_options is None:
-            navigation_options = {"timeout": 5000}
+            navigation_options = {"timeout": 10000}
         if not element and selector:
             element = await self.find(selector, xpath)
         elif not element and not selector:
@@ -387,26 +387,22 @@ class BasePuppeteerClient:
                 )
                 # Perform the click at the chosen coordinates
                 if navigation:
-                    await asyncio.wait(
-                        [
-                            self.page.mouse.click(x, y),
-                            self.page.waitForNavigation(navigation_options),
-                        ]
+                    await asyncio.gather(
+                        self.page.mouse.click(x, y),
+                        self.page.waitForNavigation(navigation_options),
                     )
                 else:
                     await self.page.mouse.click(x, y)
             else:
                 if navigation:
-                    await asyncio.wait(
-                        [
-                            element.click(),
-                            self.page.waitForNavigation(navigation_options),
-                        ]
+                    await asyncio.gather(
+                        element.click(),
+                        self.page.waitForNavigation(navigation_options),
                     )
                 else:
                     await element.click()
         except TimeoutError:
-            pass
+            self.logger.debug("Timeout error occurred while performing navigation click")
 
         return element
 
