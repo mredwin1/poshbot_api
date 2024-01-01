@@ -674,7 +674,7 @@ Resources:
   GeneralScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
-      MaxCapacity: 8
+      MaxCapacity: 10
       MinCapacity: 1
       ResourceId: !Sub
         - 'service/${ECSClusterName}/${GeneralServiceName}'
@@ -699,10 +699,16 @@ Resources:
         MetricAggregationType: 'Average'
         StepAdjustments:
           - MetricIntervalLowerBound: 0
-            MetricIntervalUpperBound: 12
+            MetricIntervalUpperBound: 8
             ScalingAdjustment: 1
-          - MetricIntervalLowerBound: 12
+          - MetricIntervalLowerBound: 8
+            MetricIntervalUpperBound: 16
             ScalingAdjustment: 2
+          - MetricIntervalLowerBound: 16
+            MetricIntervalUpperBound: 30
+            ScalingAdjustment: 3
+          - MetricIntervalLowerBound: 30
+            ScalingAdjustment: 4
 
   GeneralScaleDownPolicy:
     Type: 'AWS::ApplicationAutoScaling::ScalingPolicy'
@@ -719,11 +725,11 @@ Resources:
         Cooldown: 120
         MetricAggregationType: 'Average'
         StepAdjustments:
-          - MetricIntervalUpperBound: -8
+          - MetricIntervalUpperBound: -7
             ScalingAdjustment: 1
-          - MetricIntervalLowerBound: -8
+          - MetricIntervalLowerBound: -7
             MetricIntervalUpperBound: 0
-            ScalingAdjustment: 1
+            ScalingAdjustment: 2
 
   GeneralScaleOutAlarm:
     Type: 'AWS::CloudWatch::Alarm'
