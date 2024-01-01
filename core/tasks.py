@@ -547,7 +547,7 @@ class CampaignTask(Task):
                             await client.check_offers(
                                 user_info, shareable_listing.listed_item_id, lowest_price
                             )
-                        except NoActiveOffers:
+                        except NoActiveOffersError:
                             pass
 
                     bad_phrases = BadPhrase.objects.all()
