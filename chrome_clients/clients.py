@@ -977,7 +977,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         selector=f'div[data-et-prop-listing_id="{listing_id}"].social-action-bar__share',
                         navigation=True,
                         navigation_options={
-                            "waitUntil": "networkidle2",
+                            "waitUntil": "networkidle0",
                             "timeout": 5000,
                         },
                     )

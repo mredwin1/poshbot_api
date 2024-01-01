@@ -34,6 +34,7 @@ from chrome_clients.errors import (
     NoLikesError,
     ProfileStartError,
     NotLoggedInError,
+    NoActiveOffersError
 )
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
@@ -542,10 +543,12 @@ class CampaignTask(Task):
                             lowest_price = shareable_listing.listing.lowest_price
                         else:
                             lowest_price = self.campaign.lowest_price
-
-                        await client.check_offers(
-                            user_info, shareable_listing.listed_item_id, lowest_price
-                        )
+                        try:
+                            await client.check_offers(
+                                user_info, shareable_listing.listed_item_id, lowest_price
+                            )
+                        except NoActiveOffers:
+                            pass
 
                     bad_phrases = BadPhrase.objects.all()
                     bad_phrases = [
