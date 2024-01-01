@@ -803,6 +803,8 @@ class PoshmarkClient(BasePuppeteerClient):
                     navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
                 )
 
+            await self.sleep(1.5, 2.5)
+
             self.logger.info(f"delete_me: listing item  after nav")
 
             error_xpath = "//div[contains(@class, 'modal__body') and contains(text(), 'cannot currently perform this')]"
