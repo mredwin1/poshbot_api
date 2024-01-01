@@ -34,6 +34,7 @@ from chrome_clients.errors import (
     NoLikesError,
     ProfileStartError,
     NotLoggedInError,
+    NoActiveOffersError
 )
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
