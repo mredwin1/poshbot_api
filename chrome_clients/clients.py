@@ -911,7 +911,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     current_tab = current_tab.strip()
                     tab_counter += 1
                     self.logger.info(f"delete_me: size not found going to next tab")
-                    await self.sleep(0.3, 0.6)
+                    await self.sleep(0.6, 1.2)
 
                 if current_tab == "Custom" and not size_found:
                     self.logger.info(
