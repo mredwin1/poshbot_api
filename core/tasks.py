@@ -305,7 +305,7 @@ class CampaignTask(Task):
                 if username != user_info["username"]:
                     octo_client = OctoAPIClient()
                     octo_client.update_profile(
-                        self.campaign.posh_user.user_info, title=username
+                        self.campaign.posh_user.octo_uuid, title=username
                     )
                     self.campaign.posh_user.username = username
                     update_fields.append("username")
