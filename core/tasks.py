@@ -1196,7 +1196,6 @@ def profile_cleanup():
 
     octo_client = OctoAPIClient()
 
-    # Chunking the octo_uuids and deleting in batches of 100
     chunk_size = 100
     for i in range(0, len(octo_uuids), chunk_size):
         chunk = octo_uuids[i : i + chunk_size]
