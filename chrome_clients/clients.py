@@ -1207,7 +1207,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(0.4, 0.8)
 
             await self.click(
-                selector="//div[contains(@class, 'dropdown__link') and contains(text(), 'Report User')]",
+                selector="//div[contains(@class, 'dropdown__link') and contains(., 'Report User')]",
                 xpath=True,
             )
             await self.sleep(1, 2)
@@ -1216,7 +1216,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(0.3, 0.6)
 
             await self.click(
-                selector=f"//div[contains(@class, 'dropdown__link') and contains(text(), '{report_type}')]",
+                selector=f"//div[contains(@class, 'dropdown__link') and contains(., '{report_type}')]",
                 xpath=True,
             )
             await self.sleep(0.3, 0.6)
