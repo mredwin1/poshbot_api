@@ -709,7 +709,9 @@ class ListedItem(models.Model):
 
     @property
     def item_info(self):
-        department, category = self.listing.category.split(" ")
+        split_text = self.listing.category.split(" ")
+        department = split_text[0]
+        category = " ".join(split_text[1:])
         item_info = {
             "title": self.listing.title,
             "size": self.listing.size,
