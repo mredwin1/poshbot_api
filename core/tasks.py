@@ -1207,7 +1207,11 @@ def profile_cleanup():
             except PoshUser.DoesNotExist:
                 octo_uuids.append(profile["uuid"])
 
-    print(octo_client.delete_profiles(octo_uuids))
+    # Chunking the octo_uuids and deleting in batches of 100
+    chunk_size = 100
+    for i in range(0, len(octo_uuids), chunk_size):
+        chunk = octo_uuids[i:i + chunk_size]
+        print(octo_client.delete_profiles(chunk))
 
 
 @shared_task
