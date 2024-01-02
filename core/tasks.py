@@ -550,7 +550,7 @@ class CampaignTask(Task):
                                 lowest_price,
                             )
                         except (NoActiveOffersError, ListingNotFoundError) as e:
-                            raise e
+                            self.logger.warning(e)
 
                     bad_phrases = BadPhrase.objects.all()
                     bad_phrases = [
