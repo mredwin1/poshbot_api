@@ -353,7 +353,7 @@ class CampaignAdmin(admin.ModelAdmin):
         "listings_count",
     ]
     search_fields = ["title__istartswith", "posh_user__username__istartswith"]
-    list_filter = ["status", "user"]
+    list_filter = ["status", "user__username"]
     inlines = [ListingInline]
     actions = [start_campaigns, stop_campaigns]
 
