@@ -1202,11 +1202,13 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             await self.go_to_closet(username)
 
-            await self.click(selector='div[data-et-name="more_icon"]')
-            await self.sleep(0.2, 0.4)
+            await self.click(selector=".ellipses-dot")
+            await self.sleep(0.4, 0.8)
 
-            await self.click(selector='div[data-et-name="report_user"')
-            await self.sleep(0.4, 0.9)
+            await self.click(
+                selector="//div[contains(@class, 'dropdown__link') and contains(text(), 'Report User')]"
+            )
+            await self.sleep(1, 2)
 
             await self.click(selector=".dropdown__selector--select-tag")
             await self.sleep(0.3, 0.6)
