@@ -767,31 +767,39 @@ class PoshmarkClient(BasePuppeteerClient):
             )
 
     async def login(self, user_info: Dict) -> None:
-        username = user_info["username"]
-        password = user_info["password"]
+        try:
+            username = user_info["username"]
+            password = user_info["password"]
 
-        if "/login" not in self.page.url:
-            await self.page.goto("https://poshmark.com")
-            await self.click(selector='a[href="/login"]')
+            if "/login" not in self.page.url:
+                await self.page.goto("https://poshmark.com")
+                await self.click(selector='a[href="/login"]')
 
-        await self.sleep(1.5, 2.5)
+            await self.sleep(1.5, 2.5)
 
-        await self.type("#login_form_username_email", username)
-        await self.type("#login_form_password", password)
+            await self.type("#login_form_username_email", username)
+            await self.type("#login_form_password", password)
 
-        await self.sleep(0.2, 0.6)
-        await self.click(
-            selector='button[type="submit"]',
-            navigation=True,
-            navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
-        )
+            await self.sleep(0.2, 0.6)
+            await self.click(
+                selector='button[type="submit"]',
+                navigation=True,
+                navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+            )
 
-        retries = 0
-        error_handled = None
-        while retries < 3 and error_handled is not False:
-            error_handled = await self._handle_form_errors()
+            retries = 0
+            error_handled = None
+            while (
+                "/login" in self.page.url and retries < 3 and error_handled is not False
+            ):
+                error_handled = await self._handle_form_errors()
 
-            retries += 1
+                retries += 1
+
+            if retries >= 3 and "/login" in self.page.url:
+                raise LoginOrRegistrationError("Max number of retries exceeded")
+        except Exception as e:
+            return await self._handle_generic_errors(e, self.login, user_info=user_info)
 
     async def list_item(self, user_info: Dict, item_info: Dict) -> Dict:
         try:
