@@ -506,7 +506,7 @@ class CampaignTask(Task):
                         await client.share_listing(
                             user_info, shareable_listing.listed_item_id
                         )
-                    except ShareError as e:
+                    except (ListingNotFoundError, ShareError) as e:
                         self.logger.warning(e)
 
                     if random.random() < 0.20:
@@ -526,13 +526,13 @@ class CampaignTask(Task):
 
                         if nine_pm < now < midnight:
                             try:
-                                offer = math.floor(
+                                offer = int(
                                     shareable_listing.listing.listing_price * 0.9
                                 )
                                 await client.send_offers_to_likers(
                                     user_info, shareable_listing.listed_item_id, offer
                                 )
-                            except NoLikesError as e:
+                            except (NoLikesError, ListingNotFoundError) as e:
                                 self.logger.warning(e)
                         else:
                             self.logger.info(
@@ -549,18 +549,20 @@ class CampaignTask(Task):
                                 shareable_listing.listed_item_id,
                                 lowest_price,
                             )
-                        except NoActiveOffersError:
-                            pass
+                        except (NoActiveOffersError, ListingNotFoundError) as e:
+                            raise e
 
                     bad_phrases = BadPhrase.objects.all()
                     bad_phrases = [
                         {"word": phrase.phrase, "report_type": phrase.report_type}
                         async for phrase in bad_phrases
                     ]
-                    await client.check_comments(
-                        user_info, shareable_listing.listed_item_id, bad_phrases
-                    )
-
+                    try:
+                        await client.check_comments(
+                            user_info, shareable_listing.listed_item_id, bad_phrases
+                        )
+                    except ListingNotFoundError as e:
+                        self.logger.warning(e)
                 return True
             else:
                 all_listed_items = ListedItem.objects.filter(

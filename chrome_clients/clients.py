@@ -1062,15 +1062,15 @@ class PoshmarkClient(BasePuppeteerClient):
 
             if not share_success and shared:
                 raise ShareError("Not successfully shared")
-        except ListingNotFoundError as e:
-            self.logger.warning(e)
+        except (ListingNotFoundError, ShareError) as e:
+            raise e
         except Exception as e:
             return await self._handle_generic_errors(
                 e, self.share_listing, user_info=user_info, listing_id=listing_id
             )
 
     async def send_offers_to_likers(
-        self, user_info: Dict, listing_id: str, offer: Decimal
+        self, user_info: Dict, listing_id: str, offer: int
     ) -> None:
         try:
             username = user_info["username"]
@@ -1107,6 +1107,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 selector='//button[contains(text(), "Continue")]', xpath=True
             )
             await self.sleep(0.5, 1)
+        except (NoLikesError, ListingNotFoundError) as e:
+            raise e
         except Exception as e:
             return await self._handle_generic_errors(
                 e,
@@ -1189,8 +1191,8 @@ class PoshmarkClient(BasePuppeteerClient):
                     await self.page.goto(
                         f"https://poshmark.com/posts/{listing_id}/active_offers?pageName=ACTIVE_OFFERS&pageType=new"
                     )
-        except ListingNotFoundError as e:
-            self.logger.warning(e)
+        except (ListingNotFoundError, NoActiveOffersError) as e:
+            raise e
         except Exception as e:
             await self._handle_generic_errors(
                 e, self.check_offers, user_info=user_info, listing_id=listing_id
@@ -1295,6 +1297,8 @@ class PoshmarkClient(BasePuppeteerClient):
                             await self.report_user(
                                 user_info, username, report_type_mapping[report_type]
                             )
+        except ListingNotFoundError as e:
+            raise e
 
         except Exception as e:
             await self._handle_generic_errors(
