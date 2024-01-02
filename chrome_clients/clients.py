@@ -825,7 +825,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(1, 2)
 
             await self.click(selector='button[data-et-name="apply"]')
-            await self.sleep(0.4, 0.9)
+            await self.sleep(1, 2)
 
             self.logger.info(f"delete_me: sent images")
 
