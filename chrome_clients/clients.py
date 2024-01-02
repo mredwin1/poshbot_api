@@ -1356,4 +1356,6 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 await new_tab.close()
         except Exception as e:
-            return await self._handle_generic_errors(e, self.like_follow_share, user_info=user_info)
+            return await self._handle_generic_errors(
+                e, self.like_follow_share, user_info=user_info
+            )
