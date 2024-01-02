@@ -62,6 +62,10 @@ CELERY_TASK_ROUTES = {
         "queue": os.environ["MAINTENANCE_QUEUE"],
         "routing_key": os.environ["MAINTENANCE_QUEUE"],
     },
+    "core.tasks.profile_cleanup": {
+        "queue": os.environ["MAINTENANCE_QUEUE"],
+        "routing_key": os.environ["MAINTENANCE_QUEUE"],
+    },
 }
 
 CELERY_BEAT_SCHEDULE = {
@@ -74,6 +78,10 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(minutes=20),
     },
     "posh_user_cleanup": {
+        "task": "core.tasks.posh_user_cleanup",
+        "schedule": timedelta(hours=4),
+    },
+    "profile_cleanup": {
         "task": "core.tasks.posh_user_cleanup",
         "schedule": timedelta(hours=4),
     },

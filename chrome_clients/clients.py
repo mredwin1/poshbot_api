@@ -228,6 +228,15 @@ class OctoAPIClient:
 
         return json_response
 
+    def delete_profiles(self, uuids: List[str]) -> Dict:
+        data = {"uuids": uuids, "skip_trash_bin": True}
+        response = requests.delete(
+            f"{self.octo_api}/profiles", headers=self._octo_api_headers, json=data
+        )
+        json_response = response.json()
+
+        return json_response
+
 
 class BasePuppeteerClient:
     def __init__(self, ws_url: str, width: int = 800, height: int = 600, logger=None):

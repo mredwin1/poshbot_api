@@ -22,7 +22,6 @@ from faker_providers import address_provider
 
 
 def path_and_rename(instance, filename):
-    original_filename = filename
     ext = filename.split(".")[-1]
     rand_str = "".join(random.choices(string.ascii_uppercase + string.digits, k=4))
     filename = None
@@ -56,16 +55,6 @@ def path_and_rename(instance, filename):
                 path = os.path.join(
                     instance.user.username, "posh_user_images", filename
                 )
-
-        elif isinstance(instance, LogEntry):
-            filename = f"image_{rand_str}.{ext}"
-            path = os.path.join(
-                instance.log_group.campaign.user.username,
-                "log_images",
-                instance.log_group.campaign.title,
-                instance.log_group.campaign.posh_user.username,
-                filename,
-            )
 
         if ext != "pkl":
             try:

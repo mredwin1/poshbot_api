@@ -1180,6 +1180,37 @@ def send_support_emails():
 
 
 @shared_task
+def profile_cleanup():
+    timeframe = (timezone.now() - datetime.timedelta(days=1)).date()
+
+    # Get all posh_users who have been inactive in posh within the timeframe and are ready to delete
+    octo_uuids = list(
+        PoshUser.objects.filter(
+            is_active_in_posh=False,
+            date_disabled__lt=timeframe,
+        )
+        .exclude(listeditem__status=ListedItem.REDEEMED_PENDING)
+        .exclude(octo_uuid="")
+        .values_list("octo_uuid", flat=True)
+    )
+
+    octo_client = OctoAPIClient()
+
+    response = octo_client.get_profiles()
+
+    if "data" in response:
+        profiles = response["data"]
+
+        for profile in profiles:
+            try:
+                PoshUser.objects.get(octo_uuid=profile["uuid"])
+            except PoshUser.DoesNotExist:
+                octo_uuids.append(profile["uuid"])
+
+    octo_client.delete_profiles(octo_uuids)
+
+
+@shared_task
 def check_listed_items(username: str = ""):
     logger = logging.getLogger(__name__)
     sold_items = ListedItem.objects.filter(
