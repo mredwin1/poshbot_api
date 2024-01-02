@@ -1193,7 +1193,7 @@ class PoshmarkClient(BasePuppeteerClient):
         except (ListingNotFoundError, NoActiveOffersError) as e:
             raise e
         except Exception as e:
-            await self._handle_generic_errors(
+            return await self._handle_generic_errors(
                 e, self.check_offers, user_info=user_info, listing_id=listing_id
             )
 
@@ -1225,7 +1225,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(0.3, 0.8)
 
         except Exception as e:
-            await self._handle_generic_errors(
+            return await self._handle_generic_errors(
                 e,
                 self.report_user,
                 user_info=user_info,
@@ -1301,7 +1301,7 @@ class PoshmarkClient(BasePuppeteerClient):
             raise e
 
         except Exception as e:
-            await self._handle_generic_errors(
+            return await self._handle_generic_errors(
                 e,
                 self.check_comments,
                 user_info=user_info,
@@ -1356,4 +1356,4 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 await new_tab.close()
         except Exception as e:
-            self._handle_generic_errors(e, self.like_follow_share, user_info=user_info)
+            return await self._handle_generic_errors(e, self.like_follow_share, user_info=user_info)
