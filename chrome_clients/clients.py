@@ -1221,7 +1221,7 @@ class PoshmarkClient(BasePuppeteerClient):
             )
             await self.sleep(0.3, 0.6)
 
-            await self.click(".btn--primary")
+            await self.click(selector=".btn--primary")
             await self.sleep(0.3, 0.8)
 
         except Exception as e:
