@@ -811,14 +811,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
                 )
             elif "create-listing" in self.page.url:
-                try:
-                    await self.page.reload(
-                        {"waitUntil": "networkidle2", "timeout": 10000}
-                    )
-                except TimeoutError:
-                    self.logger.debug(
-                        "Timeout after reloading listing page. Continuing..."
-                    )
+                await self.page.reload(waitUntil="networkidle2")
             else:
                 await self.page.goto("https://poshmark.com/")
                 await self.click(
