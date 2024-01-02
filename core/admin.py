@@ -219,7 +219,7 @@ class PoshUserAdmin(admin.ModelAdmin):
         "closet_url",
     ]
     search_fields = ["username__istartswith", "email__istartswith"]
-    list_filter = ["user", PoshUserStatusFilter]
+    list_filter = ["user__username", PoshUserStatusFilter]
     list_per_page = 20
 
     def get_queryset(self, request):
@@ -300,7 +300,7 @@ class ListingAdmin(admin.ModelAdmin):
     autocomplete_fields = ["campaign"]
     list_display = ["title", "associated_user", "associated_campaign"]
     search_fields = ["title__istartswith"]
-    list_filter = ["user", "campaign"]
+    list_filter = ["user__username", "campaign__id"]
     list_per_page = 20
     inlines = [ListingImageInline]
 
@@ -434,7 +434,7 @@ class ListedItemAdmin(admin.ModelAdmin):
         "datetime_redeemed",
     ]
     search_fields = ["listing_title__istartswith", "posh_user__username__istartswith"]
-    list_filter = ["status", "posh_user__user"]
+    list_filter = ["status", "posh_user__user__username"]
 
     def get_queryset(self, request):
         return (
