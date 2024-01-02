@@ -786,6 +786,9 @@ Resources:
         - DeviceName: /dev/xvda
           Ebs:
             VolumeSize: 60
+            VolumeType: gp3
+        - DeviceName: /dev/sda1
+          NoDevice: { }
       CreditSpecification:
         CPUCredits: unlimited
       IamInstanceProfile: !Ref EC2InstanceProfile
