@@ -348,7 +348,7 @@ class CampaignTask(Task):
 
         self.campaign.status = campaign_status
         self.campaign.queue_status = "Unknown"
-        self.campaign.next_runtime = timezone.now()
+        self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
         await self.campaign.asave(
             update_fields=["status", "queue_status", "next_runtime"]
         )
