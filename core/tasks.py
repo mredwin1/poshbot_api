@@ -449,13 +449,10 @@ class CampaignTask(Task):
             #     self.campaign.posh_user.profile_updated = True
             #     self.campaign.posh_user.save(update_fields=["profile_updated"])
 
-            # TODO: Implement the below
-            # Follow random users and report a random listing
-            # random_number = random.random()
-            # if random_number < 0.1:
-            #     client.follow_random_follower()
-            # elif random_number < 0.4:
-            #     client.follow_random_user()
+            # Follow like and share randomly
+            random_number = random.random()
+            if random_number < 0.5:
+                await client.like_follow_share(user_info)
 
             # TODO: Implement the below
             # Get a list of listed item IDs the user has listed

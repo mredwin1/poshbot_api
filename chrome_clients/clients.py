@@ -5,7 +5,6 @@ import random
 import re
 import requests
 
-from decimal import Decimal, getcontext
 from pyppeteer.browser import Browser
 from pyppeteer.page import Page
 from pyppeteer.element_handle import ElementHandle
@@ -1025,7 +1024,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.sleep(1.5, 2)
 
                 # Click share to my followers
-                await self.click(selector=".internal-share")
+                await self.click(selector=".internal-share__link")
 
                 try:
                     flash_message_elem = await self.find(selector="#flash__message")
@@ -1308,3 +1307,52 @@ class PoshmarkClient(BasePuppeteerClient):
                 listing_id=listing_id,
                 bad_words=bad_words,
             )
+
+    async def like_follow_share(self, user_info: Dict) -> None:
+        try:
+            await self.page.goto("https://poshmark.com")
+
+            await self.click_random(
+                selector='ul.header--scrollable__nav__links > li > a:not([href="/feed"]):not([href="/shows"]):not([href="/brands"]):not([href="/parties"])',
+                count=1,
+            )
+
+            await self.sleep(1.2, 2)
+
+            listings = await self.find_all(".card")
+            listings_to_action: List[ElementHandle] = random.sample(
+                listings, k=random.randint(5, 10)
+            )
+
+            for listing in listings_to_action:
+                try:
+                    like_button = await listing.querySelector(".like")
+                    await self.click(element=like_button)
+                    await self.sleep(0.2, 0.4)
+                except TimeoutError:
+                    pass
+
+                share_button = await listing.querySelector(".share-gray-large")
+                await self.click(element=share_button)
+
+                await self.click(selector=".internal-share__link")
+                await self.sleep(0.3, 0.8)
+
+                seller_profile = await listing.querySelectorEval(
+                    "a.tile__creator", "a => a.href"
+                )
+                new_tab = await self.browser.newPage()
+                await new_tab.goto(seller_profile)
+                await self.sleep(0.3, 0.5)
+
+                try:
+                    await new_tab.click('button[data-et-name="follow_user"]')
+                    await self.sleep(0.4, 0.6)
+                except TimeoutError:
+                    pass
+
+                await self.sleep(0.3, 0.8)
+
+                await new_tab.close()
+        except Exception as e:
+            self._handle_generic_errors(e, self.like_follow_share, user_info=user_info)
