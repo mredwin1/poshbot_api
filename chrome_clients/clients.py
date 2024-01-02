@@ -960,10 +960,21 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(selector='button[data-et-name="list_item"')
 
             latest_url = self.page.url
+            attempts = 0
             while self.page.url != "https://poshmark.com/feed":
                 latest_url = self.page.url
                 self.logger.info(f"delete_me: listing item  url - {self.page.url}")
+                attempts += 1
                 await self.sleep(1)
+
+                if attempts == 15:
+                    screenshots_dir = os.path.join(os.getcwd(), "screenshots")
+                    screenshot_name = f"listing_attempt.png"
+                    os.makedirs(screenshots_dir, exist_ok=True)
+                    await self.page.screenshot(
+                        {"path": os.path.join(screenshots_dir, screenshot_name)}
+                    )
+                    self.logger.info(f"Screenshot saved to {screenshot_name}")
 
             parsed_url = urlparse(latest_url)
             query_params = parse_qs(parsed_url.query)
