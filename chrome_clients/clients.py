@@ -927,7 +927,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 while current_tab != "Custom" and not size_found:
                     self.logger.info(f"delete_me: at {current_tab}")
                     current_tab_elem = await self.find(
-                        f'li[data-test="horizontal-nav-{tab_counter}"]'
+                        f'a[data-test="horizontal-nav-{tab_counter}"]'
                     )
                     if tab_counter > 0:
                         await self.click(element=current_tab_elem)
