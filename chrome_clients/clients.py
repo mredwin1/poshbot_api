@@ -379,33 +379,48 @@ class BasePuppeteerClient:
 
         # Get the bounding box of the element
         bounding_box = await element.boundingBox()
-        try:
-            if bounding_box:
-                x, y = self.random_coordinates_within_box(
-                    bounding_box["x"],
-                    bounding_box["y"],
-                    bounding_box["width"],
-                    bounding_box["height"],
-                )
-                # Perform the click at the chosen coordinates
-                if navigation:
-                    await asyncio.gather(
-                        self.page.waitForNavigation(navigation_options),
-                        self.page.mouse.click(x, y),
-                    )
-                else:
-                    await self.page.mouse.click(x, y)
-            else:
-                if navigation:
-                    await asyncio.gather(
-                        self.page.waitForNavigation(navigation_options), element.click()
-                    )
-                else:
-                    await element.click()
-        except TimeoutError:
-            self.logger.debug(
-                "Timeout error occurred while performing navigation click. Continuing"
+        if bounding_box:
+            x, y = self.random_coordinates_within_box(
+                bounding_box["x"],
+                bounding_box["y"],
+                bounding_box["width"],
+                bounding_box["height"],
             )
+            # Perform the click at the chosen coordinates
+            if navigation:
+                completed, _ = await asyncio.wait(
+                    [
+                        self.page.mouse.click(x, y),
+                        self.page.waitForNavigation(navigation_options),
+                    ],
+                )
+
+                for task in completed:
+                    if task.exception():
+                        if isinstance(task.exception(), TimeoutError):
+                            self.logger.warning(
+                                "Timed out waiting for navigation after click"
+                            )
+
+            else:
+                await self.page.mouse.click(x, y)
+        else:
+            if navigation:
+                completed, _ = await asyncio.wait(
+                    [
+                        element.click(),
+                        self.page.waitForNavigation(navigation_options),
+                    ],
+                )
+
+                for task in completed:
+                    if task.exception():
+                        if isinstance(task.exception(), TimeoutError):
+                            self.logger.warning(
+                                "Timed out waiting for navigation after click"
+                            )
+            else:
+                await element.click()
 
         return element
 
@@ -530,7 +545,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         navigation=True,
                         navigation_options={
                             "waitUntil": "networkidle2",
-                            "timeout": 5000,
+                            "timeout": 10000,
                         },
                     )
 
@@ -589,6 +604,31 @@ class PoshmarkClient(BasePuppeteerClient):
 
         raise error
 
+    async def _handle_username_popup(self) -> str | None:
+        if await self.is_present('button[data-et-name="suggested_username"]'):
+            await self.sleep(0.65, 1.25)
+
+            new_username = await self.page.querySelectorEval(
+                'button[data-et-name="suggested_username"]',
+                "(element) => element.textContent",
+            )
+
+            new_username = new_username.strip()
+
+            await self.click(selector='button[data-et-name="suggested_username"]')
+
+            self.logger.info(f"New username selected: {new_username}")
+
+            await self.click(
+                selector='button[type="submit"]',
+                navigation=True,
+                navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
+            )
+
+            await self.sleep(0.5, 0.8)
+
+            return new_username
+
     async def logged_in(self, username: str) -> bool:
         await self.page.goto("https://poshmark.com")
         if "/feed" in self.page.url:
@@ -620,7 +660,7 @@ class PoshmarkClient(BasePuppeteerClient):
             # Click listing
             try:
                 await self.click(
-                    selector=f'a[data-et-prop-listing_id="{listing_id}"].tile__covershot'
+                    selector=f'a[data-et-prop-listing_id="{listing_id}"].tile__covershot',
                 )
             except TimeoutError:
                 raise ListingNotFoundError(
@@ -633,18 +673,16 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             self.logger.info(f"delete_me: register in client")
             if "/signup" not in self.page.url:
-                await self.page.goto("https://poshmark.com")
-                await self.sleep(0.6, 1)
-                await self.click(selector='a[href="/signup"]', navigation=True)
-
+                await self.page.goto("https://poshmark.com/signup")
                 await self.sleep(0.2, 0.6)
+
             self.logger.info(f"delete_me: register post nav")
-            target_username: str = user_info["username"]
+            username: str = user_info["username"]
 
             await self.type("#firstName", user_info["first_name"])
             await self.type("#lastName", user_info["last_name"])
             await self.type("#email", user_info["email"])
-            await self.type('input[name="userName"]', target_username)
+            await self.type('input[name="userName"]', username)
             await self.type("#password", user_info["password"])
 
             await self.sleep(0.2, 0.8)
@@ -667,7 +705,9 @@ class PoshmarkClient(BasePuppeteerClient):
                 navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
             )
 
-            await self.sleep(3, 4)
+            await self.sleep(0.5, 1)
+
+            new_username = await self._handle_username_popup()
 
             self.logger.info(f"delete_me: register post submit")
 
@@ -680,28 +720,17 @@ class PoshmarkClient(BasePuppeteerClient):
             ):
                 error_handled = await self._handle_form_errors()
 
-                if await self.is_present('button[data-et-name="suggested_username"]'):
-                    await self.sleep(0.65, 1.25)
-
-                    target_username = await self.page.querySelectorEval(
-                        'button[data-et-name="suggested_username"]',
-                        "(element) => element.textContent",
-                    )
-
-                    target_username = target_username.strip()
-
-                    await self.click(
-                        selector='button[data-et-name="suggested_username"]'
-                    )
-
-                    self.logger.info(f"New username selected: {target_username}")
+                new_username = await self._handle_username_popup()
 
                 retries += 1
 
             if retries >= 3 and "/signup" in self.page.url:
                 raise LoginOrRegistrationError("Max number of retries exceeded")
 
-            return target_username
+            if new_username is not None:
+                username = new_username
+
+            return username
         except Exception as e:
             return await self._handle_generic_errors(
                 e, self.register, user_info=user_info
@@ -717,7 +746,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 await self.sleep(1, 2)
                 await self.click(selector='button[data-et-name="apply"]')
-                await self.sleep(1, 2)
+                await self.sleep(1.5, 2.5)
 
             # Set shirt/dress size
             size_text = (
@@ -750,6 +779,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.type(selector='input[name="zip"]', text=user_info["zipcode"])
             await self.sleep(1, 2)
             await self.click(selector='button[type="submit"]', navigation=True)
+            await self.sleep(1, 1.5)
 
             # Select random number of brands
             await self.click_random(selector=".content-grid-item")
@@ -804,14 +834,22 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             self.logger.info(f"delete_me: listing item in client")
             if "/feed" in self.page.url:
-                await self.click(selector='a[href="/sell"]')
+                await self.click(
+                    selector='a[href="/sell"]',
+                    navigation=True,
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+                )
             elif "create-listing" in self.page.url:
                 await self.page.reload()
             else:
                 await self.page.goto("https://poshmark.com/")
-                await self.click(selector='a[href="/sell"]')
+                await self.click(
+                    selector='a[href="/sell"]',
+                    navigation=True,
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+                )
 
-            await self.sleep(2, 3)
+            await self.sleep(1, 2)
 
             self.logger.info(f"delete_me: listing item  after nav")
 
