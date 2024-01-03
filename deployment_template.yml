@@ -585,7 +585,7 @@ Resources:
             - '-A'
             - 'poshbot_api'
             - 'worker'
-            - '--concurrency=2'
+            - '--concurrency=3'
             - '-Q'
             - !GetAtt GeneralQueue.QueueName
             - '-l'
