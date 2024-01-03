@@ -571,6 +571,9 @@ class CampaignTask(Task):
                 under_review_listed_items = await all_listed_items.filter(
                     status=ListedItem.UNDER_REVIEW
                 ).aexists()
+                removed_listed_items = await all_listed_items.filter(
+                    status=ListedItem.REMOVED
+                ).aexists()
                 if reserved_listed_items:
                     self.logger.info(
                         "This user has no shareable listings but has some reserved. Setting delay to an hour."
@@ -587,13 +590,15 @@ class CampaignTask(Task):
                     await self.campaign.asave()
 
                     return False
+                elif removed_listed_items:
+                    self.logger.info("Only removed listings. Stopping campaign")
+
+                    self.campaign.status = Campaign.STOPPING
+                    self.campaign.next_runtime = None
+                    await self.campaign.asave()
+
+                    return False
                 else:
-                    #     self.logger.info("Nothing to do. Stopping campaign")
-                    #
-                    #     self.campaign.status = Campaign.STOPPING
-                    #     self.campaign.next_runtime = None
-                    #     await self.campaign.asave()
-                    #
                     return True
 
     def on_failure(self, exc, task_id, args, kwargs, einfo):
