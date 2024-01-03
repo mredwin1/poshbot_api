@@ -837,7 +837,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
                 )
             elif "create-listing" in self.page.url:
                 await self.page.reload()
@@ -927,7 +927,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 while current_tab != "Custom" and not size_found:
                     self.logger.info(f"delete_me: at {current_tab}")
                     current_tab_elem = await self.find(
-                        f'li[data-test="horizontal-{tab_counter}"]'
+                        f'li[data-test="horizontal-nav-{tab_counter}"]'
                     )
                     if tab_counter > 0:
                         await self.click(element=current_tab_elem)
