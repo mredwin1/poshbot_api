@@ -1345,11 +1345,11 @@ class PoshmarkClient(BasePuppeteerClient):
                 count=1,
             )
 
-            await self.sleep(1.2, 2)
+            await self.sleep(1.8, 2.5)
 
             listings = await self.find_all(".card")
             listings_to_action: List[ElementHandle] = random.sample(
-                listings, k=random.randint(5, 10)
+                listings, k=random.randint(10, 20)
             )
 
             seller_profiles = []
