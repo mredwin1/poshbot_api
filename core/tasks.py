@@ -574,6 +574,9 @@ class CampaignTask(Task):
                 removed_listed_items = await all_listed_items.filter(
                     status=ListedItem.REMOVED
                 ).aexists()
+                sold_listed_items = await all_listed_items.filter(
+                    status=ListedItem.SOLD
+                ).aexists()
                 if reserved_listed_items:
                     self.logger.info(
                         "This user has no shareable listings but has some reserved. Setting delay to an hour."
@@ -592,6 +595,14 @@ class CampaignTask(Task):
                     return False
                 elif removed_listed_items:
                     self.logger.info("Only removed listings. Stopping campaign")
+
+                    self.campaign.status = Campaign.STOPPING
+                    self.campaign.next_runtime = None
+                    await self.campaign.asave()
+
+                    return False
+                elif sold_listed_items:
+                    self.logger.info("Only sold listings. Stopping campaign")
 
                     self.campaign.status = Campaign.STOPPING
                     self.campaign.next_runtime = None
