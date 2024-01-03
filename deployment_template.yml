@@ -791,7 +791,7 @@ Resources:
         CPUCredits: unlimited
       IamInstanceProfile: !Ref EC2InstanceProfile
       ImageId: ami-0c7217cdde317cfec
-      InstanceType: !If [IsProd, t3.xlarge, t3.large]
+      InstanceType: t3.xlarge
       PropagateTagsToVolumeOnCreation: true
       SecurityGroupIds:
         - !GetAtt ECSSecurityGroup.GroupId
