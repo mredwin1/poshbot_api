@@ -833,7 +833,7 @@ class PoshmarkClient(BasePuppeteerClient):
     async def list_item(self, user_info: Dict, item_info: Dict) -> Dict:
         try:
             self.logger.info(f"delete_me: listing item in client")
-            if "/feed" in self.page.url:
+            if await self.is_present('a[href="/sell"]'):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
@@ -842,12 +842,7 @@ class PoshmarkClient(BasePuppeteerClient):
             elif "create-listing" in self.page.url:
                 await self.page.reload()
             else:
-                await self.page.goto("https://poshmark.com/")
-                await self.click(
-                    selector='a[href="/sell"]',
-                    navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
-                )
+                await self.page.goto("https://poshmark.com/sell")
 
             await self.sleep(1, 2)
 
