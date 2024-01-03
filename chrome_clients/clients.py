@@ -804,22 +804,14 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             self.logger.info(f"delete_me: listing item in client")
             if "/feed" in self.page.url:
-                await self.click(
-                    selector='a[href="/sell"]',
-                    navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
-                )
+                await self.click(selector='a[href="/sell"]')
             elif "create-listing" in self.page.url:
-                await self.page.reload(waitUntil="networkidle2")
+                await self.page.reload()
             else:
                 await self.page.goto("https://poshmark.com/")
-                await self.click(
-                    selector='a[href="/sell"]',
-                    navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
-                )
+                await self.click(selector='a[href="/sell"]')
 
-            await self.sleep(1.5, 2.5)
+            await self.sleep(2, 3)
 
             self.logger.info(f"delete_me: listing item  after nav")
 
