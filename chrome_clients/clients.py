@@ -622,7 +622,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(
                 selector='button[type="submit"]',
                 navigation=True,
-                navigation_options={"waitUntil": "networkidle2", "timeout": 10000},
+                navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
             )
 
             await self.sleep(0.5, 0.8)
@@ -702,7 +702,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(
                 selector='button[type="submit"]',
                 navigation=True,
-                navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+                navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
             )
 
             await self.sleep(0.5, 1)
