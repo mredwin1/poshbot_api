@@ -727,6 +727,9 @@ Resources:
         StepAdjustments:
           - MetricIntervalUpperBound: -7
             ScalingAdjustment: 1
+          - MetricIntervalLowerBound: -7
+            MetricIntervalUpperBound: 0
+            ScalingAdjustment: 2
 
   GeneralScaleOutAlarm:
     Type: 'AWS::CloudWatch::Alarm'
@@ -762,7 +765,7 @@ Resources:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       ComparisonOperator: 'LessThanOrEqualToThreshold'
       EvaluationPeriods: 1
-      MetricName: 'ApproximateNumberOfMessagesNotVisible'
+      MetricName: 'ApproximateNumberOfMessagesVisible'
       Namespace: 'AWS/SQS'
       Period: 60
       Threshold: 8
