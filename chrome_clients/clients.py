@@ -1338,14 +1338,19 @@ class PoshmarkClient(BasePuppeteerClient):
 
     async def like_follow_share(self, user_info: Dict) -> None:
         try:
-            await self.page.goto("https://poshmark.com")
+            feeds = [
+                "category/Women",
+                "category/Men",
+                "category/Kids",
+                "category/Home",
+                "category/Electronics",
+                "category/Pets",
+                "category/Women-Makeup",
+            ]
 
-            await self.click_random(
-                selector='ul.header--scrollable__nav__links > li > a:not([href="/feed"]):not([href="/shows"]):not([href="/brands"]):not([href="/parties"])',
-                count=1,
-            )
+            await self.page.goto(f"https://poshmark.com/{random.choice(feeds)}")
 
-            await self.sleep(1.8, 2.5)
+            await self.sleep(1.2, 2)
 
             listings = await self.find_all(".card")
             listings_to_action: List[ElementHandle] = random.sample(
