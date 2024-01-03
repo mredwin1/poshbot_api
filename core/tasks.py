@@ -162,7 +162,9 @@ class CampaignTask(Task):
     def stop_octo_profile(self):
         octo_client = OctoAPIClient()
         try:
-            octo_client.stop_profile(self.runtime_details["uuid"])
+            stop_response = octo_client.stop_profile(self.runtime_details["uuid"])
+
+            self.logger.info(f"Profile stop signal sent: {stop_response}")
         except KeyError:
             pass
 
