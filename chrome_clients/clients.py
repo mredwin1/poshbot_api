@@ -837,7 +837,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 30000},
                 )
             elif "create-listing" in self.page.url:
                 await self.page.reload()
