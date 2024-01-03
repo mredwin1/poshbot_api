@@ -874,7 +874,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
             # Type item Description
             await self.type(
-                'textarea[data-vv-name="description"]', item_info["description"]
+                'textarea[data-vv-name="description"]',
+                item_info["description"],
+                wpm=180,
             )
             await self.sleep(0.4, 0.9)
 
