@@ -998,7 +998,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
             latest_url = self.page.url
             attempts = 0
-            while self.page.url != "https://poshmark.com/feed":
+            while "created_listing_id" not in self.page.url:
                 latest_url = self.page.url
                 self.logger.info(f"delete_me: listing item  url - {self.page.url}")
                 attempts += 1
