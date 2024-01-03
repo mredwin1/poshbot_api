@@ -844,7 +844,7 @@ class CheckPoshUsers(Task):
             )
 
             listings_count = int(listings_count_element.get_text(strip=True))
-            if listings_count > 1:
+            if listings_count >= 1:
                 return False
 
         return True
