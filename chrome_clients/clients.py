@@ -1355,6 +1355,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 listings, k=random.randint(5, 10)
             )
 
+            seller_profiles = []
             for listing in listings_to_action:
                 try:
                     like_button = await listing.querySelector(".like")
@@ -1372,19 +1373,13 @@ class PoshmarkClient(BasePuppeteerClient):
                 seller_profile = await listing.querySelectorEval(
                     "a.tile__creator", "a => a.href"
                 )
-                new_tab = await self.browser.newPage()
-                await new_tab.goto(seller_profile)
-                await self.sleep(0.3, 0.5)
+                seller_profiles.append(seller_profile)
 
-                try:
-                    await new_tab.click('button[data-et-name="follow_user"]')
-                    await self.sleep(0.4, 0.6)
-                except TimeoutError:
-                    pass
+            for profile in seller_profiles:
+                await self.page.goto(profile)
+                await self.sleep(0.4, 0.7)
+                await self.click(selector='button[data-et-name="follow_user"]')
 
-                await self.sleep(0.3, 0.8)
-
-                await new_tab.close()
         except Exception as e:
             return await self._handle_generic_errors(
                 e, self.like_follow_share, user_info=user_info
