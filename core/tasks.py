@@ -572,10 +572,10 @@ class CampaignTask(Task):
                     status=ListedItem.UNDER_REVIEW
                 ).aexists()
                 removed_listed_items = await all_listed_items.filter(
-                    status=ListedItem.REMOVED
+                    datetime_removed__isnull=False
                 ).aexists()
                 sold_listed_items = await all_listed_items.filter(
-                    status=ListedItem.SOLD
+                    datetime_sold__isnull=False
                 ).aexists()
                 if reserved_listed_items:
                     self.logger.info(
