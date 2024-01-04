@@ -745,7 +745,7 @@ class ManageCampaignsTask(Task):
 
                     if campaign.posh_user and campaign.posh_user.octo_uuid:
                         octo_client = OctoAPIClient()
-                        octo_client.stop_profile(campaign.octo_uuid)
+                        octo_client.stop_profile(campaign.posh_user.octo_uuid)
 
                     self.logger.warning(
                         f"Campaign has been running for {runtime} sec, checking in."
