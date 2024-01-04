@@ -1376,7 +1376,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(element=share_button)
 
                 await self.click(selector=".internal-share__link")
-                await self.sleep(0.3, 0.8)
+                await self.sleep(1, 2)
 
                 await self._handle_sharing_captcha()
 
