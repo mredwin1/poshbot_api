@@ -1191,14 +1191,14 @@ def profile_cleanup():
     timeframe = (timezone.now() - datetime.timedelta(hours=12)).date()
 
     # Get all posh_users who have been inactive in posh within the timeframe and are ready to delete
-    octo_uuids = list(
+    posh_users = (
         PoshUser.objects.filter(
             Q(is_active_in_posh=False) | Q(is_active=False), date_disabled__lt=timeframe
         )
         .exclude(listeditem__status=ListedItem.REDEEMED_PENDING)
         .exclude(octo_uuid="")
-        .values_list("octo_uuid", flat=True)
     )
+    octo_uuids = list(posh_users.values_list("octo_uuid", flat=True))
 
     octo_client = OctoAPIClient()
 
@@ -1206,6 +1206,14 @@ def profile_cleanup():
     for i in range(0, len(octo_uuids), chunk_size):
         chunk = octo_uuids[i : i + chunk_size]
         print(octo_client.delete_profiles(chunk))
+
+    posh_users.update(octo_uuid="")
+
+    try:
+        redis_client = caches["default"].client.get_client()
+        redis_client.delete(f"{profile_cleanup.name}")
+    except Exception:
+        pass
 
 
 @shared_task
