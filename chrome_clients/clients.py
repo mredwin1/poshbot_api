@@ -1356,19 +1356,36 @@ class PoshmarkClient(BasePuppeteerClient):
                 "category/Pets",
                 "category/Women-Makeup",
             ]
+            chosen_feed = random.choice(feeds)
 
-            await self.page.goto(
-                f"https://poshmark.com/{random.choice(feeds)}",
-                waitUntil="networkidle2",
-                timeout=10000,
-            )
+            listings = []
+            retries = 1
 
-            await self.sleep(3, 4)
+            while not listings and retries < 3:
+                if chosen_feed not in self.page.url:
+                    await self.page.goto(
+                        f"https://poshmark.com/{chosen_feed}",
+                        waitUntil="networkidle2",
+                        timeout=10000,
+                    )
+                else:
+                    await self.page.reload(
+                        waitUntil="networkidle2",
+                        timeout=10000,
+                    )
 
-            if await self.is_present('button[data-et-name="see_all_listings"]'):
-                await self.click(selector='button[data-et-name="see_all_listings"]')
+                await self.sleep(3, 4)
 
-            listings = await self.find_all(".card")
+                if await self.is_present('button[data-et-name="see_all_listings"]'):
+                    await self.click(selector='button[data-et-name="see_all_listings"]')
+
+                listings = await self.find_all(".card")
+                retries += 1
+
+            if not listings:
+                self.logger.warning(f"Could not find listings after {retries} attempts")
+                return
+
             listings_to_action: List[ElementHandle] = random.sample(
                 listings, k=random.randint(10, 20)
             )
