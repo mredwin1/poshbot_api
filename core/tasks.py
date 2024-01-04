@@ -743,7 +743,7 @@ class ManageCampaignsTask(Task):
                 try:
                     campaign = Campaign.objects.get(id=proxy.checked_out_by)
 
-                    if campaign.poshuser and campaign.posh_user.octo_uuid:
+                    if campaign.posh_user and campaign.posh_user.octo_uuid:
                         octo_client = OctoAPIClient()
                         octo_client.stop_profile(campaign.octo_uuid)
 
