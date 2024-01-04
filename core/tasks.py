@@ -711,7 +711,11 @@ class ManageCampaignsTask(Task):
 
         current_time = timezone.now().timestamp()
         for profile in response:
-            start_time = profile.get("start_time", current_time)
+            start_time = profile.get("start_time")
+
+            if start_time is None:
+                start_time = current_time
+
             seconds_since_start = current_time - start_time
 
             if seconds_since_start > CampaignTask.soft_time_limit + 30:
