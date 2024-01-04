@@ -1370,23 +1370,26 @@ class PoshmarkClient(BasePuppeteerClient):
             for listing in listings_to_action:
                 try:
                     like_button = await listing.querySelector(".like")
-                    await self.click(element=like_button)
-                    await self.sleep(0.2, 0.4)
+                    if like_button:
+                        await self.click(element=like_button)
+                        await self.sleep(0.2, 0.4)
                 except TimeoutError:
                     pass
 
                 share_button = await listing.querySelector(".share-gray-large")
-                await self.click(element=share_button)
+                if share_button:
+                    await self.click(element=share_button)
 
-                await self.click(selector=".internal-share__link")
-                await self.sleep(1, 2)
+                    await self.click(selector=".internal-share__link")
+                    await self.sleep(1, 2)
 
-                await self._handle_sharing_captcha()
+                    await self._handle_sharing_captcha()
 
                 seller_profile = await listing.querySelectorEval(
                     "a.tile__creator", "a => a.href"
                 )
-                seller_profiles.append(seller_profile)
+                if seller_profile:
+                    seller_profiles.append(seller_profile)
 
             for profile in seller_profiles:
                 try:
