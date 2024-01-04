@@ -714,7 +714,7 @@ class ManageCampaignsTask(Task):
             start_time = profile.get("start_time", current_time)
             seconds_since_start = current_time - start_time
 
-            if seconds_since_start > CampaignTask.soft_time_limit + 60:
+            if seconds_since_start > CampaignTask.soft_time_limit + 30:
                 response = octo_client.stop_profile(profile["uuid"])
                 self.logger.debug(f"Stopping profile {profile['uuid']}: {response}")
 
