@@ -716,6 +716,8 @@ class ManageCampaignsTask(Task):
 
             return
 
+        self.logger.warning(response)
+
         current_time = timezone.now().timestamp()
         for profile in response:
             seconds_since_start = current_time - profile["start_time"]
