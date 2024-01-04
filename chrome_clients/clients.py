@@ -187,7 +187,7 @@ class OctoAPIClient:
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
-            "headless": True,
+            "headless": False,
             "debug_port": True,
             "flags": ["--disable-backgrounding-occluded-windows"],
         }
@@ -641,9 +641,10 @@ class PoshmarkClient(BasePuppeteerClient):
             result = solver.recaptcha(sitekey=site_key, url=self.page.url)
 
             await self.page.evaluate(
-                f"document.querySelector('#g-recaptcha-response').value = '{result}'"
+                f"document.querySelector('#g-recaptcha-response').value = '{result['code']}'"
             )
             await self.page.evaluate("validateResponse()")
+            await self.sleep(0.5, 1)
 
             return True
 
