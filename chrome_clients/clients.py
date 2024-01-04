@@ -1395,14 +1395,17 @@ class PoshmarkClient(BasePuppeteerClient):
                 self.logger.info("On a listing")
                 try:
                     like_button = await listing.querySelector(".like")
+                    self.logger.info("After getting like button")
                     if like_button:
                         await self.click(element=like_button)
                         await self.sleep(0.2, 0.4)
+                        self.logger.info("Shared")
                 except TimeoutError:
                     pass
 
                 try:
                     share_button = await listing.querySelector(".share-gray-large")
+                    self.logger.info("After getting like share button")
                     if share_button:
                         await self.click(element=share_button)
 
@@ -1418,6 +1421,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 seller_profile = await listing.querySelectorEval(
                     "a.tile__creator", "a => a.href"
                 )
+                self.logger.info("After getting seller profile")
                 if seller_profile:
                     seller_profiles.append(seller_profile)
                     self.logger.info("Added seller profile")
