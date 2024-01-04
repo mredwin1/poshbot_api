@@ -1382,16 +1382,19 @@ class PoshmarkClient(BasePuppeteerClient):
                 except TimeoutError:
                     pass
 
-                share_button = await listing.querySelector(".share-gray-large")
-                if share_button:
-                    await self.click(element=share_button)
+                try:
+                    share_button = await listing.querySelector(".share-gray-large")
+                    if share_button:
+                        await self.click(element=share_button)
 
-                    await self.click(selector=".internal-share__link")
-                    await self.sleep(1, 2)
+                        await self.click(selector=".internal-share__link")
+                        await self.sleep(1, 2)
 
-                    await self._handle_sharing_captcha()
+                        await self._handle_sharing_captcha()
 
-                    self.logger.debug("Shared")
+                        self.logger.debug("Shared")
+                except TimeoutError:
+                    pass
 
                 seller_profile = await listing.querySelectorEval(
                     "a.tile__creator", "a => a.href"
