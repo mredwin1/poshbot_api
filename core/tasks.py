@@ -706,6 +706,24 @@ class ManageCampaignsTask(Task):
         self.time_limit = 450
         self.logger = logging.getLogger(__name__)
 
+    def inspect_active_profiles(self):
+        octo_client = OctoAPIClient()
+
+        response = octo_client.get_active_profiles()
+
+        if "error" in response:
+            self.logger.warning(f"Error while getting active profiles: {response}")
+
+            return
+
+        current_time = timezone.now().timestamp()
+        for profile in response:
+            seconds_since_start = current_time - profile["start_time"]
+
+            if seconds_since_start > CampaignTask.soft_time_limit + 60:
+                response = octo_client.stop_profile(profile["uuid"])
+                self.logger.debug(f"Stopping profile {profile['uuid']}: {response}")
+
     def get_available_proxy(self):
         proxies = Proxy.objects.filter(is_active=True)
         in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list(
@@ -787,6 +805,8 @@ class ManageCampaignsTask(Task):
         ).order_by("next_runtime")
         queue_num = 1
         check_for_proxy = True
+
+        self.inspect_active_profiles()
 
         for campaign in campaigns:
             campaign_started = False
