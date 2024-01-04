@@ -1373,7 +1373,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
             seller_profiles = []
             for listing in listings_to_action:
-                self.logger.debug("On a listing")
+                self.logger.info("On a listing")
                 try:
                     like_button = await listing.querySelector(".like")
                     if like_button:
@@ -1392,7 +1392,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
                         await self._handle_sharing_captcha()
 
-                        self.logger.debug("Shared")
+                        self.logger.info("Shared")
                 except TimeoutError:
                     pass
 
@@ -1401,7 +1401,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 )
                 if seller_profile:
                     seller_profiles.append(seller_profile)
-                    self.logger.debug("Added seller profile")
+                    self.logger.info("Added seller profile")
 
             for profile in seller_profiles:
                 try:
@@ -1409,7 +1409,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     await self.sleep(0.4, 0.7)
                     await self.click(selector='button[data-et-name="follow_user"]')
                 except TimeoutError:
-                    self.logger.debug(f"Timeout while going to {profile}. Skipping...")
+                    self.logger.info(f"Timeout while going to {profile}. Skipping...")
 
         except Exception as e:
             return await self._handle_generic_errors(
