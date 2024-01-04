@@ -720,34 +720,36 @@ class ManageCampaignsTask(Task):
                 self.logger.debug(f"Stopping profile {profile['uuid']}: {response}")
 
     def get_available_proxy(self):
-        proxies = Proxy.objects.filter(is_active=True)
-        in_use_proxies = Proxy.objects.filter(checked_out_by__isnull=False).values_list(
-            "id", flat=True
+        bad_checkout_time = timezone.now() - datetime.timedelta(
+            minutes=CampaignTask.soft_time_limit
+        )
+        proxies = Proxy.objects.filter(is_active=True).filter(
+            Q(checked_out_by__isnull=True) | Q(checkout_time__lte=bad_checkout_time)
         )
 
         for proxy in proxies:
-            if proxy.id not in in_use_proxies and not proxy.checked_out_by:
+            if not proxy.checked_out_by:
                 return proxy
 
             runtime = (
                 (timezone.now() - proxy.checkout_time).total_seconds()
-                if proxy.checkout_time is not None
+                if proxy.checkout_time
                 else None
             )
-            if (
-                runtime
-                and proxy.checked_out_by
-                and runtime > CampaignTask.soft_time_limit
-            ):
+            if not runtime or runtime > CampaignTask.soft_time_limit * 1.5:
                 try:
                     campaign = Campaign.objects.get(id=proxy.checked_out_by)
-                    if runtime > CampaignTask.soft_time_limit * 1.5:
-                        self.logger.warning(
-                            f"Campaign has been running for {runtime} sec, checking in."
-                        )
-                        proxy.check_in()
-                        campaign.status = Campaign.STARTING
-                        campaign.save()
+
+                    if campaign.poshuser and campaign.posh_user.octo_uuid:
+                        octo_client = OctoAPIClient()
+                        octo_client.stop_profile(campaign.octo_uuid)
+
+                    self.logger.warning(
+                        f"Campaign has been running for {runtime} sec, checking in."
+                    )
+                    proxy.check_in()
+                    campaign.status = Campaign.STARTING
+                    campaign.save()
                 except Campaign.DoesNotExist:
                     self.logger.warning("Campaign does not exist. Checking in.")
                     proxy.check_in()
