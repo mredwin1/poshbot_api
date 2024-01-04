@@ -329,6 +329,16 @@ class BasePuppeteerClient:
 
         await asyncio.sleep(total_sleep)
 
+    async def save_screenshot(self, directory: str, filename: str) -> None:
+        screenshots_dir = os.path.join(os.getcwd(), directory)
+        screenshot_path = os.path.join(screenshots_dir, filename)
+        try:
+            os.makedirs(screenshots_dir, exist_ok=True)
+            await self.page.screenshot({"path": screenshot_path})
+            self.logger.info(f"Screenshot saved to {screenshot_path}")
+        except Exception:
+            self.logger.warning(f"Could not save screenshot to {screenshot_path}")
+
     async def is_present(self, selector: str, xpath: bool = False) -> bool:
         try:
             await self.find(selector, xpath, options={"visible": True, "timeout": 2000})
@@ -561,6 +571,7 @@ class PoshmarkClient(BasePuppeteerClient):
         self, error: Exception, callback: Callable, *args, **kwargs
     ):
         if not self.recovery_attempted:
+            await self.save_screenshot("screenshots", f"recovery_{callback.__name__}.png")
             self.recovery_attempted = True
             if isinstance(error, TimeoutError):
                 self.logger.warning(
@@ -588,19 +599,8 @@ class PoshmarkClient(BasePuppeteerClient):
                     self.logger.info("User not registered, not attempting to login.")
                 else:
                     self.logger.info("No username to attempt login")
-
-        screenshots_dir = os.path.join(os.getcwd(), "screenshots")
-        screenshot_name = f"error_{callback.__name__}.png"
-        try:
-            os.makedirs(screenshots_dir, exist_ok=True)
-            await self.page.screenshot(
-                {"path": os.path.join(screenshots_dir, screenshot_name)}
-            )
-            self.logger.info(f"Screenshot saved to {screenshot_name}")
-        except Exception:
-            self.logger.warning(
-                f"Could not save screenshot to {screenshot_name} on error"
-            )
+        else:
+            await self.save_screenshot("screenshots", f"error_{callback.__name__}.png")
 
         raise error
 
