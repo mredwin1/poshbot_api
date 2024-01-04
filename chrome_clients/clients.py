@@ -1387,9 +1387,12 @@ class PoshmarkClient(BasePuppeteerClient):
                 seller_profiles.append(seller_profile)
 
             for profile in seller_profiles:
-                await self.page.goto(profile)
-                await self.sleep(0.4, 0.7)
-                await self.click(selector='button[data-et-name="follow_user"]')
+                try:
+                    await self.page.goto(profile, timeout=10000)
+                    await self.sleep(0.4, 0.7)
+                    await self.click(selector='button[data-et-name="follow_user"]')
+                except TimeoutError:
+                    self.logger.debug(f"Timeout while going to {profile}. Skipping...")
 
         except Exception as e:
             return await self._handle_generic_errors(
