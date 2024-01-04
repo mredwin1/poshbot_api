@@ -603,7 +603,6 @@ class CampaignTask(Task):
         self.logger.error(f"Campaign failed due to {exc_type}: {exc_value}")
         self.logger.debug(traceback.format_exc())
 
-        self.logger.info(exc)
         if type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
             self.logger.warning(
                 "Campaign ended because it exceeded the run time allowed"
