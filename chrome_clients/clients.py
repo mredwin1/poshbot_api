@@ -571,7 +571,9 @@ class PoshmarkClient(BasePuppeteerClient):
         self, error: Exception, callback: Callable, *args, **kwargs
     ):
         if not self.recovery_attempted:
-            await self.save_screenshot("screenshots", f"recovery_{callback.__name__}.png")
+            await self.save_screenshot(
+                "screenshots", f"recovery_{callback.__name__}.png"
+            )
             self.recovery_attempted = True
             if isinstance(error, TimeoutError):
                 self.logger.warning(
