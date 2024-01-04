@@ -2,7 +2,6 @@ import asyncio
 import datetime
 import json
 import logging
-import math
 import os
 import pytz
 import random
@@ -1194,8 +1193,8 @@ def profile_cleanup():
     # Get all posh_users who have been inactive in posh within the timeframe and are ready to delete
     octo_uuids = list(
         PoshUser.objects.filter(
-            is_active_in_posh=False,
-            date_disabled__lt=timeframe,
+            Q(is_active_in_posh=False) | Q(is_active=False),
+            date_disabled__lt=timeframe
         )
         .exclude(listeditem__status=ListedItem.REDEEMED_PENDING)
         .exclude(octo_uuid="")
