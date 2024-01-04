@@ -1361,6 +1361,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
             await self.sleep(1.2, 2)
 
+            if await self.is_present('button[data-et-name="see_all_listings"]'):
+                await self.click(selector='button[data-et-name="see_all_listings"]')
+
             listings = await self.find_all(".card")
             listings_to_action: List[ElementHandle] = random.sample(
                 listings, k=random.randint(10, 20)
