@@ -720,7 +720,7 @@ class ManageCampaignsTask(Task):
 
     def get_available_proxy(self):
         bad_checkout_time = timezone.now() - datetime.timedelta(
-            minutes=CampaignTask.soft_time_limit
+            seconds=CampaignTask.soft_time_limit
         )
         proxies = Proxy.objects.filter(is_active=True).filter(
             Q(checked_out_by__isnull=True) | Q(checkout_time__lte=bad_checkout_time)
