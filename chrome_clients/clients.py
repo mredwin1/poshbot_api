@@ -629,6 +629,24 @@ class PoshmarkClient(BasePuppeteerClient):
 
             return new_username
 
+    async def _handle_sharing_captcha(self) -> bool:
+        if await self.is_present(".g-recaptcha-con"):
+            captcha_iframe = await self.find("iframe")
+            await captcha_iframe._scrollIntoViewIfNeeded()
+            captcha_src = await captcha_iframe.getProperty("src")
+            captcha_src_val = await captcha_src.jsonValue()
+
+            site_key = re.findall(r"(?<=k=)(.*?)(?=&)", captcha_src_val)[0]
+            solver = TwoCaptcha(os.environ["CAPTCHA_API_KEY"])
+            result = solver.recaptcha(sitekey=site_key, url=self.page.url)
+
+            await self.page.evaluate(
+                f"document.querySelector('#g-recaptcha-response').value = '{result}'"
+            )
+            await self.page.evaluate("validateResponse()")
+
+            return True
+
     async def logged_in(self, username: str) -> bool:
         await self.page.goto("https://poshmark.com")
         if "/feed" in self.page.url:
@@ -1063,22 +1081,10 @@ class PoshmarkClient(BasePuppeteerClient):
                     share_success = flash_message.strip() == "Shared Successfully"
                     shared = True
 
-                    if await self.is_present(".g-recaptcha-con"):
+                    captcha = await self._handle_sharing_captcha()
+
+                    if captcha:
                         shared = False
-                        captcha_iframe = await self.find("iframe")
-                        await captcha_iframe._scrollIntoViewIfNeeded()
-                        captcha_src = await captcha_iframe.getProperty("src")
-                        captcha_src_val = await captcha_src.jsonValue()
-
-                        site_key = re.findall(r"(?<=k=)(.*?)(?=&)", captcha_src_val)[0]
-                        solver = TwoCaptcha(os.environ["CAPTCHA_API_KEY"])
-                        result = solver.recaptcha(sitekey=site_key, url=self.page.url)
-
-                        await self.page.evaluate(
-                            f"document.querySelector('#g-recaptcha-response').value = '{result}'"
-                        )
-                        await self.page.evaluate("validateResponse()")
-
                         self.logger.info("Captcha solved! Re-sharing.")
 
                 except TimeoutError:
@@ -1371,6 +1377,8 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 await self.click(selector=".internal-share__link")
                 await self.sleep(0.3, 0.8)
+
+                await self._handle_sharing_captcha()
 
                 seller_profile = await listing.querySelectorEval(
                     "a.tile__creator", "a => a.href"
