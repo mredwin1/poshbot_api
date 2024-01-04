@@ -1358,7 +1358,9 @@ class PoshmarkClient(BasePuppeteerClient):
             ]
 
             await self.page.goto(
-                f"https://poshmark.com/{random.choice(feeds)}", waitUntil="networkidle2"
+                f"https://poshmark.com/{random.choice(feeds)}",
+                waitUntil="networkidle2",
+                timeout=10000,
             )
 
             await self.sleep(3, 4)
