@@ -1358,10 +1358,10 @@ class PoshmarkClient(BasePuppeteerClient):
             ]
 
             await self.page.goto(
-                f"https://poshmark.com/{random.choice(feeds)}", waitUntil="networkidle0"
+                f"https://poshmark.com/{random.choice(feeds)}", waitUntil="networkidle2"
             )
 
-            await self.sleep(1.2, 2)
+            await self.sleep(3, 4)
 
             if await self.is_present('button[data-et-name="see_all_listings"]'):
                 await self.click(selector='button[data-et-name="see_all_listings"]')
