@@ -285,7 +285,7 @@ class BasePuppeteerClient:
     async def close(self):
         """Disconnects from the debug session."""
         if self.browser:
-            await self.browser.disconnect()
+            await self.browser.close()
 
     @staticmethod
     def cleanse_selector(selector):

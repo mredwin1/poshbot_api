@@ -159,15 +159,6 @@ class CampaignTask(Task):
 
         return runtime_details
 
-    def stop_octo_profile(self):
-        octo_client = OctoAPIClient()
-        try:
-            stop_response = octo_client.stop_profile(self.runtime_details["uuid"])
-
-            self.logger.info(f"Profile stop signal sent: {stop_response}")
-        except KeyError:
-            pass
-
     def get_random_delay(self, elapsed_time):
         delay = self.campaign.delay * 60
 
@@ -239,7 +230,6 @@ class CampaignTask(Task):
         return response
 
     def finalize_campaign(self, success, campaign_delay, duration):
-        self.stop_octo_profile()
         self.check_proxy_in()
 
         if self.campaign.status not in (
@@ -628,6 +618,7 @@ class CampaignTask(Task):
             exc
         ):
             octo_client = OctoAPIClient()
+            self.logger.info(f"Active profiles: {octo_client.get_active_profiles()}")
             profile_uuid = str(exc).split(",")[-1]
             self.logger.warning(
                 f"Profile {profile_uuid} already running force stopping..."
