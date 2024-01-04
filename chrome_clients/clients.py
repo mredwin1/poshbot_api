@@ -1365,24 +1365,28 @@ class PoshmarkClient(BasePuppeteerClient):
             retries = 1
 
             while not listings and retries < 3:
-                if chosen_feed not in self.page.url:
-                    await self.page.goto(
-                        f"https://poshmark.com/{chosen_feed}",
-                        waitUntil="networkidle2",
-                        timeout=10000,
-                    )
-                else:
-                    await self.page.reload(
-                        waitUntil="networkidle2",
-                        timeout=10000,
-                    )
+                try:
+                    if chosen_feed not in self.page.url:
+                        await self.page.goto(
+                            f"https://poshmark.com/{chosen_feed}",
+                            waitUntil="networkidle2",
+                            timeout=30000,
+                        )
+                    else:
+                        await self.page.reload(
+                            waitUntil="networkidle2",
+                            timeout=30000,
+                        )
 
-                await self.sleep(3, 4)
+                    await self.sleep(3, 4)
 
-                if await self.is_present('button[data-et-name="see_all_listings"]'):
-                    await self.click(selector='button[data-et-name="see_all_listings"]')
+                    if await self.is_present('button[data-et-name="see_all_listings"]'):
+                        await self.click(selector='button[data-et-name="see_all_listings"]')
 
-                listings = await self.find_all(".card")
+                    listings = await self.find_all(".card")
+                except TimeoutError:
+                    pass
+
                 retries += 1
 
             if not listings:
