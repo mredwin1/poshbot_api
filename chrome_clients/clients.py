@@ -385,7 +385,10 @@ class BasePuppeteerClient:
             raise ElementHandleError("No element or selector provided")
 
         # Scroll the element into view
-        await element._scrollIntoViewIfNeeded()
+        try:
+            await asyncio.wait_for(element._scrollIntoViewIfNeeded(), 4)
+        except asyncio.TimeoutError:
+            self.logger.info("Timeout waiting for scroll into view")
 
         # Get the bounding box of the element
         bounding_box = await element.boundingBox()
@@ -1387,7 +1390,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 return
 
             listings_to_action: List[ElementHandle] = random.sample(
-                listings, k=random.randint(10, 20)
+                listings, k=random.randint(5, 10)
             )
 
             seller_profiles = []
@@ -1399,7 +1402,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     if like_button:
                         await self.click(element=like_button)
                         await self.sleep(0.2, 0.4)
-                        self.logger.info("Shared")
+                        self.logger.info("Liked")
                 except TimeoutError:
                     pass
 
