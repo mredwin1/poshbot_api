@@ -275,11 +275,6 @@ class CampaignTask(Task):
 
         return False
 
-    def init_logger(self, logger_id=None):
-        logger = logging.getLogger(__name__)
-
-        return logger
-
     async def register(self, list_items):
         ws_endpoint = self.runtime_details["ws_endpoint"]
         width = self.runtime_details["width"]
@@ -638,7 +633,6 @@ class CampaignTask(Task):
     def run(
         self,
         campaign_id,
-        logger_id=None,
         proxy_id=None,
         *args,
         **kwargs,
@@ -646,9 +640,9 @@ class CampaignTask(Task):
         self.campaign = (
             Campaign.objects.filter(id=campaign_id).select_related("posh_user").first()
         )
-        self.logger = self.init_logger(logger_id)
-        self.proxy = None
+        self.logger = logging.getLogger(__name__)
         self.proxy_id = proxy_id
+        self.proxy = None
         campaign_delay = None
         campaign_init = self.init_campaign()
 
@@ -716,11 +710,10 @@ class ManageCampaignsTask(Task):
 
             return
 
-        self.logger.warning(response)
-
         current_time = timezone.now().timestamp()
         for profile in response:
-            seconds_since_start = current_time - profile["start_time"]
+            start_time = profile.get("start_time", current_time)
+            seconds_since_start = current_time - start_time
 
             if seconds_since_start > CampaignTask.soft_time_limit + 60:
                 response = octo_client.stop_profile(profile["uuid"])
