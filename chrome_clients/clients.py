@@ -1368,6 +1368,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
             seller_profiles = []
             for listing in listings_to_action:
+                self.logger.debug("On a listing")
                 try:
                     like_button = await listing.querySelector(".like")
                     if like_button:
@@ -1385,11 +1386,14 @@ class PoshmarkClient(BasePuppeteerClient):
 
                     await self._handle_sharing_captcha()
 
+                    self.logger.debug("Shared")
+
                 seller_profile = await listing.querySelectorEval(
                     "a.tile__creator", "a => a.href"
                 )
                 if seller_profile:
                     seller_profiles.append(seller_profile)
+                    self.logger.debug("Added seller profile")
 
             for profile in seller_profiles:
                 try:
