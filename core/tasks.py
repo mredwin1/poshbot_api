@@ -1189,7 +1189,7 @@ def send_support_emails():
 
 @shared_task
 def profile_cleanup():
-    timeframe = (timezone.now() - datetime.timedelta(days=1)).date()
+    timeframe = (timezone.now() - datetime.timedelta(hours=12)).date()
 
     # Get all posh_users who have been inactive in posh within the timeframe and are ready to delete
     octo_uuids = list(

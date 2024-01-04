@@ -82,7 +82,7 @@ CELERY_BEAT_SCHEDULE = {
         "schedule": timedelta(hours=4),
     },
     "profile_cleanup": {
-        "task": "core.tasks.posh_user_cleanup",
+        "task": "core.tasks.profile_cleanup",
         "schedule": timedelta(hours=4),
     },
     "send_support_emails": {
