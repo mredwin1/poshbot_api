@@ -280,7 +280,6 @@ class CampaignTask(Task):
         width = self.runtime_details["width"]
         height = self.runtime_details["height"]
         async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
-            await client.check_fingerprint()
             start_time = time.perf_counter()
             user_info = self.campaign.posh_user.user_info
             user_info["profile_picture"] = self.campaign.posh_user.get_profile_picture()
