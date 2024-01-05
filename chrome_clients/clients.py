@@ -518,6 +518,7 @@ class BasePuppeteerClient:
 
     async def check_fingerprint(self):
         await self.page.goto("https://iphey.com/")
+        await self.sleep(2, 3)
 
         await self.save_screenshot("screenshots", "fingerprint_check.png")
 
