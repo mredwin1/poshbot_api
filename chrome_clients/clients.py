@@ -697,7 +697,12 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             self.logger.info(f"delete_me: register in client")
             if "/signup" not in self.page.url:
-                await self.page.goto("https://poshmark.com/signup")
+                await self.page.goto("https://poshmark.com")
+                await self.click(
+                    selector='a[href="/signup"]',
+                    navigation=True,
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 30000},
+                )
                 await self.sleep(0.2, 0.6)
 
             self.logger.info(f"delete_me: register post nav")
@@ -866,7 +871,12 @@ class PoshmarkClient(BasePuppeteerClient):
             elif "create-listing" in self.page.url:
                 await self.page.reload()
             else:
-                await self.page.goto("https://poshmark.com/sell")
+                await self.page.goto("https://poshmark.com")
+                await self.click(
+                    selector='a[href="/sell"]',
+                    navigation=True,
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 30000},
+                )
 
             await self.sleep(1, 2)
 
