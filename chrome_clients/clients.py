@@ -378,7 +378,7 @@ class BasePuppeteerClient:
         navigation_options: Dict = None,
     ) -> ElementHandle:
         if navigation and navigation_options is None:
-            navigation_options = {"timeout": 10000}
+            navigation_options = {"timeout": 30000}
         if not element and selector:
             element = await self.find(selector, xpath)
         elif not element and not selector:
@@ -570,7 +570,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         navigation=True,
                         navigation_options={
                             "waitUntil": "networkidle2",
-                            "timeout": 10000,
+                            "timeout": 60000,
                         },
                     )
 
@@ -713,7 +713,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/signup"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 30000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
                 )
                 await self.sleep(0.2, 0.6)
 
@@ -854,7 +854,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(
                 selector='button[type="submit"]',
                 navigation=True,
-                navigation_options={"waitUntil": "networkidle2", "timeout": 5000},
+                navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
             )
 
             retries = 0
@@ -878,7 +878,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 30000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
                 )
             elif "create-listing" in self.page.url:
                 await self.page.reload()
@@ -887,7 +887,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
-                    navigation_options={"waitUntil": "networkidle2", "timeout": 30000},
+                    navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
                 )
 
             await self.sleep(1, 2)
@@ -1087,7 +1087,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         navigation=True,
                         navigation_options={
                             "waitUntil": "networkidle0",
-                            "timeout": 5000,
+                            "timeout": 30000,
                         },
                     )
                 except TimeoutError:
