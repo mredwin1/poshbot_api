@@ -263,7 +263,7 @@ class CampaignTask(Task):
 
         if reset_success:
             self.logger.info(reset_success)
-            time.sleep(10)
+            time.sleep(20)
             return True
 
         self.logger.info(f"Could not reset IP. Sending campaign to the end of the line")
