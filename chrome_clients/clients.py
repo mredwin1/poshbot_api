@@ -830,6 +830,18 @@ class PoshmarkClient(BasePuppeteerClient):
 
             # Click submit again
             await self.click(selector='button[type="submit"]', navigation=True)
+            await self.sleep(1, 2)
+
+            # Check for notification
+            if await self.is_present('div[data-test="dialogue"]'):
+                dialogue = await self.find('div[data-test="dialogue"]')
+                no_button = await dialogue.querySelector(".btn--tertiary")
+                if no_button:
+                    await self.click(element=no_button)
+                    self.logger.info("Clicked not now button")
+
+                await self.sleep(1, 2)
+
         except Exception as e:
             return await self._handle_generic_errors(
                 e,
