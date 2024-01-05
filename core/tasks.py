@@ -214,17 +214,18 @@ class CampaignTask(Task):
             response["status"] = False
             response["errors"].append("Posh user needs to list but no proxy was given.")
 
-        if self.proxy_id and not self.campaign.posh_user.is_registered:
+        if self.proxy_id:
             self.proxy = Proxy.objects.get(id=self.proxy_id)
 
             self.proxy.checkout_time = timezone.now()
             self.proxy.save(update_fields=["checkout_time"])
 
-            ip_reset = self.reset_ip()
+            if not self.campaign.posh_user.is_registered:
+                ip_reset = self.reset_ip()
 
-            if not ip_reset:
-                response["status"] = False
-                response["errors"].append("IP reset unsuccessful")
+                if not ip_reset:
+                    response["status"] = False
+                    response["errors"].append("IP reset unsuccessful")
 
         return response
 
