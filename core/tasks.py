@@ -664,13 +664,16 @@ class CampaignTask(Task):
             start_time = time.time()
 
             if self.proxy and not self.campaign.posh_user.is_registered:
+                self.logger.info("Registering user")
                 success = asyncio.run(self.register(list_items=need_to_list))
             elif self.proxy and need_to_list:
+                self.logger.info("Listing item")
                 success = asyncio.run(self.list_items())
             elif self.campaign.posh_user.is_registered and self.campaign.mode in (
                 Campaign.ADVANCED_SHARING,
                 Campaign.BASIC_SHARING,
             ):
+                self.logger.info("Sharing and more")
                 success = asyncio.run(self.share_and_more())
             else:
                 self.logger.info("Seems there is nothing to do")
