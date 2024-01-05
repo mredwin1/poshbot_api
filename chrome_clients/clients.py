@@ -518,12 +518,12 @@ class BasePuppeteerClient:
 
     async def check_fingerprint(self):
         await self.page.goto("https://iphey.com/")
-        await self.sleep(2, 3)
+        await self.sleep(10)
 
         await self.save_screenshot("screenshots", "fingerprint_check.png")
 
         title_text = await self.page.querySelectorEval(
-            ".title", "(element) => element.textContent"
+            ".fw-500", "(element) => element.textContent"
         )
 
         self.logger.info(f"-------->{title_text}<--------")
@@ -709,7 +709,9 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             self.logger.info(f"delete_me: register in client")
             if "/signup" not in self.page.url:
-                await self.page.goto("https://poshmark.com")
+                await self.page.goto(
+                    "https://poshmark.com", waitUntil="domcontentloaded"
+                )
                 await self.click(
                     selector='a[href="/signup"]',
                     navigation=True,
