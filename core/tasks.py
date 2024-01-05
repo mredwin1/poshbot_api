@@ -214,7 +214,7 @@ class CampaignTask(Task):
             response["status"] = False
             response["errors"].append("Posh user needs to list but no proxy was given.")
 
-        if self.proxy_id:
+        if self.proxy_id and not self.campaign.posh_user.is_registered:
             self.proxy = Proxy.objects.get(id=self.proxy_id)
 
             self.proxy.checkout_time = timezone.now()
