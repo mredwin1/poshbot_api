@@ -220,12 +220,11 @@ class CampaignTask(Task):
             self.proxy.checkout_time = timezone.now()
             self.proxy.save(update_fields=["checkout_time"])
 
-            if not self.campaign.posh_user.is_registered:
-                ip_reset = self.reset_ip()
+            ip_reset = self.reset_ip()
 
-                if not ip_reset:
-                    response["status"] = False
-                    response["errors"].append("IP reset unsuccessful")
+            if not ip_reset:
+                response["status"] = False
+                response["errors"].append("IP reset unsuccessful")
 
         return response
 
