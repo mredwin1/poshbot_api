@@ -1015,7 +1015,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(0.3, 0.9)
 
             # Click list item
-            await self.click(selector='button[data-et-name="list_item"')
+            await self.click(selector='button[data-et-name="list_item"]')
 
             latest_url = self.page.url
             attempts = 0
