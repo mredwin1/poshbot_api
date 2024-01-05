@@ -516,6 +516,17 @@ class BasePuppeteerClient:
 
             await self.sleep(0.5, 0.84)
 
+    async def check_fingerprint(self):
+        await self.page.goto("https://iphey.com/")
+
+        await self.save_screenshot("screenshots", "fingerprint_check.png")
+
+        title_text = await self.page.querySelectorEval(
+            ".title", "(element) => element.textContent"
+        )
+
+        self.logger.info(f"-------->{title_text}<--------")
+
 
 class PoshmarkClient(BasePuppeteerClient):
     async def _handle_form_errors(self) -> bool:
