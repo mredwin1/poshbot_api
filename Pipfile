@@ -32,6 +32,7 @@ black = "*"
 django-redis = "*"
 pyppeteer = "*"
 2captcha-python = "*"
+flower = "*"
 
 [dev-packages]
 

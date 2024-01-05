@@ -337,6 +337,117 @@ Resources:
           PredefinedMetricType: ECSServiceAverageCPUUtilization
         TargetValue: 85
 
+  FlowerTaskDefinition:
+    Type: AWS::ECS::TaskDefinition
+    Properties:
+      Family: !Sub
+        - '${ApplicationName}-flower-task-definition-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      NetworkMode: awsvpc
+      ExecutionRoleArn: !GetAtt TaskExecutionRole.Arn
+      TaskRoleArn: !GetAtt TaskRole.Arn
+      Cpu: 512
+      Memory: 1024
+      RuntimePlatform:
+        CpuArchitecture: X86_64
+        OperatingSystemFamily: LINUX
+      ContainerDefinitions:
+        - Name: flower-container
+          Image: !Ref DockerImage
+          EntryPoint:
+            - 'flower'
+            - '-A'
+            - 'poshbot_api'
+          RepositoryCredentials:
+            CredentialsParameter:
+              Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
+          PortMappings:
+            - ContainerPort: 5555
+              AppProtocol: http
+          LogConfiguration:
+            LogDriver: awslogs
+            Options:
+              awslogs-group: !Ref ECSLogGroup
+              awslogs-region: !Ref AWS::Region
+              awslogs-stream-prefix: flower-container
+          Environment:
+            - Name: ENVIRONMENT
+              Value: !Ref Environment
+            - Name: DJANGO_SETTINGS_MODULE
+              Value: 'poshbot_api.settings.prod'
+            - Name: DB_NAME
+              Value: 'postgres'
+            - Name: DB_SECRET
+              Value: !GetAtt Database.MasterUserSecret.SecretArn
+            - Name: DB_HOSTNAME
+              Value: !GetAtt Database.Endpoint.Address
+            - Name: DB_PORT
+              Value: !GetAtt Database.Endpoint.Port
+            - Name: AWS_STORAGE_BUCKET_NAME
+              Value: !Ref S3Bucket
+            - Name: DOMAIN
+              Value: !Ref RecordSet
+            - Name: MAINTENANCE_QUEUE
+              Value: !GetAtt MaintenanceQueue.QueueName
+            - Name: GENERAL_QUEUE
+              Value: !GetAtt GeneralQueue.QueueName
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            - Name: OCTO_ENDPOINT
+              Value: !GetAtt EC2Instance.PrivateDnsName
+          Secrets:
+            - Name: SECRET_KEY
+              ValueFrom: !Ref DjangoSecretKey
+            - Name: MASTER_USER_PASSWORD
+              ValueFrom: !Ref MasterUserPassword
+            - Name: CAPTCHA_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:2CaptchaAPIKeySecret'
+            - Name: ZKE_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:ZKEDBCredentials'
+            - Name: MOBILE_HOP_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:MobileHopCredentials'
+            - Name: EMAIL_CREDENTIALS
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:EmailCredentials'
+            - Name: OCTO_API_KEY
+              ValueFrom:
+                Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoAPIKeySecret'
+
+  FlowerService:
+    Type: AWS::ECS::Service
+    DependsOn: HTTPSListener
+    Properties:
+      ServiceName: !Sub
+        - '${ApplicationName}-flower-service-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      EnableExecuteCommand: true
+      EnableECSManagedTags: true
+      PropagateTags: TASK_DEFINITION
+      Cluster: !Ref ECSCluster
+      TaskDefinition: !Ref FlowerTaskDefinition
+      DesiredCount: 1
+      LaunchType: FARGATE
+      LoadBalancers:
+        - TargetGroupArn: !Ref FlowerTargetGroup
+          ContainerName: flower-container
+          ContainerPort: 5555
+      NetworkConfiguration:
+        AwsvpcConfiguration:
+          Subnets: !Split
+            - ","
+            - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PrivateSubnetIds' ] ]
+          SecurityGroups:
+            - !GetAtt DatabaseSecurityGroup.GroupId
+            - !GetAtt APISecurityGroup.GroupId
+            - !GetAtt ECSServiceSecurityGroup.GroupId
+
   BeatTaskDefinition:
     Type: AWS::ECS::TaskDefinition
     Properties:
@@ -1029,6 +1140,90 @@ Resources:
             - Domain:
                 Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
               Environment: !Ref Environment
+          HostedZoneId:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
+
+  FlowerLoadBalancer:
+    Type: AWS::ElasticLoadBalancingV2::LoadBalancer
+    Properties:
+      Name: !Sub
+        - '${ApplicationName}-flower-elb-${Environment}'
+        - Environment: !Ref Environment
+          ApplicationName:
+            Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
+      SecurityGroups:
+        - !GetAtt APISecurityGroup.GroupId
+        - !GetAtt ELBSecurityGroup.GroupId
+      Scheme: internet-facing
+      Subnets: !Split
+        - ","
+        - Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'PublicSubnetIds' ] ]
+
+  FlowerHTTPListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: redirect
+          RedirectConfig:
+            Protocol: HTTPS
+            Port: '443'
+            StatusCode: 'HTTP_301'
+      LoadBalancerArn: !Ref APILoadBalancer
+      Port: 80
+      Protocol: HTTP
+
+  FLowerHTTPSListener:
+    Type: AWS::ElasticLoadBalancingV2::Listener
+    Properties:
+      DefaultActions:
+        - Type: forward
+          ForwardConfig:
+            TargetGroups:
+              - TargetGroupArn: !Ref FlowerTargetGroup
+      LoadBalancerArn: !Ref FlowerLoadBalancer
+      Port: 443
+      Protocol: HTTPS
+      Certificates:
+        - CertificateArn: !Ref FlowerSSLCertificate
+
+  FlowerTargetGroup:
+    Type: AWS::ElasticLoadBalancingV2::TargetGroup
+    Properties:
+      HealthCheckPath: '/'
+      Port: 5555
+      Protocol: HTTP
+      TargetType: ip
+      VpcId:
+        Fn::ImportValue: !Sub '${GlobalResourcesStackName}:VPCId'
+
+  FlowerSSLCertificate:
+    Type: AWS::CertificateManager::Certificate
+    DependsOn: RecordSet
+    Properties:
+      DomainName: !If
+        - IsProd
+        - Fn::Sub:
+            - 'flower.${Domain}'
+            - Domain:
+                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+        - Fn::Sub:
+            - '${Environment}.flower.${Domain}'
+            - Domain:
+                Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+              Environment: !Ref Environment
+      ValidationMethod: DNS
+      DomainValidationOptions:
+        - DomainName: !If
+            - IsProd
+            - Fn::Sub:
+                - 'flower.${Domain}'
+                - Domain:
+                    Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+            - Fn::Sub:
+                - '${Environment}.flower.${Domain}'
+                - Domain:
+                    Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+                  Environment: !Ref Environment
           HostedZoneId:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
 

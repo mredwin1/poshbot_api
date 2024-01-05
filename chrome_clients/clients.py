@@ -1381,7 +1381,9 @@ class PoshmarkClient(BasePuppeteerClient):
                     await self.sleep(3, 4)
 
                     if await self.is_present('button[data-et-name="see_all_listings"]'):
-                        await self.click(selector='button[data-et-name="see_all_listings"]')
+                        await self.click(
+                            selector='button[data-et-name="see_all_listings"]'
+                        )
 
                     listings = await self.find_all(".card")
                 except TimeoutError:
