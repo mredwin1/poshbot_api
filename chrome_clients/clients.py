@@ -569,7 +569,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         selector="button[type='submit']",
                         navigation=True,
                         navigation_options={
-                            "waitUntil": "networkidle2",
+                            "waitUntil": "networkidle0",
                             "timeout": 60000,
                         },
                     )
@@ -639,7 +639,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(
                 selector='button[type="submit"]',
                 navigation=True,
-                navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
+                navigation_options={"waitUntil": "networkidle0", "timeout": 60000},
             )
 
             await self.sleep(0.5, 0.8)
@@ -765,7 +765,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 retries += 1
 
-            if retries >= 3 and "/signup" in self.page.url:
+            if retries >= 3 or "/signup" in self.page.url:
                 raise LoginOrRegistrationError("Max number of retries exceeded")
 
             if new_username is not None:
