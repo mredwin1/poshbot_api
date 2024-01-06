@@ -10,6 +10,7 @@ from pyppeteer.page import Page
 from pyppeteer.element_handle import ElementHandle
 from pyppeteer.us_keyboard_layout import keyDefinitions
 from pyppeteer.errors import TimeoutError, ElementHandleError
+from python_ghost_cursor.pyppeteer import create_cursor
 from twocaptcha import TwoCaptcha
 from urllib.parse import urlparse, parse_qs
 
@@ -255,6 +256,7 @@ class BasePuppeteerClient:
         self.logger = logger
         self.browser: Union[Browser, None] = None
         self.page: Union[Page, None] = None
+        self.cursor = None
         self.recovery_attempted = False
 
     async def __aenter__(self) -> "BasePuppeteerClient":
@@ -278,6 +280,8 @@ class BasePuppeteerClient:
         else:
             # If no pages are open, create a new one
             self.page = await self.browser.newPage()
+
+        self.cursor = create_cursor(self.page)
 
         self.page.setDefaultNavigationTimeout(60000)
         await self.page.setViewport(
@@ -393,49 +397,23 @@ class BasePuppeteerClient:
             self.logger.info("Timeout waiting for scroll into view")
 
         # Get the bounding box of the element
-        bounding_box = await element.boundingBox()
-        if bounding_box:
-            x, y = self.random_coordinates_within_box(
-                bounding_box["x"],
-                bounding_box["y"],
-                bounding_box["width"],
-                bounding_box["height"],
+        if navigation:
+            completed, _ = await asyncio.wait(
+                [
+                    self.cursor.click(element, wait_for_click=random.randint(100, 200)),
+                    self.page.waitForNavigation(navigation_options),
+                ],
             )
-            # Perform the click at the chosen coordinates
-            if navigation:
-                completed, _ = await asyncio.wait(
-                    [
-                        self.page.mouse.click(x, y),
-                        self.page.waitForNavigation(navigation_options),
-                    ],
-                )
 
-                for task in completed:
-                    if task.exception():
-                        if isinstance(task.exception(), TimeoutError):
-                            self.logger.warning(
-                                "Timed out waiting for navigation after click"
-                            )
+            for task in completed:
+                if task.exception():
+                    if isinstance(task.exception(), TimeoutError):
+                        self.logger.warning(
+                            "Timed out waiting for navigation after click"
+                        )
 
-            else:
-                await self.page.mouse.click(x, y)
         else:
-            if navigation:
-                completed, _ = await asyncio.wait(
-                    [
-                        element.click(),
-                        self.page.waitForNavigation(navigation_options),
-                    ],
-                )
-
-                for task in completed:
-                    if task.exception():
-                        if isinstance(task.exception(), TimeoutError):
-                            self.logger.warning(
-                                "Timed out waiting for navigation after click"
-                            )
-            else:
-                await element.click()
+            await self.cursor.click(element, wait_for_click=random.randint(100, 200))
 
         return element
 
@@ -494,6 +472,8 @@ class BasePuppeteerClient:
                 if random.random() < 0.1:
                     random.uniform(0.2, 0.75)
 
+        await self.sleep(random.random() * 2)
+
         return element
 
     async def upload_file(
@@ -509,7 +489,7 @@ class BasePuppeteerClient:
         elements = await self.find_all(selector, xpath)
 
         if count is None:
-            count = random.randint(int(len(elements) * 0.2), int(len(elements) * 0.65))
+            count = random.randint(0, int(len(elements) * 0.65))
 
         selected_elements: List[ElementHandle] = random.choices(elements, k=count)
 
@@ -575,8 +555,6 @@ class PoshmarkClient(BasePuppeteerClient):
                             "timeout": 60000,
                         },
                     )
-
-                    await self.sleep(3, 4)
 
                     return True
                 else:
@@ -644,8 +622,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 navigation_options={"waitUntil": "networkidle0", "timeout": 60000},
             )
 
-            await self.sleep(0.5, 0.8)
-
             return new_username
 
     async def _handle_sharing_captcha(self) -> bool:
@@ -709,7 +685,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
     async def register(self, user_info: Dict) -> str:
         try:
-            self.logger.info(f"delete_me: register in client")
+            self.logger.info(f"delete_me: starting registration")
             if "/signup" not in self.page.url:
                 await self.page.goto(
                     "https://poshmark.com", waitUntil="domcontentloaded"
@@ -719,23 +695,24 @@ class PoshmarkClient(BasePuppeteerClient):
                     navigation=True,
                     navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
                 )
-                await self.sleep(0.2, 0.6)
 
             self.logger.info(f"delete_me: register post nav")
             username: str = user_info["username"]
 
-            await self.type("#firstName", user_info["first_name"])
-            await self.type("#lastName", user_info["last_name"])
-            await self.type("#email", user_info["email"])
-            await self.type('input[name="userName"]', username)
-            await self.type("#password", user_info["password"])
+            field_pairs = [
+                ("#firstName", user_info["first_name"]),
+                ("#lastName", user_info["last_name"]),
+                ("#email", user_info["email"]),
+                ('input[name="userName"]', username),
+                ("#password", user_info["password"]),
+            ]
+            random.shuffle(field_pairs)
 
-            await self.sleep(0.2, 0.8)
+            for field_pair in field_pairs:
+                await self.type(*field_pair)
 
             if user_info["gender"] is not None:
                 await self.click(selector=".dropdown__selector--select-tag")
-
-                await self.sleep(0.2, 0.8)
 
                 await self.click(
                     selector=f"//div[contains(@class, 'dropdown__link') and contains(text(), '{user_info['gender']}')]",
@@ -744,15 +721,19 @@ class PoshmarkClient(BasePuppeteerClient):
 
             self.logger.info(f"delete_me: register pre submit")
 
-            await self.click(
-                selector='button[type="submit"]',
-                navigation=True,
-                navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
-            )
-
-            await self.sleep(0.5, 1)
+            await self.click(selector='button[type="submit"]')
 
             new_username = await self._handle_username_popup()
+
+            if new_username is None:
+                try:
+                    await self.page.waitForNavigation(
+                        {"waitUntil": "networkidle2", "timeout": 60000}
+                    )
+                except TimeoutError:
+                    self.logger.info(
+                        "Timeout while waiting for navigation after click submit"
+                    )
 
             self.logger.info(f"delete_me: register post submit")
 
@@ -775,6 +756,8 @@ class PoshmarkClient(BasePuppeteerClient):
             if new_username is not None:
                 username = new_username
 
+            self.logger.info("finished registration")
+
             return username
         except Exception as e:
             return await self._handle_generic_errors(
@@ -783,55 +766,61 @@ class PoshmarkClient(BasePuppeteerClient):
 
     async def finish_registration(self, user_info: Dict) -> None:
         try:
+            self.logger.info("start finish registration")
             if user_info["profile_picture"]:
                 # Upload profile picture to .user-image
                 await self.upload_file(
                     ".image-selector__input-img-files", user_info["profile_picture"]
                 )
 
-                await self.sleep(1, 2)
+                await self.sleep(0.7)
                 await self.click(selector='button[data-et-name="apply"]')
-                await self.sleep(1.5, 2.5)
 
-            # Set shirt/dress size
-            size_text = (
-                "Dress Size" if user_info["gender"] == "Female" else "Shirt Size"
-            )
+            if random.random() < 0.5:
+                # Set shirt/dress size
+                size_text = (
+                    "Dress Size" if user_info["gender"] == "Female" else "Shirt Size"
+                )
 
-            try:
+                try:
+                    await self.click(
+                        selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
+                        xpath=True,
+                    )
+                except TimeoutError as e:
+                    size_text = (
+                        "Shirt Size" if size_text == "Dress Size" else "Dress Size"
+                    )
+                    await self.click(
+                        selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
+                        xpath=True,
+                    )
+                await self.click_random("ul.dropdown__menu--expanded > li", count=1)
+
+            if random.random() < 0.5:
+                # Set shoe size
                 await self.click(
-                    selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
+                    selector="//div[preceding-sibling::label[contains(text(), 'Shoe Size')]][@id='set-profile-info-size-dropdown']",
                     xpath=True,
                 )
-            except TimeoutError as e:
-                size_text = "Shirt Size" if size_text == "Dress Size" else "Dress Size"
-                await self.click(
-                    selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
-                    xpath=True,
-                )
-            await self.click_random("ul.dropdown__menu--expanded > li", count=1)
-            await self.sleep(1, 2)
+                await self.click_random("ul.dropdown__menu--expanded > li", count=1)
 
-            # Set shoe size
-            await self.click(
-                selector="//div[preceding-sibling::label[contains(text(), 'Shoe Size')]][@id='set-profile-info-size-dropdown']",
-                xpath=True,
-            )
-            await self.click_random("ul.dropdown__menu--expanded > li", count=1)
-            await self.sleep(1, 2)
-
-            # Enter zipcode
-            await self.type(selector='input[name="zip"]', text=user_info["zipcode"])
-            await self.sleep(1, 2)
+            if random.random() < 0.5:
+                # Enter zipcode
+                await self.type(selector='input[name="zip"]', text=user_info["zipcode"])
             await self.click(selector='button[type="submit"]', navigation=True)
-            await self.sleep(1, 1.5)
 
             # Select random number of brands
-            await self.click_random(selector=".content-grid-item")
+            await self.click_random(selector=".follow-brands__container")
             await self.click(selector='button[type="submit"]', navigation=True)
 
             # Click submit again
-            await self.click(selector='button[type="submit"]', navigation=True)
+            await self.click(
+                selector='button[type="submit"]',
+                navigation=True,
+                navigation_options={"waitUntil": "domcontentloaded", "timeout": 30000},
+            )
+            await self.sleep(1, 2)
 
             # Check for notification
             if await self.is_present('div[data-test="dialogue"]'):
@@ -841,7 +830,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     await self.click(element=no_button)
                     self.logger.info("Clicked not now button")
 
-                await self.sleep(1, 2)
+            self.logger.info("end finish registration")
 
         except Exception as e:
             return await self._handle_generic_errors(
@@ -857,15 +846,14 @@ class PoshmarkClient(BasePuppeteerClient):
             password = user_info["password"]
 
             if "/login" not in self.page.url:
-                await self.page.goto("https://poshmark.com")
+                await self.page.goto(
+                    "https://poshmark.com", waitUntil="domcontentloaded"
+                )
                 await self.click(selector='a[href="/login"]')
-
-            await self.sleep(1.5, 2.5)
 
             await self.type("#login_form_username_email", username)
             await self.type("#login_form_password", password)
 
-            await self.sleep(0.2, 0.6)
             await self.click(
                 selector='button[type="submit"]',
                 navigation=True,
@@ -898,7 +886,9 @@ class PoshmarkClient(BasePuppeteerClient):
             elif "create-listing" in self.page.url:
                 await self.page.reload()
             else:
-                await self.page.goto("https://poshmark.com")
+                await self.page.goto(
+                    "https://poshmark.com", waitUntil="domcontentloaded"
+                )
                 await self.click(
                     selector='a[href="/sell"]',
                     navigation=True,
@@ -918,14 +908,11 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(1, 2)
 
             await self.click(selector='button[data-et-name="apply"]')
-            await self.sleep(1, 2)
 
             self.logger.info(f"delete_me: sent images")
 
             # Type item Title
             await self.type('input[data-vv-name="title"]', item_info["title"])
-            await self.sleep(0.4, 0.9)
-
             self.logger.info(f"delete_me: typed title")
 
             # Type item Description
@@ -934,7 +921,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 item_info["description"],
                 wpm=180,
             )
-            await self.sleep(0.4, 0.9)
 
             self.logger.info(f"delete_me: types description")
 
@@ -943,21 +929,17 @@ class PoshmarkClient(BasePuppeteerClient):
                 selector='//*[@id="content"]/div/div[1]/div[2]/section[3]/div/div[2]/div[1]/div',
                 xpath=True,
             )
-            await self.sleep(0.4, 0.9)
             await self.click(
                 selector=f'//a[@data-et-name="{item_info["department"].lower()}" and @data-et-on-name="category_selection"]',
                 xpath=True,
             )
-            await self.sleep(0.4, 0.9)
             await self.click(
                 selector=f"//li[contains(@class, 'dropdown__menu__item') and contains(., '{item_info['category']}')]",
                 xpath=True,
             )
-            await self.sleep(0.4, 0.9)
             await self.click(
                 selector=f'a[data-et-prop-content="{item_info["subcategory"]}"]'
             )
-            await self.sleep(0.5, 1)
 
             self.logger.info(f"delete_me: selected department")
 
@@ -970,7 +952,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 and size_elem_text.strip().lower() != "os"
             ):
                 await self.click(element=size_elem)
-                await self.sleep(0.2, 0.4)
                 await self.click(selector="size-One Size")
 
             elif (
@@ -978,7 +959,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 and item_info["size"] != size_elem_text.strip()
             ):
                 await self.click(element=size_elem)
-                await self.sleep(0.2, 0.4)
 
                 await self.find(selector=".navigation--horizontal__tab")
 
@@ -1006,7 +986,6 @@ class PoshmarkClient(BasePuppeteerClient):
                     current_tab = current_tab.strip()
                     tab_counter += 1
                     self.logger.info(f"delete_me: size not found going to next tab")
-                    await self.sleep(0.6, 1.2)
 
                 if current_tab == "Custom" and not size_found:
                     self.logger.info(
@@ -1027,29 +1006,22 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.type(
                 'input[placeholder="Enter the Brand/Designer"]', item_info["brand"]
             )
-            await self.sleep(0.3, 0.9)
-
             self.logger.info(f"delete_me: brand inputted")
 
             # Type in Original Price
             await self.type(
                 'input[data-vv-name="originalPrice"]', item_info["original_price"]
             )
-            await self.sleep(0.3, 0.9)
-
             self.logger.info(f"delete_me: original price typed")
 
             # Type in Listing Price
             await self.type(
                 'input[data-vv-name="listingPrice"]', item_info["listing_price"]
             )
-            await self.sleep(2, 3)
-
             self.logger.info(f"delete_me: listing price typed")
 
             # Click Next
             await self.click(selector='button[data-et-name="next"]')
-            await self.sleep(0.3, 0.9)
 
             # Click list item
             await self.click(selector='button[data-et-name="list_item"]')
@@ -1154,11 +1126,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
             # Click price drop button
             await self.click(selector='button[data-et-name="price_drop"]')
-            await self.sleep(0.3, 0.8)
 
             # Click private button
             await self.click(selector='button[data-et-name="make_offer_to_likers"]')
-            await self.sleep(1, 1.5)
 
             if not await self.is_present(
                 'button[data-et-name="apply_offer"]',
@@ -1167,13 +1137,10 @@ class PoshmarkClient(BasePuppeteerClient):
                 raise NoLikesError(f"No likes on the listing: {listing_id}")
 
             await self.type('input[name="offer"]', str(offer))
-            await self.sleep(2, 2.5)
 
             await self.click(selector=".offer-model__shipping-discount")
-            await self.sleep(0.3, 0.6)
 
             await self.click(selector='a[data-et-name="shipping_discount_item"]')
-            await self.sleep(0.3, 0.6)
 
             await self.click(selector='button[data-et-name="apply_offer"]')
             await self.sleep(2, 3)
@@ -1181,7 +1148,6 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(
                 selector='//button[contains(text(), "Continue")]', xpath=True
             )
-            await self.sleep(0.5, 1)
         except (NoLikesError, ListingNotFoundError) as e:
             raise e
         except Exception as e:
@@ -1280,7 +1246,6 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.go_to_closet(username)
 
             await self.click(selector=".ellipses-dot")
-            await self.sleep(0.4, 0.8)
 
             await self.click(
                 selector="//div[contains(@class, 'dropdown__link') and contains(., 'Report User')]",
@@ -1289,16 +1254,13 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.sleep(1, 2)
 
             await self.click(selector=".dropdown__selector--select-tag")
-            await self.sleep(0.3, 0.6)
 
             await self.click(
                 selector=f"//div[contains(@class, 'dropdown__link') and contains(., '{report_type}')]",
                 xpath=True,
             )
-            await self.sleep(0.3, 0.6)
 
             await self.click(selector=".btn--primary")
-            await self.sleep(0.3, 0.8)
 
         except Exception as e:
             return await self._handle_generic_errors(
@@ -1358,16 +1320,13 @@ class PoshmarkClient(BasePuppeteerClient):
                                 username = username.strip()
 
                             await report_button.click()
-                            await self.sleep(0.3, 0.7)
 
                             await self.click(selector=".dropdown__selector--select-tag")
-                            await self.sleep(0.3, 0.6)
 
                             await self.click(
                                 selector=f"//div[contains(@class, 'dropdown__link') and contains(text(), '{report_type}')]",
                                 xpath=True,
                             )
-                            await self.sleep(0.3, 0.6)
                             await self.click(selector=".btn--primary")
 
                             await self.report_user(
@@ -1438,44 +1397,35 @@ class PoshmarkClient(BasePuppeteerClient):
 
             seller_profiles = []
             for listing in listings_to_action:
-                self.logger.info("On a listing")
+                chance = random.random()
                 try:
                     like_button = await listing.querySelector(".like")
-                    self.logger.info("After getting like button")
-                    if like_button:
+                    if like_button and chance < 0.5:
                         await self.click(element=like_button)
-                        await self.sleep(0.2, 0.4)
-                        self.logger.info("Liked")
                 except TimeoutError:
                     pass
 
                 try:
                     share_button = await listing.querySelector(".share-gray-large")
-                    self.logger.info("After getting like share button")
-                    if share_button:
+                    if share_button and chance < 0.7:
                         await self.click(element=share_button)
-
                         await self.click(selector=".internal-share__link")
-                        await self.sleep(1, 2)
-
                         await self._handle_sharing_captcha()
 
-                        self.logger.info("Shared")
                 except TimeoutError:
                     pass
 
                 seller_profile = await listing.querySelectorEval(
                     "a.tile__creator", "a => a.href"
                 )
-                self.logger.info("After getting seller profile")
                 if seller_profile:
                     seller_profiles.append(seller_profile)
-                    self.logger.info("Added seller profile")
 
             for profile in seller_profiles:
                 try:
-                    await self.page.goto(profile, timeout=10000)
-                    await self.sleep(0.4, 0.7)
+                    await self.page.goto(
+                        profile, waitUntil="domcontentloaded", timeout=10000
+                    )
                     await self.click(selector='button[data-et-name="follow_user"]')
                 except TimeoutError:
                     self.logger.info(f"Timeout while going to {profile}. Skipping...")

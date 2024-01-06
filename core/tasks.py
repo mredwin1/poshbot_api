@@ -76,8 +76,8 @@ class CustomBeatScheduler(Scheduler):
 
 class CampaignTask(Task):
     def __init__(self):
-        self.soft_time_limit = 400
-        self.time_limit = 600
+        self.soft_time_limit = 600
+        self.time_limit = 800
         self.campaign = None
         self.logger = None
         self.proxy = None

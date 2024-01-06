@@ -32,7 +32,7 @@ black = "*"
 django-redis = "*"
 pyppeteer = "*"
 2captcha-python = "*"
-flower = "*"
+python-ghost-cursor = "*"
 
 [dev-packages]
 
