@@ -188,7 +188,7 @@ class OctoAPIClient:
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
-            "headless": False,
+            "headless": True,
             "debug_port": True,
             "flags": ["--disable-backgrounding-occluded-windows"],
         }

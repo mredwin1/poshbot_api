@@ -855,7 +855,7 @@ Resources:
           sudo -u octo bash << EOF
           Xvfb :1 -ac -screen 0 "1920x1080x24" -nolisten tcp +extension GLX +render -noreset &
 
-          (DISPLAY=:1 ~/browser/OctoBrowser.AppImage &)
+          (DISPLAY=:1 OCTO_HEADLESS=1 ~/browser/OctoBrowser.AppImage &)
           EOF
           
           sleep 10
