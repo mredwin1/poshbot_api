@@ -280,17 +280,6 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
-  S3Endpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref 'VPC'
-      VpcEndpointType: Interface
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.s3'
-      SecurityGroupIds:
-        - !GetAtt EndpointSecurityGroup.GroupId
-      SubnetIds:
-        - !Ref PrivateSubnetOne
-        - !Ref PrivateSubnetTwo
   SecretsManagerEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
@@ -303,49 +292,13 @@ Resources:
       SubnetIds:
         - !Ref PrivateSubnetOne
         - !Ref PrivateSubnetTwo
-  ElasticFileSystemEndpoint:
+  ElastiCacheEndpoint:
     Type: AWS::EC2::VPCEndpoint
     Properties:
       VpcId: !Ref 'VPC'
       VpcEndpointType: Interface
       PrivateDnsEnabled: true
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.elasticfilesystem'
-      SecurityGroupIds:
-        - !GetAtt EndpointSecurityGroup.GroupId
-      SubnetIds:
-        - !Ref PrivateSubnetOne
-        - !Ref PrivateSubnetTwo
-  ECSAgentEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref 'VPC'
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs-agent'
-      SecurityGroupIds:
-        - !GetAtt EndpointSecurityGroup.GroupId
-      SubnetIds:
-        - !Ref PrivateSubnetOne
-        - !Ref PrivateSubnetTwo
-  ECSTelemetryEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref 'VPC'
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs-telemetry'
-      SecurityGroupIds:
-        - !GetAtt EndpointSecurityGroup.GroupId
-      SubnetIds:
-        - !Ref PrivateSubnetOne
-        - !Ref PrivateSubnetTwo
-  ECSEndpoint:
-    Type: AWS::EC2::VPCEndpoint
-    Properties:
-      VpcId: !Ref 'VPC'
-      VpcEndpointType: Interface
-      PrivateDnsEnabled: true
-      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.ecs'
+      ServiceName: !Sub 'com.amazonaws.${AWS::Region}.elasticache'
       SecurityGroupIds:
         - !GetAtt EndpointSecurityGroup.GroupId
       SubnetIds:
