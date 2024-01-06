@@ -22,6 +22,7 @@ from django.utils import timezone
 from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
+from requests.exceptions import ConnectionError
 from typing import Union
 
 from chrome_clients.clients import PoshmarkClient, OctoAPIClient
@@ -703,27 +704,30 @@ class ManageCampaignsTask(Task):
         self.logger = logging.getLogger(__name__)
 
     def inspect_active_profiles(self):
-        octo_client = OctoAPIClient()
+        try:
+            octo_client = OctoAPIClient()
 
-        response = octo_client.get_active_profiles()
+            response = octo_client.get_active_profiles()
 
-        if "error" in response:
-            self.logger.warning(f"Error while getting active profiles: {response}")
+            if "error" in response:
+                self.logger.warning(f"Error while getting active profiles: {response}")
 
-            return
+                return
 
-        current_time = timezone.now().timestamp()
-        for profile in response:
-            start_time = profile.get("start_time")
+            current_time = timezone.now().timestamp()
+            for profile in response:
+                start_time = profile.get("start_time")
 
-            if start_time is None:
-                start_time = current_time
+                if start_time is None:
+                    start_time = current_time
 
-            seconds_since_start = current_time - start_time
+                seconds_since_start = current_time - start_time
 
-            if seconds_since_start > CampaignTask.soft_time_limit + 30:
-                response = octo_client.stop_profile(profile["uuid"])
-                self.logger.debug(f"Stopping profile {profile['uuid']}: {response}")
+                if seconds_since_start > CampaignTask.soft_time_limit + 30:
+                    response = octo_client.stop_profile(profile["uuid"])
+                    self.logger.debug(f"Stopping profile {profile['uuid']}: {response}")
+        except ConnectionError:
+            self.logger.error("Error while connecting to octo endpoint")
 
     def get_available_proxy(self):
         bad_checkout_time = timezone.now() - datetime.timedelta(
@@ -766,6 +770,9 @@ class ManageCampaignsTask(Task):
             octo_client.check_username()
         except NotLoggedInError as e:
             self.logger.error(str(e))
+            return False
+        except ConnectionError:
+            self.logger.error("Error while connecting to octo endpoint")
             return False
 
         if proxy:
