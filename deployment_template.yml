@@ -675,7 +675,7 @@ Resources:
   GeneralScalableTarget:
     Type: AWS::ApplicationAutoScaling::ScalableTarget
     Properties:
-      MaxCapacity: 10
+      MaxCapacity: 6
       MinCapacity: 1
       ResourceId: !Sub
         - 'service/${ECSClusterName}/${GeneralServiceName}'
