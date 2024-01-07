@@ -549,6 +549,7 @@ class CampaignTask(Task):
                         self.logger.warning(e)
                 return True
             else:
+                timeframe = timezone.now() - datetime.timedelta(hours=24)
                 all_listed_items = ListedItem.objects.filter(
                     posh_user=self.campaign.posh_user
                 )
@@ -559,10 +560,10 @@ class CampaignTask(Task):
                     status=ListedItem.UNDER_REVIEW
                 ).aexists()
                 removed_listed_items = await all_listed_items.filter(
-                    datetime_removed__isnull=False
+                    datetime_removed__gte=timeframe
                 ).aexists()
                 sold_listed_items = await all_listed_items.filter(
-                    datetime_sold__isnull=False
+                    datetime_sold__gte=timeframe
                 ).aexists()
                 if reserved_listed_items:
                     self.logger.info(
@@ -581,7 +582,9 @@ class CampaignTask(Task):
 
                     return False
                 elif removed_listed_items:
-                    self.logger.info("Only removed listings. Stopping campaign")
+                    self.logger.info(
+                        "Only removed listings within the last 24 hours. Stopping campaign"
+                    )
 
                     self.campaign.status = Campaign.STOPPING
                     self.campaign.next_runtime = None
@@ -589,7 +592,9 @@ class CampaignTask(Task):
 
                     return False
                 elif sold_listed_items:
-                    self.logger.info("Only sold listings. Stopping campaign")
+                    self.logger.info(
+                        "Only sold listings within the last 24 hours. Stopping campaign"
+                    )
 
                     self.campaign.status = Campaign.STOPPING
                     self.campaign.next_runtime = None
