@@ -127,8 +127,7 @@ class Proxy(models.Model):
         return response.cookies
 
     def reset_ip(self):
-        reset_url = f"https://portal.mobilehop.com/proxies/{self.proxy_uuid}/reset"
-        response = requests.get(reset_url)
+        response = requests.get(self.change_ip_url)
 
         if response.status_code == 200:
             return response.text
@@ -201,7 +200,7 @@ class Proxy(models.Model):
         self.save(update_fields=["checked_out_by", "checkout_time"])
 
     def __str__(self):
-        return self.license_id
+        return self.external_id
 
 
 class User(AbstractUser):
