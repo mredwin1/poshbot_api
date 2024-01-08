@@ -282,7 +282,6 @@ class PoshmarkTask(Task):
 
         loop = self.loop
         try:
-            # Run the async _run method within the event loop
             loop.run_until_complete(
                 self._run(task_blueprint["actions"], runtime_details, logger)
             )
@@ -814,10 +813,21 @@ def start_event_loop(*args, **kwargs):
 @task_postrun.connect(sender=PoshmarkTask)
 def close_event_loop(*args, **kwargs):
     loop = kwargs["task"].loop
+
     if loop and not loop.is_closed():
-        for task in asyncio.all_tasks(loop):
+        # Cancel all pending tasks
+        pending = asyncio.all_tasks(loop)
+        for task in pending:
             task.cancel()
+            try:
+                loop.run_until_complete(task)
+            except asyncio.CancelledError:
+                pass
+
+        # Shutdown async generators
         loop.run_until_complete(loop.shutdown_asyncgens())
+
+        # Close the loop
         loop.close()
 
 
