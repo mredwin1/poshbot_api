@@ -375,13 +375,16 @@ class ManageCampaignsTask(Task):
         now = timezone.now()
         campaigns = (
             Campaign.objects.filter(
-                status__in=(
-                    Campaign.STOPPING,
-                    Campaign.IDLE,
-                    Campaign.STARTING,
-                    Campaign.RUNNING,
-                    Campaign.IN_QUEUE,
+                Q(
+                    status__in=(
+                        Campaign.STOPPING,
+                        Campaign.IDLE,
+                        Campaign.STARTING,
+                        Campaign.RUNNING,
+                        Campaign.IN_QUEUE,
+                    )
                 )
+                & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))
             )
             .order_by("next_runtime")
             .select_related("posh_user")
@@ -421,7 +424,11 @@ class ManageCampaignsTask(Task):
                 "register" in task_blueprint["actions"]
                 or "list_items" in task_blueprint["actions"]
             )
-            if register_or_list and available_proxies:
+            if (
+                register_or_list
+                and available_proxies
+                and campaign.status not in (Campaign.RUNNING, Campaign.IN_QUEUE)
+            ):
                 proxy = available_proxies.pop()
                 ip_reset = proxy.reset_ip()
                 if ip_reset:
@@ -437,12 +444,20 @@ class ManageCampaignsTask(Task):
                     )
                 else:
                     self.logger.warning(f"Could not reset IP: {ip_reset}")
-            elif register_or_list and not available_proxies:
+            elif (
+                register_or_list
+                and not available_proxies
+                and campaign.status not in (Campaign.RUNNING, Campaign.IN_QUEUE)
+            ):
                 campaign.status = Campaign.STARTING
                 campaign.queue_status = str(queue_num)
                 campaign.save(update_fields=["status", "queue_status"])
                 queue_num += 1
-            elif not register_or_list and task_blueprint["actions"]:
+            elif (
+                not register_or_list
+                and task_blueprint["actions"]
+                and campaign.status not in (Campaign.RUNNING, Campaign.IN_QUEUE)
+            ):
                 campaign.status = Campaign.IN_QUEUE
                 campaign.queue_status = "N/A"
                 campaign.save(update_fields=["status", "queue_status"])
@@ -450,7 +465,10 @@ class ManageCampaignsTask(Task):
                 self.logger.info(
                     f"Campaign Started: {campaign.title} for {campaign.posh_user.username}"
                 )
-            elif not task_blueprint["actions"]:
+            elif not task_blueprint["actions"] and campaign.status not in (
+                Campaign.RUNNING,
+                Campaign.IN_QUEUE,
+            ):
                 timeframe = timezone.now() - datetime.timedelta(hours=24)
                 all_listed_items = ListedItem.objects.filter(
                     posh_user=campaign.posh_user
