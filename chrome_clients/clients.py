@@ -1358,7 +1358,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 bad_words=bad_words,
             )
 
-    async def like_follow_share(self, user_info: Dict) -> None:
+    async def like_follow_share(self, user_info: Dict, target_count: int = 5) -> None:
         try:
             feeds = [
                 "category/Women",
@@ -1406,7 +1406,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 return
 
             listings_to_action: List[ElementHandle] = random.sample(
-                listings, k=random.randint(5, 10)
+                listings, k=target_count
             )
 
             seller_profiles = []
