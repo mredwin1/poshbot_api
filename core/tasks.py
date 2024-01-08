@@ -245,9 +245,7 @@ class PoshmarkTask(Task):
                 logger.warning(e)
 
     @staticmethod
-    async def like_follow_share(
-        client: PoshmarkClient, details: Dict
-    ):
+    async def like_follow_share(client: PoshmarkClient, details: Dict):
         await client.like_follow_share(details["user_info"])
 
     async def _run(self, actions: Dict, runtime_details: Dict, logger: logging.Logger):
@@ -292,11 +290,11 @@ class PoshmarkTask(Task):
             logger.error(f"An error occurred: {e}")
 
         task_end_time = time.perf_counter()
-        total_runtime = task_start_time - task_end_time
+        total_runtime = task_end_time - task_start_time
 
         delay = task_blueprint["delay"] - total_runtime
 
-        if not delay:
+        if delay < 0:
             delay = task_blueprint["delay"]
 
         next_runtime = timezone.now() + datetime.timedelta(seconds=delay)
