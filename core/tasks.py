@@ -280,13 +280,26 @@ class PoshmarkTask(Task):
         runtime_details = self.start_profile(octo_profile_details)
         logger = logging.getLogger(__name__)
 
-        loop = self.loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
         try:
             loop.run_until_complete(
                 self._run(task_blueprint["actions"], runtime_details, logger)
             )
         except Exception as e:
             logger.error(f"An error occurred: {e}")
+        finally:
+            pending = asyncio.all_tasks(loop)
+            for task in pending:
+                task.cancel()
+                try:
+                    loop.run_until_complete(task)
+                except asyncio.CancelledError:
+                    pass
+
+            # Shutdown async generators
+            loop.run_until_complete(loop.shutdown_asyncgens())
+            loop.close()
 
         task_end_time = time.perf_counter()
         total_runtime = task_end_time - task_start_time
@@ -801,34 +814,6 @@ class CheckPoshUsers(Task):
 PoshmarkTask = app.register_task(PoshmarkTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
 CheckPoshUsers = app.register_task(CheckPoshUsers())
-
-
-@task_prerun.connect(sender=PoshmarkTask)
-def start_event_loop(*args, **kwargs):
-    loop = asyncio.new_event_loop()
-    asyncio.set_event_loop(loop)
-    kwargs["task"].loop = loop
-
-
-@task_postrun.connect(sender=PoshmarkTask)
-def close_event_loop(*args, **kwargs):
-    loop = kwargs["task"].loop
-
-    if loop and not loop.is_closed():
-        # Cancel all pending tasks
-        pending = asyncio.all_tasks(loop)
-        for task in pending:
-            task.cancel()
-            try:
-                loop.run_until_complete(task)
-            except asyncio.CancelledError:
-                pass
-
-        # Shutdown async generators
-        loop.run_until_complete(loop.shutdown_asyncgens())
-
-        # Close the loop
-        loop.close()
 
 
 @shared_task
