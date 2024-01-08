@@ -307,8 +307,8 @@ class PoshUser(models.Model):
     lat = models.DecimalField(max_digits=9, decimal_places=6, default=0)
     long = models.DecimalField(max_digits=9, decimal_places=6, default=0)
 
-    date_added = models.DateField(auto_now_add=True)
-    date_disabled = models.DateField(null=True, blank=True)
+    datetime_added = models.DateTimeField(auto_now_add=True)
+    datetime_disabled = models.DateTimeField(null=True, blank=True)
     date_of_birth = models.DateField(null=True, blank=True)
     date_last_support_email = models.DateTimeField(null=True, blank=True)
 

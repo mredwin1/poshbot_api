@@ -206,9 +206,9 @@ class UserAdmin(BaseUserAdmin):
 @admin.register(models.PoshUser)
 class PoshUserAdmin(admin.ModelAdmin):
     readonly_fields = [
-        "date_added",
+        "datetime_added",
         "time_to_register",
-        "date_disabled",
+        "datetime_disabled",
     ]
     list_display = [
         "username",
@@ -259,7 +259,7 @@ class PoshUserAdmin(admin.ModelAdmin):
                         "send_support_email",
                     ),
                     ("time_to_register",),
-                    ("user", "date_added", "date_disabled"),
+                    ("user", "datetime_added", "datetime_disabled"),
                     (
                         "username",
                         "password",
