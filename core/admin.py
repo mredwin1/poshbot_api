@@ -155,7 +155,7 @@ class BadPhraseAdmin(admin.ModelAdmin):
 
 @admin.register(models.Proxy)
 class ProxyAdmin(admin.ModelAdmin):
-    list_display = ["license_id", "is_active", "associated_campaign", "checkout_time"]
+    list_display = ["external_id", "is_active", "associated_campaign", "checkout_time"]
     readonly_fields = ["checked_out_by", "checkout_time"]
     actions = [check_proxies_in]
 

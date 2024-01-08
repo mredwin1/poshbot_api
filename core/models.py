@@ -17,6 +17,8 @@ from django.utils import timezone
 from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
+from typing import Dict, List
+from zoneinfo import ZoneInfo
 
 from faker_providers import address_provider
 
@@ -87,9 +89,24 @@ class Proxy(models.Model):
     port = models.PositiveSmallIntegerField()
     username = models.CharField(max_length=255)
     password = models.CharField(max_length=255)
-    license_id = models.CharField(max_length=255)
-    proxy_uuid = models.CharField(max_length=255)
+    external_id = models.CharField(max_length=255)
+    change_ip_url = models.CharField(max_length=255)
     type = models.CharField(max_length=10, choices=PROXY_TYPE_CHOICES, default=HTTP)
+
+    @property
+    def proxy_info(self):
+        info = {
+            "title": f"{self.vendor} {self.external_id}",
+            "type": self.type,
+            "port": self.port,
+            "host": self.hostname,
+            "login": self.username,
+            "password": self.password,
+            "external_id": self.external_id,
+            "change_ip_url": self.external_id,
+        }
+
+        return info
 
     @staticmethod
     def authenticate_with_cookies():
@@ -188,9 +205,42 @@ class Proxy(models.Model):
 
 
 class User(AbstractUser):
+    TIMEZONES = (
+        ("America/Adak", "America/Adak"),
+        ("America/Anchorage", "America/Anchorage"),
+        ("America/Boise", "America/Boise"),
+        ("America/Chicago", "America/Chicago"),
+        ("America/Denver", "America/Denver"),
+        ("America/Detroit", "America/Detroit"),
+        ("America/Indiana/Indianapolis", "America/Indiana/Indianapolis"),
+        ("America/Indiana/Knox", "America/Indiana/Knox"),
+        ("America/Indiana/Marengo", "America/Indiana/Marengo"),
+        ("America/Indiana/Petersburg", "America/Indiana/Petersburg"),
+        ("America/Indiana/Tell_City", "America/Indiana/Tell_City"),
+        ("America/Indiana/Vevay", "America/Indiana/Vevay"),
+        ("America/Indiana/Vincennes", "America/Indiana/Vincennes"),
+        ("America/Indiana/Winamac", "America/Indiana/Winamac"),
+        ("America/Juneau", "America/Juneau"),
+        ("America/Kentucky/Louisville", "America/Kentucky/Louisville"),
+        ("America/Kentucky/Monticello", "America/Kentucky/Monticello"),
+        ("America/Los_Angeles", "America/Los_Angeles"),
+        ("America/Menominee", "America/Menominee"),
+        ("America/Metlakatla", "America/Metlakatla"),
+        ("America/New_York", "America/New_York"),
+        ("America/Nome", "America/Nome"),
+        ("America/North_Dakota/Beulah", "America/North_Dakota/Beulah"),
+        ("America/North_Dakota/Center", "America/North_Dakota/Center"),
+        ("America/North_Dakota/New_Salem", "America/North_Dakota/New_Salem"),
+        ("America/Phoenix", "America/Phoenix"),
+        ("America/Sitka", "America/Sitka"),
+        ("America/Yakutat", "America/Yakutat"),
+    )
     id = models.UUIDField(primary_key=True, default=uuid4, editable=False)
     email = models.EmailField()
     phone_number = models.CharField(max_length=15, blank=True)
+    timezone = models.CharField(
+        max_length=255, choices=TIMEZONES, default="America/New_York"
+    )
 
     def send_text(self, message):
         client = boto3.client("pinpoint")
@@ -291,7 +341,7 @@ class PoshUser(models.Model):
             return "Assigned"
 
     @property
-    def sold_listings(self):
+    def sold_listings(self) -> int:
         sold_listings = ListedItem.objects.filter(
             posh_user=self, datetime_sold__isnull=False
         )
@@ -316,18 +366,133 @@ class PoshUser(models.Model):
         return f"{self.first_name} {self.last_name}"
 
     @property
-    def user_info(self):
-        user_info = {
-            "first_name": self.first_name,
-            "last_name": self.last_name,
-            "email": self.email,
+    def profile_picture_path(self) -> str:
+        if self.profile_picture:
+            return self._get_file(self.profile_picture)
+        return ""
+
+    @property
+    def header_picture_path(self) -> str:
+        if self.header_picture:
+            return self._get_file(self.header_picture)
+        return ""
+
+    @property
+    def task_blueprint(self) -> Dict:
+        shared_info = {
+            "posh_user_id": self.id,
+            "is_registered": self.is_registered,
             "username": self.username,
             "password": self.password,
-            "gender": self.gender,
-            "registered": self.is_registered,
-            "zipcode": self.postcode,
         }
-        return user_info
+        """
+        Property to return a task blueprint containing shared info and actions and their details.
+        """
+        octo_details = {
+            "title": self.username,
+            "uuid": self.octo_uuid,
+            "tags": [
+                os.environ["ENVIRONMENT"].replace("-", "")[:10],
+                self.user.username[:10],
+            ],
+        }
+        actions = {}
+
+        # Registration
+        if not self.is_registered:
+            actions["register"] = {
+                "first_name": self.first_name,
+                "last_name": self.last_name,
+                "email": self.email,
+                "username": self.username,
+                "password": self.password,
+                "gender": self.gender,
+                "registered": self.is_registered,
+                "zipcode": self.postcode,
+                "profile_picture": self.profile_picture_path,
+            }
+
+        # Sharing, sending offers, check offers, and check comments
+        items_to_list = ListedItem.objects.filter(
+            posh_user=self, status=ListedItem.NOT_LISTED
+        )
+        if items_to_list.exists():
+            item_details = []
+
+            for item in items_to_list:
+                item_details.append(item.item_info)
+
+            actions["list_items"] = {"items": item_details}
+
+        listed_items_up = ListedItem.objects.filter(
+            posh_user=self, status=ListedItem.UP
+        ).select_related("listing")
+        if listed_items_up.exists():
+            user_timezone = ZoneInfo(self.user.timezone)
+            now = datetime.datetime.now(user_timezone)
+
+            # Time for 9 PM and midnight
+            nine_pm = datetime.time(21, 0)
+            midnight = datetime.time(0, 0)
+            item_share_details = []
+            item_send_offer_details = []
+            item_check_offer_details = []
+            item_check_comments_details = []
+
+            # Iterate through all listed items that are up
+            for listed_item in listed_items_up:
+                item_share_details.append(listed_item.listed_item_id)
+                item_check_comments_details.append(listed_item.listed_item_id)
+
+                if nine_pm < now.time() < midnight and random.random() < 0.2:
+                    item_send_offer_details.append(
+                        {
+                            "listing_id": listed_item.listed_item_id,
+                            "offer": int(listed_item.listing.listing_price * 0.9),
+                        }
+                    )
+
+                if random.random() < 0.2:
+                    item_check_offer_details.append(
+                        {
+                            "listing_id": listed_item.listed_item_id,
+                            "lowest_price": listed_item.listing.lowest_price,
+                        }
+                    )
+
+            # Create a list of bad phrases to report
+            bad_phrases = BadPhrase.objects.all()
+            bad_phrases = [
+                {"word": phrase.phrase, "report_type": phrase.report_type}
+                for phrase in bad_phrases
+            ]
+
+            actions["share_listings"] = {"items": item_share_details}
+            actions["check_comments"] = {
+                "bad_phrases": bad_phrases,
+                "items": item_check_comments_details,
+            }
+
+            if item_send_offer_details:
+                actions["send_offers"] = {"items": item_send_offer_details}
+
+            if item_check_offer_details:
+                actions["check_offers"] = {"items": item_check_offer_details}
+
+        if random.random() < 0.5:
+            actions["like_follow_share"] = {"count": random.randint(5, 10)}
+
+        # Add shared info to all action details
+        for action_details in actions.values():
+            action_details.update(shared_info)
+
+        task_blueprint = {
+            "campaign_id": self.campaign.id,
+            "octo_details": octo_details,
+            "actions": actions,
+        }
+
+        return task_blueprint
 
     @staticmethod
     def _generate_username(faker_obj, first_name, last_name, year_of_birth):
@@ -528,16 +693,6 @@ class PoshUser(models.Model):
 
         return file_path
 
-    def get_profile_picture(self):
-        if self.profile_picture:
-            return self._get_file(self.profile_picture)
-        return ""
-
-    def get_header_picture(self):
-        if self.header_picture:
-            return self._get_file(self.header_picture)
-        return ""
-
     def __str__(self):
         return self.username
 
@@ -713,6 +868,7 @@ class ListedItem(models.Model):
         department = split_text[0]
         category = " ".join(split_text[1:])
         item_info = {
+            "id": self.id,
             "title": self.listing.title,
             "size": self.listing.size,
             "brand": self.listing.brand,
@@ -722,11 +878,13 @@ class ListedItem(models.Model):
             "original_price": str(self.listing.original_price),
             "listing_price": str(self.listing.listing_price),
             "description": self.listing.description,
+            "images": self.image_paths,
         }
 
         return item_info
 
-    async def get_images(self):
+    @property
+    def image_paths(self) -> List:
         paths = []
 
         dir_name, cover_photo_name = os.path.split(self.listing.cover_photo.name)
@@ -739,7 +897,7 @@ class ListedItem(models.Model):
         paths.append(cover_photo_path)
 
         images = ListingImage.objects.filter(listing=self.listing)
-        async for image in images:
+        for image in images:
             _, image_name = os.path.split(image.image.name)
             image_path = os.path.join(dir_name, image_name)
             with open(image_path, mode="wb") as local_file:
