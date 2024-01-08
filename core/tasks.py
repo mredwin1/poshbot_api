@@ -274,14 +274,18 @@ class PoshmarkTask(Task):
         runtime_details = self.start_profile(octo_profile_details)
         logger = logging.getLogger(__name__)
 
-        # Run event loop here and call self._run()
-        loop = asyncio.get_event_loop()
+        # Create a new asyncio event loop
+        loop = asyncio.new_event_loop()
+        asyncio.set_event_loop(loop)
+
         try:
+            # Run the async _run method within the new event loop
             loop.run_until_complete(
                 self._run(task_blueprint["actions"], runtime_details, logger)
             )
-        except Exception as e:
-            logger.error(f"Error during task execution: {e}")
+        finally:
+            # Close the event loop after task completion
+            loop.close()
 
         task_end_time = time.perf_counter()
         total_runtime = task_start_time - task_end_time
