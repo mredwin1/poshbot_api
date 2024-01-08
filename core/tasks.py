@@ -12,6 +12,7 @@ import time
 
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
+from celery.signals import task_prerun, task_postrun
 from celery.beat import Scheduler
 from decimal import Decimal
 from django.core.cache import caches
@@ -75,6 +76,7 @@ class PoshmarkTask(Task):
     def __init__(self):
         self.soft_time_limit = 600
         self.time_limit = 800
+        self.loop = None
 
     @staticmethod
     def get_octo_profile(proxy: Union[Dict, None], octo_details: Union[Dict, None]):
@@ -274,18 +276,14 @@ class PoshmarkTask(Task):
         runtime_details = self.start_profile(octo_profile_details)
         logger = logging.getLogger(__name__)
 
-        # Create a new asyncio event loop
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-
+        loop = self.loop
         try:
-            # Run the async _run method within the new event loop
+            # Run the async _run method within the event loop
             loop.run_until_complete(
                 self._run(task_blueprint["actions"], runtime_details, logger)
             )
-        finally:
-            # Close the event loop after task completion
-            loop.close()
+        except Exception as e:
+            logger.error(f"An error occurred: {e}")
 
         task_end_time = time.perf_counter()
         total_runtime = task_start_time - task_end_time
@@ -800,6 +798,23 @@ class CheckPoshUsers(Task):
 PoshmarkTask = app.register_task(PoshmarkTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
 CheckPoshUsers = app.register_task(CheckPoshUsers())
+
+
+@task_prerun.connect(sender=PoshmarkTask)
+def start_event_loop(*args, **kwargs):
+    loop = asyncio.new_event_loop()
+    asyncio.set_event_loop(loop)
+    kwargs["task"].loop = loop
+
+
+@task_postrun.connect(sender=PoshmarkTask)
+def close_event_loop(*args, **kwargs):
+    loop = kwargs["task"].loop
+    if loop and not loop.is_closed():
+        for task in asyncio.all_tasks(loop):
+            task.cancel()
+        loop.run_until_complete(loop.shutdown_asyncgens())
+        loop.close()
 
 
 @shared_task
