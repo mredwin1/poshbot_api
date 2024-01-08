@@ -408,7 +408,6 @@ class PoshUser(models.Model):
                     "username": self.username,
                     "password": self.password,
                     "gender": self.gender,
-                    "registered": self.is_registered,
                     "zipcode": self.postcode,
                     "profile_picture": self.profile_picture_path,
                 }

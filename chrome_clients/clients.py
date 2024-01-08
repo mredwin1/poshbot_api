@@ -576,7 +576,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 )
                 user_info = kwargs.get("user_info", {})
                 username = user_info.get("username")
-                registered = user_info.get("registered")
+                registered = user_info.get("is_registered")
                 if username and registered:
                     self.logger.info(f"Checking login status of {username}")
                     password = user_info.get("password")
