@@ -244,6 +244,12 @@ class PoshmarkTask(Task):
             except (NoActiveOffersError, ListingNotFoundError) as e:
                 logger.warning(e)
 
+    @staticmethod
+    async def like_follow_share(
+        client: PoshmarkClient, details: Dict
+    ):
+        await client.like_follow_share(details["user_info"])
+
     async def _run(self, actions: Dict, runtime_details: Dict, logger: logging.Logger):
         ws_endpoint = runtime_details["ws_endpoint"]
         width = runtime_details["width"]
