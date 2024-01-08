@@ -22,7 +22,7 @@ CELERY_BROKER_URL = f"sqs://"
 CELERY_BROKER_CONNECTION_RETRY_ON_START_UP = True
 
 CELERY_TASK_ROUTES = {
-    "core.tasks.CampaignTask": {
+    "core.tasks.PoshmarkTask": {
         "queue": os.environ["GENERAL_QUEUE"],
         "routing_key": os.environ["GENERAL_QUEUE"],
     },

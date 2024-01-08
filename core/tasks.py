@@ -1,4 +1,4 @@
-import asyncio
+import aiohttp
 import datetime
 import json
 import logging
@@ -23,7 +23,7 @@ from email.message import EmailMessage
 from email.mime.multipart import MIMEMultipart
 from email.mime.text import MIMEText
 from requests.exceptions import ConnectionError
-from typing import Union
+from typing import Union, Dict, List
 
 from chrome_clients.clients import PoshmarkClient, OctoAPIClient
 from chrome_clients.errors import (
@@ -75,69 +75,51 @@ class CustomBeatScheduler(Scheduler):
             return True, next_time_to_run
 
 
-class CampaignTask(Task):
+class PoshmarkTask(Task):
     def __init__(self):
         self.soft_time_limit = 600
         self.time_limit = 800
-        self.campaign = None
-        self.logger = None
-        self.proxy = None
-        self.proxy_id = None
-        self.runtime_details = {}
 
-    def get_runtime_details(self):
+    @staticmethod
+    async def get_octo_profile(
+        proxy: Union[Dict, None], octo_details: Union[Dict, None]
+    ):
         octo_client = OctoAPIClient()
         proxy_uuid = ""
-        proxy = None
 
-        if self.proxy is not None:
-            current_proxy = {
-                "title": f"{self.proxy.vendor} {self.proxy.license_id}",
-                "type": self.proxy.type,
-                "port": self.proxy.port,
-                "host": self.proxy.hostname,
-                "login": self.proxy.username,
-                "password": self.proxy.password,
-                "external_id": self.proxy.license_id,
-                "change_ip_url": f"https://portal.mobilehop.com/proxies/{self.proxy.proxy_uuid}/reset",
-            }
-            proxies = octo_client.get_proxies(external_id=self.proxy.license_id)
+        if proxy is not None:
+            proxies = octo_client.get_proxies(external_id=proxy["external_id"])
 
             if proxies:
-                proxy = proxies[0]
+                current_proxy = proxies[0]
 
                 proxy_differences = {}
-                for key, value in current_proxy.items():
-                    if value != proxy[key]:
+                for key, value in proxy.items():
+                    if value != current_proxy[key]:
                         proxy_differences[key] = value
 
                 if proxy_differences:
                     proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
             else:
-                proxy = octo_client.create_proxy(current_proxy)
+                proxy = octo_client.create_proxy(proxy)
 
             proxy_uuid = proxy["uuid"]
 
-        if not self.campaign.posh_user.octo_uuid:
-            tags = [
-                os.environ["ENVIRONMENT"].replace("-", "")[:10],
-                self.campaign.user.username[:10],
-            ]
+        if not octo_details.get("uuid"):
             if proxy:
                 profile_uuid = octo_client.create_profile(
-                    self.campaign.posh_user.username, tags, proxy_uuid=proxy_uuid
+                    octo_details["title"],
+                    octo_details["tags"],
+                    proxy_uuid=octo_details["uuid"],
                 )
             else:
                 profile_uuid = octo_client.create_profile(
-                    self.campaign.posh_user.username, tags
+                    octo_details["title"], octo_details["tags"]
                 )
             profile = octo_client.get_profile(profile_uuid)
 
-            self.campaign.posh_user.octo_uuid = profile["uuid"]
-            self.campaign.posh_user.save(update_fields=["octo_uuid"])
-
         else:
-            profile = octo_client.get_profile(self.campaign.posh_user.octo_uuid)
+            profile = octo_client.get_profile(octo_details["uuid"])
 
         if proxy:
             octo_client.update_profile(profile["uuid"], proxy_uuid=proxy_uuid)
@@ -145,6 +127,11 @@ class CampaignTask(Task):
         elif not proxy and profile["proxy"]:
             octo_client.update_profile(profile["uuid"])
 
+        return profile
+
+    @staticmethod
+    async def start_profile(profile: Dict):
+        octo_client = OctoAPIClient()
         width, height = map(
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
         )
@@ -159,547 +146,143 @@ class CampaignTask(Task):
 
         return runtime_details
 
-    def get_random_delay(self, elapsed_time):
-        delay = self.campaign.delay * 60
+    @staticmethod
+    async def register(client: PoshmarkClient, details: Dict, logger: logging.Logger):
+        try:
+            username = await client.register(details)
 
-        if delay <= 0:
-            return 0
-        else:
-            range_start = max(0, delay - (delay * 0.3))
-            range_end = delay + (delay * 0.3)
-            random_delay_in_seconds = round(random.uniform(range_start, range_end))
-            delay_after_elapsed_time_in_seconds = random_delay_in_seconds - elapsed_time
-            if delay_after_elapsed_time_in_seconds >= 0:
-                return delay_after_elapsed_time_in_seconds
-            else:
-                return random_delay_in_seconds
-
-    def check_proxy_in(self):
-        if self.proxy and self.proxy.checked_out_by == self.campaign.id:
-            self.logger.info("Releasing proxy")
-            self.proxy.check_in()
-
-    def init_campaign(self):
-        response = {"status": True, "errors": []}
-
-        if self.campaign.status in (Campaign.STOPPING, Campaign.STOPPED):
-            response["status"] = False
-            response["errors"].append(f"Campaign status is {self.campaign.status}")
-
-        if not self.campaign.posh_user:
-            response["status"] = False
-            response["errors"].append("Campaign has no posh user assigned")
-
-        if not self.campaign.posh_user.is_active:
-            response["status"] = False
-            response["errors"].append(
-                f"Posh User, {self.campaign.posh_user}, is disabled"
-            )
-
-        if not self.campaign.posh_user.is_active_in_posh:
-            response["status"] = False
-            response["errors"].append(
-                f"Posh user, {self.campaign.posh_user}, is inactive"
-            )
-
-        if not self.campaign.posh_user.is_registered and not self.proxy_id:
-            response["status"] = False
-            response["errors"].append(
-                "Posh user is not registered but no proxy was given."
-            )
-
-        needs_to_list = ListedItem.objects.filter(
-            posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
-        ).exists()
-        if needs_to_list and not self.proxy_id:
-            response["status"] = False
-            response["errors"].append("Posh user needs to list but no proxy was given.")
-
-        if self.proxy_id:
-            self.proxy = Proxy.objects.get(id=self.proxy_id)
-
-            self.proxy.checkout_time = timezone.now()
-            self.proxy.save(update_fields=["checkout_time"])
-
-            ip_reset = self.reset_ip()
-
-            if not ip_reset:
-                response["status"] = False
-                response["errors"].append("IP reset unsuccessful")
-
-        return response
-
-    def finalize_campaign(self, success, campaign_delay, duration):
-        self.check_proxy_in()
-
-        if self.campaign.status not in (
-            Campaign.STOPPING,
-            Campaign.STOPPED,
-            Campaign.PAUSED,
-            Campaign.STARTING,
-        ):
-            if not success and self.campaign.status not in (
-                Campaign.STOPPED,
-                Campaign.STOPPING,
-            ):
-                campaign_delay = 3600
-
-            if not campaign_delay:
-                campaign_delay = self.get_random_delay(duration)
-
-            hours, remainder = divmod(campaign_delay, 3600)
-            minutes, seconds = divmod(remainder, 60)
-
-            self.campaign.status = Campaign.IDLE
-            self.campaign.next_runtime = timezone.now() + datetime.timedelta(
-                seconds=campaign_delay
-            )
-            self.campaign.save(update_fields=["status", "next_runtime"])
-            self.logger.info(
-                f"Campaign will start back up in {round(hours)} hours {round(minutes)} minutes and {round(seconds)} seconds"
-            )
-
-    def reset_ip(self):
-        reset_success = self.proxy.reset_ip()
-
-        if reset_success:
-            self.logger.info(reset_success)
-            time.sleep(20)
-            return True
-
-        self.logger.info(f"Could not reset IP. Sending campaign to the end of the line")
-
-        self.campaign.status = Campaign.STARTING
-        self.campaign.queue_status = "Unknown"
-        self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
-        self.campaign.save(update_fields=["status", "queue_status", "next_runtime"])
-
-        return False
-
-    async def register(self, list_items):
-        ws_endpoint = self.runtime_details["ws_endpoint"]
-        width = self.runtime_details["width"]
-        height = self.runtime_details["height"]
-        async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
-            start_time = time.perf_counter()
-            user_info = self.campaign.posh_user.user_info
-            user_info["profile_picture"] = self.campaign.posh_user.get_profile_picture()
-
-            try:
-                username = await client.register(user_info)
-
-                update_fields = ["is_registered"]
-                if username != user_info["username"]:
-                    octo_client = OctoAPIClient()
-                    octo_client.update_profile(
-                        self.campaign.posh_user.octo_uuid, title=username
-                    )
-                    self.campaign.posh_user.username = username
-                    update_fields.append("username")
-
-                self.campaign.posh_user.is_registered = True
-                await self.campaign.posh_user.asave()
-                await client.finish_registration(user_info)
-                os.remove(user_info["profile_picture"])
-                end_time = time.perf_counter()
-
-                time_to_register = datetime.timedelta(
-                    seconds=round(end_time - start_time)
+            posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
+            if username != details["username"]:
+                octo_client = OctoAPIClient()
+                octo_client.update_profile(
+                    details["octo_details"]["uuid"], title=username
                 )
-                self.logger.info(f"Time to register user: {time_to_register}")
-                self.campaign.posh_user.time_to_register = time_to_register
-                await self.campaign.posh_user.asave(update_fields=["time_to_register"])
+                posh_user.update(username=username, is_registered=True)
+            else:
+                posh_user.update(is_registered=True)
+            await client.finish_registration(details)
 
-                if list_items:
-                    success = await self.list_items(client)
-                    campaign_status = Campaign.PAUSED
-                else:
-                    success = True
-                    campaign_status = Campaign.IDLE
+        except LoginOrRegistrationError as e:
+            logger.error(e)
 
-            except LoginOrRegistrationError as e:
-                success = False
-                self.logger.error(e)
-                error_str = str(e)
-                if "form__error" in error_str:
-                    self.logger.warning("Stopping campaign and setting user inactive")
-                    self.campaign.posh_user.is_active = False
-                    await self.campaign.posh_user.asave(update_fields=["is_active"])
+            if "form__error" in str(e):
+                logger.warning(f"Setting user {details['username']} inactive")
+                posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
+                posh_user.update(
+                    is_active_in_posh=False, datetime_disabled=timezone.now()
+                )
 
-                campaign_status = Campaign.STOPPING
-            except Exception as e:
-                success = False
-                self.logger.exception(e, exc_info=True)
-                self.logger.info("Restarting campaign due to error")
-                campaign_status = Campaign.STARTING
-
-        self.campaign.status = campaign_status
-        self.campaign.queue_status = "Unknown"
-        self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
-        await self.campaign.asave(
-            update_fields=["status", "queue_status", "next_runtime"]
-        )
-
-        return success
-
-    async def _list_items(self, client):
-        self.logger.info("delete_me: listing item")
-        items_to_list = ListedItem.objects.filter(
-            posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
-        ).select_related("listing")
-        async for item_to_list in items_to_list:
-            self.logger.info(f"delete_me: listing item  - {item_to_list}")
-            user_info = self.campaign.posh_user.user_info
-            item_info = item_to_list.item_info
-            item_info["photos"] = await item_to_list.get_images()
-            start_time = time.time()
+    @staticmethod
+    async def list_items(client: PoshmarkClient, details: Dict, logger: logging.Logger):
+        for item_to_list in details["items"]:
             try:
-                listed_item = await client.list_item(user_info, item_info)
-                end_time = time.time()
-                time_to_list = datetime.timedelta(seconds=round(end_time - start_time))
-
-                self.logger.info(f"Time to list item: {time_to_list}")
-                self.logger.info(f"Listed item ID: {listed_item['listing_id']}")
-
-                item_to_list.listed_item_id = listed_item["listing_id"]
-                item_to_list.time_to_list = time_to_list
-                item_to_list.status = ListedItem.UNDER_REVIEW
-                item_to_list.datetime_listed = timezone.now()
-                await item_to_list.asave(
-                    update_fields=[
-                        "time_to_list",
-                        "status",
-                        "datetime_listed",
-                        "listed_item_id",
-                    ]
+                listed_item = await client.list_item(details["user_info"], item_to_list)
+                item_to_list_obj = ListedItem.objects.get(id=item_to_list["id"])
+                item_to_list_obj.aupdate(
+                    status=ListedItem.UNDER_REVIEW,
+                    listed_item_id=listed_item["listing_id"],
+                    datetime_listed=timezone.now(),
                 )
 
             except UserDisabledError as e:
-                self.logger.error(e)
-                self.logger.warning("Stopping campaign.")
-
-                self.campaign.status = Campaign.STOPPING
-                self.campaign.queue_status = "N/A"
-                self.campaign.next_runtime = None
-                await self.campaign.asave(
-                    update_fields=["status", "queue_status", "next_runtime"]
+                logger.error(e)
+                posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
+                posh_user.update(
+                    is_active_in_posh=False, datetime_disabled=timezone.now()
                 )
 
-                return False
-
-        return True
-
-    async def list_items(self, client=None):
-        if client:
-            item_listed = await self._list_items(client)
-        else:
-            ws_endpoint = self.runtime_details["ws_endpoint"]
-            width = self.runtime_details["width"]
-            height = self.runtime_details["height"]
-            async with PoshmarkClient(
-                ws_endpoint, width, height, self.logger
-            ) as client:
-                item_listed = await self._list_items(client)
-
-        if not item_listed and self.campaign.status == Campaign.RUNNING:
-            self.logger.info("Did not list successfully. Restarting campaign.")
-
-            self.campaign.status = Campaign.STARTING
-            self.campaign.queue_status = "Unknown"
-            self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
-            await self.campaign.asave(
-                update_fields=["status", "queue_status", "next_runtime"]
-            )
-        else:
-            all_items = ListedItem.objects.filter(
-                posh_user=self.campaign.posh_user, status=ListedItem.UP
-            )
-
-            if await all_items.acount() == 0:
-                self.campaign.status = Campaign.PAUSED
-                await self.campaign.asave(update_fields=["status"])
-
-        return item_listed
-
-    async def share_and_more(self):
-        # profile_updated = self.campaign.posh_user.profile_updated
-        ws_endpoint = self.runtime_details["ws_endpoint"]
-        width = self.runtime_details["width"]
-        height = self.runtime_details["height"]
-        listing_shared = None
-        user_info = self.campaign.posh_user.user_info
-        async with PoshmarkClient(ws_endpoint, width, height, self.logger) as client:
-            # TODO: Implement the below
-            # if not profile_updated:
-            #     await client.update_profile(update_profile_retries)
-            #
-            #     self.campaign.posh_user.profile_updated = True
-            #     self.campaign.posh_user.save(update_fields=["profile_updated"])
-
-            # Follow like and share randomly
-            random_number = random.random()
-            if random_number < 0.5:
-                await client.like_follow_share(user_info)
-
-            # TODO: Implement the below
-            # Get a list of listed item IDs the user has listed
-            # user_listed_item_ids = ListedItem.objects.filter(
-            #     posh_user=self.campaign.posh_user
-            # ).values_list("listed_item_id", flat=True)
-            #
-            # # Get a list of reported item IDs by the given posh_user
-            # reported_item_ids = ListedItemReport.objects.filter(
-            #     posh_user=self.campaign.posh_user
-            # ).values_list("listed_item_to_report__listed_item_id", flat=True)
-            #
-            # excluded_items = user_listed_item_ids.union(reported_item_ids)
-            #
-            # # Get a random unreported item by the given posh_user
-            # unreported_items = ListedItemToReport.objects.exclude(
-            #     listed_item_id__in=excluded_items
-            # )
-            #
-            # if unreported_items:
-            #     unreported_item = random.choice(unreported_items)
-            #
-            #     reported = client.report_listing(
-            #         unreported_item.listed_item_id, unreported_item.report_type
-            #     )
-            #
-            #     if reported:
-            #         ListedItemReport.objects.create(
-            #             posh_user=self.campaign.posh_user,
-            #             listed_item_to_report=unreported_item,
-            #         )
-            #     elif reported is False:
-            #         # unreported_items.delete()
-            #         pass
-            #
-
-            shareable_listings = (
-                ListedItem.objects.filter(
-                    posh_user=self.campaign.posh_user, status=ListedItem.UP
-                )
-                .exclude(listed_item_id="")
-                .select_related("listing")
-            )
-
-            if await shareable_listings.aexists():
-                async for shareable_listing in shareable_listings:
-                    try:
-                        await client.share_listing(
-                            user_info, shareable_listing.listed_item_id
-                        )
-                    except (ListingNotFoundError, ShareError) as e:
-                        self.logger.warning(e)
-
-                    if random.random() < 0.20:
-                        self.logger.info(
-                            "Seeing if it is time to send offers to likers"
-                        )
-                        now = timezone.now()
-                        nine_pm = datetime.datetime(
-                            year=now.year,
-                            month=now.month,
-                            day=now.day,
-                            hour=2,
-                            minute=0,
-                            second=0,
-                        ).replace(tzinfo=pytz.utc)
-                        midnight = nine_pm + datetime.timedelta(hours=3)
-
-                        if nine_pm < now < midnight:
-                            try:
-                                offer = int(
-                                    shareable_listing.listing.listing_price * 0.9
-                                )
-                                await client.send_offers_to_likers(
-                                    user_info, shareable_listing.listed_item_id, offer
-                                )
-                            except (NoLikesError, ListingNotFoundError) as e:
-                                self.logger.warning(e)
-                        else:
-                            self.logger.info(
-                                f"Not the time to send offers to likers. Current Time: {now.astimezone(pytz.timezone('US/Eastern')).strftime('%I:%M %p')} Eastern"
-                            )
-                    if random.random() < 0.20:
-                        if shareable_listing.listing:
-                            lowest_price = shareable_listing.listing.lowest_price
-                        else:
-                            lowest_price = self.campaign.lowest_price
-                        try:
-                            await client.check_offers(
-                                user_info,
-                                shareable_listing.listed_item_id,
-                                lowest_price,
-                            )
-                        except (NoActiveOffersError, ListingNotFoundError) as e:
-                            self.logger.warning(e)
-
-                    bad_phrases = BadPhrase.objects.all()
-                    bad_phrases = [
-                        {"word": phrase.phrase, "report_type": phrase.report_type}
-                        async for phrase in bad_phrases
-                    ]
-                    try:
-                        await client.check_comments(
-                            user_info, shareable_listing.listed_item_id, bad_phrases
-                        )
-                    except ListingNotFoundError as e:
-                        self.logger.warning(e)
-                return True
-            else:
-                timeframe = timezone.now() - datetime.timedelta(hours=24)
-                all_listed_items = ListedItem.objects.filter(
-                    posh_user=self.campaign.posh_user
-                )
-                reserved_listed_items = await all_listed_items.filter(
-                    status=ListedItem.RESERVED
-                ).aexists()
-                under_review_listed_items = await all_listed_items.filter(
-                    status=ListedItem.UNDER_REVIEW
-                ).aexists()
-                removed_listed_items = await all_listed_items.filter(
-                    datetime_removed__gte=timeframe
-                ).aexists()
-                sold_listed_items = await all_listed_items.filter(
-                    datetime_sold__gte=timeframe
-                ).aexists()
-                if reserved_listed_items:
-                    self.logger.info(
-                        "This user has no shareable listings but has some reserved. Setting delay to an hour."
-                    )
-
-                    return False
-                elif under_review_listed_items:
-                    self.logger.info(
-                        "This user has no shareable listings but has some under review. Pausing campaign"
-                    )
-
-                    self.campaign.status = Campaign.PAUSED
-                    self.campaign.next_runtime = None
-                    await self.campaign.asave()
-
-                    return False
-                elif removed_listed_items:
-                    self.logger.info(
-                        "Only removed listings within the last 24 hours. Stopping campaign"
-                    )
-
-                    self.campaign.status = Campaign.STOPPING
-                    self.campaign.next_runtime = None
-                    await self.campaign.asave()
-
-                    return False
-                elif sold_listed_items:
-                    self.logger.info(
-                        "Only sold listings within the last 24 hours. Stopping campaign"
-                    )
-
-                    self.campaign.status = Campaign.STOPPING
-                    self.campaign.next_runtime = None
-                    await self.campaign.asave()
-
-                    return False
-                else:
-                    return True
-
-    def on_failure(self, exc, task_id, args, kwargs, einfo):
-        exc_type, exc_value, exc_traceback = einfo.exc_info
-        self.logger.error(f"Campaign failed due to {exc_type}: {exc_value}")
-        self.logger.debug(traceback.format_exc())
-
-        if type(exc) in (SoftTimeLimitExceeded, TimeLimitExceeded):
-            self.logger.warning(
-                "Campaign ended because it exceeded the run time allowed"
-            )
-        elif isinstance(exc, ProfileStartError) and "Profile is already started" in str(
-            exc
-        ):
-            octo_client = OctoAPIClient()
-            self.logger.info(f"Active profiles: {octo_client.get_active_profiles()}")
-            profile_uuid = str(exc).split(",")[-1]
-            self.logger.warning(
-                f"Profile {profile_uuid} already running force stopping..."
-            )
-            octo_client.stop_profile(profile_uuid)
-
-        if self.campaign.status not in (Campaign.STOPPING, Campaign.STOPPED):
-            self.logger.info(
-                "Campaign was sent to the end of the line and will start soon"
-            )
-            self.campaign.status = Campaign.STARTING
-            self.campaign.next_runtime = timezone.now() + datetime.timedelta(seconds=60)
-            self.campaign.queue_status = "Unknown"
-            self.campaign.save(update_fields=["status", "next_runtime", "queue_status"])
-
-        self.finalize_campaign(False, None, 0)
-
-    def run(
-        self,
-        campaign_id,
-        proxy_id=None,
-        *args,
-        **kwargs,
+    @staticmethod
+    async def share_listings(
+        client: PoshmarkClient, details: Dict, logger: logging.Logger
     ):
-        self.campaign = (
-            Campaign.objects.filter(id=campaign_id).select_related("posh_user").first()
+        for item_to_share in details["items"]:
+            try:
+                await client.share_listing(details["user_info"], item_to_share)
+            except (ListingNotFoundError, ShareError) as e:
+                logger.warning(e)
+
+    @staticmethod
+    async def check_comments(
+        client: PoshmarkClient, details: Dict, logger: logging.Logger
+    ):
+        for item_to_check_comments in details["items"]:
+            try:
+                await client.check_comments(
+                    details["user_info"], item_to_check_comments, details["bad_phrases"]
+                )
+            except ListingNotFoundError as e:
+                logger.warning(e)
+
+    @staticmethod
+    async def send_offers(
+        client: PoshmarkClient, details: Dict, logger: logging.Logger
+    ):
+        for item_to_send_offers in details["items"]:
+            try:
+                await client.send_offers_to_likers(
+                    details["user_info"],
+                    item_to_send_offers["listing_id"],
+                    item_to_send_offers["offer"],
+                )
+            except (NoLikesError, ListingNotFoundError) as e:
+                logger.warning(e)
+
+    @staticmethod
+    async def check_offers(
+        client: PoshmarkClient, details: Dict, logger: logging.Logger
+    ):
+        for item_to_check_offers in details["items"]:
+            try:
+                await client.check_offers(
+                    details["user_info"],
+                    item_to_check_offers["listing_id"],
+                    item_to_check_offers["lowest_price"],
+                )
+            except (NoActiveOffersError, ListingNotFoundError) as e:
+                logger.warning(e)
+
+    async def run(self, task_blueprint: Dict, proxy: Union[Dict, None] = None):
+        task_start_time = time.perf_counter()
+        campaign = await Campaign.objects.aget(id=task_blueprint["campaign_id"])
+        campaign.aupdate(status=Campaign.RUNNING, next_runtime=timezone.now())
+
+        if proxy:
+            proxy_obj = await Proxy.objects.aget(id=proxy["id"])
+            proxy_obj.aupdate(checkout_time=timezone.now())
+
+        octo_profile_details = task_blueprint["octo_details"]
+        octo_profile_details = await self.get_octo_profile(proxy, octo_profile_details)
+        runtime_details = await self.start_profile(octo_profile_details)
+
+        logger = logging.getLogger(__name__)
+        ws_endpoint = runtime_details["ws_endpoint"]
+        width = runtime_details["width"]
+        height = runtime_details["height"]
+        async with PoshmarkClient(ws_endpoint, width, height, logger) as client:
+            actions = task_blueprint["actions"]
+            for action_name, action_details in actions.items():
+                action_method = getattr(self, action_name)
+                start_time = time.perf_counter()
+                await action_method(client, action_details, logger)
+                end_time = time.perf_counter()
+                elapsed_time = end_time - start_time
+                logger.info(
+                    f"Time to {action_name} for {action_details['user_info']['username']}: {elapsed_time}"
+                )
+        task_end_time = time.perf_counter()
+        total_runtime = task_start_time - task_end_time
+
+        delay = task_blueprint["delay"] - total_runtime
+
+        if not delay:
+            delay = task_blueprint["delay"]
+
+        next_runtime = timezone.now() + datetime.timedelta(seconds=delay)
+
+        campaign.aupdate(status=Campaign.IDLE, next_runtime=next_runtime)
+        logger.info(
+            f"Time to finish_task for {action_details['user_info']['username']}: {total_runtime}. Starting back up in {delay} seconds"
         )
-        self.logger = logging.getLogger(__name__)
-        self.proxy_id = proxy_id
-        self.proxy = None
-        campaign_delay = None
-        campaign_init = self.init_campaign()
-
-        if campaign_init["status"]:
-            self.logger.info(
-                f"Campaign, {self.campaign.title}, started for {self.campaign.posh_user.username}"
-            )
-
-            self.runtime_details = self.get_runtime_details()
-
-            self.campaign.status = Campaign.RUNNING
-            self.campaign.queue_status = "N/A"
-            self.campaign.save(update_fields=["status", "queue_status"])
-
-            need_to_list = ListedItem.objects.filter(
-                posh_user=self.campaign.posh_user, status=ListedItem.NOT_LISTED
-            ).exists()
-
-            start_time = time.time()
-
-            if self.proxy and not self.campaign.posh_user.is_registered:
-                self.logger.info("Registering user")
-                success = asyncio.run(self.register(list_items=need_to_list))
-            elif self.proxy and need_to_list:
-                self.logger.info("Listing item")
-                success = asyncio.run(self.list_items())
-            elif self.campaign.posh_user.is_registered and self.campaign.mode in (
-                Campaign.ADVANCED_SHARING,
-                Campaign.BASIC_SHARING,
-            ):
-                self.logger.info("Sharing and more")
-                success = asyncio.run(self.share_and_more())
-            else:
-                self.logger.info("Seems there is nothing to do")
-                success = False
-
-            end_time = time.time()
-            duration = end_time - start_time
-
-            self.finalize_campaign(success, campaign_delay, duration)
-        else:
-            self.logger.info(
-                f'Campaign could not be initiated due to the following issues {", ".join(campaign_init["errors"])}'
-            )
-
-            if self.campaign.status != Campaign.STARTING:
-                self.campaign.status = Campaign.STOPPING
-                self.campaign.save(update_fields=["status"])
-
-            self.check_proxy_in()
-
-        self.logger.info("Campaign ended")
 
 
 class ManageCampaignsTask(Task):
@@ -728,30 +311,31 @@ class ManageCampaignsTask(Task):
 
                 seconds_since_start = current_time - start_time
 
-                if seconds_since_start > CampaignTask.soft_time_limit + 30:
+                if seconds_since_start > PoshmarkTask.soft_time_limit + 30:
                     response = octo_client.stop_profile(profile["uuid"])
                     self.logger.debug(f"Stopping profile {profile['uuid']}: {response}")
         except ConnectionError:
             self.logger.error("Error while connecting to octo endpoint")
 
-    def get_available_proxy(self):
+    def get_available_proxies(self) -> List[Proxy]:
         bad_checkout_time = timezone.now() - datetime.timedelta(
-            seconds=CampaignTask.soft_time_limit
+            seconds=PoshmarkTask.soft_time_limit
         )
         proxies = Proxy.objects.filter(is_active=True).filter(
             Q(checked_out_by__isnull=True) | Q(checkout_time__lte=bad_checkout_time)
         )
+        available_proxies = []
 
         for proxy in proxies:
             if not proxy.checked_out_by:
-                return proxy
+                available_proxies.append(proxy)
 
             runtime = (
                 (timezone.now() - proxy.checkout_time).total_seconds()
                 if proxy.checkout_time
                 else None
             )
-            if not runtime or runtime > CampaignTask.soft_time_limit * 1.5:
+            if not runtime or runtime > PoshmarkTask.soft_time_limit + 30:
                 try:
                     campaign = Campaign.objects.get(id=proxy.checked_out_by)
 
@@ -769,7 +353,9 @@ class ManageCampaignsTask(Task):
                     self.logger.warning("Campaign does not exist. Checking in.")
                     proxy.check_in()
 
-    def start_campaign(self, campaign, proxy=None):
+        return available_proxies
+
+    def run(self, *args, **kwargs):
         try:
             octo_client = OctoAPIClient()
             octo_client.check_username()
@@ -780,92 +366,52 @@ class ManageCampaignsTask(Task):
             self.logger.error("Error while connecting to octo endpoint")
             return False
 
-        if proxy:
-            try:
-                proxy.check_out(campaign.id)
-
-                campaign.status = Campaign.IN_QUEUE
-                campaign.queue_status = "N/A"
-
-                campaign.save(update_fields=["status", "queue_status"])
-
-                CampaignTask.delay(campaign.id, proxy_id=proxy.id)
-                self.logger.info(
-                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy.license_id} proxy"
-                )
-
-                return True
-            except ValueError:
-                self.logger.warning(f"Proxy: {proxy} already in use")
-
-                return False
-        else:
-            campaign.status = Campaign.IN_QUEUE
-            campaign.queue_status = "N/A"
-            campaign.save(update_fields=["status", "queue_status"])
-
-            CampaignTask.delay(campaign.id)
-
-            self.logger.info(
-                f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with no device and no proxy"
-            )
-
-            return True
-
-    def run(self, *args, **kwargs):
         now = timezone.now()
-        campaigns = Campaign.objects.filter(
-            Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING])
-            & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))
-        ).order_by("next_runtime")
+        campaigns = (
+            Campaign.objects.filter(
+                Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING])
+                & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))
+            )
+            .order_by("next_runtime")
+            .select_related("posh_user")
+        )
         queue_num = 1
-        check_for_proxy = True
 
         self.inspect_active_profiles()
+        available_proxies = self.get_available_proxies()
 
         for campaign in campaigns:
-            campaign_started = False
-            available_proxy = None
+            # If campaign has been running for too long just reset it so it runs again
+            max_runtime = campaign.next_runtime + datetime.timedelta(
+                seconds=PoshmarkTask.soft_time_limit + 60
+            )
+            if now > max_runtime:
+                campaign.update(next_runtime=now, status=Campaign.STARTING)
+                continue
 
-            need_to_list = ListedItem.objects.filter(
-                posh_user=campaign.posh_user, status=ListedItem.NOT_LISTED
-            ).exists()
+            task_blueprint = campaign.posh_user.task_blueprints
+            register_or_list = (
+                "register" in task_blueprint["actions"]
+                or "list_items" in task_blueprint["actions"]
+            )
+            if register_or_list and available_proxies:
+                proxy = available_proxies.pop()
+                proxy.check_out(campaign.id)
 
-            if (
-                campaign.posh_user
-                and check_for_proxy
-                and (need_to_list or not campaign.posh_user.is_registered)
-            ):
-                available_proxy = self.get_available_proxy()
-
-            if (
-                campaign.status == Campaign.STOPPING
-                or not campaign.posh_user
-                or not campaign.posh_user.is_active
-                or not campaign.posh_user.is_active_in_posh
-            ):
-                campaign.status = Campaign.STOPPED
-                campaign.queue_status = "N/A"
-                campaign.next_runtime = None
-
-                campaign.save(update_fields=["status", "queue_status", "next_runtime"])
-            elif campaign.status == Campaign.IDLE and campaign.next_runtime is not None:
-                campaign_started = self.start_campaign(campaign, available_proxy)
-            elif campaign.status == Campaign.STARTING and (
-                available_proxy
-                or (not need_to_list and campaign.posh_user.is_registered)
-            ):
-                campaign_started = self.start_campaign(campaign, available_proxy)
-
-            if (not campaign_started and campaign.status == Campaign.STARTING) or (
-                not available_proxy and campaign.status == Campaign.STARTING
-            ):
-                campaign.queue_status = str(queue_num)
-                campaign.save(update_fields=["queue_status"])
+                campaign.update(status=Campaign.IN_QUEUE, queue_status="N/A")
+                PoshmarkTask.delay(task_blueprint, proxy.proxy_info)
+                self.logger.info(
+                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy} proxy"
+                )
+            elif register_or_list and not available_proxies:
+                campaign.update(status=Campaign.STARTING, queue_status=str(queue_num))
                 queue_num += 1
-
-                if check_for_proxy:
-                    check_for_proxy = False
+            elif not register_or_list and task_blueprint["actions"]:
+                campaign.update(status=Campaign.IN_QUEUE, queue_status="N/A")
+                PoshmarkTask.delay(task_blueprint)
+                self.logger.info(
+                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username}"
+                )
 
         try:
             redis_client = caches["default"].client.get_client()
@@ -1117,8 +663,10 @@ class CheckPoshUsers(Task):
                         pass
 
                     posh_user.is_active_in_posh = False
-                    posh_user.date_disabled = timezone.now().date()
-                    posh_user.save(update_fields=["is_active_in_posh", "date_disabled"])
+                    posh_user.datetime_disabled = timezone.now()
+                    posh_user.save(
+                        update_fields=["is_active_in_posh", "datetime_disabled"]
+                    )
 
                     for listed_item in listed_items:
                         listed_item.status = ListedItem.REMOVED
@@ -1133,18 +681,18 @@ class CheckPoshUsers(Task):
             pass
 
 
-CampaignTask = app.register_task(CampaignTask())
+PoshmarkTask = app.register_task(PoshmarkTask())
 ManageCampaignsTask = app.register_task(ManageCampaignsTask())
 CheckPoshUsers = app.register_task(CheckPoshUsers())
 
 
 @shared_task
 def posh_user_cleanup():
-    month_ago = (timezone.now() - datetime.timedelta(days=30)).date()
+    month_ago = timezone.now() - datetime.timedelta(days=30)
 
     # Get all posh_users who have been inactive for at least a day
     posh_users = PoshUser.objects.filter(
-        is_active=False, date_disabled__lt=month_ago
+        is_active=False, datetime_disabled__lt=month_ago
     ).exclude(
         listeditem__status__in=(
             ListedItem.SOLD,
@@ -1223,12 +771,13 @@ def send_support_emails():
 
 @shared_task
 def profile_cleanup():
-    timeframe = (timezone.now() - datetime.timedelta(hours=12)).date()
+    timeframe = timezone.now() - datetime.timedelta(hours=12)
 
     # Get all posh_users who have been inactive in posh within the timeframe and are ready to delete
     posh_users = (
         PoshUser.objects.filter(
-            Q(is_active_in_posh=False) | Q(is_active=False), date_disabled__lt=timeframe
+            Q(is_active_in_posh=False) | Q(is_active=False),
+            datetime_disabled__lt=timeframe,
         )
         .exclude(listeditem__status=ListedItem.REDEEMED_PENDING)
         .exclude(octo_uuid="")

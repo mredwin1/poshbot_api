@@ -96,6 +96,7 @@ class Proxy(models.Model):
     @property
     def proxy_info(self):
         info = {
+            "id": self.id,
             "title": f"{self.vendor} {self.external_id}",
             "type": self.type,
             "port": self.port,
@@ -200,7 +201,7 @@ class Proxy(models.Model):
         self.save(update_fields=["checked_out_by", "checkout_time"])
 
     def __str__(self):
-        return self.external_id
+        return f"{self.vendor} {self.external_id}"
 
 
 class User(AbstractUser):
@@ -383,10 +384,12 @@ class PoshUser(models.Model):
         """
 
         shared_info = {
-            "posh_user_id": self.id,
-            "is_registered": self.is_registered,
-            "username": self.username,
-            "password": self.password,
+            "user_info": {
+                "posh_user_id": self.id,
+                "is_registered": self.is_registered,
+                "username": self.username,
+                "password": self.password,
+            }
         }
         octo_details = {
             "title": self.username,
@@ -496,8 +499,13 @@ class PoshUser(models.Model):
         for action_details in actions.values():
             action_details.update(shared_info)
 
+        delay_lower_bound = max(
+            0, int(self.campaign.delay * 60 - (self.campaign.delay * 60 * 0.3))
+        )
+        delay_upper_bound = self.campaign.delay * 60 + (self.campaign.delay * 60 * 0.3)
         task_blueprint = {
             "campaign_id": self.campaign.id,
+            "delay": random.uniform(delay_lower_bound, delay_upper_bound),
             "octo_details": octo_details,
             "actions": actions,
         }
