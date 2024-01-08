@@ -152,9 +152,12 @@ class PoshmarkTask(Task):
                 octo_client.update_profile(
                     details["octo_details"]["uuid"], title=username
                 )
-                posh_user.update(username=username, is_registered=True)
+                posh_user.username = username
+                posh_user.is_registered = True
+                posh_user.save(update_fields=["username", "is_registered"])
             else:
-                posh_user.update(is_registered=True)
+                posh_user.is_registered = True
+                posh_user.save(update_fields=["is_registered"])
             await client.finish_registration(details)
 
         except LoginOrRegistrationError as e:
@@ -163,9 +166,9 @@ class PoshmarkTask(Task):
             if "form__error" in str(e):
                 logger.warning(f"Setting user {details['username']} inactive")
                 posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
-                posh_user.update(
-                    is_active_in_posh=False, datetime_disabled=timezone.now()
-                )
+                posh_user.is_active_in_posh = False
+                posh_user.datetime_disabled = timezone.now()
+                posh_user.save(update_fields=["is_active_in_posh", "datetime_disabled"])
 
     @staticmethod
     async def list_items(client: PoshmarkClient, details: Dict, logger: logging.Logger):
@@ -182,9 +185,9 @@ class PoshmarkTask(Task):
             except UserDisabledError as e:
                 logger.error(e)
                 posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
-                posh_user.update(
-                    is_active_in_posh=False, datetime_disabled=timezone.now()
-                )
+                posh_user.is_active_in_posh = False
+                posh_user.datetime_disabled = timezone.now()
+                posh_user.save(update_fields=["is_active_in_posh", "datetime_disabled"])
 
     @staticmethod
     async def share_listings(
@@ -388,9 +391,10 @@ class ManageCampaignsTask(Task):
                 or not campaign.posh_user.is_active
                 or not campaign.posh_user.is_active_in_posh
             ):
-                campaign.update(
-                    status=Campaign.STOPPED, queue_status="N/A", next_runtime=None
-                )
+                campaign.status = Campaign.STOPPED
+                campaign.queue_status = "N/A"
+                campaign.next_runtime = None
+                campaign.save(update_fields=["status", "queue_status", "next_runtime"])
                 continue
 
             # If campaign has been running for too long just reset it so it runs again
@@ -398,7 +402,10 @@ class ManageCampaignsTask(Task):
                 seconds=PoshmarkTask.soft_time_limit + 60
             )
             if now > max_runtime:
-                campaign.update(next_runtime=now, status=Campaign.STARTING)
+                campaign.status = Campaign.STARTING
+                campaign.queue_status = "CALCULATING"
+                campaign.next_runtime = now
+                campaign.save(update_fields=["status", "queue_status", "next_runtime"])
                 continue
 
             task_blueprint = campaign.posh_user.task_blueprint
@@ -413,7 +420,9 @@ class ManageCampaignsTask(Task):
                     self.logger.info(ip_reset)
                     proxy.check_out(campaign.id)
 
-                    campaign.update(status=Campaign.IN_QUEUE, queue_status="N/A")
+                    campaign.status = Campaign.IN_QUEUE
+                    campaign.queue_status = "N/A"
+                    campaign.save(update_fields=["status", "queue_status"])
                     PoshmarkTask.delay(task_blueprint, proxy.proxy_info)
                     self.logger.info(
                         f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy} proxy"
@@ -421,10 +430,14 @@ class ManageCampaignsTask(Task):
                 else:
                     self.logger.warning(f"Could not reset IP: {ip_reset}")
             elif register_or_list and not available_proxies:
-                campaign.update(status=Campaign.STARTING, queue_status=str(queue_num))
+                campaign.status = Campaign.STARTING
+                campaign.queue_status = str(queue_num)
+                campaign.save(update_fields=["status", "queue_status"])
                 queue_num += 1
             elif not register_or_list and task_blueprint["actions"]:
-                campaign.update(status=Campaign.IN_QUEUE, queue_status="N/A")
+                campaign.status = Campaign.IN_QUEUE
+                campaign.queue_status = "N/A"
+                campaign.save(update_fields=["status", "queue_status"])
                 PoshmarkTask.delay(task_blueprint)
                 self.logger.info(
                     f"Campaign Started: {campaign.title} for {campaign.posh_user.username}"
@@ -448,22 +461,31 @@ class ManageCampaignsTask(Task):
                     self.logger.info(
                         f"{campaign.posh_user} has nothing to do but a listing under review. Pausing campaign."
                     )
-                    campaign.update(
-                        status=Campaign.PAUSED, next_runtime=None, queue_status="N/A"
+                    campaign.status = Campaign.PAUSED
+                    campaign.next_runtime = None
+                    campaign.queue_status = "N/A"
+                    campaign.save(
+                        update_fields=["status", "next_runtime", "queue_status"]
                     )
                 elif removed_listed_items:
                     self.logger.info(
                         f"{campaign.posh_user} has nothing to do and only removed listings in the last 24 hours. Stopping campaign."
                     )
-                    campaign.update(
-                        status=Campaign.STOPPING, next_runtime=None, queue_status="N/A"
+                    campaign.status = Campaign.STOPPING
+                    campaign.next_runtime = None
+                    campaign.queue_status = "N/A"
+                    campaign.save(
+                        update_fields=["status", "next_runtime", "queue_status"]
                     )
                 elif sold_listed_items:
                     self.logger.info(
                         f"{campaign.posh_user} has nothing to do and only sold listings in the last 24 hours. Stopping campaign."
                     )
-                    campaign.update(
-                        status=Campaign.STOPPING, next_runtime=None, queue_status="N/A"
+                    campaign.status = Campaign.STOPPING
+                    campaign.next_runtime = None
+                    campaign.queue_status = "N/A"
+                    campaign.save(
+                        update_fields=["status", "next_runtime", "queue_status"]
                     )
 
         try:
