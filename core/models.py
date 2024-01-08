@@ -378,15 +378,16 @@ class PoshUser(models.Model):
 
     @property
     def task_blueprint(self) -> Dict:
+        """
+        Property to return a task blueprint containing shared info and actions and their details.
+        """
+
         shared_info = {
             "posh_user_id": self.id,
             "is_registered": self.is_registered,
             "username": self.username,
             "password": self.password,
         }
-        """
-        Property to return a task blueprint containing shared info and actions and their details.
-        """
         octo_details = {
             "title": self.username,
             "uuid": self.octo_uuid,
@@ -397,89 +398,100 @@ class PoshUser(models.Model):
         }
         actions = {}
 
-        # Registration
-        if not self.is_registered:
-            actions["register"] = {
-                "first_name": self.first_name,
-                "last_name": self.last_name,
-                "email": self.email,
-                "username": self.username,
-                "password": self.password,
-                "gender": self.gender,
-                "registered": self.is_registered,
-                "zipcode": self.postcode,
-                "profile_picture": self.profile_picture_path,
-            }
+        if self.is_active_in_posh:
+            # Registration
+            if not self.is_registered:
+                actions["register"] = {
+                    "first_name": self.first_name,
+                    "last_name": self.last_name,
+                    "email": self.email,
+                    "username": self.username,
+                    "password": self.password,
+                    "gender": self.gender,
+                    "registered": self.is_registered,
+                    "zipcode": self.postcode,
+                    "profile_picture": self.profile_picture_path,
+                }
 
-        # Sharing, sending offers, check offers, and check comments
-        items_to_list = ListedItem.objects.filter(
-            posh_user=self, status=ListedItem.NOT_LISTED
-        )
-        if items_to_list.exists():
-            item_details = []
-
-            for item in items_to_list:
-                item_details.append(item.item_info)
-
-            actions["list_items"] = {"items": item_details}
-
-        listed_items_up = ListedItem.objects.filter(
-            posh_user=self, status=ListedItem.UP
-        ).select_related("listing")
-        if listed_items_up.exists():
-            user_timezone = ZoneInfo(self.user.timezone)
-            now = datetime.datetime.now(user_timezone)
-
-            # Time for 9 PM and midnight
-            nine_pm = datetime.time(21, 0)
-            midnight = datetime.time(0, 0)
-            item_share_details = []
-            item_send_offer_details = []
-            item_check_offer_details = []
-            item_check_comments_details = []
-
-            # Iterate through all listed items that are up
-            for listed_item in listed_items_up:
-                item_share_details.append(listed_item.listed_item_id)
-                item_check_comments_details.append(listed_item.listed_item_id)
-
-                if nine_pm < now.time() < midnight and random.random() < 0.2:
-                    item_send_offer_details.append(
-                        {
-                            "listing_id": listed_item.listed_item_id,
-                            "offer": int(listed_item.listing.listing_price * 0.9),
-                        }
+            # Create listed items if necessary (THIS IS TEMPORARY AND NEEDS TO BE REMOVED)
+            listings = Listing.objects.filter(campaign__posh_user=self)
+            for listing in listings:
+                try:
+                    ListedItem.objects.get(posh_user=self, listing=listing)
+                except ListedItem.DoesNotExist:
+                    ListedItem.objects.create(
+                        posh_user=self, listing=listing, listing_title=listing.title
                     )
 
-                if random.random() < 0.2:
-                    item_check_offer_details.append(
-                        {
-                            "listing_id": listed_item.listed_item_id,
-                            "lowest_price": listed_item.listing.lowest_price,
-                        }
-                    )
+            # Sharing, sending offers, check offers, and check comments
+            items_to_list = ListedItem.objects.filter(
+                posh_user=self, status=ListedItem.NOT_LISTED
+            )
+            if items_to_list.exists():
+                item_details = []
 
-            # Create a list of bad phrases to report
-            bad_phrases = BadPhrase.objects.all()
-            bad_phrases = [
-                {"word": phrase.phrase, "report_type": phrase.report_type}
-                for phrase in bad_phrases
-            ]
+                for item in items_to_list:
+                    item_details.append(item.item_info)
 
-            actions["share_listings"] = {"items": item_share_details}
-            actions["check_comments"] = {
-                "bad_phrases": bad_phrases,
-                "items": item_check_comments_details,
-            }
+                actions["list_items"] = {"items": item_details}
 
-            if item_send_offer_details:
-                actions["send_offers"] = {"items": item_send_offer_details}
+            listed_items_up = ListedItem.objects.filter(
+                posh_user=self, status=ListedItem.UP
+            ).select_related("listing")
+            if listed_items_up.exists():
+                user_timezone = ZoneInfo(self.user.timezone)
+                now = datetime.datetime.now(user_timezone)
 
-            if item_check_offer_details:
-                actions["check_offers"] = {"items": item_check_offer_details}
+                # Time for 9 PM and midnight
+                nine_pm = datetime.time(21, 0)
+                midnight = datetime.time(0, 0)
+                item_share_details = []
+                item_send_offer_details = []
+                item_check_offer_details = []
+                item_check_comments_details = []
 
-        if random.random() < 0.5:
-            actions["like_follow_share"] = {"count": random.randint(5, 10)}
+                # Iterate through all listed items that are up
+                for listed_item in listed_items_up:
+                    item_share_details.append(listed_item.listed_item_id)
+                    item_check_comments_details.append(listed_item.listed_item_id)
+
+                    if nine_pm < now.time() < midnight and random.random() < 0.2:
+                        item_send_offer_details.append(
+                            {
+                                "listing_id": listed_item.listed_item_id,
+                                "offer": int(listed_item.listing.listing_price * 0.9),
+                            }
+                        )
+
+                    if random.random() < 0.2:
+                        item_check_offer_details.append(
+                            {
+                                "listing_id": listed_item.listed_item_id,
+                                "lowest_price": listed_item.listing.lowest_price,
+                            }
+                        )
+
+                # Create a list of bad phrases to report
+                bad_phrases = BadPhrase.objects.all()
+                bad_phrases = [
+                    {"word": phrase.phrase, "report_type": phrase.report_type}
+                    for phrase in bad_phrases
+                ]
+
+                actions["share_listings"] = {"items": item_share_details}
+                actions["check_comments"] = {
+                    "bad_phrases": bad_phrases,
+                    "items": item_check_comments_details,
+                }
+
+                if item_send_offer_details:
+                    actions["send_offers"] = {"items": item_send_offer_details}
+
+                if item_check_offer_details:
+                    actions["check_offers"] = {"items": item_check_offer_details}
+
+            if random.random() < 0.5:
+                actions["like_follow_share"] = {"count": random.randint(5, 10)}
 
         # Add shared info to all action details
         for action_details in actions.values():

@@ -255,26 +255,6 @@ class CampaignViewSet(
         serializer = self.get_serializer(campaign)
 
         if campaign.posh_user and campaign.posh_user.is_active_in_posh:
-            campaign_listings = Listing.objects.filter(campaign__id=campaign.id)
-            items_to_list = []
-
-            for campaign_listing in campaign_listings:
-                try:
-                    listed_item = ListedItem.objects.get(
-                        posh_user=campaign.posh_user, listing=campaign_listing
-                    )
-                    if listed_item.status == ListedItem.NOT_LISTED:
-                        items_to_list.append(campaign_listing)
-
-                except ListedItem.DoesNotExist:
-                    item_to_list = ListedItem(
-                        posh_user=campaign.posh_user,
-                        listing=campaign_listing,
-                        listing_title=campaign_listing.title,
-                    )
-                    item_to_list.save()
-                    items_to_list.append(item_to_list)
-
             campaign.status = Campaign.STARTING
             campaign.next_runtime = datetime.datetime.utcnow().replace(tzinfo=pytz.utc)
             campaign.queue_status = "CALCULATING"
