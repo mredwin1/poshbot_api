@@ -300,7 +300,7 @@ class PoshmarkTask(Task):
         campaign.status = Campaign.IDLE
         campaign.next_runtime = next_runtime
         campaign.save(update_fields=["status", "next_runtime"])
-        username = task_blueprint["actions"].values()[0]["user_info"]["username"]
+        username = list(task_blueprint["actions"].values())[0]["user_info"]["username"]
         logger.info(
             f"Time to finish_task for {username}: {total_runtime}. Starting back up in {delay} seconds"
         )
