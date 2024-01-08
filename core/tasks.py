@@ -154,10 +154,10 @@ class PoshmarkTask(Task):
                 )
                 posh_user.username = username
                 posh_user.is_registered = True
-                posh_user.save(update_fields=["username", "is_registered"])
+                await posh_user.asave(update_fields=["username", "is_registered"])
             else:
                 posh_user.is_registered = True
-                posh_user.save(update_fields=["is_registered"])
+                await posh_user.asave(update_fields=["is_registered"])
             await client.finish_registration(details)
 
         except LoginOrRegistrationError as e:
@@ -168,15 +168,17 @@ class PoshmarkTask(Task):
                 posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
                 posh_user.is_active_in_posh = False
                 posh_user.datetime_disabled = timezone.now()
-                posh_user.save(update_fields=["is_active_in_posh", "datetime_disabled"])
+                await posh_user.asave(
+                    update_fields=["is_active_in_posh", "datetime_disabled"]
+                )
 
     @staticmethod
     async def list_items(client: PoshmarkClient, details: Dict, logger: logging.Logger):
         for item_to_list in details["items"]:
             try:
                 listed_item = await client.list_item(details["user_info"], item_to_list)
-                item_to_list_obj = ListedItem.objects.get(id=item_to_list["id"])
-                item_to_list_obj.aupdate(
+                item_to_list_obj = ListedItem.objects.aget(id=item_to_list["id"])
+                await item_to_list_obj.aupdate(
                     status=ListedItem.UNDER_REVIEW,
                     listed_item_id=listed_item["listing_id"],
                     datetime_listed=timezone.now(),
@@ -187,7 +189,9 @@ class PoshmarkTask(Task):
                 posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
                 posh_user.is_active_in_posh = False
                 posh_user.datetime_disabled = timezone.now()
-                posh_user.save(update_fields=["is_active_in_posh", "datetime_disabled"])
+                await posh_user.asave(
+                    update_fields=["is_active_in_posh", "datetime_disabled"]
+                )
 
     @staticmethod
     async def share_listings(
@@ -242,7 +246,9 @@ class PoshmarkTask(Task):
     async def run(self, task_blueprint: Dict, proxy: Union[Dict, None] = None):
         task_start_time = time.perf_counter()
         campaign = await Campaign.objects.aget(id=task_blueprint["campaign_id"])
-        campaign.aupdate(status=Campaign.RUNNING, next_runtime=timezone.now())
+        campaign.status = Campaign.RUNNING
+        campaign.next_runtime = timezone.now()
+        await campaign.asave(update_fields=["status", "next_runtime"])
 
         if proxy:
             proxy_obj = await Proxy.objects.aget(id=proxy["id"])
@@ -277,7 +283,9 @@ class PoshmarkTask(Task):
 
         next_runtime = timezone.now() + datetime.timedelta(seconds=delay)
 
-        campaign.aupdate(status=Campaign.IDLE, next_runtime=next_runtime)
+        campaign.status = Campaign.IDLE
+        campaign.next_runtime = next_runtime
+        campaign.asave(update_fields=["status", "next_runtime"])
         logger.info(
             f"Time to finish_task for {action_details['user_info']['username']}: {total_runtime}. Starting back up in {delay} seconds"
         )
