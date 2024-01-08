@@ -1,4 +1,3 @@
-import aiohttp
 import datetime
 import json
 import logging
@@ -9,12 +8,10 @@ import requests
 import smtplib
 import ssl
 import time
-import traceback
 
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
 from celery.beat import Scheduler
-from celery.exceptions import TimeLimitExceeded, SoftTimeLimitExceeded
 from decimal import Decimal
 from django.core.cache import caches
 from django.db.models import Q
@@ -32,7 +29,6 @@ from chrome_clients.errors import (
     ShareError,
     ListingNotFoundError,
     NoLikesError,
-    ProfileStartError,
     NotLoggedInError,
     NoActiveOffersError,
 )
@@ -45,7 +41,6 @@ from .models import (
     ListedItem,
     PaymentEmailContent,
     Proxy,
-    BadPhrase,
 )
 
 
@@ -396,13 +391,18 @@ class ManageCampaignsTask(Task):
             )
             if register_or_list and available_proxies:
                 proxy = available_proxies.pop()
-                proxy.check_out(campaign.id)
+                ip_reset = proxy.reset_ip()
+                if ip_reset:
+                    self.logger.info(ip_reset)
+                    proxy.check_out(campaign.id)
 
-                campaign.update(status=Campaign.IN_QUEUE, queue_status="N/A")
-                PoshmarkTask.delay(task_blueprint, proxy.proxy_info)
-                self.logger.info(
-                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy} proxy"
-                )
+                    campaign.update(status=Campaign.IN_QUEUE, queue_status="N/A")
+                    PoshmarkTask.delay(task_blueprint, proxy.proxy_info)
+                    self.logger.info(
+                        f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy} proxy"
+                    )
+                else:
+                    self.logger.warning(f"Could not reset IP: {ip_reset}")
             elif register_or_list and not available_proxies:
                 campaign.update(status=Campaign.STARTING, queue_status=str(queue_num))
                 queue_num += 1
