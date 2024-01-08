@@ -33,6 +33,7 @@ django-redis = "*"
 pyppeteer = "*"
 2captcha-python = "*"
 python-ghost-cursor = "*"
+gevent = "*"
 
 [dev-packages]
 

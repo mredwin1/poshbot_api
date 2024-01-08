@@ -590,6 +590,8 @@ Resources:
             - !GetAtt GeneralQueue.QueueName
             - '-l'
             - 'INFO'
+            - '-P'
+            - 'gevent'
           RepositoryCredentials:
             CredentialsParameter:
               Fn::ImportValue: !Sub '${GlobalResourcesStackName}:PackageRegistryCredentials'
