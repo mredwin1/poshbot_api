@@ -643,16 +643,24 @@ class PoshmarkClient(BasePuppeteerClient):
 
             return True
 
-    async def logged_in(self, username: str) -> bool:
-        await self.page.goto("https://poshmark.com")
-        if "/feed" in self.page.url:
-            if await self.is_present(".user-image"):
-                profile_pic = await self.find(".user-image")
-                profile_pic_alt_property = await profile_pic.getProperty("alt")
-                profile_pic_alt = await profile_pic_alt_property.jsonValue()
+    async def _get_username(self):
+        username = ""
+        if await self.is_present(".user-image"):
+            profile_pic = await self.find(".user-image")
+            profile_pic_alt_property = await profile_pic.getProperty("alt")
+            username = await profile_pic_alt_property.jsonValue()
 
-                if profile_pic_alt == username:
-                    return True
+        return username
+
+    async def logged_in(self, username: str) -> bool:
+        current_username = await self._get_username()
+        if not current_username:
+            await self.page.goto("https://poshmark.com", waitUntil="domcontentloaded")
+            if "/feed" in self.page.url:
+                current_username = await self._get_username()
+
+        if current_username == username:
+            return True
 
         return False
 
@@ -1065,7 +1073,10 @@ class PoshmarkClient(BasePuppeteerClient):
             retries = 0
 
             while not shared and retries < 3:
-                await self.go_to_closet(username)
+                if not await self.is_present(
+                    'div[data-et-prop-listing_id="{listing_id}"].social-action-bar__share'
+                ):
+                    await self.go_to_closet(username)
 
                 # Click share button
                 try:
@@ -1120,9 +1131,10 @@ class PoshmarkClient(BasePuppeteerClient):
         self, user_info: Dict, listing_id: str, offer: int
     ) -> None:
         try:
-            username = user_info["username"]
-            await self.go_to_listing(username, listing_id)
-            await self.sleep(1, 1.6)
+            if not await self.is_present('button[data-et-name="price_drop"]'):
+                username = user_info["username"]
+                await self.go_to_listing(username, listing_id)
+                await self.sleep(1, 1.6)
 
             # Click price drop button
             await self.click(selector='button[data-et-name="price_drop"]')
@@ -1163,9 +1175,10 @@ class PoshmarkClient(BasePuppeteerClient):
         self, user_info: Dict, listing_id: str, lowest_price: int
     ) -> None:
         try:
-            await self.page.goto(
-                f"https://poshmark.com/posts/{listing_id}/active_offers?pageName=ACTIVE_OFFERS&pageType=new"
-            )
+            if not await self.is_present(".active-offers__content"):
+                await self.page.goto(
+                    f"https://poshmark.com/posts/{listing_id}/active_offers?pageName=ACTIVE_OFFERS&pageType=new"
+                )
 
             if await self.is_present(".active-offers__content__empty-image"):
                 raise NoActiveOffersError("No active offers")
@@ -1282,7 +1295,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 "Harassment": "Harassment",
             }
 
-            await self.go_to_listing(user_info["username"], listing_id)
+            if not await self.is_present(".comment-item__container"):
+                await self.go_to_listing(user_info["username"], listing_id)
 
             # Select all comment elements
             try:
