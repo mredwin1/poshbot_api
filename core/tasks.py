@@ -401,7 +401,7 @@ class ManageCampaignsTask(Task):
                 campaign.update(next_runtime=now, status=Campaign.STARTING)
                 continue
 
-            task_blueprint = campaign.posh_user.task_blueprints
+            task_blueprint = campaign.posh_user.task_blueprint
             register_or_list = (
                 "register" in task_blueprint["actions"]
                 or "list_items" in task_blueprint["actions"]
