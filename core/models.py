@@ -466,10 +466,15 @@ class PoshUser(models.Model):
                         )
 
                     if random.random() < 0.2:
+                        lowest_price = (
+                            listed_item.listing.lowest_price
+                            if listed_item.listing
+                            else self.campaign.lowest_price
+                        )
                         item_check_offer_details.append(
                             {
                                 "listing_id": listed_item.listed_item_id,
-                                "lowest_price": listed_item.listing.lowest_price,
+                                "lowest_price": lowest_price,
                             }
                         )
 
