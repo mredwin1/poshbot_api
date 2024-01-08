@@ -364,8 +364,13 @@ class ManageCampaignsTask(Task):
         now = timezone.now()
         campaigns = (
             Campaign.objects.filter(
-                Q(status__in=[Campaign.STOPPING, Campaign.IDLE, Campaign.STARTING])
-                & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))
+                status__in=(
+                    Campaign.STOPPING,
+                    Campaign.IDLE,
+                    Campaign.STARTING,
+                    Campaign.RUNNING,
+                    Campaign.IN_QUEUE,
+                )
             )
             .order_by("next_runtime")
             .select_related("posh_user")
@@ -376,6 +381,18 @@ class ManageCampaignsTask(Task):
         available_proxies = self.get_available_proxies()
 
         for campaign in campaigns:
+            if (
+                campaign.status == Campaign.STOPPING
+                or not campaign.next_runtime
+                or not campaign.posh_user
+                or not campaign.posh_user.is_active
+                or not campaign.posh_user.is_active_in_posh
+            ):
+                campaign.update(
+                    status=Campaign.STOPPED, queue_status="N/A", next_runtime=None
+                )
+                continue
+
             # If campaign has been running for too long just reset it so it runs again
             max_runtime = campaign.next_runtime + datetime.timedelta(
                 seconds=PoshmarkTask.soft_time_limit + 60
@@ -412,6 +429,42 @@ class ManageCampaignsTask(Task):
                 self.logger.info(
                     f"Campaign Started: {campaign.title} for {campaign.posh_user.username}"
                 )
+            elif not task_blueprint["actions"]:
+                timeframe = timezone.now() - datetime.timedelta(hours=24)
+                all_listed_items = ListedItem.objects.filter(
+                    posh_user=campaign.posh_user
+                )
+                under_review_listed_items = all_listed_items.filter(
+                    status=ListedItem.UNDER_REVIEW
+                ).exists()
+                removed_listed_items = all_listed_items.filter(
+                    datetime_removed__gte=timeframe
+                ).exists()
+                sold_listed_items = all_listed_items.filter(
+                    datetime_sold__gte=timeframe
+                ).exists()
+
+                if under_review_listed_items:
+                    self.logger.info(
+                        f"{campaign.posh_user} has nothing to do but a listing under review. Pausing campaign."
+                    )
+                    campaign.update(
+                        status=Campaign.PAUSED, next_runtime=None, queue_status="N/A"
+                    )
+                elif removed_listed_items:
+                    self.logger.info(
+                        f"{campaign.posh_user} has nothing to do and only removed listings in the last 24 hours. Stopping campaign."
+                    )
+                    campaign.update(
+                        status=Campaign.STOPPING, next_runtime=None, queue_status="N/A"
+                    )
+                elif sold_listed_items:
+                    self.logger.info(
+                        f"{campaign.posh_user} has nothing to do and only sold listings in the last 24 hours. Stopping campaign."
+                    )
+                    campaign.update(
+                        status=Campaign.STOPPING, next_runtime=None, queue_status="N/A"
+                    )
 
         try:
             redis_client = caches["default"].client.get_client()
