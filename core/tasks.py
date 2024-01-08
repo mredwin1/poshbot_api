@@ -1,3 +1,4 @@
+import asyncio
 import datetime
 import json
 import logging
@@ -76,9 +77,7 @@ class PoshmarkTask(Task):
         self.time_limit = 800
 
     @staticmethod
-    async def get_octo_profile(
-        proxy: Union[Dict, None], octo_details: Union[Dict, None]
-    ):
+    def get_octo_profile(proxy: Union[Dict, None], octo_details: Union[Dict, None]):
         octo_client = OctoAPIClient()
         proxy_uuid = ""
 
@@ -125,7 +124,7 @@ class PoshmarkTask(Task):
         return profile
 
     @staticmethod
-    async def start_profile(profile: Dict):
+    def start_profile(profile: Dict):
         octo_client = OctoAPIClient()
         width, height = map(
             int, profile["fingerprint"]["screen"].split(" ")[0].split("x")
@@ -243,27 +242,11 @@ class PoshmarkTask(Task):
             except (NoActiveOffersError, ListingNotFoundError) as e:
                 logger.warning(e)
 
-    async def run(self, task_blueprint: Dict, proxy: Union[Dict, None] = None):
-        task_start_time = time.perf_counter()
-        campaign = await Campaign.objects.aget(id=task_blueprint["campaign_id"])
-        campaign.status = Campaign.RUNNING
-        campaign.next_runtime = timezone.now()
-        await campaign.asave(update_fields=["status", "next_runtime"])
-
-        if proxy:
-            proxy_obj = await Proxy.objects.aget(id=proxy["id"])
-            proxy_obj.aupdate(checkout_time=timezone.now())
-
-        octo_profile_details = task_blueprint["octo_details"]
-        octo_profile_details = await self.get_octo_profile(proxy, octo_profile_details)
-        runtime_details = await self.start_profile(octo_profile_details)
-
-        logger = logging.getLogger(__name__)
+    async def _run(self, actions: Dict, runtime_details: Dict, logger: logging.Logger):
         ws_endpoint = runtime_details["ws_endpoint"]
         width = runtime_details["width"]
         height = runtime_details["height"]
         async with PoshmarkClient(ws_endpoint, width, height, logger) as client:
-            actions = task_blueprint["actions"]
             for action_name, action_details in actions.items():
                 action_method = getattr(self, action_name)
                 start_time = time.perf_counter()
@@ -273,6 +256,33 @@ class PoshmarkTask(Task):
                 logger.info(
                     f"Time to {action_name} for {action_details['user_info']['username']}: {elapsed_time}"
                 )
+
+    def run(self, task_blueprint: Dict, proxy: Union[Dict, None] = None):
+        task_start_time = time.perf_counter()
+        campaign = Campaign.objects.get(id=task_blueprint["campaign_id"])
+        campaign.status = Campaign.RUNNING
+        campaign.next_runtime = timezone.now()
+        campaign.save(update_fields=["status", "next_runtime"])
+
+        if proxy:
+            proxy_obj = Proxy.objects.get(id=proxy["id"])
+            proxy_obj.checkout_time = timezone.now()
+            proxy_obj.save(update_fields=["checkout_time"])
+
+        octo_profile_details = task_blueprint["octo_details"]
+        octo_profile_details = self.get_octo_profile(proxy, octo_profile_details)
+        runtime_details = self.start_profile(octo_profile_details)
+        logger = logging.getLogger(__name__)
+
+        # Run event loop here and call self._run()
+        loop = asyncio.get_event_loop()
+        try:
+            loop.run_until_complete(
+                self._run(task_blueprint["actions"], runtime_details, logger)
+            )
+        except Exception as e:
+            logger.error(f"Error during task execution: {e}")
+
         task_end_time = time.perf_counter()
         total_runtime = task_start_time - task_end_time
 
@@ -287,7 +297,7 @@ class PoshmarkTask(Task):
         campaign.next_runtime = next_runtime
         campaign.asave(update_fields=["status", "next_runtime"])
         logger.info(
-            f"Time to finish_task for {action_details['user_info']['username']}: {total_runtime}. Starting back up in {delay} seconds"
+            f"Time to finish_task for {task_blueprint['actions'][0]['user_info']['username']}: {total_runtime}. Starting back up in {delay} seconds"
         )
 
 
