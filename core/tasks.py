@@ -108,7 +108,7 @@ class PoshmarkTask(Task):
                 profile_uuid = octo_client.create_profile(
                     octo_details["title"],
                     octo_details["tags"],
-                    proxy_uuid=octo_details["uuid"],
+                    proxy_uuid=proxy_uuid,
                 )
             else:
                 profile_uuid = octo_client.create_profile(
