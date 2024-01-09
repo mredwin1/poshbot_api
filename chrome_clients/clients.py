@@ -107,12 +107,14 @@ class OctoAPIClient:
         return json_response["data"]
 
     def create_tag(self, tag_name: str) -> None:
+        print(f"Tag name: {tag_name}")
         response = requests.post(
             f"{self.octo_api}/tags",
             headers=self._octo_api_headers,
             json={"name": tag_name},
         )
         json_response = response.json()
+        print(json_response)
 
         return json_response["data"]["uuid"]
 
