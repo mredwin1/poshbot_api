@@ -1369,39 +1369,33 @@ class PoshmarkClient(BasePuppeteerClient):
             ]
             chosen_feed = random.choice(feeds)
 
-            listings = []
-            retries = 1
+            if chosen_feed not in self.page.url:
+                await self.page.goto(
+                    f"https://poshmark.com/{chosen_feed}",
+                    waitUntil="networkidle2",
+                    timeout=30000,
+                )
+            else:
+                await self.page.reload(
+                    waitUntil="networkidle2",
+                    timeout=30000,
+                )
 
-            while not listings and retries < 3:
-                try:
-                    if chosen_feed not in self.page.url:
-                        await self.page.goto(
-                            f"https://poshmark.com/{chosen_feed}",
-                            waitUntil="networkidle2",
-                            timeout=30000,
-                        )
-                    else:
-                        await self.page.reload(
-                            waitUntil="networkidle2",
-                            timeout=30000,
-                        )
+            await self.sleep(3, 4)
 
-                    await self.sleep(3, 4)
+            if await self.is_present('button[data-et-name="see_all_listings"]'):
+                await self.click(selector='button[data-et-name="see_all_listings"]')
 
-                    if await self.is_present('button[data-et-name="see_all_listings"]'):
-                        await self.click(
-                            selector='button[data-et-name="see_all_listings"]'
-                        )
+            try:
+                listings = await self.find_all(".card")
 
-                    listings = await self.find_all(".card")
-                except TimeoutError:
-                    pass
-
-                retries += 1
-
-            if not listings:
+                if not listings:
+                    await self.save_screenshot("screenshots", "listings_no_load.png")
+                    self.logger.warning(f"Could not find listings.")
+                    return
+            except TimeoutError:
                 await self.save_screenshot("screenshots", "listings_no_load.png")
-                self.logger.warning(f"Could not find listings after {retries} attempts")
+                self.logger.warning(f"Could not find listings. Timeout")
                 return
 
             listings_to_action: List[ElementHandle] = random.sample(
