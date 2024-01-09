@@ -94,6 +94,7 @@ class PoshmarkTask(Task):
                         proxy_differences[key] = value
 
                 if proxy_differences:
+                    print(proxy_differences)
                     proxy = octo_client.update_proxy(
                         current_proxy["uuid"], proxy_differences
                     )
@@ -539,7 +540,9 @@ class ManageCampaignsTask(Task):
                         f"{campaign.posh_user} has nothing to do right now. Seting to sleep for {task_blueprint['delay']}."
                     )
                     campaign.status = Campaign.IDLE
-                    campaign.next_runtime = now + datetime.timedelta(seconds=task_blueprint['delay'])
+                    campaign.next_runtime = now + datetime.timedelta(
+                        seconds=task_blueprint["delay"]
+                    )
                     campaign.queue_status = "N/A"
                     campaign.save(
                         update_fields=["status", "next_runtime", "queue_status"]
