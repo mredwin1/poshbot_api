@@ -141,10 +141,11 @@ class PoshmarkTask(Task):
 
     @staticmethod
     async def register(client: PoshmarkClient, details: Dict, logger: logging.Logger):
+        posh_user_id = details["user_info"]["posh_user_id"]
         try:
             username = await client.register(details)
 
-            posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
+            posh_user = await PoshUser.objects.aget(id=posh_user_id)
             if username != details["username"]:
                 octo_client = OctoAPIClient()
                 octo_client.update_profile(
@@ -163,7 +164,7 @@ class PoshmarkTask(Task):
 
             if "form__error" in str(e):
                 logger.warning(f"Setting user {details['username']} inactive")
-                posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
+                posh_user = await PoshUser.objects.aget(id=posh_user_id)
                 posh_user.is_active_in_posh = False
                 posh_user.datetime_disabled = timezone.now()
                 await posh_user.asave(
@@ -183,8 +184,9 @@ class PoshmarkTask(Task):
                     update_fields=["status", "listed_item_id", "datetime_listed"]
                 )
             except UserDisabledError as e:
+                posh_user_id = details["user_info"]["posh_user_id"]
                 logger.error(e)
-                posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
+                posh_user = await PoshUser.objects.aget(id=posh_user_id)
                 posh_user.is_active_in_posh = False
                 posh_user.datetime_disabled = timezone.now()
                 await posh_user.asave(
