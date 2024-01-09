@@ -415,6 +415,10 @@ class BasePuppeteerClient:
                         self.logger.warning(
                             "Timed out waiting for navigation after click"
                         )
+                    else:
+                        self.logger.warning(
+                            "Some other exception occurred while performing click"
+                        )
 
         else:
             await self.cursor.click(element, wait_for_click=random.randint(100, 200))
