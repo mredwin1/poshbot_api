@@ -1400,6 +1400,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 retries += 1
 
             if not listings:
+                await self.save_screenshot("screenshots", "listings_no_load.png")
                 self.logger.warning(f"Could not find listings after {retries} attempts")
                 return
 
