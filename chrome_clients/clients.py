@@ -200,8 +200,6 @@ class OctoAPIClient:
         )
         json_response = response.json()
 
-        print(json_response)
-
         if "error" in json_response:
             raise ProfileStartError(f'{json_response["error"]},{uuid}')
 
