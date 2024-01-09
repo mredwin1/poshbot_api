@@ -80,7 +80,7 @@ class PoshmarkTask(Task):
     @staticmethod
     def get_octo_profile(proxy: Union[Dict, None], octo_details: Union[Dict, None]):
         octo_client = OctoAPIClient()
-        proxy_uuid = ""
+        proxy_uuid = None
 
         if proxy is not None:
             proxies = octo_client.get_proxies(external_id=proxy["external_id"])
@@ -104,16 +104,11 @@ class PoshmarkTask(Task):
             proxy_uuid = proxy["uuid"]
 
         if not octo_details.get("uuid"):
-            if proxy:
-                profile_uuid = octo_client.create_profile(
-                    octo_details["title"],
-                    octo_details["tags"],
-                    proxy_uuid=proxy_uuid,
-                )
-            else:
-                profile_uuid = octo_client.create_profile(
-                    octo_details["title"], octo_details["tags"]
-                )
+            profile_uuid = octo_client.create_profile(
+                octo_details["title"],
+                octo_details["tags"],
+                proxy_uuid=proxy_uuid,
+            )
             profile = octo_client.get_profile(profile_uuid)
 
         else:
