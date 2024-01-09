@@ -1438,7 +1438,9 @@ class PoshmarkClient(BasePuppeteerClient):
                         profile, waitUntil="domcontentloaded", timeout=10000
                     )
                 except TimeoutError:
-                    self.logger.warning(f"Timeout while going to {profile}. Attempting to click follow button...")
+                    self.logger.warning(
+                        f"Timeout while going to {profile}. Attempting to click follow button..."
+                    )
 
                 try:
                     await self.click(selector='button[data-et-name="follow_user"]')
