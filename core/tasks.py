@@ -90,11 +90,8 @@ class PoshmarkTask(Task):
 
                 proxy_differences = {}
                 for key, value in proxy.items():
-                    try:
-                        if value != current_proxy[key]:
-                            proxy_differences[key] = value
-                    except KeyError:
-                        pass
+                    if value != current_proxy[key]:
+                        proxy_differences[key] = value
 
                 if proxy_differences:
                     proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
@@ -275,7 +272,8 @@ class PoshmarkTask(Task):
         campaign.save(update_fields=["status", "next_runtime"])
 
         if proxy:
-            proxy_obj = Proxy.objects.get(id=proxy["id"])
+            proxy_id = proxy.pop("id")
+            proxy_obj = Proxy.objects.get(id=proxy_id)
             proxy_obj.checkout_time = timezone.now()
             proxy_obj.save(update_fields=["checkout_time"])
 
