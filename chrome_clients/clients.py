@@ -910,7 +910,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 raise UserDisabledError("User disabled")
 
             # Send item images
-            await self.upload_file('input[name="img-file-input"]', *item_info["photos"])
+            await self.upload_file('input[name="img-file-input"]', *item_info["images"])
             await self.sleep(1, 2)
 
             await self.click(selector='button[data-et-name="apply"]')
