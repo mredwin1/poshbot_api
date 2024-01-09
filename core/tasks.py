@@ -289,19 +289,14 @@ class PoshmarkTask(Task):
         task_end_time = time.perf_counter()
         total_runtime = task_end_time - task_start_time
 
-        delay = task_blueprint["delay"] - total_runtime
-
-        if delay < 0:
-            delay = task_blueprint["delay"]
-
-        next_runtime = timezone.now() + datetime.timedelta(seconds=delay)
+        next_runtime = timezone.now() + datetime.timedelta(seconds=task_blueprint["delay"])
 
         campaign.status = Campaign.IDLE
         campaign.next_runtime = next_runtime
         campaign.save(update_fields=["status", "next_runtime"])
         username = list(task_blueprint["actions"].values())[0]["user_info"]["username"]
         logger.info(
-            f"Time to finish_task for {username}: {total_runtime}. Starting back up in {delay} seconds"
+            f"Time to finish_task for {username}: {total_runtime}. Starting back up in {task_blueprint['delay']} seconds"
         )
 
 
