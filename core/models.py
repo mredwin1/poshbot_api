@@ -73,7 +73,7 @@ def path_and_rename(instance, filename):
 
 class Proxy(models.Model):
     HTTP = "http"
-    SOCKS5 = "socks"
+    SOCKS5 = "socks5"
 
     PROXY_TYPE_CHOICES = [(HTTP, HTTP), (SOCKS5, SOCKS5)]
 
@@ -104,7 +104,7 @@ class Proxy(models.Model):
             "login": self.username,
             "password": self.password,
             "external_id": self.external_id,
-            "change_ip_url": self.external_id,
+            "change_ip_url": self.change_ip_url,
         }
 
         return info
