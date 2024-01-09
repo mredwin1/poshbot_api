@@ -96,6 +96,7 @@ class OctoAPIClient:
             f"{self.octo_api}/profiles", headers=self._octo_api_headers, json=data
         )
         json_response = response.json()
+        print(json_response)
 
         return json_response["data"]["uuid"]
 
