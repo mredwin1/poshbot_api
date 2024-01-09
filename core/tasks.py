@@ -284,26 +284,7 @@ class PoshmarkTask(Task):
         runtime_details = self.start_profile(octo_profile_details)
         logger = logging.getLogger(__name__)
 
-        loop = asyncio.new_event_loop()
-        asyncio.set_event_loop(loop)
-        try:
-            loop.run_until_complete(
-                self._run(task_blueprint["actions"], runtime_details, logger)
-            )
-        except Exception as e:
-            logger.error(f"An error occurred: {e}")
-        finally:
-            pending = asyncio.all_tasks(loop)
-            for task in pending:
-                task.cancel()
-                try:
-                    loop.run_until_complete(task)
-                except asyncio.CancelledError:
-                    pass
-
-            # Shutdown async generators
-            loop.run_until_complete(loop.shutdown_asyncgens())
-            loop.close()
+        asyncio.run(self._run(task_blueprint["actions"], runtime_details, logger))
 
         task_end_time = time.perf_counter()
         total_runtime = task_end_time - task_start_time
