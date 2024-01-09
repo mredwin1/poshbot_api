@@ -176,12 +176,12 @@ class PoshmarkTask(Task):
             try:
                 listed_item = await client.list_item(details["user_info"], item_to_list)
                 item_to_list_obj = await ListedItem.objects.aget(id=item_to_list["id"])
-                await item_to_list_obj.aupdate(
-                    status=ListedItem.UNDER_REVIEW,
-                    listed_item_id=listed_item["listing_id"],
-                    datetime_listed=timezone.now(),
+                item_to_list_obj.status = ListedItem.UNDER_REVIEW
+                item_to_list_obj.listed_item_id = listed_item["listing_id"]
+                item_to_list_obj.datetime_listed = timezone.now()
+                await item_to_list_obj.asave(
+                    update_fields=["status", "listed_item_id", "datetime_listed"]
                 )
-
             except UserDisabledError as e:
                 logger.error(e)
                 posh_user = await PoshUser.objects.aget(id=details["posh_user_id"])
