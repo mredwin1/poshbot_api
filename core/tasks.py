@@ -12,7 +12,6 @@ import time
 
 from bs4 import BeautifulSoup
 from celery import shared_task, Task
-from celery.signals import task_prerun, task_postrun
 from celery.beat import Scheduler
 from decimal import Decimal
 from django.core.cache import caches
@@ -91,8 +90,11 @@ class PoshmarkTask(Task):
 
                 proxy_differences = {}
                 for key, value in proxy.items():
-                    if value != current_proxy[key]:
-                        proxy_differences[key] = value
+                    try:
+                        if value != current_proxy[key]:
+                            proxy_differences[key] = value
+                    except KeyError:
+                        pass
 
                 if proxy_differences:
                     proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
