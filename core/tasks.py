@@ -247,7 +247,9 @@ class PoshmarkTask(Task):
                 logger.warning(e)
 
     @staticmethod
-    async def like_follow_share(client: PoshmarkClient, details: Dict):
+    async def like_follow_share(
+        client: PoshmarkClient, details: Dict, logger: logging.Logger
+    ):
         await client.like_follow_share(details["user_info"])
 
     async def _run(self, actions: Dict, runtime_details: Dict, logger: logging.Logger):
