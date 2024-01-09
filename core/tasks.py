@@ -534,6 +534,16 @@ class ManageCampaignsTask(Task):
                     campaign.save(
                         update_fields=["status", "next_runtime", "queue_status"]
                     )
+                else:
+                    self.logger.info(
+                        f"{campaign.posh_user} has nothing to do right now. Seting to sleep for {task_blueprint['delay']}."
+                    )
+                    campaign.status = Campaign.IDLE
+                    campaign.next_runtime = task_blueprint['delay']
+                    campaign.queue_status = "N/A"
+                    campaign.save(
+                        update_fields=["status", "next_runtime", "queue_status"]
+                    )
 
         try:
             redis_client = caches["default"].client.get_client()
