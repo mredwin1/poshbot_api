@@ -174,8 +174,11 @@ class OctoAPIClient:
             json=data,
             headers=self._octo_api_headers,
         )
+        json_response = response.json()
 
-        return response.json()["data"]
+        print(json_response)
+
+        return json_response["data"]
 
     def get_active_profiles(self):
         active_profiles = requests.get(
