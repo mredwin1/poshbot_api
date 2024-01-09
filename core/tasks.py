@@ -94,7 +94,9 @@ class PoshmarkTask(Task):
                         proxy_differences[key] = value
 
                 if proxy_differences:
-                    proxy = octo_client.update_proxy(proxy["uuid"], proxy_differences)
+                    proxy = octo_client.update_proxy(
+                        current_proxy["uuid"], proxy_differences
+                    )
             else:
                 proxy = octo_client.create_proxy(proxy)
 
