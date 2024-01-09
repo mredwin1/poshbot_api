@@ -267,16 +267,23 @@ class PoshmarkTask(Task):
                 )
 
     def run(self, task_blueprint: Dict, proxy: Union[Dict, None] = None):
+        now = timezone.now()
         task_start_time = time.perf_counter()
         campaign = Campaign.objects.get(id=task_blueprint["campaign_id"])
         campaign.status = Campaign.RUNNING
-        campaign.next_runtime = timezone.now()
+        campaign.next_runtime = now
         campaign.save(update_fields=["status", "next_runtime"])
 
         if proxy:
             proxy_id = proxy.pop("id")
             proxy_obj = Proxy.objects.get(id=proxy_id)
-            proxy_obj.checkout_time = timezone.now()
+
+            time_since_reset = (now - proxy_obj.checkout_time).total_seconds()
+
+            if time_since_reset < 20:
+                time.sleep(20 - time_since_reset)
+
+            proxy_obj.checkout_time = now
             proxy_obj.save(update_fields=["checkout_time"])
 
         octo_profile_details = task_blueprint["octo_details"]
@@ -289,7 +296,9 @@ class PoshmarkTask(Task):
         task_end_time = time.perf_counter()
         total_runtime = task_end_time - task_start_time
 
-        next_runtime = timezone.now() + datetime.timedelta(seconds=task_blueprint["delay"])
+        next_runtime = timezone.now() + datetime.timedelta(
+            seconds=task_blueprint["delay"]
+        )
 
         campaign.status = Campaign.IDLE
         campaign.next_runtime = next_runtime
