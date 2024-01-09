@@ -175,7 +175,7 @@ class PoshmarkTask(Task):
         for item_to_list in details["items"]:
             try:
                 listed_item = await client.list_item(details["user_info"], item_to_list)
-                item_to_list_obj = ListedItem.objects.aget(id=item_to_list["id"])
+                item_to_list_obj = await ListedItem.objects.aget(id=item_to_list["id"])
                 await item_to_list_obj.aupdate(
                     status=ListedItem.UNDER_REVIEW,
                     listed_item_id=listed_item["listing_id"],
