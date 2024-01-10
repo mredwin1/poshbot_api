@@ -318,7 +318,12 @@ class PoshmarkTask(Task):
             octo_uuid = octo_profile_details.get("uuid")
             if octo_uuid:
                 octo_client = OctoAPIClient()
-                octo_client.stop_profile(octo_uuid)
+                stop_response = octo_client.stop_profile(octo_uuid)
+
+                logger.info(f"Stopped octo profile, response: {stop_response}")
+                if 'error' in stop_response and stop_response['error'] == "Profile is not started":
+                    response = octo_client.force_stop_profile(octo_uuid)
+                    logger.info(f"Force stopped octo profile, response: {response}")
 
             if proxy_id:
                 proxy_obj = Proxy.objects.get(id=proxy_id)
