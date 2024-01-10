@@ -274,6 +274,7 @@ class PoshmarkTask(Task):
         campaign.next_runtime = now
         campaign.save(update_fields=["status", "next_runtime"])
         proxy_id = None
+        proxy_obj = None
 
         if proxy:
             proxy_id = proxy.pop("id")
@@ -293,6 +294,9 @@ class PoshmarkTask(Task):
             runtime_details = self.start_profile(octo_profile_details)
 
             asyncio.run(self._run(task_blueprint["actions"], runtime_details, logger))
+
+            if proxy_obj:
+                proxy_obj.check_in()
 
             task_end_time = time.perf_counter()
             total_runtime = task_end_time - task_start_time
