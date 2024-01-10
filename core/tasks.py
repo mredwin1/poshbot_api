@@ -450,10 +450,7 @@ class ManageCampaignsTask(Task):
             max_runtime = campaign.next_runtime + datetime.timedelta(
                 seconds=PoshmarkTask.soft_time_limit + 60
             )
-            if now > max_runtime and campaign.status in (
-                Campaign.RUNNING,
-                campaign.IN_QUEUE,
-            ):
+            if now > max_runtime and campaign.status == Campaign.RUNNING:
                 campaign.status = Campaign.STARTING
                 campaign.queue_status = "CALCULATING"
                 campaign.next_runtime = now
