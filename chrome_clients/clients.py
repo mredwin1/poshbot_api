@@ -1090,12 +1090,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 # Click share button
                 try:
                     await self.click(
-                        selector=f'div[data-et-prop-listing_id="{listing_id}"].social-action-bar__share',
-                        navigation=True,
-                        navigation_options={
-                            "waitUntil": "networkidle0",
-                            "timeout": 30000,
-                        },
+                        selector=f'div[data-et-prop-listing_id="{listing_id}"].social-action-bar__share'
                     )
                 except TimeoutError:
                     raise ListingNotFoundError(
