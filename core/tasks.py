@@ -465,51 +465,8 @@ class ManageCampaignsTask(Task):
                 "register" in task_blueprint["actions"]
                 or "list_items" in task_blueprint["actions"]
             )
-            if (
-                register_or_list
-                and available_proxies
-                and campaign.status not in (Campaign.RUNNING, Campaign.IN_QUEUE)
-            ):
-                proxy = available_proxies.pop()
-                ip_reset = proxy.reset_ip()
-                if ip_reset:
-                    self.logger.info(ip_reset)
-                    proxy.check_out(campaign.id)
 
-                    campaign.status = Campaign.IN_QUEUE
-                    campaign.queue_status = "N/A"
-                    campaign.save(update_fields=["status", "queue_status"])
-                    PoshmarkTask.delay(task_blueprint, proxy.proxy_info)
-                    self.logger.info(
-                        f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy} proxy"
-                    )
-                else:
-                    self.logger.warning(f"Could not reset IP: {ip_reset}")
-            elif (
-                register_or_list
-                and not available_proxies
-                and campaign.status not in (Campaign.RUNNING, Campaign.IN_QUEUE)
-            ):
-                campaign.status = Campaign.STARTING
-                campaign.queue_status = str(queue_num)
-                campaign.save(update_fields=["status", "queue_status"])
-                queue_num += 1
-            elif (
-                not register_or_list
-                and task_blueprint["actions"]
-                and campaign.status not in (Campaign.RUNNING, Campaign.IN_QUEUE)
-            ):
-                campaign.status = Campaign.IN_QUEUE
-                campaign.queue_status = "N/A"
-                campaign.save(update_fields=["status", "queue_status"])
-                PoshmarkTask.delay(task_blueprint)
-                self.logger.info(
-                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username}"
-                )
-            elif not task_blueprint["actions"] and campaign.status not in (
-                Campaign.RUNNING,
-                Campaign.IN_QUEUE,
-            ):
+            if not task_blueprint["actions"] and campaign.status != Campaign.RUNNING:
                 timeframe = timezone.now() - datetime.timedelta(hours=24)
                 all_listed_items = ListedItem.objects.filter(
                     posh_user=campaign.posh_user
@@ -566,7 +523,43 @@ class ManageCampaignsTask(Task):
                     campaign.save(
                         update_fields=["status", "next_runtime", "queue_status"]
                     )
+            elif (
+                register_or_list
+                and available_proxies
+                and campaign.status != Campaign.RUNNING
+            ):
+                proxy = available_proxies.pop()
+                ip_reset = proxy.reset_ip()
+                if ip_reset:
+                    self.logger.info(ip_reset)
+                    proxy.check_out(campaign.id)
 
+                    campaign.status = Campaign.IN_QUEUE
+                    campaign.queue_status = "N/A"
+                    campaign.save(update_fields=["status", "queue_status"])
+                    PoshmarkTask.delay(task_blueprint, proxy.proxy_info)
+                    self.logger.info(
+                        f"Campaign Started: {campaign.title} for {campaign.posh_user.username} with {proxy} proxy"
+                    )
+                else:
+                    self.logger.warning(f"Could not reset IP: {ip_reset}")
+            elif (
+                register_or_list
+                and not available_proxies
+                and campaign.status != Campaign.RUNNING
+            ):
+                campaign.status = Campaign.STARTING
+                campaign.queue_status = str(queue_num)
+                campaign.save(update_fields=["status", "queue_status"])
+                queue_num += 1
+            elif not register_or_list and campaign.status != Campaign.RUNNING:
+                campaign.status = Campaign.IN_QUEUE
+                campaign.queue_status = "N/A"
+                campaign.save(update_fields=["status", "queue_status"])
+                PoshmarkTask.delay(task_blueprint)
+                self.logger.info(
+                    f"Campaign Started: {campaign.title} for {campaign.posh_user.username}"
+                )
         try:
             redis_client = caches["default"].client.get_client()
             redis_client.delete(f"{self.name}")
