@@ -9,7 +9,7 @@ from pyppeteer.browser import Browser
 from pyppeteer.page import Page
 from pyppeteer.element_handle import ElementHandle
 from pyppeteer.us_keyboard_layout import keyDefinitions
-from pyppeteer.errors import TimeoutError, ElementHandleError
+from pyppeteer.errors import TimeoutError
 from python_ghost_cursor.pyppeteer import create_cursor
 from twocaptcha import TwoCaptcha
 from urllib.parse import urlparse, parse_qs
@@ -379,7 +379,8 @@ class BasePuppeteerClient:
         if navigation and navigation_options is None:
             navigation_options = {"timeout": 30000}
 
-        self.logger.info(f"CLicking {selector}")
+        if isinstance(selector, str) and "//" in selector:
+            selector = await self.find(selector)
 
         # Get the bounding box of the element
         if navigation:
@@ -411,8 +412,6 @@ class BasePuppeteerClient:
                 wait_for_click=random.randint(100, 200),
                 wait_for_selector=5000,
             )
-
-        self.logger.info(f"Clicked {selector}")
 
     async def type(
         self, selector: Union[ElementHandle, str], text: str, wpm: int = 100
