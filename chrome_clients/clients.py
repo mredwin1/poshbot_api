@@ -343,56 +343,51 @@ class BasePuppeteerClient:
         except Exception:
             self.logger.warning(f"Could not save screenshot to {screenshot_path}")
 
-    async def is_present(self, selector: str, xpath: bool = False) -> bool:
+    async def is_present(self, selector: str) -> bool:
         try:
-            await self.find(selector, xpath, options={"visible": True, "timeout": 2000})
+            await self.find(selector, options={"visible": True, "timeout": 2000})
 
             return True
         except TimeoutError:
             return False
 
-    async def find(
-        self, selector: str, xpath: bool = False, options: Dict = None
-    ) -> ElementHandle:
+    async def find(self, selector: str, options: Dict = None) -> ElementHandle:
         if options is None:
             options = {"visible": True, "timeout": 5000}
 
-        if xpath:
+        if "//" in selector:
             return await self.page.waitForXPath(selector, options)
         else:
             return await self.page.waitForSelector(selector, options)
 
-    async def find_all(self, selector: str, xpath: bool = False) -> List[ElementHandle]:
+    async def find_all(self, selector: str) -> List[ElementHandle]:
         options = {"visible": True, "timeout": 5000}
 
-        if xpath:
+        if "//" in selector:
             await self.page.waitForXPath(selector, options)
             return await self.page.xpath(selector)
-
         else:
             await self.page.waitForSelector(selector, options)
             return await self.page.querySelectorAll(selector)
 
     async def click(
         self,
-        element: ElementHandle = None,
-        selector: str = "",
-        xpath: bool = False,
+        selector: Union[ElementHandle, str],
         navigation: bool = False,
         navigation_options: Dict = None,
-    ) -> ElementHandle:
+    ):
         if navigation and navigation_options is None:
             navigation_options = {"timeout": 30000}
-        if not element and selector:
-            element = await self.find(selector, xpath)
-        elif not element and not selector:
-            raise ElementHandleError("No element or selector provided")
 
         # Get the bounding box of the element
         if navigation:
             completed, _ = await asyncio.wait(
                 [
-                    self.cursor.click(element, wait_for_click=random.randint(100, 200)),
+                    self.cursor.click(
+                        selector,
+                        wait_for_click=random.randint(100, 200),
+                        wait_for_selector=5000,
+                    ),
                     self.page.waitForNavigation(navigation_options),
                 ],
             )
@@ -409,26 +404,31 @@ class BasePuppeteerClient:
                         )
 
         else:
-            await self.cursor.click(element, wait_for_click=random.randint(100, 200))
-
-        return element
+            await self.cursor.click(
+                selector,
+                wait_for_click=random.randint(100, 200),
+                wait_for_selector=5000,
+            )
 
     async def type(
-        self, selector: str, text: str, xpath: bool = False, wpm: int = 100
-    ) -> ElementHandle:
+        self, selector: Union[ElementHandle, str], text: str, wpm: int = 100
+    ) -> None:
         # Check current text before proceeding
-        element = await self.find(selector, xpath)
+        if isinstance(selector, str):
+            element = self.find(selector)
+        else:
+            element = selector
         current_text = await self.page.evaluate(
             "(element) => element.textContent", element
         )
 
         if text == current_text:
-            return element
+            return
         elif current_text != "":
             for _ in current_text:
                 await self.page.keyboard.press("Backspace")
 
-        element = await self.click(selector=selector, xpath=xpath)
+        await self.click(selector=selector)
 
         # Calculate average pause between chars
         total_duration = len(text) / (wpm * 4.5)
@@ -470,19 +470,18 @@ class BasePuppeteerClient:
 
         await self.sleep(random.random() * 2)
 
-        return element
-
     async def upload_file(
-        self, selector: str, *file_paths: str, xpath: bool = False
+        self, selector: Union[ElementHandle, str], *file_paths: str
     ) -> None:
-        element = await self.find(selector, xpath)
+        if isinstance(selector, str):
+            element = await self.find(selector)
+        else:
+            element = selector
 
         await element.uploadFile(*file_paths)
 
-    async def click_random(
-        self, selector: str, xpath: bool = False, count: int = None
-    ) -> None:
-        elements = await self.find_all(selector, xpath)
+    async def click_random(self, selector: str, count: int = None) -> None:
+        elements = await self.find_all(selector)
 
         if count is None:
             count = random.randint(0, int(len(elements) * 0.65))
@@ -490,7 +489,7 @@ class BasePuppeteerClient:
         selected_elements: List[ElementHandle] = random.choices(elements, k=count)
 
         for element in selected_elements:
-            await self.click(element=element)
+            await self.click(selector=element)
 
             await self.sleep(0.5, 0.84)
 
@@ -720,7 +719,6 @@ class PoshmarkClient(BasePuppeteerClient):
 
                 await self.click(
                     selector=f"//div[contains(@class, 'dropdown__link') and contains(text(), '{user_info['gender']}')]",
-                    xpath=True,
                 )
 
             self.logger.info(f"delete_me: register pre submit")
@@ -789,7 +787,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 try:
                     await self.click(
                         selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
-                        xpath=True,
                     )
                 except TimeoutError as e:
                     size_text = (
@@ -797,7 +794,6 @@ class PoshmarkClient(BasePuppeteerClient):
                     )
                     await self.click(
                         selector=f"//div[preceding-sibling::label[contains(text(), '{size_text}')]][@id='set-profile-info-size-dropdown']",
-                        xpath=True,
                     )
                 await self.click_random("ul.dropdown__menu--expanded > li", count=1)
 
@@ -805,7 +801,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 # Set shoe size
                 await self.click(
                     selector="//div[preceding-sibling::label[contains(text(), 'Shoe Size')]][@id='set-profile-info-size-dropdown']",
-                    xpath=True,
                 )
                 await self.click_random("ul.dropdown__menu--expanded > li", count=1)
 
@@ -831,7 +826,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 dialogue = await self.find('div[data-test="dialogue"]')
                 no_button = await dialogue.querySelector(".btn--tertiary")
                 if no_button:
-                    await self.click(element=no_button)
+                    await self.click(selector=no_button)
                     self.logger.info("Clicked not now button")
 
             self.logger.info("end finish registration")
@@ -904,7 +899,7 @@ class PoshmarkClient(BasePuppeteerClient):
             self.logger.info(f"delete_me: listing item  after nav")
 
             error_xpath = "//div[contains(@class, 'modal__body') and contains(text(), 'cannot currently perform this')]"
-            if await self.is_present(error_xpath, xpath=True):
+            if await self.is_present(error_xpath):
                 raise UserDisabledError("User disabled")
 
             # Send item images
@@ -931,15 +926,12 @@ class PoshmarkClient(BasePuppeteerClient):
             # Put in item Department, Category, and Subcategory
             await self.click(
                 selector='//*[@id="content"]/div/div[1]/div[2]/section[3]/div/div[2]/div[1]/div',
-                xpath=True,
             )
             await self.click(
                 selector=f'//a[@data-et-name="{item_info["department"].lower()}" and @data-et-on-name="category_selection"]',
-                xpath=True,
             )
             await self.click(
                 selector=f"//li[contains(@class, 'dropdown__menu__item') and contains(., '{item_info['category']}')]",
-                xpath=True,
             )
             await self.click(
                 selector=f'a[data-et-prop-content="{item_info["subcategory"]}"]'
@@ -998,7 +990,6 @@ class PoshmarkClient(BasePuppeteerClient):
                     await self.type("#customSizeInput0", item_info["size"])
                     await self.click(
                         selector='//*[@id="content"]/div/div[1]/div[2]/section[4]/div[2]/div[2]/div[1]/div/div[2]/div[2]/div/div/div[1]/ul/li/div/div/button',
-                        xpath=True,
                     )
                     await self.sleep(0.4, 0.8)
 
@@ -1148,9 +1139,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(selector='button[data-et-name="apply_offer"]')
             await self.sleep(2, 3)
 
-            await self.click(
-                selector='//button[contains(text(), "Continue")]', xpath=True
-            )
+            await self.click(selector='//button[contains(text(), "Continue")]')
         except (NoLikesError, ListingNotFoundError) as e:
             raise e
         except Exception as e:
@@ -1204,7 +1193,6 @@ class PoshmarkClient(BasePuppeteerClient):
                         await self.sleep(5)
                         await self.click(
                             selector="/html/body/div[2]/main/div[2]/div/div[2]/div[5]/div[3]/div[2]/div[3]/button[2]",
-                            xpath=True,
                         )
 
                         await self.sleep(8)
@@ -1253,7 +1241,6 @@ class PoshmarkClient(BasePuppeteerClient):
 
             await self.click(
                 selector="//div[contains(@class, 'dropdown__link') and contains(., 'Report User')]",
-                xpath=True,
             )
             await self.sleep(1, 2)
 
@@ -1261,7 +1248,6 @@ class PoshmarkClient(BasePuppeteerClient):
 
             await self.click(
                 selector=f"//div[contains(@class, 'dropdown__link') and contains(., '{report_type}')]",
-                xpath=True,
             )
 
             await self.click(selector=".btn--primary")
@@ -1330,7 +1316,6 @@ class PoshmarkClient(BasePuppeteerClient):
 
                             await self.click(
                                 selector=f"//div[contains(@class, 'dropdown__link') and contains(text(), '{report_type}')]",
-                                xpath=True,
                             )
                             await self.click(selector=".btn--primary")
 
