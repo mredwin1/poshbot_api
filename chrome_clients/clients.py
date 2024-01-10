@@ -379,6 +379,8 @@ class BasePuppeteerClient:
         if navigation and navigation_options is None:
             navigation_options = {"timeout": 30000}
 
+        self.logger.info(f"CLicking {selector}")
+
         # Get the bounding box of the element
         if navigation:
             completed, _ = await asyncio.wait(
@@ -409,6 +411,8 @@ class BasePuppeteerClient:
                 wait_for_click=random.randint(100, 200),
                 wait_for_selector=5000,
             )
+
+        self.logger.info(f"Clicked {selector}")
 
     async def type(
         self, selector: Union[ElementHandle, str], text: str, wpm: int = 100
@@ -848,7 +852,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.page.goto(
                     "https://poshmark.com", waitUntil="domcontentloaded"
                 )
-                await self.click(selector='a[href="/login"]')
+                await self.click(selector='a[href="/login"]', navigation=True)
 
             await self.type("#login_form_username_email", username)
             await self.type("#login_form_password", password)
