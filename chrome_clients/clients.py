@@ -85,7 +85,8 @@ class OctoAPIClient:
         if tags is not None:
             existing_tags = self.get_tags()
             existing_tags = [existing_tag["name"] for existing_tag in existing_tags]
-
+            print(existing_tags)
+            print(tags)
             for tag in tags:
                 if tag not in existing_tags:
                     self.create_tag(tag)
