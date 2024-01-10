@@ -32,6 +32,7 @@ from chrome_clients.errors import (
     NoLikesError,
     NotLoggedInError,
     NoActiveOffersError,
+    ProfileStartError
 )
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
@@ -265,6 +266,7 @@ class PoshmarkTask(Task):
                 )
 
     def run(self, task_blueprint: Dict, proxy: Union[Dict, None] = None):
+        logger = logging.getLogger(__name__)
         now = timezone.now()
         task_start_time = time.perf_counter()
         campaign = Campaign.objects.get(id=task_blueprint["campaign_id"])
@@ -285,26 +287,40 @@ class PoshmarkTask(Task):
             proxy_obj.save(update_fields=["checkout_time"])
 
         octo_profile_details = task_blueprint["octo_details"]
-        octo_profile_details = self.get_octo_profile(proxy, octo_profile_details)
-        runtime_details = self.start_profile(octo_profile_details)
-        logger = logging.getLogger(__name__)
+        try:
+            octo_profile_details = self.get_octo_profile(proxy, octo_profile_details)
+            runtime_details = self.start_profile(octo_profile_details)
 
-        asyncio.run(self._run(task_blueprint["actions"], runtime_details, logger))
+            asyncio.run(self._run(task_blueprint["actions"], runtime_details, logger))
 
-        task_end_time = time.perf_counter()
-        total_runtime = task_end_time - task_start_time
+            task_end_time = time.perf_counter()
+            total_runtime = task_end_time - task_start_time
 
-        next_runtime = timezone.now() + datetime.timedelta(
-            seconds=task_blueprint["delay"]
-        )
+            next_runtime = timezone.now() + datetime.timedelta(
+                seconds=task_blueprint["delay"]
+            )
 
-        campaign.status = Campaign.IDLE
-        campaign.next_runtime = next_runtime
-        campaign.save(update_fields=["status", "next_runtime"])
-        username = list(task_blueprint["actions"].values())[0]["user_info"]["username"]
-        logger.info(
-            f"Time to finish_task for {username}: {total_runtime}. Starting back up in {task_blueprint['delay']} seconds"
-        )
+            campaign.status = Campaign.IDLE
+            campaign.next_runtime = next_runtime
+            campaign.queue_status = "N/A"
+            campaign.save(update_fields=["status", "next_runtime", "queue_status"])
+            username = list(task_blueprint["actions"].values())[0]["user_info"]["username"]
+            logger.info(
+                f"Time to finish_task for {username}: {total_runtime}. Starting back up in {task_blueprint['delay']} seconds"
+            )
+        except ProfileStartError as e:
+            logger.error(e)
+            logger.info("Restarting task")
+
+            octo_uuid = octo_profile_details.get("uuid")
+            if octo_uuid:
+                octo_client = OctoAPIClient()
+                octo_client.stop_profile(octo_uuid)
+
+            campaign.status = Campaign.STARTING
+            campaign.queue_status = "CALCULATING"
+            campaign.next_runtime = now + datetime.timedelta(seconds=60)
+            campaign.save(update_fields=["status", "next_runtime", "queue_status"])
 
 
 class ManageCampaignsTask(Task):
