@@ -1178,7 +1178,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 )
 
                 if status_text.strip() == "New Counteroffer":
-                    await self.click(element=offer, navigation=True)
+                    await self.click(selector=offer, navigation=True)
 
                     chat_bubbles = await self.find_all(".chat-bubble")
                     counter_offer_locator = f'div[data-test="offer_details_offer_interaction_{len(chat_bubbles)}"]'
@@ -1393,14 +1393,14 @@ class PoshmarkClient(BasePuppeteerClient):
                 try:
                     like_button = await listing.querySelector(".like")
                     if like_button and chance < 0.5:
-                        await self.click(element=like_button)
+                        await self.click(selector=like_button)
                 except TimeoutError:
                     pass
 
                 try:
                     share_button = await listing.querySelector(".share-gray-large")
                     if share_button and chance < 0.7:
-                        await self.click(element=share_button)
+                        await self.click(selector=share_button)
                         await self.click(selector=".internal-share__link")
                         await self._handle_sharing_captcha()
 
