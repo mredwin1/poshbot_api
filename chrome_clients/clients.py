@@ -1236,7 +1236,10 @@ class PoshmarkClient(BasePuppeteerClient):
         try:
             await self.go_to_closet(username)
 
-            await self.click(".ellipses-dot")
+            if await self.is_present(".ellipses-dot"):
+                await self.click(".ellipses-dot")
+            else:
+                await self.click('div[data-et-name="more_icon"]')
 
             await self.click(
                 "//div[contains(@class, 'dropdown__link') and contains(., 'Report User')]",
