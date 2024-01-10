@@ -420,7 +420,6 @@ class ManageCampaignsTask(Task):
                         Campaign.IDLE,
                         Campaign.STARTING,
                         Campaign.RUNNING,
-                        Campaign.IN_QUEUE,
                     )
                 )
                 & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))
