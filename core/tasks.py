@@ -412,6 +412,7 @@ class ManageCampaignsTask(Task):
                     )
                     proxy.check_in()
                     campaign.status = Campaign.STARTING
+                    campaign.queue_status = "CALCULATING"
                     campaign.save()
                 except Campaign.DoesNotExist:
                     self.logger.warning("Campaign does not exist. Checking in.")
