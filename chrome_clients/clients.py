@@ -936,9 +936,7 @@ class PoshmarkClient(BasePuppeteerClient):
             await self.click(
                 f"//li[contains(@class, 'dropdown__menu__item') and contains(., '{item_info['category']}')]",
             )
-            await self.click(
-                f'a[data-et-prop-content="{item_info["subcategory"]}"]'
-            )
+            await self.click(f'a[data-et-prop-content="{item_info["subcategory"]}"]')
 
             self.logger.info(f"delete_me: selected department")
 
@@ -1213,9 +1211,7 @@ class PoshmarkClient(BasePuppeteerClient):
                         last_offer = int(last_offer_match.group(2))
                         new_offer = int(last_offer * 0.9)
 
-                        await self.click(
-                            'button[data-et-name="counter_offer"]'
-                        )
+                        await self.click('button[data-et-name="counter_offer"]')
 
                         await self.sleep(2)
 
