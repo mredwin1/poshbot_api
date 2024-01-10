@@ -273,6 +273,7 @@ class PoshmarkTask(Task):
         campaign.status = Campaign.RUNNING
         campaign.next_runtime = now
         campaign.save(update_fields=["status", "next_runtime"])
+        proxy_id = None
 
         if proxy:
             proxy_id = proxy.pop("id")
@@ -318,6 +319,10 @@ class PoshmarkTask(Task):
             if octo_uuid:
                 octo_client = OctoAPIClient()
                 octo_client.stop_profile(octo_uuid)
+
+            if proxy_id:
+                proxy_obj = Proxy.objects.get(id=proxy_id)
+                proxy_obj.check_in()
 
             campaign.status = Campaign.STARTING
             campaign.queue_status = "CALCULATING"
