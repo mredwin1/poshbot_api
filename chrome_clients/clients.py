@@ -88,7 +88,7 @@ class OctoAPIClient:
             print(existing_tags)
             print(tags)
             for tag in tags:
-                if tag not in existing_tags:
+                if tag.lower() not in existing_tags:
                     self.create_tag(tag)
 
             data["tags"] = tags
