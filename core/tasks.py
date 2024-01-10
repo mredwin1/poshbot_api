@@ -32,7 +32,7 @@ from chrome_clients.errors import (
     NoLikesError,
     NotLoggedInError,
     NoActiveOffersError,
-    ProfileStartError
+    ProfileStartError,
 )
 from email_retrieval import zke_yahoo
 from poshbot_api.celery import app
@@ -304,7 +304,9 @@ class PoshmarkTask(Task):
             campaign.next_runtime = next_runtime
             campaign.queue_status = "N/A"
             campaign.save(update_fields=["status", "next_runtime", "queue_status"])
-            username = list(task_blueprint["actions"].values())[0]["user_info"]["username"]
+            username = list(task_blueprint["actions"].values())[0]["user_info"][
+                "username"
+            ]
             logger.info(
                 f"Time to finish_task for {username}: {total_runtime}. Starting back up in {task_blueprint['delay']} seconds"
             )

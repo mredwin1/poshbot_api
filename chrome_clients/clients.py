@@ -1379,17 +1379,20 @@ class PoshmarkClient(BasePuppeteerClient):
             ]
             chosen_feed = random.choice(feeds)
 
-            if chosen_feed not in self.page.url:
-                await self.page.goto(
-                    f"https://poshmark.com/{chosen_feed}",
-                    waitUntil="networkidle2",
-                    timeout=30000,
-                )
-            else:
-                await self.page.reload(
-                    waitUntil="networkidle2",
-                    timeout=30000,
-                )
+            try:
+                if chosen_feed not in self.page.url:
+                    await self.page.goto(
+                        f"https://poshmark.com/{chosen_feed}",
+                        waitUntil="networkidle2",
+                        timeout=30000,
+                    )
+                else:
+                    await self.page.reload(
+                        waitUntil="networkidle2",
+                        timeout=30000,
+                    )
+            except TimeoutError:
+                self.logger.error(f"Timeout error while navigating to {chosen_feed}")
 
             await self.sleep(3, 4)
 
