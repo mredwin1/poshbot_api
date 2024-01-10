@@ -85,8 +85,6 @@ class OctoAPIClient:
         if tags is not None:
             existing_tags = self.get_tags()
             existing_tags = [existing_tag["name"] for existing_tag in existing_tags]
-            print(existing_tags)
-            print(tags)
             for tag in tags:
                 if tag.lower() not in existing_tags:
                     self.create_tag(tag)
@@ -97,7 +95,6 @@ class OctoAPIClient:
             f"{self.octo_api}/profiles", headers=self._octo_api_headers, json=data
         )
         json_response = response.json()
-        print(json_response)
 
         return json_response["data"]["uuid"]
 
@@ -108,14 +105,12 @@ class OctoAPIClient:
         return json_response["data"]
 
     def create_tag(self, tag_name: str) -> None:
-        print(f"Tag name: {tag_name}")
         response = requests.post(
             f"{self.octo_api}/tags",
             headers=self._octo_api_headers,
             json={"name": tag_name},
         )
         json_response = response.json()
-        print(json_response)
 
         return json_response["data"]["uuid"]
 
@@ -179,8 +174,6 @@ class OctoAPIClient:
             headers=self._octo_api_headers,
         )
         json_response = response.json()
-
-        print(json_response)
 
         return json_response["data"]
 
@@ -394,12 +387,6 @@ class BasePuppeteerClient:
             element = await self.find(selector, xpath)
         elif not element and not selector:
             raise ElementHandleError("No element or selector provided")
-
-        # Scroll the element into view
-        try:
-            await asyncio.wait_for(element._scrollIntoViewIfNeeded(), 4)
-        except asyncio.TimeoutError:
-            self.logger.info("Timeout waiting for scroll into view")
 
         # Get the bounding box of the element
         if navigation:
