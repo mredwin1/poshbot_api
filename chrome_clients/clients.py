@@ -188,7 +188,7 @@ class OctoAPIClient:
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
-            "headless": True,
+            "headless": False,
             "debug_port": True,
             "flags": ["--disable-backgrounding-occluded-windows"],
         }
@@ -419,7 +419,7 @@ class BasePuppeteerClient:
     ) -> None:
         # Check current text before proceeding
         if isinstance(selector, str):
-            element = self.find(selector)
+            element = await self.find(selector)
         else:
             element = selector
         current_text = await self.page.evaluate(
