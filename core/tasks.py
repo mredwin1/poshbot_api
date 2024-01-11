@@ -1226,9 +1226,3 @@ def send_email(
     with smtplib.SMTP_SSL("smtp.gmail.com", 465, context=context) as smtp:
         smtp.login(from_email, password)
         smtp.sendmail(from_email, to_email, email.as_string())
-
-
-@shared_task
-def test_task(posh_user_id):
-    posh_user = PoshUser.objects.get(id=posh_user_id)
-    print(posh_user.profile_picture_path)

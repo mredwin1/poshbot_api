@@ -456,6 +456,10 @@ Resources:
       TaskRoleArn: !GetAtt TaskRole.Arn
       Cpu: 1024
       Memory: 2048
+      Volumes:
+        - Name: 'efs-volume'
+          EFSVolumeConfiguration:
+            FilesystemId: !GetAtt EFSVolume.FileSystemId
       RuntimePlatform:
         CpuArchitecture: X86_64
         OperatingSystemFamily: LINUX
