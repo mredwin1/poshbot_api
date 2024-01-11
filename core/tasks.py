@@ -400,10 +400,13 @@ class ManageCampaignsTask(Task):
                         campaign = Campaign.objects.get(id=campaign_id)
 
                         # If campaign has been running for too long just reset it so it runs again
-                        max_runtime = campaign.next_runtime + datetime.timedelta(
-                            seconds=PoshmarkTask.soft_time_limit * 1.5
-                        )
-                        if now > max_runtime and campaign.status in (
+                        runtime_exceeded = True
+                        if campaign.next_runtime:
+                            max_runtime = campaign.next_runtime + datetime.timedelta(
+                                seconds=PoshmarkTask.soft_time_limit * 1.5
+                            )
+                            runtime_exceeded = now > max_runtime
+                        if runtime_exceeded and campaign.status in (
                             Campaign.IN_QUEUE,
                             Campaign.RUNNING,
                         ):
