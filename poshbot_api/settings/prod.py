@@ -26,6 +26,10 @@ CELERY_TASK_ROUTES = {
         "queue": os.environ["GENERAL_QUEUE"],
         "routing_key": os.environ["GENERAL_QUEUE"],
     },
+    "core.tasks.test_task": {
+        "queue": os.environ["GENERAL_QUEUE"],
+        "routing_key": os.environ["GENERAL_QUEUE"],
+    },
     "core.tasks.ManageCampaignsTask": {
         "queue": os.environ["MAINTENANCE_QUEUE"],
         "routing_key": os.environ["MAINTENANCE_QUEUE"],

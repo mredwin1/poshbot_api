@@ -1229,6 +1229,6 @@ def send_email(
 
 
 @shared_task
-def test_task():
-    logger = logging.getLogger(__name__)
-    logger.info("TEst success")
+def test_task(posh_user_id):
+    posh_user = PoshUser.objects.get(id=posh_user_id)
+    print(posh_user.profile_picture_path)
