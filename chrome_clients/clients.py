@@ -906,6 +906,8 @@ class PoshmarkClient(BasePuppeteerClient):
                 raise UserDisabledError("User disabled")
 
             # Send item images
+            self.logger.info(item_info)
+            self.logger.info(item_info["images"])
             await self.upload_file('input[name="img-file-input"]', *item_info["images"])
             await self.sleep(1, 2)
 
