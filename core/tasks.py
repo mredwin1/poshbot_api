@@ -398,7 +398,7 @@ class ManageCampaignsTask(Task):
 
                     try:
                         campaign = Campaign.objects.get(id=campaign_id)
-
+                        self.logger.info(f"Restarting {campaign}")
                         # If campaign has been running for too long just reset it so it runs again
                         runtime_exceeded = True
                         if campaign.next_runtime:
@@ -416,11 +416,8 @@ class ManageCampaignsTask(Task):
                             campaign.save(
                                 update_fields=["status", "queue_status", "next_runtime"]
                             )
-                            continue
                     except Campaign.DoesNotExist:
                         pass
-
-                    self.logger.info("Received task_args:", task_blueprint)
 
                 except (json.JSONDecodeError, IndexError) as error:
                     self.logger.error(
