@@ -255,6 +255,8 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
+            - Name: GENERAL_QUEUE_DL
+              Value: !GetAtt GeneralQueueDL.QueueName
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
             - Name: OCTO_ENDPOINT
@@ -395,6 +397,8 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
+            - Name: GENERAL_QUEUE_DL
+              Value: !GetAtt GeneralQueueDL.QueueName
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
             - Name: OCTO_ENDPOINT
@@ -510,6 +514,8 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
+            - Name: GENERAL_QUEUE_DL
+              Value: !GetAtt GeneralQueueDL.QueueName
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
             - Name: OCTO_ENDPOINT
@@ -627,6 +633,8 @@ Resources:
               Value: !GetAtt MaintenanceQueue.QueueName
             - Name: GENERAL_QUEUE
               Value: !GetAtt GeneralQueue.QueueName
+            - Name: GENERAL_QUEUE_DL
+              Value: !GetAtt GeneralQueueDL.QueueName
             - Name: REDIS_ENDPOINT
               Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
             - Name: OCTO_ENDPOINT

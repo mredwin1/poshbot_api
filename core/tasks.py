@@ -1,4 +1,6 @@
 import asyncio
+import base64
+import boto3
 import datetime
 import json
 import logging
@@ -362,6 +364,65 @@ class ManageCampaignsTask(Task):
         self.time_limit = 450
         self.logger = logging.getLogger(__name__)
 
+    def handle_dl_queue(self):
+        # [Initialize SQS client and get the queue URL as before]
+        sqs = boto3.client("sqs")
+        queue_name = os.environ["GENERAL_QUEUE_DL"]
+
+        # Get the queue URL
+        queue_url = sqs.get_queue_url(QueueName=queue_name)["QueueUrl"]
+
+        # Poll messages from the queue
+        # while True:
+        messages = sqs.receive_message(
+            QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=20
+        )
+
+        if "Messages" in messages:
+            now = timezone.now()
+            for message in messages["Messages"]:
+                try:
+                    # Decode the base64 encoded message
+                    decoded_message = base64.b64decode(message["Body"]).decode("utf-8")
+
+                    # Deserialize the message body
+                    task_data = json.loads(decoded_message)
+
+                    # Decode the base64 encoded 'body' field inside task_data
+                    encoded_body = task_data.get("body", "")
+                    decoded_body = base64.b64decode(encoded_body).decode("utf-8")
+
+                    # Deserialize the decoded body to get the actual task arguments
+                    task_blueprint = json.loads(decoded_body)[0][0]
+                    campaign_id = task_blueprint["campaign_id"]["__value__"]["hex"]
+
+                    try:
+                        campaign = Campaign.objects.get(id=campaign_id)
+
+                        # If campaign has been running for too long just reset it so it runs again
+                        max_runtime = campaign.next_runtime + datetime.timedelta(
+                            seconds=PoshmarkTask.soft_time_limit * 1.5
+                        )
+                        if now > max_runtime and campaign.status in (Campaign.IN_QUEUE, Campaign.RUNNING):
+                            campaign.status = Campaign.STARTING
+                            campaign.queue_status = "CALCULATING"
+                            campaign.next_runtime = now
+                            campaign.save(update_fields=["status", "queue_status", "next_runtime"])
+                            continue
+                    except Campaign.DoesNotExist:
+                        pass
+
+                    self.logger.info("Received task_args:", task_blueprint)
+
+                except (json.JSONDecodeError, IndexError) as error:
+                    self.logger.error(
+                        "Error processing message:", message["Body"], "\nError:", error
+                    )
+
+                sqs.delete_message(
+                    QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"]
+                )
+
     def inspect_active_profiles(self):
         try:
             octo_client = OctoAPIClient()
@@ -446,7 +507,6 @@ class ManageCampaignsTask(Task):
                         Campaign.STOPPING,
                         Campaign.IDLE,
                         Campaign.STARTING,
-                        Campaign.RUNNING,
                     )
                 )
                 & (Q(next_runtime__lte=now) | Q(next_runtime__isnull=True))
@@ -457,6 +517,7 @@ class ManageCampaignsTask(Task):
         queue_num = 1
 
         self.inspect_active_profiles()
+        self.handle_dl_queue()
         available_proxies = self.get_available_proxies()
 
         for campaign in campaigns:
@@ -470,17 +531,6 @@ class ManageCampaignsTask(Task):
                 campaign.status = Campaign.STOPPED
                 campaign.queue_status = "N/A"
                 campaign.next_runtime = None
-                campaign.save(update_fields=["status", "queue_status", "next_runtime"])
-                continue
-
-            # If campaign has been running for too long just reset it so it runs again
-            max_runtime = campaign.next_runtime + datetime.timedelta(
-                seconds=PoshmarkTask.soft_time_limit + 60
-            )
-            if now > max_runtime and campaign.status == Campaign.RUNNING:
-                campaign.status = Campaign.STARTING
-                campaign.queue_status = "CALCULATING"
-                campaign.next_runtime = now
                 campaign.save(update_fields=["status", "queue_status", "next_runtime"])
                 continue
 
