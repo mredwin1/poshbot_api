@@ -95,7 +95,6 @@ class PoshmarkTask(Task):
                         proxy_differences[key] = value
 
                 if proxy_differences:
-                    print(proxy_differences)
                     current_proxy = octo_client.update_proxy(
                         current_proxy["uuid"], proxy_differences
                     )
@@ -290,6 +289,13 @@ class PoshmarkTask(Task):
         octo_profile_details = task_blueprint["octo_details"]
         try:
             octo_profile_details = self.get_octo_profile(proxy, octo_profile_details)
+
+            octo_uuid = octo_profile_details.get("uuid")
+            if octo_uuid:
+                posh_user = PoshUser.objects.get(id=task_blueprint["posh_user_id"])
+                posh_user.octo_uuid = octo_profile_details["uuid"]
+                posh_user.save(update_fields=["octo_uuid"])
+
             runtime_details = self.start_profile(octo_profile_details)
 
             asyncio.run(self._run(task_blueprint["actions"], runtime_details, logger))

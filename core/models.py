@@ -513,6 +513,7 @@ class PoshUser(models.Model):
         delay_upper_bound = self.campaign.delay * 60 + (self.campaign.delay * 60 * 0.3)
         task_blueprint = {
             "campaign_id": self.campaign.id,
+            "posh_user_id": self.id,
             "delay": random.uniform(delay_lower_bound, delay_upper_bound),
             "octo_details": octo_details,
             "actions": actions,
