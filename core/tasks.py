@@ -376,7 +376,6 @@ class ManageCampaignsTask(Task):
         queue_url = sqs.get_queue_url(QueueName=queue_name)["QueueUrl"]
 
         # Poll messages from the queue
-        # while True:
         messages = sqs.receive_message(
             QueueUrl=queue_url, MaxNumberOfMessages=10, WaitTimeSeconds=20
         )
@@ -401,23 +400,29 @@ class ManageCampaignsTask(Task):
 
                     try:
                         campaign = Campaign.objects.get(id=campaign_id)
-                        self.logger.info(f"Restarting {campaign}")
+                        start_time = datetime.datetime.fromisoformat(
+                            task_blueprint["start_time"]
+                        )
                         # If campaign has been running for too long just reset it so it runs again
-                        runtime_exceeded = True
-                        if campaign.next_runtime:
-                            max_runtime = campaign.next_runtime + datetime.timedelta(
-                                seconds=PoshmarkTask.soft_time_limit * 1.5
-                            )
-                            runtime_exceeded = now > max_runtime
-                        if runtime_exceeded and campaign.status in (
+                        if campaign.status in (
                             Campaign.IN_QUEUE,
                             Campaign.RUNNING,
                         ):
-                            campaign.status = Campaign.STARTING
-                            campaign.queue_status = "CALCULATING"
-                            campaign.next_runtime = now
-                            campaign.save(
-                                update_fields=["status", "queue_status", "next_runtime"]
+                            if start_time < now:
+                                self.logger.info(f"Restarting {campaign}")
+                                campaign.status = Campaign.STARTING
+                                campaign.queue_status = "CALCULATING"
+                                campaign.next_runtime = now
+                                campaign.save(
+                                    update_fields=[
+                                        "status",
+                                        "queue_status",
+                                        "next_runtime",
+                                    ]
+                                )
+                            sqs.delete_message(
+                                QueueUrl=queue_url,
+                                ReceiptHandle=message["ReceiptHandle"],
                             )
                     except Campaign.DoesNotExist:
                         pass
@@ -426,10 +431,6 @@ class ManageCampaignsTask(Task):
                     self.logger.error(
                         "Error processing message:", message["Body"], "\nError:", error
                     )
-
-                sqs.delete_message(
-                    QueueUrl=queue_url, ReceiptHandle=message["ReceiptHandle"]
-                )
 
     def inspect_active_profiles(self):
         try:
@@ -543,6 +544,7 @@ class ManageCampaignsTask(Task):
                 continue
 
             task_blueprint = campaign.posh_user.task_blueprint
+            task_blueprint["start_time"] = now.isoformat()
             register_or_list = (
                 "register" in task_blueprint["actions"]
                 or "list_items" in task_blueprint["actions"]
