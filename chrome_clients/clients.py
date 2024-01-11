@@ -624,6 +624,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
     async def _handle_sharing_captcha(self) -> bool:
         if await self.is_present(".g-recaptcha-con"):
+            self.logger.info("Handling sharing captcha")
             captcha_iframe = await self.find("iframe")
             await captcha_iframe._scrollIntoViewIfNeeded()
             captcha_src = await captcha_iframe.getProperty("src")
@@ -638,6 +639,7 @@ class PoshmarkClient(BasePuppeteerClient):
             )
             await self.page.evaluate("validateResponse()")
             await self.sleep(0.5, 1)
+            self.logger.info("Captcha solved successfully")
 
             return True
 
