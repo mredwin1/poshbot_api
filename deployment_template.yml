@@ -1140,6 +1140,7 @@ Resources:
                   - "sqs:DeleteMessage"
                   - "sqs:ListQueues"
                   - "sqs:GetQueueAttributes"
+                  - "sqs:GetQueueUrl"
                   - "sqs:changemessagevisibility"
                 Resource: '*'
         - PolicyName: EFSAccess
