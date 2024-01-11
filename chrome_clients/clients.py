@@ -897,7 +897,7 @@ class PoshmarkClient(BasePuppeteerClient):
                     navigation_options={"waitUntil": "networkidle2", "timeout": 60000},
                 )
 
-            await self.sleep(1, 2)
+            await self.sleep(3)
 
             self.logger.info(f"delete_me: listing item  after nav")
 
