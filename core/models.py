@@ -710,6 +710,7 @@ class PoshUser(models.Model):
     @staticmethod
     def _get_file(file):
         sanitized_name = sanitize_filepath(file.name)
+        print(f"Sanitized name: {sanitized_name}")
         dir_name, cover_photo_name = os.path.split(sanitized_name)
         dir_name = f"/mnt/efs/{dir_name}"
         os.makedirs(dir_name, exist_ok=True)
@@ -717,6 +718,8 @@ class PoshUser(models.Model):
         with open(file_path, "wb") as local_file:
             for chunk in file:
                 local_file.write(chunk)
+
+        print(f"File saved to {file_path}")
 
         return file_path
 
