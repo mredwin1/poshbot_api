@@ -643,8 +643,8 @@ class PoshmarkClient(BasePuppeteerClient):
 
     async def _get_username(self):
         username = ""
-        if await self.is_present(".user-image"):
-            profile_pic = await self.find(".user-image")
+        if await self.is_present(".header__account-info-list .user-image"):
+            profile_pic = await self.find(".header__account-info-list .user-image")
             profile_pic_alt_property = await profile_pic.getProperty("alt")
             username = await profile_pic_alt_property.jsonValue()
 
