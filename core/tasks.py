@@ -336,6 +336,9 @@ class PoshmarkTask(Task):
                 if (
                     "msg" in stop_response
                     and stop_response["msg"] == "Profile is not started"
+                ) or (
+                    "error" in stop_response
+                    and stop_response["error"] == "Profile is not started"
                 ):
                     response = octo_client.force_stop_profile(octo_uuid)
                     logger.info(f"Force stopped octo profile, response: {response}")
