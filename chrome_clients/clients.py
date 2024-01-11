@@ -376,6 +376,7 @@ class BasePuppeteerClient:
         navigation: bool = False,
         navigation_options: Dict = None,
     ):
+        self.logger.info(f"Pre click: {selector}")
         if navigation and navigation_options is None:
             navigation_options = {"timeout": 30000}
 
@@ -412,6 +413,7 @@ class BasePuppeteerClient:
                 wait_for_click=random.randint(100, 200),
                 wait_for_selector=5000,
             )
+        self.logger.info(f"Post click: {selector}")
 
     async def type(
         self, selector: Union[ElementHandle, str], text: str, wpm: int = 100
@@ -909,6 +911,7 @@ class PoshmarkClient(BasePuppeteerClient):
             self.logger.info(item_info)
             self.logger.info(item_info["images"])
             await self.upload_file('input[name="img-file-input"]', *item_info["images"])
+            self.logger.info("images sent")
             await self.sleep(1, 2)
 
             await self.click('button[data-et-name="apply"]')
