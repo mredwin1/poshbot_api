@@ -718,6 +718,7 @@ class PoshUser(models.Model):
         with open(file_path, "wb") as local_file:
             for chunk in file:
                 local_file.write(chunk)
+            local_file.flush()
 
         return file_path
 
@@ -922,6 +923,7 @@ class ListedItem(models.Model):
         with open(cover_photo_path, "wb") as local_file:
             for chunk in self.listing.cover_photo.file:
                 local_file.write(chunk)
+            local_file.flush()
         paths.append(cover_photo_path)
 
         images = ListingImage.objects.filter(listing=self.listing)
@@ -932,6 +934,7 @@ class ListedItem(models.Model):
             with open(image_path, mode="wb") as local_file:
                 for chunk in image.image.file.chunks():
                     local_file.write(chunk)
+                local_file.flush()
             paths.append(image_path)
 
         return paths
