@@ -17,6 +17,7 @@ from django.utils import timezone
 from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
+from pathvalidate import sanitize_filepath
 from typing import Dict, List
 from zoneinfo import ZoneInfo
 
@@ -67,6 +68,8 @@ def path_and_rename(instance, filename):
                 )
             except Exception:
                 pass
+
+    path = sanitize_filepath(path)
 
     return path
 
@@ -706,7 +709,8 @@ class PoshUser(models.Model):
 
     @staticmethod
     def _get_file(file):
-        dir_name, cover_photo_name = os.path.split(file.name)
+        sanitized_name = sanitize_filepath(file.name)
+        dir_name, cover_photo_name = os.path.split(sanitized_name)
         dir_name = f"/mnt/efs/{dir_name}"
         os.makedirs(dir_name, exist_ok=True)
         file_path = os.path.join(dir_name, cover_photo_name)
@@ -909,8 +913,8 @@ class ListedItem(models.Model):
     @property
     def image_paths(self) -> List:
         paths = []
-
-        dir_name, cover_photo_name = os.path.split(self.listing.cover_photo.name)
+        sanitized_cover_photo_name = sanitize_filepath(self.listing.cover_photo.name)
+        dir_name, cover_photo_name = os.path.split(sanitized_cover_photo_name)
         dir_name = f"/mnt/efs/{dir_name}"
         os.makedirs(dir_name, exist_ok=True)
         cover_photo_path = os.path.join(dir_name, cover_photo_name)
@@ -921,7 +925,8 @@ class ListedItem(models.Model):
 
         images = ListingImage.objects.filter(listing=self.listing)
         for image in images:
-            _, image_name = os.path.split(image.image.name)
+            sanitized_image_name = image.image.name
+            _, image_name = os.path.split(sanitized_image_name)
             image_path = os.path.join(dir_name, image_name)
             with open(image_path, mode="wb") as local_file:
                 for chunk in image.image.file.chunks():
