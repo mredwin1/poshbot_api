@@ -376,7 +376,6 @@ class BasePuppeteerClient:
         navigation: bool = False,
         navigation_options: Dict = None,
     ):
-        self.logger.info(f"Pre click: {selector}")
         if navigation and navigation_options is None:
             navigation_options = {"timeout": 30000}
 
@@ -413,7 +412,6 @@ class BasePuppeteerClient:
                 wait_for_click=random.randint(100, 200),
                 wait_for_selector=5000,
             )
-        self.logger.info(f"Post click: {selector}")
 
     async def type(
         self, selector: Union[ElementHandle, str], text: str, wpm: int = 100
