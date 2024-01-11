@@ -1218,7 +1218,7 @@ Resources:
         - Environment: !Ref Environment
           ApplicationName:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
-      VisibilityTimeout: 630
+      VisibilityTimeout: 1200
       ReceiveMessageWaitTimeSeconds: 2
       RedrivePolicy:
         deadLetterTargetArn: !GetAtt GeneralQueueDL.Arn
