@@ -465,6 +465,9 @@ Resources:
         OperatingSystemFamily: LINUX
       ContainerDefinitions:
         - Name: maintenance-container
+          MountPoints:
+            - SourceVolume: 'efs-volume'
+              ContainerPath: '/mnt/efs'
           Image: !Ref DockerImage
           StopTimeout: 120
           EntryPoint:
