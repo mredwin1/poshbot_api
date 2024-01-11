@@ -293,8 +293,9 @@ class PoshmarkTask(Task):
             octo_uuid = octo_profile_details.get("uuid")
             if octo_uuid:
                 posh_user = PoshUser.objects.get(id=task_blueprint["posh_user_id"])
-                posh_user.octo_uuid = octo_profile_details["uuid"]
-                posh_user.save(update_fields=["octo_uuid"])
+                if octo_uuid != posh_user.octo_uuid:
+                    posh_user.octo_uuid = octo_profile_details["uuid"]
+                    posh_user.save(update_fields=["octo_uuid"])
 
             runtime_details = self.start_profile(octo_profile_details)
 
