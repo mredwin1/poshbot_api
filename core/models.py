@@ -1,5 +1,6 @@
 import datetime
 import json
+import logging
 import os
 import random
 import string
@@ -79,6 +80,8 @@ def path_and_rename(instance, filename):
 
 def get_local_file_path_image_field(image):
     # Check if the default storage is S3Boto3Storage
+    logger = logging.getLogger(__name__)
+    logger.info(default_storage.__class__)
     if default_storage.__class__ == "storages.backends.s3boto3.S3Boto3Storage":
         # If we are using cloud storage we have to retrieve the file locally if it doesn't exist...
         filename = image.name
