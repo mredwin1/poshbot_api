@@ -20,6 +20,7 @@ from faker import Faker
 from imagekit.models import ProcessedImageField
 from imagekit.processors import ResizeToFill, Transpose
 from pathvalidate import sanitize_filepath
+from storages.backends.s3boto3 import S3Boto3Storage
 from typing import Dict, List
 from zoneinfo import ZoneInfo
 
@@ -82,7 +83,7 @@ def get_local_file_path_image_field(image):
     # Check if the default storage is S3Boto3Storage
     logger = logging.getLogger(__name__)
     logger.info(default_storage.__class__)
-    if default_storage.__class__ == "storages.backends.s3boto3.S3Boto3Storage":
+    if isinstance(default_storage, S3Boto3Storage):
         # If we are using cloud storage we have to retrieve the file locally if it doesn't exist...
         filename = image.name
         # If the file is not on local storage (now /mnt/efs/) download it...
