@@ -77,22 +77,19 @@ def path_and_rename(instance, filename):
     return path
 
 
-def get_local_file_path_from_object(obj):
-    """
-    obj.binary = FileField()
-    """
+def get_local_file_path_image_field(image):
     # Check if the default storage is S3Boto3Storage
     if default_storage.__class__ == "storages.backends.s3boto3.S3Boto3Storage":
         # If we are using cloud storage we have to retrieve the file locally if it doesn't exist...
-        filename = obj.binary.name
+        filename = image.name
         # If the file is not on local storage (now /mnt/efs/) download it...
         if not local_storage.exists(filename):
-            local_storage.save(filename, ContentFile(obj.binary.read()))
+            local_storage.save(filename, ContentFile(image.read()))
         # Retrieve the abs path from the mounted drive
         local_file_path = local_storage.path(filename)
     else:
         # If storage is not cloud, retrieve the path from the local storage
-        local_file_path = obj.binary.path
+        local_file_path = image.path
 
     return local_file_path
 
