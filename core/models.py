@@ -24,7 +24,7 @@ from zoneinfo import ZoneInfo
 
 from faker_providers import address_provider
 
-local_storage = FileSystemStorage(location='/mnt/efs/')
+local_storage = FileSystemStorage(location="/mnt/efs/")
 
 
 def path_and_rename(instance, filename):
