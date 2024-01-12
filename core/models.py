@@ -391,13 +391,13 @@ class PoshUser(models.Model):
     @property
     def profile_picture_path(self) -> str:
         if self.profile_picture:
-            return get_local_file_path_from_object(self.profile_picture)
+            return get_local_file_path_image_field(self.profile_picture)
         return ""
 
     @property
     def header_picture_path(self) -> str:
         if self.header_picture:
-            return get_local_file_path_from_object(self.header_picture)
+            return get_local_file_path_image_field(self.header_picture)
         return ""
 
     @property
@@ -934,11 +934,11 @@ class ListedItem(models.Model):
 
     @property
     def image_paths(self) -> List:
-        paths = [get_local_file_path_from_object(self.listing.cover_photo)]
+        paths = [get_local_file_path_image_field(self.listing.cover_photo)]
 
         images = ListingImage.objects.filter(listing=self.listing)
         for image in images:
-            paths.append(get_local_file_path_from_object(image.image))
+            paths.append(get_local_file_path_image_field(image.image))
 
         return paths
 
