@@ -910,7 +910,7 @@ class PoshmarkClient(BasePuppeteerClient):
             # Send item images
             await self.upload_file('input[name="img-file-input"]', *item_info["images"])
             self.logger.info("images sent")
-            await self.sleep(1, 2)
+            await self.sleep(3)
 
             await self.click('button[data-et-name="apply"]')
 
