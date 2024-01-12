@@ -12,6 +12,7 @@ from botocore.exceptions import ClientError
 from django.conf import settings
 from django.contrib.auth.models import AbstractUser
 from django.core.files.base import ContentFile
+from django.core.files.storage import default_storage, FileSystemStorage
 from django.db import models
 from django.utils import timezone
 from faker import Faker
@@ -22,6 +23,8 @@ from typing import Dict, List
 from zoneinfo import ZoneInfo
 
 from faker_providers import address_provider
+
+local_storage = FileSystemStorage(location='/mnt/efs/')
 
 
 def path_and_rename(instance, filename):
@@ -72,6 +75,26 @@ def path_and_rename(instance, filename):
     path = sanitize_filepath(path)
 
     return path
+
+
+def get_local_file_path_from_object(obj):
+    """
+    obj.binary = FileField()
+    """
+    # Check if the default storage is S3Boto3Storage
+    if default_storage.__class__ == "storages.backends.s3boto3.S3Boto3Storage":
+        # If we are using cloud storage we have to retrieve the file locally if it doesn't exist...
+        filename = obj.binary.name
+        # If the file is not on local storage (now /mnt/efs/) download it...
+        if not local_storage.exists(filename):
+            local_storage.save(filename, ContentFile(obj.binary.read()))
+        # Retrieve the abs path from the mounted drive
+        local_file_path = local_storage.path(filename)
+    else:
+        # If storage is not cloud, retrieve the path from the local storage
+        local_file_path = obj.binary.path
+
+    return local_file_path
 
 
 class Proxy(models.Model):
@@ -371,13 +394,13 @@ class PoshUser(models.Model):
     @property
     def profile_picture_path(self) -> str:
         if self.profile_picture:
-            return self._get_file(self.profile_picture)
+            return get_local_file_path_from_object(self.profile_picture)
         return ""
 
     @property
     def header_picture_path(self) -> str:
         if self.header_picture:
-            return self._get_file(self.header_picture)
+            return get_local_file_path_from_object(self.header_picture)
         return ""
 
     @property
@@ -914,28 +937,11 @@ class ListedItem(models.Model):
 
     @property
     def image_paths(self) -> List:
-        paths = []
-        sanitized_cover_photo_name = sanitize_filepath(self.listing.cover_photo.name)
-        dir_name, cover_photo_name = os.path.split(sanitized_cover_photo_name)
-        dir_name = f"/mnt/efs/{dir_name}"
-        os.makedirs(dir_name, exist_ok=True)
-        cover_photo_path = os.path.join(dir_name, cover_photo_name)
-        with open(cover_photo_path, "wb") as local_file:
-            for chunk in self.listing.cover_photo.file:
-                local_file.write(chunk)
-            local_file.flush()
-        paths.append(cover_photo_path)
+        paths = [get_local_file_path_from_object(self.listing.cover_photo)]
 
         images = ListingImage.objects.filter(listing=self.listing)
         for image in images:
-            sanitized_image_name = image.image.name
-            _, image_name = os.path.split(sanitized_image_name)
-            image_path = os.path.join(dir_name, image_name)
-            with open(image_path, mode="wb") as local_file:
-                for chunk in image.image.file.chunks():
-                    local_file.write(chunk)
-                local_file.flush()
-            paths.append(image_path)
+            paths.append(get_local_file_path_from_object(image.image))
 
         return paths
 
