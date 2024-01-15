@@ -81,19 +81,22 @@ def path_and_rename(instance, filename):
 
 def get_local_file_path_image_field(image):
     # Check if the default storage is S3Boto3Storage
-    if isinstance(default_storage, S3Boto3Storage):
-        # If we are using cloud storage we have to retrieve the file locally if it doesn't exist...
-        filename = image.name
-        # If the file is not on local storage (now /mnt/efs/) download it...
-        if not local_storage.exists(filename):
-            local_storage.save(filename, ContentFile(image.read()))
-        # Retrieve the abs path from the mounted drive
-        local_file_path = local_storage.path(filename)
-    else:
-        # If storage is not cloud, retrieve the path from the local storage
-        local_file_path = image.path
+    try:
+        if isinstance(default_storage, S3Boto3Storage):
+            # If we are using cloud storage we have to retrieve the file locally if it doesn't exist...
+            filename = image.name
+            # If the file is not on local storage (now /mnt/efs/) download it...
+            if not local_storage.exists(filename):
+                local_storage.save(filename, ContentFile(image.read()))
+            # Retrieve the abs path from the mounted drive
+            local_file_path = local_storage.path(filename)
+        else:
+            # If storage is not cloud, retrieve the path from the local storage
+            local_file_path = image.path
 
-    return local_file_path
+        return local_file_path
+    except FileNotFoundError:
+        return None
 
 
 class Proxy(models.Model):
@@ -458,9 +461,13 @@ class PoshUser(models.Model):
                 item_details = []
 
                 for item in items_to_list:
-                    item_details.append(item.item_info)
+                    item_info = item.item_info
 
-                actions["list_items"] = {"items": item_details}
+                    if item_info["images"]:
+                        item_details.append(item.item_info)
+
+                if items_to_list:
+                    actions["list_items"] = {"items": item_details}
 
             listed_items_up = ListedItem.objects.filter(
                 posh_user=self, status=ListedItem.UP
@@ -940,7 +947,9 @@ class ListedItem(models.Model):
 
         images = ListingImage.objects.filter(listing=self.listing)
         for image in images:
-            paths.append(get_local_file_path_image_field(image.image))
+            local_image_path = get_local_file_path_image_field(image.image)
+            if local_image_path:
+                paths.append(local_image_path)
 
         return paths
 
