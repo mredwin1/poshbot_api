@@ -72,6 +72,7 @@ class OctoAPIClient:
         title: str,
         tags: List[str] = None,
         fingerprint: Dict = None,
+        storage: Dict = None,
         proxy_uuid: str = None,
     ) -> str:
         if fingerprint is None:
@@ -86,7 +87,18 @@ class OctoAPIClient:
                 },
             }
 
-        data = {"title": title, "fingerprint": fingerprint}
+        if storage is None:
+            storage = {
+                "cookies": True,
+                "passwords": False,
+                "extensions": False,
+                "localstorage": False,
+                "history": False,
+                "bookmarks": True,
+                "serviceworkers": False,
+            }
+
+        data = {"title": title, "fingerprint": fingerprint, "storage_options": storage}
 
         if proxy_uuid is not None:
             data["proxy"] = {"uuid": proxy_uuid}
