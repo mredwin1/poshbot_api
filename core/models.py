@@ -529,8 +529,8 @@ class PoshUser(models.Model):
                 if item_check_offer_details:
                     actions["check_offers"] = {"items": item_check_offer_details}
 
-            if self.is_registered and random.random() < 0.25:
-                actions["like_follow_share"] = {"count": random.randint(5, 10)}
+            # if self.is_registered and random.random() < 0.25:
+            #     actions["like_follow_share"] = {"count": random.randint(5, 10)}
 
         # Add shared info to all action details
         for action_details in actions.values():
