@@ -1,69 +1,69 @@
-name: Build and Deploy Staging
-
-on:
-  push:
-    branches:
-      - main
-
-jobs:
-  build_and_deploy:
-    name: Build and Deploy
-    runs-on: ubuntu-latest
-    permissions:
-      id-token: write
-      contents: read
-      packages: write
-
-    steps:
-      - name: Checkout main branch
-        uses: actions/checkout@v4
-
-      - name: Login to GitHub Container Registry
-        uses: docker/login-action@v3
-        with:
-          registry: ghcr.io
-          username: ${{ github.actor }}
-          password: ${{ secrets.GITHUB_TOKEN }}
-
-      - name: Build and Push Docker image
-        uses: docker/build-push-action@v2
-        with:
-          context: .
-          file: Dockerfile
-          push: true
-          tags: |
-            ghcr.io/${{ github.repository }}/poshbot-api:latest
-
-      - name: Authenticate with AWS
-        uses: aws-actions/configure-aws-credentials@v4
-        with:
-          role-to-assume: arn:aws:iam::069773459506:role/github-actions
-          aws-region: us-east-1
-
-      - name: Deploy Cloudformation stack
-        id: cloudformation-stack
-        uses: aws-actions/aws-cloudformation-github-deploy@v1
-        with:
-          name: poshbot-staging
-          template: deployment_template.yml
-          no-fail-on-empty-changeset: "1"
-          capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
-          parameter-overrides: >-
-            GlobalResourcesStackName=poshbot-global-resources,
-            Environment=staging,
-            Version=latest,
-            DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:latest
-          tags: >-
-            [
-              { "Key": "Environment", "Value": "staging" },
-              { "Key": "AppManagerCFNStackKey", "Value": "staging" },
-              { "Key": "Application", "Value": "poshbot" },
-              { "Key": "Version", "Value": "latest" }
-            ]
-
-      - name: Force re-deploy ecs tasks
-        run: |
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.BeatService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.APIService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.MaintenanceService }} --force-new-deployment
-          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.GeneralService }} --force-new-deployment
+#name: Build and Deploy Staging
+#
+#on:
+#  push:
+#    branches:
+#      - main
+#
+#jobs:
+#  build_and_deploy:
+#    name: Build and Deploy
+#    runs-on: ubuntu-latest
+#    permissions:
+#      id-token: write
+#      contents: read
+#      packages: write
+#
+#    steps:
+#      - name: Checkout main branch
+#        uses: actions/checkout@v4
+#
+#      - name: Login to GitHub Container Registry
+#        uses: docker/login-action@v3
+#        with:
+#          registry: ghcr.io
+#          username: ${{ github.actor }}
+#          password: ${{ secrets.GITHUB_TOKEN }}
+#
+#      - name: Build and Push Docker image
+#        uses: docker/build-push-action@v2
+#        with:
+#          context: .
+#          file: Dockerfile
+#          push: true
+#          tags: |
+#            ghcr.io/${{ github.repository }}/poshbot-api:latest
+#
+#      - name: Authenticate with AWS
+#        uses: aws-actions/configure-aws-credentials@v4
+#        with:
+#          role-to-assume: arn:aws:iam::069773459506:role/github-actions
+#          aws-region: us-east-1
+#
+#      - name: Deploy Cloudformation stack
+#        id: cloudformation-stack
+#        uses: aws-actions/aws-cloudformation-github-deploy@v1
+#        with:
+#          name: poshbot-staging
+#          template: deployment_template.yml
+#          no-fail-on-empty-changeset: "1"
+#          capabilities: CAPABILITY_IAM,CAPABILITY_NAMED_IAM
+#          parameter-overrides: >-
+#            GlobalResourcesStackName=poshbot-global-resources,
+#            Environment=staging,
+#            Version=latest,
+#            DockerImage=ghcr.io/${{ github.repository }}/poshbot-api:latest
+#          tags: >-
+#            [
+#              { "Key": "Environment", "Value": "staging" },
+#              { "Key": "AppManagerCFNStackKey", "Value": "staging" },
+#              { "Key": "Application", "Value": "poshbot" },
+#              { "Key": "Version", "Value": "latest" }
+#            ]
+#
+#      - name: Force re-deploy ecs tasks
+#        run: |
+#          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.BeatService }} --force-new-deployment
+#          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.APIService }} --force-new-deployment
+#          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.MaintenanceService }} --force-new-deployment
+#          aws ecs update-service --cluster ${{ steps.cloudformation-stack.outputs.ClusterName }} --service ${{ steps.cloudformation-stack.outputs.GeneralService }} --force-new-deployment
