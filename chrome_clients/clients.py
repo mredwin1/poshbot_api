@@ -209,7 +209,7 @@ class OctoAPIClient:
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
-            "headless": False,
+            "headless": True,
             "debug_port": True,
             "flags": ["--disable-backgrounding-occluded-windows"],
         }
@@ -391,6 +391,61 @@ class BasePuppeteerClient:
             await self.page.waitForSelector(selector, options)
             return await self.page.querySelectorAll(selector)
 
+    async def scroll_to_element(self, selector: Union[ElementHandle, str]):
+        if isinstance(selector, str):
+            element = await self.find(selector)
+        else:
+            element = selector
+
+        # Check if the element is in the viewport
+        is_in_viewport = await self.page.evaluate(
+            """
+            element => {
+                const rect = element.getBoundingClientRect();
+                const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+                return (rect.bottom > 0 && rect.top - viewHeight < 0);
+            }
+        """,
+            element,
+        )
+
+        # If the element is not in view, perform smooth scrolling
+        if not is_in_viewport:
+            await self.page.evaluate(
+                """
+                element => {
+                    const smoothScroll = (element) => {
+                        const rect = element.getBoundingClientRect();
+                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                        const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+                        const finalY = rect.top + scrollTop - (viewHeight / 2) + (rect.height / 2);
+
+                        let step = Math.round(Math.random() * 20) + 5; // Initial step size
+                        let interval = Math.round(Math.random() * 20) + 10; // Initial interval
+
+                        return new Promise(resolve => {
+                            const scrollInterval = setInterval(() => {
+                                // Randomly change step size and interval to simulate natural human behavior
+                                if (Math.random() < 0.1) { // 10% chance to change step and interval
+                                    step = Math.round(Math.random() * 20) + 5;
+                                    interval = Math.round(Math.random() * 20) + 10;
+                                }
+
+                                if (window.pageYOffset < finalY) {
+                                    window.scrollBy(0, step);
+                                } else {
+                                    clearInterval(scrollInterval);
+                                    resolve();
+                                }
+                            }, interval);
+                        });
+                    };
+                    return smoothScroll(element);
+                }
+                """,
+                element,
+            )
+
     async def click(
         self,
         selector: Union[ElementHandle, str],
@@ -402,6 +457,8 @@ class BasePuppeteerClient:
 
         if isinstance(selector, str) and "//" in selector:
             selector = await self.find(selector)
+
+        await self.scroll_to_element(selector)
 
         # Get the bounding box of the element
         if navigation:
@@ -434,25 +491,31 @@ class BasePuppeteerClient:
                 wait_for_selector=5000,
             )
 
+        await self.sleep(0.1)
+
     async def type(
-        self, selector: Union[ElementHandle, str], text: str, wpm: int = 100
+        self,
+        selector: Union[ElementHandle, str],
+        text: str,
+        wpm: int = 100,
+        mistakes: bool = True,
     ) -> None:
         # Check current text before proceeding
         if isinstance(selector, str):
             element = await self.find(selector)
         else:
             element = selector
-        current_text = await self.page.evaluate(
-            "(element) => element.textContent", element
-        )
+        current_text = await self.page.evaluate("(element) => element.value", element)
 
+        await self.click(selector)
         if text == current_text:
             return
         elif current_text != "":
+            await self.page.keyboard.press("End")
+            await self.sleep(0.04, 0.14)
             for _ in current_text:
                 await self.page.keyboard.press("Backspace")
-
-        await self.click(selector)
+                await self.sleep(0.04, 0.14)
 
         # Calculate average pause between chars
         total_duration = len(text) / (wpm * 4.5)
@@ -463,27 +526,52 @@ class BasePuppeteerClient:
 
         words = 0
         last_char = ""
+        mistake_made = False
+        mistake_index = 0
+        mistake_rate = 0.15
         lines = text.splitlines()
         for index, line in enumerate(lines):
-            for char in line:
+            for char_index, char in enumerate(line):
                 delay = random.uniform(avg_pause * 0.9, avg_pause * 1.2)
 
-                if char in keyDefinitions:
-                    await self.page.keyboard.press(char)
+                if mistakes and random.random() < mistake_rate and not mistake_made:
+                    selected_char = random.choice("abcdefghijklmnopqrstuvwxyz")
+                    mistake_made = True
+                    mistake_index = char_index
                 else:
-                    await self.page.keyboard.sendCharacter(char)
+                    selected_char = char
 
-                if char == " ":
+                if selected_char in keyDefinitions:
+                    await self.page.keyboard.press(selected_char)
+                else:
+                    await self.page.keyboard.sendCharacter(selected_char)
+
+                if selected_char == " ":
                     words += 1
 
                 if (
-                    char in punctuation
+                    selected_char in punctuation
                     and last_char not in punctuation
                     and words > 3
                     and random.random() < 0.1
                 ):
                     delay += random.uniform(0.2, 0.75)
                     words = 0
+
+                if mistake_made and (
+                    char_index - mistake_index > random.randint(1, 5)
+                    or char_index == len(line) - 1
+                ):
+                    await self.sleep(0.5, 0.8)
+                    # Moving back to the mistake
+                    for _ in range(char_index - mistake_index + 1):
+                        await self.page.keyboard.press("Backspace")
+                        await self.sleep(random.uniform(avg_pause * 0.8, avg_pause * 1))
+                    # Retyping the correct text from the mistake point
+                    for correct_char in line[mistake_index : char_index + 1]:
+                        await self.page.keyboard.sendCharacter(correct_char)
+                        await self.sleep(avg_pause * 0.9, avg_pause * 1.2)
+                    mistake_made = False
 
                 last_char = char
                 await asyncio.sleep(delay)
@@ -528,6 +616,89 @@ class BasePuppeteerClient:
         )
 
         self.logger.info(f"-------->{title_text}<--------")
+
+    async def solve_challenge(self):
+        import time
+
+        await self.page.goto("https://bot.incolumitas.com/")
+        # Handle the dialog
+        self.page.on("dialog", lambda dialog: time.sleep(2))
+        await self.sleep(random.random())
+
+        # Wait for the form to appear on the page
+        while not await self.is_present("#formStuff"):
+            await self.sleep(1)
+
+        # Overwrite the existing text in the 'userName' field
+        await self.type('input[name="userName"]', "bot3000")
+
+        # Overwrite the existing text in the 'eMail' field
+        await self.type('input[name="eMail"]', "bot3000@gmail.com")
+
+        # Select an option from a dropdown
+        await self.click('select[name="cookies"]')
+        await self.sleep(1)
+        await self.page.select('[name="cookies"]', "I want all the Cookies")
+
+        await self.click('input[name="terms"]')
+
+        # Click buttons
+        await self.click("#smolCat")
+        await self.click("#bigCat")
+
+        # Submit the form
+        await self.click("#submit")
+        await self.sleep(0.2)
+
+        # Wait for results to appear
+        await self.find("#tableStuff tbody tr .url")
+        await self.sleep(0.1)  # Sleep for 100 ms
+
+        # Update prices
+        await self.find("#updatePrice0")
+        await self.click("#updatePrice0")
+        await self.page.waitForFunction(
+            'document.getElementById("price0").getAttribute("data-last-update")'
+        )
+
+        await self.find("#updatePrice1")
+        await self.click("#updatePrice1")
+        await self.page.waitForFunction(
+            'document.getElementById("price1").getAttribute("data-last-update")'
+        )
+
+        # Scrape the response
+        data = await self.page.evaluate(
+            """() => {
+            let results = [];
+            document.querySelectorAll('#tableStuff tbody tr').forEach((row) => {
+                results.push({
+                    name: row.querySelector('.name').innerText,
+                    price: row.querySelector('.price').innerText,
+                    url: row.querySelector('.url').innerText,
+                })
+            });
+            return results;
+        }"""
+        )
+        print(data)
+
+    async def check_bot(self):
+        await self.page.goto("https://antoinevastel.com/bots/datadome")
+        await self.sleep(2)
+
+        await self.save_screenshot("screenshots", "bot_detection.png")
+        await self.sleep(2)
+
+        await self.page.goto("https://arh.antoinevastel.com/bots/areyouheadless")
+        await self.sleep(2)
+
+        await self.save_screenshot("screenshots", "headless_detection.png")
+
+        await self.page.goto("https://pixelscan.net/")
+        await self.sleep(6)
+
+        await self.save_screenshot("screenshots", "pixelscan.png")
 
 
 class PoshmarkClient(BasePuppeteerClient):
@@ -832,7 +1003,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
             if random.random() < 0.5:
                 # Enter zipcode
-                await self.type('input[name="zip"]', text=user_info["zipcode"])
+                await self.type(
+                    'input[name="zip"]', text=user_info["zipcode"], mistakes=False
+                )
             await self.click('button[type="submit"]', navigation=True)
 
             # Select random number of brands
@@ -1030,13 +1203,17 @@ class PoshmarkClient(BasePuppeteerClient):
 
             # Type in Original Price
             await self.type(
-                'input[data-vv-name="originalPrice"]', item_info["original_price"]
+                'input[data-vv-name="originalPrice"]',
+                item_info["original_price"],
+                mistakes=False,
             )
             self.logger.info(f"delete_me: original price typed")
 
             # Type in Listing Price
             await self.type(
-                'input[data-vv-name="listingPrice"]', item_info["listing_price"]
+                'input[data-vv-name="listingPrice"]',
+                item_info["listing_price"],
+                mistakes=False,
             )
             self.logger.info(f"delete_me: listing price typed")
 
@@ -1155,7 +1332,7 @@ class PoshmarkClient(BasePuppeteerClient):
                 await self.click(".btn--primary")
                 raise NoLikesError(f"No likes on the listing: {listing_id}")
 
-            await self.type('input[name="offer"]', str(offer))
+            await self.type('input[name="offer"]', str(offer), mistakes=False)
 
             await self.click(".offer-model__shipping-discount")
 
@@ -1239,7 +1416,9 @@ class PoshmarkClient(BasePuppeteerClient):
 
                         await self.sleep(2)
 
-                        await self.type('input[name="offer"]', str(new_offer))
+                        await self.type(
+                            'input[name="offer"]', str(new_offer), mistakes=False
+                        )
                         await self.sleep(2)
                         await self.click('button[data-et-name="submit"]')
                         await self.sleep(1)
