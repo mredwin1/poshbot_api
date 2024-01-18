@@ -75,7 +75,16 @@ class OctoAPIClient:
         proxy_uuid: str = None,
     ) -> str:
         if fingerprint is None:
-            fingerprint = {"dns": "8.8.8.8", "os": "win"}
+            fingerprint = {
+                "dns": "8.8.8.8",
+                "os": "win",
+                "noise": {
+                    "webgl": True,
+                    "canvas": True,
+                    "audio": True,
+                    "client_rects": True,
+                },
+            }
 
         data = {"title": title, "fingerprint": fingerprint}
 
