@@ -456,15 +456,16 @@ class PoshUser(models.Model):
             # Sharing, sending offers, check offers, and check comments
             items_to_list = ListedItem.objects.filter(
                 posh_user=self, status=ListedItem.NOT_LISTED
-            )
+            ).select_related("listing")
             if items_to_list.exists():
                 item_details = []
 
                 for item in items_to_list:
-                    item_info = item.item_info
-
-                    if item_info["images"]:
-                        item_details.append(item.item_info)
+                    if item.listing:
+                        item_info = item.item_info
+    
+                        if item_info["images"]:
+                            item_details.append(item.item_info)
 
                 if items_to_list:
                     actions["list_items"] = {"items": item_details}
