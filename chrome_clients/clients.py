@@ -450,7 +450,7 @@ class BasePuppeteerClient:
                     ),
                     timeout=10,
                 )
-            except TimeoutError:
+            except asyncio.TimeoutError:
                 self.logger.warning("Timeout while scrolling")
         self.logger.info("Ending scroll")
 
