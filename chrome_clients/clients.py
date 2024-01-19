@@ -783,6 +783,12 @@ class PoshmarkClient(BasePuppeteerClient):
                         )
                         return await callback(*args, **kwargs)
                 elif username:
+                    self.logger.info("Checking if user is signed in.")
+                    username = await self._get_username()
+                    if username:
+                        self.logger.info("User is logged in, continuing...")
+                        return username
+
                     self.logger.info("User not registered, not attempting to login.")
                 else:
                     self.logger.info("No username to attempt login")
