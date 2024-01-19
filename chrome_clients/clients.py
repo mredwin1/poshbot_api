@@ -392,6 +392,7 @@ class BasePuppeteerClient:
             return await self.page.querySelectorAll(selector)
 
     async def scroll_to_element(self, selector: Union[ElementHandle, str]):
+        self.logger.info("STarting scroll")
         if isinstance(selector, str):
             element = await self.find(selector)
         else:
@@ -445,6 +446,7 @@ class BasePuppeteerClient:
                 """,
                 element,
             )
+        self.logger.info("Ending scroll")
 
     async def click(
         self,
@@ -452,6 +454,7 @@ class BasePuppeteerClient:
         navigation: bool = False,
         navigation_options: Dict = None,
     ):
+        self.logger.info(f"Starting click: {selector}")
         if navigation and navigation_options is None:
             navigation_options = {"timeout": 30000}
 
@@ -490,6 +493,8 @@ class BasePuppeteerClient:
                 wait_for_click=random.randint(100, 200),
                 wait_for_selector=5000,
             )
+
+        self.logger.info(f"Ending click: {selector}")
 
         await self.sleep(0.1)
 
