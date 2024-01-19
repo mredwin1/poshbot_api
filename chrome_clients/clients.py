@@ -412,40 +412,46 @@ class BasePuppeteerClient:
 
         # If the element is not in view, perform smooth scrolling
         if not is_in_viewport:
-            await self.page.evaluate(
-                """
-                element => {
-                    const smoothScroll = (element) => {
-                        const rect = element.getBoundingClientRect();
-                        const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-                        const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-                        const finalY = rect.top + scrollTop - (viewHeight / 2) + (rect.height / 2);
-
-                        let step = Math.round(Math.random() * 20) + 5; // Initial step size
-                        let interval = Math.round(Math.random() * 20) + 10; // Initial interval
-
-                        return new Promise(resolve => {
-                            const scrollInterval = setInterval(() => {
-                                // Randomly change step size and interval to simulate natural human behavior
-                                if (Math.random() < 0.1) { // 10% chance to change step and interval
-                                    step = Math.round(Math.random() * 20) + 5;
-                                    interval = Math.round(Math.random() * 20) + 10;
-                                }
-
-                                if (window.pageYOffset < finalY) {
-                                    window.scrollBy(0, step);
-                                } else {
-                                    clearInterval(scrollInterval);
-                                    resolve();
-                                }
-                            }, interval);
-                        });
-                    };
-                    return smoothScroll(element);
-                }
-                """,
-                element,
-            )
+            try:
+                await asyncio.wait_for(
+                    self.page.evaluate(
+                        """
+                    element => {
+                        const smoothScroll = (element) => {
+                            const rect = element.getBoundingClientRect();
+                            const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
+                            const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
+                            const finalY = rect.top + scrollTop - (viewHeight / 2) + (rect.height / 2);
+    
+                            let step = Math.round(Math.random() * 20) + 5; // Initial step size
+                            let interval = Math.round(Math.random() * 20) + 10; // Initial interval
+    
+                            return new Promise(resolve => {
+                                const scrollInterval = setInterval(() => {
+                                    // Randomly change step size and interval to simulate natural human behavior
+                                    if (Math.random() < 0.1) { // 10% chance to change step and interval
+                                        step = Math.round(Math.random() * 20) + 5;
+                                        interval = Math.round(Math.random() * 20) + 10;
+                                    }
+    
+                                    if (window.pageYOffset < finalY) {
+                                        window.scrollBy(0, step);
+                                    } else {
+                                        clearInterval(scrollInterval);
+                                        resolve();
+                                    }
+                                }, interval);
+                            });
+                        };
+                        return smoothScroll(element);
+                    }
+                    """,
+                        element,
+                    ),
+                    timeout=10,
+                )
+            except TimeoutError:
+                self.logger.warning("Timeout while scrolling")
         self.logger.info("Ending scroll")
 
     async def click(
