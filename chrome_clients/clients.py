@@ -209,7 +209,7 @@ class OctoAPIClient:
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
-            "headless": False,
+            "headless": True,
             "debug_port": True,
             "flags": ["--disable-backgrounding-occluded-windows"],
         }
@@ -310,76 +310,6 @@ class BasePuppeteerClient:
             self.page = await self.browser.newPage()
 
         self.cursor = create_cursor(self.page)
-
-        await self.page.evaluateOnNewDocument(
-            """
-            function addMouseHelper() {
-                window.addEventListener('DOMContentLoaded', () => {
-                if (window !== window.parent) 
-                    return;
-                    console.log('New page loaded');
-                    const box = document.createElement('puppeteer-mouse-pointer');
-                    const styleElement = document.createElement('style');
-                    styleElement.innerHTML = `
-                        puppeteer-mouse-pointer {
-                        pointer-events: none;
-                        position: absolute;
-                        top: 0;
-                        z-index: 10000;
-                        left: 0;
-                        width: 20px;
-                        height: 20px;
-                        background: rgba(0,0,0,.4);
-                        border: 1px solid white;
-                        border-radius: 10px;
-                        margin: -10px 0 0 -10px;
-                        padding: 0;
-                        transition: background .2s, border-radius .2s, border-color .2s;
-                        }
-                        puppeteer-mouse-pointer.button-1 {
-                        transition: none;
-                        background: rgba(0,0,0,0.9);
-                        }
-                        puppeteer-mouse-pointer.button-2 {
-                        transition: none;
-                        border-color: rgba(0,0,255,0.9);
-                        }
-                        puppeteer-mouse-pointer.button-3 {
-                        transition: none;
-                        border-radius: 4px;
-                        }
-                        puppeteer-mouse-pointer.button-4 {
-                        transition: none;
-                        border-color: rgba(255,0,0,0.9);
-                        }
-                        puppeteer-mouse-pointer.button-5 {
-                        transition: none;
-                        border-color: rgba(0,255,0,0.9);
-                        }
-                    `;
-                    document.head.appendChild(styleElement);
-                    document.body.appendChild(box);
-                    document.addEventListener('mousemove', event => {
-                        box.style.left = event.pageX + 'px';
-                        box.style.top = event.pageY + 'px';
-                        updateButtons(event.buttons);
-                    }, true);
-                    document.addEventListener('mousedown', event => {
-                        updateButtons(event.buttons);
-                        box.classList.add('button-' + event.which);
-                    }, true);
-                    document.addEventListener('mouseup', event => {
-                    updateButtons(event.buttons);
-                        box.classList.remove('button-' + event.which);
-                    }, true);
-                    function updateButtons(buttons) {
-                    for (let i = 0; i < 5; i++)
-                        box.classList.toggle('button-' + i, buttons & (1 << i));
-                    }
-                });
-            }
-        """
-        )
 
         self.page.setDefaultNavigationTimeout(60000)
         await self.page.setViewport(
