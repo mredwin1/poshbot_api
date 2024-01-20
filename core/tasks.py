@@ -178,7 +178,9 @@ class PoshmarkTask(Task):
         for item_to_list in details["items"]:
             try:
                 listed_item = await client.list_item(details["user_info"], item_to_list)
+                logger.info("Finished listing")
                 item_to_list_obj = await ListedItem.objects.aget(id=item_to_list["id"])
+                logger.info("Getting object")
                 item_to_list_obj.status = ListedItem.UNDER_REVIEW
                 item_to_list_obj.listed_item_id = listed_item["listing_id"]
                 item_to_list_obj.datetime_listed = timezone.now()

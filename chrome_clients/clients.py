@@ -1280,6 +1280,7 @@ class PoshmarkClient(BasePuppeteerClient):
 
             try:
                 item_info["listing_id"] = query_params["created_listing_id"][0]
+                self.logger.info(f"Listing id: {item_info['listing_id']}")
             except KeyError:
                 pass
 
