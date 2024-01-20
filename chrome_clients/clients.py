@@ -317,13 +317,6 @@ class BasePuppeteerClient:
                 except Exception as e:
                     self.logger.error(f"Error while closing page: {e}")
 
-            # Cancel related browser tasks
-            tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-            for task in tasks:
-                task.cancel()
-
-            await asyncio.gather(*tasks, return_exceptions=True)
-
             # Close the browser
             try:
                 await self.browser.close()
