@@ -294,7 +294,6 @@ class BasePuppeteerClient:
         self.logger.info("NO excpetions, closed normally.")
         self.logger.info("=====================================")
 
-
     async def start(self):
         """Asynchronously starts the Puppeteer browser and sets the page."""
         self.browser = await pyppeteer.launcher.connect(browserWSEndpoint=self.ws_url)
