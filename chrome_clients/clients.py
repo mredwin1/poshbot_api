@@ -1266,15 +1266,6 @@ class PoshmarkClient(BasePuppeteerClient):
                 attempts += 1
                 await self.sleep(1)
 
-                if attempts == 15:
-                    screenshots_dir = os.path.join(os.getcwd(), "screenshots")
-                    screenshot_name = f"listing_attempt.png"
-                    os.makedirs(screenshots_dir, exist_ok=True)
-                    await self.page.screenshot(
-                        {"path": os.path.join(screenshots_dir, screenshot_name)}
-                    )
-                    self.logger.info(f"Screenshot saved to {screenshot_name}")
-
             parsed_url = urlparse(latest_url)
             query_params = parse_qs(parsed_url.query)
 

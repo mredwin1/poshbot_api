@@ -478,7 +478,9 @@ class ManageCampaignsTask(Task):
                 if proxy.checkout_time
                 else None
             )
-            if proxy.checked_out_by and (not runtime or runtime > PoshmarkTask.soft_time_limit + 30):
+            if proxy.checked_out_by and (
+                not runtime or runtime > PoshmarkTask.soft_time_limit + 30
+            ):
                 try:
                     campaign = Campaign.objects.get(id=proxy.checked_out_by)
 
