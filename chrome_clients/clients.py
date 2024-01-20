@@ -307,16 +307,16 @@ class BasePuppeteerClient:
             {"width": self.width, "height": self.height, "deviceScaleFactor": 1}
         )
 
-     async def close(self):
+    async def close(self):
         """Gracefully disconnects from the debug session."""
         if self.browser:
             # Cancel all running tasks
             tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
             [task.cancel() for task in tasks]
-
+        
             # Wait for tasks to be cancelled
             await asyncio.gather(*tasks, return_exceptions=True)
-
+        
             # Close the browser
             try:
                 await self.browser.close()
