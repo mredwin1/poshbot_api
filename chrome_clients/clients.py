@@ -446,31 +446,26 @@ class BasePuppeteerClient:
                             const rect = element.getBoundingClientRect();
                             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
                             const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-                            let finalY = rect.top + scrollTop - (viewHeight / 2) + (rect.height / 2);
-                    
-                            // Calculate the maximum scrollable distance
-                            const maxScrollableDistance = document.documentElement.scrollHeight - viewHeight;
-                    
-                            // Adjust finalY to be within the scrollable limits
-                            finalY = Math.min(finalY, maxScrollableDistance);
-                    
+                            const finalY = rect.top + scrollTop - (viewHeight / 2) + (rect.height / 2);
+                            const maxScroll = document.documentElement.scrollHeight - window.innerHeight;
+                                                        
+                            let step = Math.round(Math.random() * 20) + 5; // Initial step size
+                            let interval = Math.round(Math.random() * 20) + 10; // Initial interval
+                            
                             return new Promise(resolve => {
                                 const scrollInterval = setInterval(() => {
-                                    let step = Math.round(Math.random() * 20) + 5; // Random step size
-                    
-                                    // Calculate the maximum possible step to avoid overshooting
-                                    const maxPossibleStep = Math.min(step, maxScrollableDistance - window.pageYOffset);
-                    
-                                    // Randomly change interval to simulate natural human behavior
-                                    let interval = Math.round(Math.random() * 20) + 10;
-                    
-                                    if (window.pageYOffset < finalY && window.pageYOffset < maxScrollableDistance) {
-                                        window.scrollBy(0, maxPossibleStep);
-                                        if (maxPossibleStep < step) { // If max step was used, stop scrolling
-                                            clearInterval(scrollInterval);
-                                            resolve();
-                                        }
+                                    // Randomly change step size and interval to simulate natural human behavior
+                                    if (Math.random() < 0.1) { // 10% chance to change step and interval
+                                        step = Math.round(Math.random() * 20) + 5;
+                                        interval = Math.round(Math.random() * 20) + 10;
+                                    }
+                                    
+                                    step = Math.min(step, maxScroll - window.scrollY)                                   
+    
+                                    if (Math.abs(finalY - window.pageYOffset) > step) {
+                                        window.scrollBy(0, step);
                                     } else {
+                                        window.scrollTo(0, finalY); // directly jump to final position if within one step
                                         clearInterval(scrollInterval);
                                         resolve();
                                     }
@@ -729,6 +724,7 @@ class BasePuppeteerClient:
         }"""
         )
         print(data)
+        await self.sleep(20)
 
     async def check_bot(self):
         await self.page.goto("https://antoinevastel.com/bots/datadome")
