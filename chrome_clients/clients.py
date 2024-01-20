@@ -285,9 +285,15 @@ class BasePuppeteerClient:
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
         self.logger.info("=====================================")
-        self.logger.info(exc_type, exc_val, exc_tb)
+        try:
+            await self.close()
+        finally:
+            if exc_type is not None:
+                self.logger.info("raising the exception")
+                raise exc_val
+        self.logger.info("NO excpetions, closed normally.")
         self.logger.info("=====================================")
-        await self.close()
+
 
     async def start(self):
         """Asynchronously starts the Puppeteer browser and sets the page."""
