@@ -90,12 +90,12 @@ class OctoAPIClient:
         if storage is None:
             storage = {
                 "cookies": True,
-                "passwords": False,
-                "extensions": False,
-                "localstorage": False,
+                "passwords": True,
+                "extensions": True,
+                "localstorage": True,
                 "history": False,
                 "bookmarks": True,
-                "serviceworkers": False,
+                "serviceworkers": True,
             }
 
         data = {"title": title, "fingerprint": fingerprint, "storage_options": storage}
@@ -209,7 +209,7 @@ class OctoAPIClient:
     def start_profile(self, uuid: str) -> Dict:
         data = {
             "uuid": uuid,
-            "headless": True,
+            "headless": False,
             "debug_port": True,
             "flags": ["--disable-backgrounding-occluded-windows"],
         }
@@ -290,6 +290,7 @@ class BasePuppeteerClient:
         finally:
             if exc_type is not None:
                 self.logger.info("raising the exception")
+                self.logger.info("=====================================")
                 raise exc_val
         self.logger.info("NO excpetions, closed normally.")
         self.logger.info("=====================================")
@@ -310,6 +311,76 @@ class BasePuppeteerClient:
 
         self.cursor = create_cursor(self.page)
 
+        await self.page.evaluateOnNewDocument(
+            """
+            function addMouseHelper() {
+                window.addEventListener('DOMContentLoaded', () => {
+                if (window !== window.parent) 
+                    return;
+                    console.log('New page loaded');
+                    const box = document.createElement('puppeteer-mouse-pointer');
+                    const styleElement = document.createElement('style');
+                    styleElement.innerHTML = `
+                        puppeteer-mouse-pointer {
+                        pointer-events: none;
+                        position: absolute;
+                        top: 0;
+                        z-index: 10000;
+                        left: 0;
+                        width: 20px;
+                        height: 20px;
+                        background: rgba(0,0,0,.4);
+                        border: 1px solid white;
+                        border-radius: 10px;
+                        margin: -10px 0 0 -10px;
+                        padding: 0;
+                        transition: background .2s, border-radius .2s, border-color .2s;
+                        }
+                        puppeteer-mouse-pointer.button-1 {
+                        transition: none;
+                        background: rgba(0,0,0,0.9);
+                        }
+                        puppeteer-mouse-pointer.button-2 {
+                        transition: none;
+                        border-color: rgba(0,0,255,0.9);
+                        }
+                        puppeteer-mouse-pointer.button-3 {
+                        transition: none;
+                        border-radius: 4px;
+                        }
+                        puppeteer-mouse-pointer.button-4 {
+                        transition: none;
+                        border-color: rgba(255,0,0,0.9);
+                        }
+                        puppeteer-mouse-pointer.button-5 {
+                        transition: none;
+                        border-color: rgba(0,255,0,0.9);
+                        }
+                    `;
+                    document.head.appendChild(styleElement);
+                    document.body.appendChild(box);
+                    document.addEventListener('mousemove', event => {
+                        box.style.left = event.pageX + 'px';
+                        box.style.top = event.pageY + 'px';
+                        updateButtons(event.buttons);
+                    }, true);
+                    document.addEventListener('mousedown', event => {
+                        updateButtons(event.buttons);
+                        box.classList.add('button-' + event.which);
+                    }, true);
+                    document.addEventListener('mouseup', event => {
+                    updateButtons(event.buttons);
+                        box.classList.remove('button-' + event.which);
+                    }, true);
+                    function updateButtons(buttons) {
+                    for (let i = 0; i < 5; i++)
+                        box.classList.toggle('button-' + i, buttons & (1 << i));
+                    }
+                });
+            }
+        """
+        )
+
         self.page.setDefaultNavigationTimeout(60000)
         await self.page.setViewport(
             {"width": self.width, "height": self.height, "deviceScaleFactor": 1}
@@ -317,14 +388,6 @@ class BasePuppeteerClient:
 
     async def close(self):
         if self.browser:
-            # Close individual pages first
-            pages = await self.browser.pages()
-            for page in pages:
-                try:
-                    await page.close()
-                except Exception as e:
-                    self.logger.error(f"Error while closing page: {e}")
-
             # Close the browser
             try:
                 await self.browser.close()
@@ -422,17 +485,28 @@ class BasePuppeteerClient:
         # Check if the element is in the viewport
         is_in_viewport = await self.page.evaluate(
             """
-            element => {
-                const rect = element.getBoundingClientRect();
-                const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-                return (rect.bottom > 0 && rect.top - viewHeight < 0);
+            async element => {
+                // Use IntersectionObserver to check if the element is fully within the viewport
+                const visibleRatio = await new Promise(resolve => {
+                    const observer = new IntersectionObserver(entries => {
+                        resolve(entries[0].intersectionRatio);
+                        observer.disconnect();
+                    }, {threshold: 1.0});
+                    observer.observe(element);
+                });
+
+                // Return true if the element is fully visible
+                return visibleRatio === 1.0;
             }
-        """,
+            """,
             element,
         )
 
+        self.logger.info(f"In viewport: {is_in_viewport}")
+
         # If the element is not in view, perform smooth scrolling
         if not is_in_viewport:
+            self.logger.info("Process of scrolling")
             try:
                 await asyncio.wait_for(
                     self.page.evaluate(
@@ -442,21 +516,30 @@ class BasePuppeteerClient:
                             const rect = element.getBoundingClientRect();
                             const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
                             const viewHeight = Math.max(document.documentElement.clientHeight, window.innerHeight);
-                            const finalY = rect.top + scrollTop - (viewHeight / 2) + (rect.height / 2);
-    
-                            let step = Math.round(Math.random() * 20) + 5; // Initial step size
-                            let interval = Math.round(Math.random() * 20) + 10; // Initial interval
-    
+                            let finalY = rect.top + scrollTop - (viewHeight / 2) + (rect.height / 2);
+                    
+                            // Calculate the maximum scrollable distance
+                            const maxScrollableDistance = document.documentElement.scrollHeight - viewHeight;
+                    
+                            // Adjust finalY to be within the scrollable limits
+                            finalY = Math.min(finalY, maxScrollableDistance);
+                    
                             return new Promise(resolve => {
                                 const scrollInterval = setInterval(() => {
-                                    // Randomly change step size and interval to simulate natural human behavior
-                                    if (Math.random() < 0.1) { // 10% chance to change step and interval
-                                        step = Math.round(Math.random() * 20) + 5;
-                                        interval = Math.round(Math.random() * 20) + 10;
-                                    }
-    
-                                    if (window.pageYOffset < finalY) {
-                                        window.scrollBy(0, step);
+                                    let step = Math.round(Math.random() * 20) + 5; // Random step size
+                    
+                                    // Calculate the maximum possible step to avoid overshooting
+                                    const maxPossibleStep = Math.min(step, maxScrollableDistance - window.pageYOffset);
+                    
+                                    // Randomly change interval to simulate natural human behavior
+                                    let interval = Math.round(Math.random() * 20) + 10;
+                    
+                                    if (window.pageYOffset < finalY && window.pageYOffset < maxScrollableDistance) {
+                                        window.scrollBy(0, maxPossibleStep);
+                                        if (maxPossibleStep < step) { // If max step was used, stop scrolling
+                                            clearInterval(scrollInterval);
+                                            resolve();
+                                        }
                                     } else {
                                         clearInterval(scrollInterval);
                                         resolve();
@@ -562,7 +645,7 @@ class BasePuppeteerClient:
         last_char = ""
         mistake_made = False
         mistake_index = 0
-        mistake_rate = 0.15
+        mistake_rate = 0.04
         lines = text.splitlines()
         for index, line in enumerate(lines):
             for char_index, char in enumerate(line):
@@ -1047,10 +1130,12 @@ class PoshmarkClient(BasePuppeteerClient):
                     'input[name="zip"]', text=user_info["zipcode"], mistakes=False
                 )
             await self.click('button[type="submit"]', navigation=True)
+            await self.sleep(2)
 
             # Select random number of brands
             await self.click_random(".follow-brands__container")
             await self.click('button[type="submit"]', navigation=True)
+            await self.sleep(2)
 
             # Click submit again
             await self.click(
