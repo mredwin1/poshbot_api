@@ -452,6 +452,8 @@ class PoshUser(models.Model):
                     ListedItem.objects.create(
                         posh_user=self, listing=listing, listing_title=listing.title
                     )
+                except ListedItem.MultipleObjectsReturned:
+                    pass
 
             # Sharing, sending offers, check offers, and check comments
             items_to_list = ListedItem.objects.filter(
