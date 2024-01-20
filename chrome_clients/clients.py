@@ -465,6 +465,8 @@ class BasePuppeteerClient:
                 )
             except asyncio.TimeoutError:
                 self.logger.warning("Timeout while scrolling")
+            except Exception:
+                self.logger.warning("Unhandled error while scrolling")
         self.logger.info("Ending scroll")
 
     async def click(
