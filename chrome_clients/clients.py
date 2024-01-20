@@ -308,21 +308,29 @@ class BasePuppeteerClient:
         )
 
     async def close(self):
-        """Gracefully disconnects from the debug session."""
         if self.browser:
-            # Cancel all running tasks
-            tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task()]
-            [task.cancel() for task in tasks]
-        
-            # Wait for tasks to be cancelled
+            # Close individual pages first
+            pages = await self.browser.pages()
+            for page in pages:
+                try:
+                    await page.close()
+                except Exception as e:
+                    self.logger.error(f"Error while closing page: {e}")
+
+            # Cancel related browser tasks
+            tasks = [t for t in asyncio.all_tasks() if t is not asyncio.current_task() and is_browser_related(t)]
+            for task in tasks:
+                task.cancel()
+
             await asyncio.gather(*tasks, return_exceptions=True)
-        
+
             # Close the browser
             try:
                 await self.browser.close()
             except Exception as e:
-                # Handle exception (logging or other error handling)
-                self.logger.error(f"Error while closing: {e}")
+                self.logger.error(f"Error while closing browser: {e}")
+        else:
+            self.logger.info("Browser already disconnected.")
 
     @staticmethod
     def cleanse_selector(selector):
