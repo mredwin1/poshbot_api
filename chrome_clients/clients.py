@@ -284,7 +284,9 @@ class BasePuppeteerClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.logger.info("=====================================")
         self.logger.info(exc_type, exc_val, exc_tb)
+        self.logger.info("=====================================")
         await self.close()
 
     async def start(self):
@@ -601,7 +603,7 @@ class BasePuppeteerClient:
                     mistake_made = False
 
                 last_char = char
-                await asyncio.sleep(delay)
+                await self.sleep(delay)
             if index != len(lines) - 1:
                 await self.page.keyboard.press("Enter")
                 if random.random() < 0.1:
