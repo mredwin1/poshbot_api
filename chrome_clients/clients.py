@@ -284,6 +284,7 @@ class BasePuppeteerClient:
         return self
 
     async def __aexit__(self, exc_type, exc_val, exc_tb):
+        self.logger.info(exc_type, exc_val, exc_tb)
         await self.close()
 
     async def start(self):
