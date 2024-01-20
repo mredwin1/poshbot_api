@@ -1266,6 +1266,9 @@ class PoshmarkClient(BasePuppeteerClient):
                 attempts += 1
                 await self.sleep(1)
 
+                if attempts == 15:
+                    await self.save_screenshot("screenshots", "listing_item.png")
+
             parsed_url = urlparse(latest_url)
             query_params = parse_qs(parsed_url.query)
 
