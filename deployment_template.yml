@@ -257,10 +257,10 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: GENERAL_QUEUE_DL
               Value: !GetAtt GeneralQueueDL.QueueName
-            - Name: REDIS_ENDPOINT
-              Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            - Name: OCTO_ENDPOINT
-              Value: !GetAtt EC2Instance.PrivateDnsName
+            # - Name: REDIS_ENDPOINT
+            #   Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            # - Name: OCTO_ENDPOINT
+            #   Value: !GetAtt EC2Instance.PrivateDnsName
           Secrets:
             - Name: SECRET_KEY
               ValueFrom: !Ref DjangoSecretKey
@@ -1318,12 +1318,12 @@ Outputs:
   APIService:
     Value: !GetAtt APIService.Name
     Description: 'The name of the API Service'
-  MaintenanceService:
-    Value: !GetAtt MaintenanceService.Name
-    Description: 'The name of the Maintenance Service'
-  BeatService:
-    Value: !GetAtt BeatService.Name
-    Description: 'The name of the Beat Service'
-  GeneralService:
-    Value: !GetAtt GeneralService.Name
-    Description: 'The name of the General Service'
+  # MaintenanceService:
+  #   Value: !GetAtt MaintenanceService.Name
+  #   Description: 'The name of the Maintenance Service'
+  # BeatService:
+  #   Value: !GetAtt BeatService.Name
+  #   Description: 'The name of the Beat Service'
+  # GeneralService:
+  #   Value: !GetAtt GeneralService.Name
+  #   Description: 'The name of the General Service'
