@@ -1155,51 +1155,51 @@ Resources:
 #                  - 'elasticfilesystem:DescribeMountTargets'
 #                Resource: !GetAtt EFSVolume.Arn
 
-  EC2InstanceRole:
-    Type: "AWS::IAM::Role"
-    Properties:
-      AssumeRolePolicyDocument:
-        Version: "2012-10-17"
-        Statement:
-          - Effect: "Allow"
-            Principal:
-              Service: "ec2.amazonaws.com"
-            Action: "sts:AssumeRole"
-      Path: "/"
-      ManagedPolicyArns:
-        - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
-        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
-      Policies:
-        - PolicyName: SecretsManagerAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "secretsmanager:GetSecretValue"
-                Resource:
-                  - !GetAtt Database.MasterUserSecret.SecretArn
-                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
-        - PolicyName: CloudFormationAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - "cloudformation:DescribeStacks"
-                Resource:
-                  - "*"
-        - PolicyName: EFSAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'elasticfilesystem:ClientMount'
-                  - 'elasticfilesystem:ClientWrite'
-                  - 'elasticfilesystem:DescribeFileSystems'
-                  - 'elasticfilesystem:DescribeMountTargets'
-                Resource: !GetAtt EFSVolume.Arn
+#  EC2InstanceRole:
+#    Type: "AWS::IAM::Role"
+#    Properties:
+#      AssumeRolePolicyDocument:
+#        Version: "2012-10-17"
+#        Statement:
+#          - Effect: "Allow"
+#            Principal:
+#              Service: "ec2.amazonaws.com"
+#            Action: "sts:AssumeRole"
+#      Path: "/"
+#      ManagedPolicyArns:
+#        - "arn:aws:iam::aws:policy/service-role/AmazonEC2ContainerServiceforEC2Role"
+#        - "arn:aws:iam::aws:policy/AmazonSSMManagedInstanceCore"
+#      Policies:
+#        - PolicyName: SecretsManagerAccess
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "secretsmanager:GetSecretValue"
+#                Resource:
+#                  - !GetAtt Database.MasterUserSecret.SecretArn
+#                  - Fn::ImportValue: !Sub '${GlobalResourcesStackName}:OctoCredentials'
+#        - PolicyName: CloudFormationAccess
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - "cloudformation:DescribeStacks"
+#                Resource:
+#                  - "*"
+#        - PolicyName: EFSAccess
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - 'elasticfilesystem:ClientMount'
+#                  - 'elasticfilesystem:ClientWrite'
+#                  - 'elasticfilesystem:DescribeFileSystems'
+#                  - 'elasticfilesystem:DescribeMountTargets'
+#                Resource: !GetAtt EFSVolume.Arn
 
   EC2InstanceProfile:
     Type: "AWS::IAM::InstanceProfile"
