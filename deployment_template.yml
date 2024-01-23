@@ -1143,17 +1143,17 @@ Resources:
                   - "sqs:GetQueueUrl"
                   - "sqs:changemessagevisibility"
                 Resource: '*'
-        - PolicyName: EFSAccess
-          PolicyDocument:
-            Version: "2012-10-17"
-            Statement:
-              - Effect: Allow
-                Action:
-                  - 'elasticfilesystem:ClientMount'
-                  - 'elasticfilesystem:ClientWrite'
-                  - 'elasticfilesystem:DescribeFileSystems'
-                  - 'elasticfilesystem:DescribeMountTargets'
-                Resource: !GetAtt EFSVolume.Arn
+#        - PolicyName: EFSAccess
+#          PolicyDocument:
+#            Version: "2012-10-17"
+#            Statement:
+#              - Effect: Allow
+#                Action:
+#                  - 'elasticfilesystem:ClientMount'
+#                  - 'elasticfilesystem:ClientWrite'
+#                  - 'elasticfilesystem:DescribeFileSystems'
+#                  - 'elasticfilesystem:DescribeMountTargets'
+#                Resource: !GetAtt EFSVolume.Arn
 
   EC2InstanceRole:
     Type: "AWS::IAM::Role"
