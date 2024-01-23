@@ -92,37 +92,37 @@ class PoshUserSerializer(serializers.ModelSerializer):
         return f"https://poshmark.com/closet/{posh_user.username}"
 
     def get_password(self, posh_user: PoshUser):
-        user = self.context.get("user")
-        if (
-            user.username == "david" and posh_user.is_registered
-        ) or ListedItem.objects.filter(
-            Q(posh_user=posh_user, datetime_sold__isnull=False)
-            | Q(posh_user=posh_user, datetime_redeemable__isnull=False)
-        ).exists():
-            return posh_user.password
-        return "***********"
+        # user = self.context.get("user")
+        # if (
+        #     user.username == "david" and posh_user.is_registered
+        # ) or ListedItem.objects.filter(
+        #     Q(posh_user=posh_user, datetime_sold__isnull=False)
+        #     | Q(posh_user=posh_user, datetime_redeemable__isnull=False)
+        # ).exists():
+        return posh_user.password
+        # return "***********"
 
     def get_email_imap_password(self, posh_user: PoshUser):
-        user = self.context.get("user")
-        if (
-            user.username == "david" and posh_user.is_registered
-        ) or ListedItem.objects.filter(
-            Q(posh_user=posh_user, datetime_sold__isnull=False)
-            | Q(posh_user=posh_user, datetime_redeemable__isnull=False)
-        ).exists():
-            return posh_user.email_imap_password
-        return "***********"
+        # user = self.context.get("user")
+        # if (
+        #     user.username == "david" and posh_user.is_registered
+        # ) or ListedItem.objects.filter(
+        #     Q(posh_user=posh_user, datetime_sold__isnull=False)
+        #     | Q(posh_user=posh_user, datetime_redeemable__isnull=False)
+        # ).exists():
+        return posh_user.email_imap_password
+        # return "***********"
 
     def get_email_password(self, posh_user: PoshUser):
-        user = self.context.get("user")
-        if (
-            user.username == "david" and posh_user.is_registered
-        ) or ListedItem.objects.filter(
-            Q(posh_user=posh_user, datetime_sold__isnull=False)
-            | Q(posh_user=posh_user, datetime_redeemable__isnull=False)
-        ).exists():
-            return posh_user.email_password
-        return "***********"
+        # user = self.context.get("user")
+        # if (
+        #     user.username == "david" and posh_user.is_registered
+        # ) or ListedItem.objects.filter(
+        #     Q(posh_user=posh_user, datetime_sold__isnull=False)
+        #     | Q(posh_user=posh_user, datetime_redeemable__isnull=False)
+        # ).exists():
+        return posh_user.email_password
+        # return "***********"
 
     def create(self, validated_data):
         used_full_names = self.context.get("used_full_names")
