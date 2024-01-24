@@ -1201,12 +1201,12 @@ Resources:
 #                  - 'elasticfilesystem:DescribeMountTargets'
 #                Resource: !GetAtt EFSVolume.Arn
 
-  EC2InstanceProfile:
-    Type: "AWS::IAM::InstanceProfile"
-    Properties:
-      Path: "/"
-      Roles:
-        - !Ref EC2InstanceRole
+#  EC2InstanceProfile:
+#    Type: "AWS::IAM::InstanceProfile"
+#    Properties:
+#      Path: "/"
+#      Roles:
+#        - !Ref EC2InstanceRole
 
   MaintenanceQueue:
     Type: AWS::SQS::Queue
