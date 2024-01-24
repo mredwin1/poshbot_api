@@ -910,26 +910,26 @@ Resources:
             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationName' ] ]
       AccessControl: Private
 
- RecordSet:
-   Type: AWS::Route53::RecordSet
-   Properties:
-     HostedZoneId:
-       Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
-     Name: !If
-       - IsProd
-       - Fn::Sub:
-         - 'api.${Domain}'
-         - Domain:
+  RecordSet:
+    Type: AWS::Route53::RecordSet
+    Properties:
+      HostedZoneId:
+        Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationHostedZone' ] ]
+      Name: !If
+        - IsProd
+        - Fn::Sub:
+          - 'api.${Domain}'
+          - Domain:
              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-       - Fn::Sub:
-         - '${Environment}.api.${Domain}'
-         - Domain:
-             Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
-           Environment: !Ref Environment
-     Type: A
-     AliasTarget:
-       HostedZoneId: !GetAtt APILoadBalancer.CanonicalHostedZoneID
-       DNSName: !GetAtt APILoadBalancer.DNSName
+        - Fn::Sub:
+          - '${Environment}.api.${Domain}'
+          - Domain:
+              Fn::ImportValue: !Join [ ":", [ !Ref GlobalResourcesStackName, 'ApplicationDomain' ] ]
+            Environment: !Ref Environment
+      Type: A
+      AliasTarget:
+        HostedZoneId: !GetAtt APILoadBalancer.CanonicalHostedZoneID
+        DNSName: !GetAtt APILoadBalancer.DNSName
 #
 #  EFSMountTargetOne:
 #    Type: AWS::EFS::MountTarget
