@@ -648,8 +648,7 @@ class PoshUser(models.Model):
         if listing:
             item_details = [listing.item_info]
 
-            if item_details:
-                actions["list_items"] = {"items": item_details}
+            actions["list_items"] = {"items": item_details}
 
         # Add shared info to all action details
         for action_details in actions.values():
