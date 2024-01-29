@@ -1679,3 +1679,89 @@ class PoshmarkClient(BasePuppeteerClient):
             return await self._handle_generic_errors(
                 e, self.like_follow_share, user_info=user_info
             )
+
+
+class RealRealClient(BasePuppeteerClient):
+    async def register(self, user_info: Dict):
+        await self.page.goto("https://therealreal.com")
+
+        await self.type("#sign_up_user_email_", user_info["email"])
+        await self.click('button[data-event-link-detail="Email Sign Up"]')
+
+        await self.type("#sign_up_user_password_", user_info["password"])
+
+    async def _enter_seller_info(self, user_info: Dict):
+        await self.type(
+            'input[data-testid="contact-form-first-name"]', user_info["first_name"]
+        )
+        await self.type(
+            'input[data-testid="contact-form-last-name"]', user_info["last_name"]
+        )
+        await self.type('input[data-testid="contact-form-email"]', user_info["email"])
+        await self.type(
+            'input[data-testid="contact-form-phone"]', user_info["phone_number"]
+        )
+        await self.type('input[data-testid="contact-form-zip"]', user_info["zipcode"])
+        await self.click('button[data-testid="contact-form-submit"]')
+
+        await self.sleep(1)
+
+    async def _confirm_address(self, user_info: Dict):
+        address = f"{user_info['house_number']} {user_info['road']}"
+        await self.type(
+            'input[data-testid="address-form-first-name"]', user_info["first_name"]
+        )
+        await self.type(
+            'input[data-testid="address-form-last-name"]', user_info["last_name"]
+        )
+        await self.type('input[data-testid="google-address-input"]', address)
+        await self.type('input[data-testid="address-form-city"]', user_info["city"])
+        await self.type(
+            'div[data-testid="address-form-state"] > input', user_info["state"]
+        )
+        await self.type('input[data-testid="address-form-zip"]', user_info["zipcode"])
+        await self.type(
+            'input[data-testid="address-form-phone"]', user_info["phone_number"]
+        )
+
+        await self.click('button[data-testid="address-form-submit"]')
+
+        if await self.is_present(
+            'button[data-testid="address-verification-modal-confirm-button"]'
+        ):
+            await self.click(
+                'button[data-testid="address-verification-modal-confirm-button"]'
+            )
+
+    async def list_item(self, user_info: Dict, item_info: Dict):
+        if not await self.is_present('a[href="/sell"]'):
+            await self.page.goto("https://therealreal.com")
+
+        await self.click('a[href="/sell"]')
+
+        if await self.is_present('div[data-testid="seller-contact-form"]'):
+            await self._enter_seller_info(user_info)
+
+        await self.click(
+            'div[data-testid="seller-method-card-SHIP_DIRECT"] > button',
+            navigation=True,
+        )
+
+        await self.click("#category-dropdown-input")
+        await self.sleep(0.1)
+
+        await self.click(f'//li[contains(Text(), {item_info["category"]})]')
+
+        await self.type("#designer-dropdown-input", item_info["brand"])
+        await self.click(f"//li[contains(text(), '{item_info['brand']}')]")
+
+        await self.click("#taxon-dropdown-input")
+        await self.click(f"//li[contains(text(), '{item_info['item_type']}')]")
+
+        await self.click('button[data-testid="packing-list-form-add-item"]')
+        await self.sleep(1)
+
+        await self.click('data-testid="packing-list-form-sell-items"')
+        await self._confirm_address(user_info)
+
+        await self.sleep(5)

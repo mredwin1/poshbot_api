@@ -52,6 +52,15 @@ def path_and_rename(instance, filename):
                 instance.listing.user.username, "listing_images", title, filename
             )
 
+        elif isinstance(instance, RealRealListing):
+            filename = f"image_{rand_str}.{ext}"
+            path = os.path.join(
+                instance.posh_user.user.username,
+                "real_real_labels",
+                instance.posh_user.username,
+                filename,
+            )
+
         elif isinstance(instance, PoshUser):
             if ext == "pkl":
                 filename = f"cookies.{ext}"
@@ -465,7 +474,7 @@ class PoshUser(models.Model):
                 for item in items_to_list:
                     if item.listing:
                         item_info = item.item_info
-    
+
                         if item_info["images"]:
                             item_details.append(item.item_info)
 
@@ -547,6 +556,99 @@ class PoshUser(models.Model):
             "campaign_id": self.campaign.id,
             "posh_user_id": self.id,
             "delay": random.uniform(delay_lower_bound, delay_upper_bound),
+            "octo_details": octo_details,
+            "actions": actions,
+        }
+
+        return task_blueprint
+
+    @property
+    def real_real_blueprint(self) -> Dict:
+        """
+        Property to return a real real task blueprint containing shared info and actions and their details.
+        """
+        CATEGORIES = ["Women", "Men"]
+        BRANDS = {
+            "Women": ["Gucci", "Valentino"],
+            "Men": [
+                "Salvatore Ferragamo",
+                "Gucci",
+                "Louis Vuitton",
+                "Versace",
+                "Fendi",
+            ],
+        }
+        ITEM_TYPES = ["ACCESSORIES"]
+
+        shared_info = {
+            "user_info": {
+                "posh_user_id": self.id,
+                "is_registered": self.is_registered,
+                "username": self.username,
+                "password": self.password,
+            }
+        }
+        octo_details = {
+            "title": self.username,
+            "uuid": self.octo_uuid,
+            "tags": [
+                os.environ["ENVIRONMENT"].replace("-", "")[:10],
+                self.user.username[:10],
+            ],
+        }
+        actions = {}
+
+        # Registration
+        if not self.is_registered:
+            actions["register"] = {
+                "first_name": self.first_name,
+                "last_name": self.last_name,
+                "email": self.email,
+                "username": self.username,
+                "password": self.password,
+                "zipcode": self.postcode,
+                "phone_number": self.phone_number,
+                "house_number": self.house_number,
+                "road": self.road,
+                "city": self.city,
+                "state": self.state,
+            }
+
+        # Create real real listing if necessary (THIS IS TEMPORARY AND NEEDS TO BE REMOVED)
+        real_real_listings = RealRealListing.objects.filter(posh_user=self)
+        if not real_real_listings.filter(
+            status__in=(RealRealListing.LISTED, RealRealListing.NOT_LISTED)
+        ).exists():
+            category = random.choice(CATEGORIES)
+            listing = RealRealListing.objects.create(
+                posh_user=self,
+                status=RealRealListing.NOT_LISTED,
+                category=category,
+                brand=random.choice(BRANDS[category]),
+                item_type=random.choice(ITEM_TYPES),
+            )
+        elif not real_real_listings.filter(status=RealRealListing.NOT_LISTED).exists():
+            listing = RealRealListing.objects.filter(
+                posh_user=self, status=RealRealListing.NOT_LISTED
+            ).first()
+        else:
+            listing = None
+
+        # Sharing, sending offers, check offers, and check comments
+        if listing:
+            item_details = [listing.item_info]
+
+            if item_details:
+                actions["list_items"] = {"items": item_details}
+
+        # Add shared info to all action details
+        for action_details in actions.values():
+            action_details.update(shared_info)
+
+        task_blueprint = {
+            "campaign_id": self.campaign.id,
+            "posh_user_id": self.id,
+            "delay": None,
             "octo_details": octo_details,
             "actions": actions,
         }
@@ -958,6 +1060,47 @@ class ListedItem(models.Model):
 
     def __str__(self):
         return f"{self.listing_title}"
+
+
+class RealRealListing(models.Model):
+    NOT_LISTED = "NOT LISTED"
+    LISTED = "LISTED"
+    SHIPPED = "SHIPPED"
+    SOLD = "SOLD"
+    CANCELLED = "CANCELLED"
+
+    STATUS_CHOICES = [
+        (NOT_LISTED, NOT_LISTED),
+        (LISTED, LISTED),
+        (SOLD, SOLD),
+        (SHIPPED, SHIPPED),
+        (CANCELLED, CANCELLED),
+    ]
+
+    posh_user = models.ForeignKey(
+        PoshUser, on_delete=models.CASCADE, related_name="real_real_listings"
+    )
+
+    category = models.CharField(max_length=50)
+    brand = models.CharField(max_length=50)
+    item_type = models.CharField(max_length=50)
+    status = models.CharField(
+        max_length=255, choices=STATUS_CHOICES, default=NOT_LISTED
+    )
+
+    datetime_listed = models.DateTimeField(null=True, blank=True)
+
+    shipping_label = models.FileField(upload_to=path_and_rename)
+
+    @property
+    def item_info(self):
+        item_info = {
+            "category": self.category,
+            "brand": self.brand,
+            "item_type": self.item_type,
+        }
+
+        return item_info
 
 
 class ListedItemToReport(models.Model):

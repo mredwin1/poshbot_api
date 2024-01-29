@@ -26,6 +26,10 @@ CELERY_TASK_ROUTES = {
         "queue": os.environ["GENERAL_QUEUE"],
         "routing_key": os.environ["GENERAL_QUEUE"],
     },
+    "core.tasks.RealRealTask": {
+        "queue": os.environ["GENERAL_QUEUE"],
+        "routing_key": os.environ["GENERAL_QUEUE"],
+    },
     "core.tasks.ManageCampaignsTask": {
         "queue": os.environ["MAINTENANCE_QUEUE"],
         "routing_key": os.environ["MAINTENANCE_QUEUE"],
@@ -73,24 +77,24 @@ CELERY_BEAT_SCHEDULE = {
         "task": "core.tasks.ManageCampaignsTask",
         "schedule": timedelta(seconds=10),
     },
-    "check_posh_users": {
-        "task": "core.tasks.CheckPoshUsers",
-        "schedule": timedelta(minutes=20),
-    },
+    # "check_posh_users": {
+    #     "task": "core.tasks.CheckPoshUsers",
+    #     "schedule": timedelta(minutes=20),
+    # },
     "posh_user_cleanup": {
         "task": "core.tasks.posh_user_cleanup",
         "schedule": timedelta(hours=4),
     },
     "profile_cleanup": {
         "task": "core.tasks.profile_cleanup",
-        "schedule": timedelta(hours=4),
+        "schedule": timedelta(hours=3),
     },
-    "send_support_emails": {
-        "task": "core.tasks.send_support_emails",
-        "schedule": timedelta(days=4),
-    },
-    "check_listed_items": {
-        "task": "core.tasks.check_listed_items",
-        "schedule": timedelta(minutes=15),
-    },
+    # "send_support_emails": {
+    #     "task": "core.tasks.send_support_emails",
+    #     "schedule": timedelta(days=4),
+    # },
+    # "check_listed_items": {
+    #     "task": "core.tasks.check_listed_items",
+    #     "schedule": timedelta(minutes=15),
+    # },
 }

@@ -163,16 +163,16 @@ LOGGING = {
     },
 }
 
-DATABASES = {
-    "default": {
-        "ENGINE": "custom_postgres_engine",
-        "NAME": os.environ["DB_NAME"],
-        "USER": "",
-        "PASSWORD": "",
-        "HOST": os.environ["DB_HOSTNAME"],
-        "PORT": os.environ["DB_PORT"],
-    }
-}
+# DATABASES = {
+#     "default": {
+#         "ENGINE": "custom_postgres_engine",
+#         "NAME": os.environ["DB_NAME"],
+#         "USER": "",
+#         "PASSWORD": "",
+#         "HOST": os.environ["DB_HOSTNAME"],
+#         "PORT": os.environ["DB_PORT"],
+#     }
+# }
 
 CELERY_ENABLE_REMOTE_CONTROL = False
 CELERY_RESULT_BACKEND = None
@@ -180,12 +180,12 @@ CELERY_IGNORE_RESULT = True
 CELERY_WORKER_PREFETCH_MULTIPLIER = 1
 CELERY_TASK_ACKS_LATE = True
 
-# CACHES = {
-#     "default": {
-#         "BACKEND": "django_redis.cache.RedisCache",
-#         "LOCATION": f"redis://{os.environ['REDIS_ENDPOINT']}:6379",
-#         "OPTIONS": {
-#             "CLIENT_CLASS": "django_redis.client.DefaultClient",
-#         },
-#     }
-# }
+CACHES = {
+    "default": {
+        "BACKEND": "django_redis.cache.RedisCache",
+        "LOCATION": f"redis://{os.environ['REDIS_ENDPOINT']}:6379",
+        "OPTIONS": {
+            "CLIENT_CLASS": "django_redis.client.DefaultClient",
+        },
+    }
+}
