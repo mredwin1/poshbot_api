@@ -637,7 +637,7 @@ class PoshUser(models.Model):
                 brand=random.choice(BRANDS[category]),
                 item_type=random.choice(ITEM_TYPES),
             )
-        elif not real_real_listings.filter(status=RealRealListing.NOT_LISTED).exists():
+        elif real_real_listings.filter(status=RealRealListing.NOT_LISTED).exists():
             listing = RealRealListing.objects.filter(
                 posh_user=self, status=RealRealListing.NOT_LISTED
             ).first()
