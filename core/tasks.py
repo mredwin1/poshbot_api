@@ -743,6 +743,7 @@ class ManageCampaignsTask(Task):
                 continue
 
             task_blueprint = campaign.posh_user.real_real_blueprint
+            self.logger.info(task_blueprint)
             task_blueprint["start_time"] = now.isoformat()
             register_or_list = (
                 "register" in task_blueprint["actions"]
