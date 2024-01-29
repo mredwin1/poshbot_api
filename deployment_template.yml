@@ -257,10 +257,10 @@ Resources:
               Value: !GetAtt GeneralQueue.QueueName
             - Name: GENERAL_QUEUE_DL
               Value: !GetAtt GeneralQueueDL.QueueName
-            # - Name: REDIS_ENDPOINT
-            #   Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
-            # - Name: OCTO_ENDPOINT
-            #   Value: !GetAtt EC2Instance.PrivateDnsName
+            - Name: REDIS_ENDPOINT
+              Value: !GetAtt ElastiCacheCluster.RedisEndpoint.Address
+            - Name: OCTO_ENDPOINT
+              Value: !GetAtt EC2Instance.PrivateDnsName
           Secrets:
             - Name: SECRET_KEY
               ValueFrom: !Ref DjangoSecretKey
