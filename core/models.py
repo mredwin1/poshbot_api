@@ -569,13 +569,23 @@ class PoshUser(models.Model):
         """
         CATEGORIES = ["Women", "Men"]
         BRANDS = {
-            "Women": ["Gucci", "Valentino"],
-            "Men": [
-                "Salvatore Ferragamo",
+            "Women": [
                 "Gucci",
                 "Louis Vuitton",
+                "Salvatore Ferragamo",
                 "Versace",
-                "Fendi",
+                "Valentino",
+                "Christian Dior",
+                "Celine",
+                "Chanel",
+            ],
+            "Men": [
+                "Gucci",
+                "Louis Vuitton",
+                "Salvatore Ferragamo",
+                "Versace",
+                "Valentino",
+                "Christian Dior",
             ],
         }
         ITEM_TYPES = ["ACCESSORIES"]
