@@ -510,15 +510,15 @@ class RealRealTask(Task):
                 seconds=task_blueprint["delay"]
             )
 
-            campaign.status = Campaign.IDLE
-            campaign.next_runtime = next_runtime
+            campaign.status = Campaign.STOPPING
+            campaign.next_runtime = None
             campaign.queue_status = "N/A"
             campaign.save(update_fields=["status", "next_runtime", "queue_status"])
             username = list(task_blueprint["actions"].values())[0]["user_info"][
                 "username"
             ]
             logger.info(
-                f"Time to finish_task for {username}: {total_runtime}. Starting back up in {task_blueprint['delay']} seconds"
+                f"Time to finish_task for {username}: {total_runtime}."
             )
         except ProfileStartError as e:
             logger.error(e)
