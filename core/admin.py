@@ -12,7 +12,6 @@ from . import models
 
 admin.site.register(models.ListedItemOffer)
 admin.site.register(models.PaymentEmailContent)
-admin.site.register(models.RealRealListing)
 
 
 @admin.action(description="Start selected campaigns")
@@ -481,6 +480,49 @@ class ListedItemAdmin(admin.ModelAdmin):
                         "datetime_redeemable",
                         "datetime_redeemed",
                     ),
+                )
+            },
+        ),
+    )
+
+
+@admin.register(models.RealRealListing)
+class RealRealListing(admin.ModelAdmin):
+    autocomplete_fields = ["posh_user"]
+    list_display = [
+        "status",
+        "associated_user",
+        "associated_posh_user",
+        "datetime_listed",
+    ]
+    search_fields = ["posh_user__username__istartswith"]
+    list_filter = ["status", "posh_user__user__username"]
+
+    def get_queryset(self, request):
+        return (
+            super(RealRealListing, self)
+            .get_queryset(request)
+            .select_related("posh_user")
+        )
+
+    @admin.display(ordering="posh_user")
+    def associated_posh_user(self, real_real_listing):
+        url = f"{reverse('admin:core_poshuser_change', args=[real_real_listing.posh_user.id])}"
+        return format_html('<a href="{}">{}</a>', url, real_real_listing.posh_user)
+
+    @admin.display(ordering="posh_user__user")
+    def associated_user(self, real_real_listing):
+        url = f"{reverse('admin:core_user_change', args=[real_real_listing.posh_user.user.id])}"
+        return format_html('<a href="{}">{}</a>', url, real_real_listing.posh_user.user)
+
+    fieldsets = (
+        (
+            "Campaign Information",
+            {
+                "fields": (
+                    ("posh_user",),
+                    ("status",),
+                    ("datetime_listed",),
                 )
             },
         ),

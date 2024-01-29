@@ -1112,6 +1112,9 @@ class RealRealListing(models.Model):
 
         return item_info
 
+    def __str__(self):
+        return f"Real Real Listing for {self.posh_user}"
+
 
 class ListedItemToReport(models.Model):
     REPLICA = "Replica"
