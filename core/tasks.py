@@ -25,7 +25,7 @@ from email.mime.text import MIMEText
 from requests.exceptions import ConnectionError
 from typing import Union, Dict, List
 
-from chrome_clients.clients import PoshmarkClient, OctoAPIClient
+from chrome_clients.clients import PoshmarkClient, OctoAPIClient, RealRealClient
 from chrome_clients.errors import (
     LoginOrRegistrationError,
     UserDisabledError,
@@ -452,7 +452,7 @@ class RealRealTask(Task):
         ws_endpoint = runtime_details["ws_endpoint"]
         width = runtime_details["width"]
         height = runtime_details["height"]
-        async with PoshmarkClient(ws_endpoint, width, height, logger) as client:
+        async with RealRealClient(ws_endpoint, width, height, logger) as client:
             for action_name, action_details in actions.items():
                 action_method = getattr(self, action_name)
                 start_time = time.perf_counter()
